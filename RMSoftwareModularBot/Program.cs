@@ -446,7 +446,7 @@ namespace RMSoftware.ModularBot
         }
 
         static int[] cColors = { 0x000000, 0x000080, 0x008000, 0x008080, 0x800000, 0x800080, 0x808000, 0xC0C0C0, 0x808080, 0x0000FF, 0x00FF00, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFFFF00, 0xFFFFFF };
-
+//Courtesy of StackOverflow
         public static void ConsoleWritePixel(System.Drawing.Color cValue)
         {
             System.Drawing.Color[] cTable = cColors.Select(x => System.Drawing.Color.FromArgb(x)).ToArray();
