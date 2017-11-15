@@ -34,7 +34,7 @@ namespace RMSoftware.ModularBot
         /// <summary>
         /// Program EntryPoint
         /// </summary>
-        /// <param name="args">The only argument that should be in here should be your discord application token</param>
+        /// <param name="args">The only argument that could/should be in here should be your discord application token</param>
         /// <returns></returns>
         public static int Main(string[] args)
         {
@@ -48,7 +48,6 @@ namespace RMSoftware.ModularBot
             ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
             ccmg = new CustomCommandManager();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
             string[] NonConfigArgs = args;
             if (InitializeConfig())//If true, do setup.
             {
@@ -171,17 +170,6 @@ namespace RMSoftware.ModularBot
             Console.ReadKey();
             return 200;//OK status
         }
-
-        private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
-        {
-            //Exception ex = e.Exception as Exception;
-            //LogToConsole("CritERR", ex.Message);
-            //ConsoleColor Last = Console.ForegroundColor;
-            //Console.ForegroundColor = ConsoleColor.Gray;
-            //LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
-            //Console.ForegroundColor = Last;
-        }
-
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Exception ex = e.ExceptionObject as Exception;
@@ -214,8 +202,6 @@ namespace RMSoftware.ModularBot
             string pTitle = WTitle.PadLeft(71+WTitle.Length/2);
             pTitle += "".PadRight(71-WTitle.Length/2);
             Console.Write("\u2551{0}\u2551", pTitle);
-            
-           
             DecorateBottom();
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
@@ -450,7 +436,7 @@ namespace RMSoftware.ModularBot
                 {
                     if(Program.MainCFG.GetCategoryByName("Application").CheckForEntry("Dev-ShowWizard"))
                     {
-                        WizardDebug = true;
+                        WizardDebug = Program.MainCFG.GetCategoryByName("Application").GetEntryByName("Dev-ShowWizard").GetAsBool();
                         return Program.MainCFG.GetCategoryByName("Application").GetEntryByName("Dev-ShowWizard").GetAsBool();
                     }
                 }
