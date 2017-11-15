@@ -21,9 +21,6 @@ namespace RMSoftware.ModularBot
 
             string format = string.Format("I've been alive and well for **{0}** hours, **{1}** minutes, and **{2}** seconds!", Math.Floor(delta.TotalHours).ToString("n0"), delta.Minutes, delta.Seconds);
             await Retry.Do(async () => await Context.Channel.SendMessageAsync(format + " " + args), TimeSpan.FromMilliseconds(140));
-
-            //await Context.Channel.SendMessageAsync();
-
         }
         [Command("about"), Summary("Display information about the bot")]
         public async Task ShowAbout()
@@ -36,8 +33,6 @@ namespace RMSoftware.ModularBot
             builder.AddField("Version", Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
             builder.WithFooter("RMSoftwareModularBot, created by rmsoft1");
             await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
-
-            //await Context.Channel.SendMessageAsync();
         }
 
         [Command("STOPBOT"), Summary("[BotMaster] closes the bot")]
@@ -75,8 +70,6 @@ namespace RMSoftware.ModularBot
                 c.LogoutAsync();
                 c.StopAsync();
 #pragma warning restore CS4014 // TL;DC
-
-                //Program.discon = true;
             }
             else
             {
@@ -114,8 +107,6 @@ namespace RMSoftware.ModularBot
             {
                 await Context.Channel.SendMessageAsync("... ... ... ... ...");
                 throw (new Exception("You triggered this exception."));
-
-                //Program.discon = true;
             }
             else
             {
@@ -343,7 +334,8 @@ namespace RMSoftware.ModularBot
                         {
                             if (item.GetEntryByName("guildID").GetAsUlong() != Context.Guild.Id)
                             {
-                                continue;//if the entry exists, and it doesn't match the guild listcmd was called in, don't add it to the list.
+                                continue;//if the entry exists, and it doesn't match the guild listcmd was called in
+                                //don't add it to the list.
                             }
 
                         }
@@ -368,12 +360,14 @@ namespace RMSoftware.ModularBot
                     builder.WithFooter("Powered by RMSoftwareModules DevBOT");
                     try
                     {
-                        await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
+                        await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), 
+                        TimeSpan.FromMilliseconds(140));
                     }
                     catch (AggregateException ex)
                     {
 
-                        await arg.Channel.SendMessageAsync("Tried to do this THREE different times, and Quite honestly, I just could not do it... I'm sorry...");
+                        await arg.Channel.SendMessageAsync("Tried to do this THREE different times, and Quite honestly, "+
+                        "I just could not do it... I'm sorry...");
                         Program.LogToConsole("CritERR", ex.Message);
                     }
                     
@@ -383,7 +377,8 @@ namespace RMSoftware.ModularBot
                 }
 
             }
-            await Retry.Do(async () => await Context.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
+            await Retry.Do(async () => await Context.Channel.SendMessageAsync("Hey " + arg.Author.Mention +
+            ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
            
 
             return;
@@ -416,13 +411,15 @@ namespace RMSoftware.ModularBot
         {
             EmbedBuilder eb = new EmbedBuilder();
 
-            eb.WithAuthor("What's New", "https://cdn.discordapp.com/app-icons/350413323180834818/dc9bbd8d4ba0beb5e148de4279db0080.png", "");
-            eb.AddField("v1.3.262 (1.4.0-PRERELEASE)", "• Renamed this dialog.\r\n• Change log is not a change log. It's Version History.");
+            eb.WithAuthor("What's New", "http://rmsoftware.org/RMSoftwareICO.png", "");
+            eb.AddField("v1.3.262 (1.4.0-PRERELEASE)",
+            "• Renamed this dialog.\r\n• Change log is not a change log. It's Version History.");
             eb.WithFooter("Powered by: RMSoftware.ModularBot\r\n Copyright © 2017 RMSoftware Development");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
             op.RetryMode = RetryMode.AlwaysRetry;
-            await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build(), op);
+            await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**",
+            false, eb.Build(), op);
         }
 
 
