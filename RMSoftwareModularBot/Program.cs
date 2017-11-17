@@ -49,7 +49,6 @@ namespace RMSoftware.ModularBot
             ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
             ccmg = new CustomCommandManager();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
             string[] NonConfigArgs = args;
             if (InitializeConfig())//If true, do setup.
             {
@@ -179,7 +178,7 @@ namespace RMSoftware.ModularBot
             if(!InvalidSession)
             {
 
-                return 4007;//OK status
+                return 4007;//NOT OKAY
             }
             else
             {
@@ -188,15 +187,6 @@ namespace RMSoftware.ModularBot
             }
         }
 
-        private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
-        {
-            //Exception ex = e.Exception as Exception;
-            //LogToConsole("CritERR", ex.Message);
-            //ConsoleColor Last = Console.ForegroundColor;
-            //Console.ForegroundColor = ConsoleColor.Gray;
-            //LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
-            //Console.ForegroundColor = Last;
-        }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
@@ -219,8 +209,6 @@ namespace RMSoftware.ModularBot
             Console.SetBufferSize(144, 256);
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
-
-           
             Console.Clear();
             
             Console.BackgroundColor = ConsoleColor.Black;
@@ -230,8 +218,6 @@ namespace RMSoftware.ModularBot
             string pTitle = WTitle.PadLeft(71+WTitle.Length/2);
             pTitle += "".PadRight(71-WTitle.Length/2);
             Console.Write("\u2551{0}\u2551", pTitle);
-            
-           
             DecorateBottom();
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
@@ -244,8 +230,6 @@ namespace RMSoftware.ModularBot
             Console.SetBufferSize(w, h);
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
-
-
             Console.Clear();
 
             Console.BackgroundColor = ConsoleColor.Black;
@@ -329,8 +313,8 @@ namespace RMSoftware.ModularBot
             _client = new DiscordSocketClient();
             _client.Log += Log;
             services = new ServiceCollection().BuildServiceProvider();
-            _client.Ready += _client_Connected;
-            _client.Connected += _client_Connected1;
+            _client.Ready += _ClientReady;
+            _client.Connected += _client_Connected;
             _client.MessageReceived += _client_MessageReceived;
             _client.Disconnected += _client_Disconnected;
             
@@ -338,18 +322,17 @@ namespace RMSoftware.ModularBot
             await _client.LoginAsync(TokenType.Bot, token);
             await _client.StartAsync();            
         }
-        
+
+        private Task _ClientReady()
+        {
+            StartTime = DateTime.Now;
+            return Task.Delay(1);
+        }
 
         private Task _client_Disconnected(Exception arg)
         {
             LogToConsole("Session", "Disconnected: "+ arg.Message);
             return Task.Delay(3);
-        }
-
-        private Task _client_Connected1()
-        {
-            StartTime = DateTime.Now;
-            return Task.Delay(1);
         }
 
         private async Task _client_Connected()
@@ -393,10 +376,12 @@ namespace RMSoftware.ModularBot
             }
           
         }
+
         public static void LogToConsole(string category,string logText)
         {
             Console.WriteLine("{0} {1}{2}", DateTime.Now.ToString("HH:mm:ss"), category.PadRight(12), logText);
         }
+
         private async Task _client_MessageReceived(SocketMessage arg)
         {
             //DEBUG: Output the bot-mentioned chat message to the console
@@ -483,6 +468,7 @@ namespace RMSoftware.ModularBot
             
         }
 
+//=============STACKOVERFLOW THANK YOU!==================
         static int[] cColors = { 0x000000, 0x000080, 0x008000, 0x008080, 0x800000, 0x800080, 0x808000, 0xC0C0C0, 0x808080, 0x0000FF, 0x00FF00, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFFFF00, 0xFFFFFF };
 
         public static void ConsoleWritePixel(System.Drawing.Color cValue)
@@ -518,7 +504,6 @@ namespace RMSoftware.ModularBot
             Console.BackgroundColor = (ConsoleColor)bestHit[1];
             Console.Write(rList[bestHit[2] - 1]);
         }
-
 
         public static void ConsoleWriteImage(System.Drawing.Bitmap source)
         {
