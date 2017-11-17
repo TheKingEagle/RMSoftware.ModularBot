@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using RMSoftware.IO;
@@ -21,6 +21,7 @@ namespace RMSoftware.ModularBot
 
             string format = string.Format("I've been alive and well for **{0}** hours, **{1}** minutes, and **{2}** seconds!", Math.Floor(delta.TotalHours).ToString("n0"), delta.Minutes, delta.Seconds);
             await Retry.Do(async () => await Context.Channel.SendMessageAsync(format + " " + args), TimeSpan.FromMilliseconds(140));
+
         }
         [Command("about"), Summary("Display information about the bot")]
         public async Task ShowAbout()
@@ -35,7 +36,7 @@ namespace RMSoftware.ModularBot
             await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
         }
 
-        [Command("STOPBOT"), Summary("[BotMaster] closes the bot")]
+        [Command("STOPBOT",RunMode=RunMode.Async), Summary("[BotMaster] closes the bot")]
         public async Task StopBot()
         {
             if (Context.Guild == null)
@@ -62,14 +63,12 @@ namespace RMSoftware.ModularBot
             }
             if (hasrole)
             {
-                await Context.Channel.SendMessageAsync("BotMaster has triggered **STOPBOT()** -- Shutting down...");
+                await Context.Channel.SendMessageAsync("[BotMaster] called ***StopBot***... g'day m8 ;)");
                 DiscordSocketClient c = (DiscordSocketClient)Context.Client;
-
-#pragma warning disable CS4014 // Because this call is not awaited--... Yeah yeah... TL;DR
-                c.SetStatusAsync(UserStatus.Invisible);
-                c.LogoutAsync();
-                c.StopAsync();
-#pragma warning restore CS4014 // TL;DC
+                await c.SetStatusAsync(UserStatus.Invisible);
+                await c.StopAsync();
+                await Task.Delay(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
+                Program.discon = true;
             }
             else
             {
@@ -78,42 +77,6 @@ namespace RMSoftware.ModularBot
 
         }
 
-        [Command("crash"), Summary("[BotMaster] throw a dummy exception")]
-        public async Task crash()
-        {
-            if (Context.Guild == null)
-            {
-                await Context.Channel.SendMessageAsync("This command is locked to a specific guild... My DM is no exception to the rule.");
-            }
-            if (Context.Guild?.Id != Program.MainCFG.GetCategoryByName("Application").GetEntryByName("masterGuild").GetAsUlong())
-            {
-                await Context.Channel.SendMessageAsync("You cannot use that command on this guild server...");
-                return;
-            }
-            SocketGuildUser user = ((SocketGuildUser)Context.User);
-            bool hasrole = false;
-            foreach (SocketRole role in user.Roles)
-            {
-                hasrole = false;
-                if (role.Name == "BotMaster")
-                {
-
-                    Program.LogToConsole("CmdExec", "User has required permissions");
-                    hasrole = true;
-                    break;
-                }
-            }
-            if (hasrole)
-            {
-                await Context.Channel.SendMessageAsync("... ... ... ... ...");
-                throw (new Exception("You triggered this exception."));
-            }
-            else
-            {
-                await Context.Channel.SendMessageAsync("You don't have the *BotMaster* role...");
-            }
-
-        }
         [Command("reloadModules"), Summary("[DevCommand] Reload all modules & commands")]
         public async Task Reload()
         {
@@ -334,8 +297,7 @@ namespace RMSoftware.ModularBot
                         {
                             if (item.GetEntryByName("guildID").GetAsUlong() != Context.Guild.Id)
                             {
-                                continue;//if the entry exists, and it doesn't match the guild listcmd was called in
-                                //don't add it to the list.
+                                continue;//if the entry exists, and it doesn't match the guild listcmd was called in, don't add it to the list.
                             }
 
                         }
@@ -360,14 +322,12 @@ namespace RMSoftware.ModularBot
                     builder.WithFooter("Powered by RMSoftwareModules DevBOT");
                     try
                     {
-                        await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), 
-                        TimeSpan.FromMilliseconds(140));
+                        await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
                     }
                     catch (AggregateException ex)
                     {
 
-                        await arg.Channel.SendMessageAsync("Tried to do this THREE different times, and Quite honestly, "+
-                        "I just could not do it... I'm sorry...");
+                        await arg.Channel.SendMessageAsync("Tried to do this THREE different times, and Quite honestly, I just could not do it... I'm sorry...");
                         Program.LogToConsole("CritERR", ex.Message);
                     }
                     
@@ -377,8 +337,7 @@ namespace RMSoftware.ModularBot
                 }
 
             }
-            await Retry.Do(async () => await Context.Channel.SendMessageAsync("Hey " + arg.Author.Mention +
-            ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
+            await Retry.Do(async () => await Context.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
            
 
             return;
@@ -411,15 +370,13 @@ namespace RMSoftware.ModularBot
         {
             EmbedBuilder eb = new EmbedBuilder();
 
-            eb.WithAuthor("What's New", "http://rmsoftware.org/RMSoftwareICO.png", "");
-            eb.AddField("v1.3.262 (1.4.0-PRERELEASE)",
-            "• Renamed this dialog.\r\n• Change log is not a change log. It's Version History.");
+            eb.WithAuthor("What's New", "https://cdn.discordapp.com/app-icons/350413323180834818/dc9bbd8d4ba0beb5e148de4279db0080.png", "");
+            eb.AddField("v1.3.269 (1.4.0-PRERELEASE)", "• Re-wrote StopBot to function without blocking gateway task.\r\n• Removed `!crash`\r\n•Removed logout event and replaced with disconnect event\r\n•Added instruction to prompt for application termination when the bot fails to resume a previous connection to the discord gateway.");
             eb.WithFooter("Powered by: RMSoftware.ModularBot\r\n Copyright © 2017 RMSoftware Development");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
             op.RetryMode = RetryMode.AlwaysRetry;
-            await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**",
-            false, eb.Build(), op);
+            await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build(), op);
         }
 
 
