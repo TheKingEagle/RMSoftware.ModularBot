@@ -31,7 +31,7 @@ CLI_EXEC is pretty much the same thing, but the bot adds another internal parame
 
 ```
 ArcadeCORE Extension Pack
-ArcadeCORE is an extension pack containing EXEC/CLI_EXEC Commands you can manually add to the bot with !addcmd
+ArcadeCORE is an extension pack containing functions for commands availale to "The Arcade" and "Rewards 1" discord guilds.
 Version: v1.0.56
 Creator: rmsoft1#1442
 Website: http://rmsoftware.org/
