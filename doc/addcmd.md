@@ -1,5 +1,6 @@
 # !addcmd Usage
 * Normal usage: `!addcmd <cmdName> <boolDevCmdOnly> <boolLockToGuild> <Action>`
+* This command is restricted to users with a DevCommand named role only.
 ### Action Parameter
 The action can be several things, Most of the time, it can be a combination of text and emotes. More advanced things are covered later.
 ### cmdName
