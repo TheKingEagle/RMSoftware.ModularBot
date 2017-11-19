@@ -27,7 +27,7 @@ CLI_EXEC is pretty much the same thing, but the bot adds another internal parame
 * Please refer to the DLL readme to get the EXEC Type for the specified function.
 
 
-## Sample EXEC Command library ReadMe
+## Sample EXEC Command DLL ReadMe
 
 ```
 ArcadeCORE Extension Pack
