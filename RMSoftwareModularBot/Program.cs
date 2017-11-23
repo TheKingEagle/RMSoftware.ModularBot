@@ -13,6 +13,7 @@ using Discord.Commands;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using RMSoftware.IO;
+using System.Diagnostics;
 namespace RMSoftware.ModularBot
 {
     class Program
@@ -20,14 +21,15 @@ namespace RMSoftware.ModularBot
         public static DateTime StartTime;
         public static DiscordSocketClient _client;
         private IServiceProvider services;
-        private static bool BCMDStarted = false;
+        public static bool BCMDStarted = false;
         public static CustomCommandManager ccmg { get; private set; }
         public static Discord.Commands.CommandService cmdsvr = new Discord.Commands.CommandService();
         public static CancellationToken t;
         public static bool WizardDebug = false;
         public static bool discon = false;
         public static bool InvalidSession = false;
-        
+        public static bool RestartRequested = false;
+        static List<SocketMessage> messageQueue = new List<SocketMessage>();
         /// <summary>
         /// Application's main configuration file
         /// </summary>
@@ -172,6 +174,22 @@ namespace RMSoftware.ModularBot
                 LogToConsole("Session", "Failed to resume previous session. Please restart the application");
                 
                 _client = null;
+            }
+            if(RestartRequested)
+            {
+                Process p = new Process();
+                p.StartInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName);
+                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
+                LogToConsole("Program", "Restarting the bot... this console window will close in 3 seconds.");
+                Thread.Sleep(1000);
+                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
+                LogToConsole("Program", "Restarting the bot... this console window will close in 2 seconds.");
+                Thread.Sleep(1000);
+                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
+                LogToConsole("Program", "Restarting the bot... this console window will close in 1 second.");
+                Thread.Sleep(1000);
+                p.Start();
+                return 0x00000c4;
             }
             LogToConsole("Program", "Press any key to terminate...");
             Console.ReadKey();
@@ -323,7 +341,7 @@ namespace RMSoftware.ModularBot
             await _client.StartAsync();            
         }
 
-        private Task _ClientReady()
+        private Task _client_Connected()
         {
             StartTime = DateTime.Now;
             return Task.Delay(1);
@@ -335,14 +353,19 @@ namespace RMSoftware.ModularBot
             return Task.Delay(3);
         }
 
-        private async Task _client_Connected()
+        private async Task _ClientReady()
+        {
+            await Log(new LogMessage(LogSeverity.Info, "Taskman", "Running a task"));
+            await Task.Run(new Action(OffloadReady));
+          
+        }
+        private async void OffloadReady()
         {
             try
             {
                 if (!BCMDStarted)
                 {
-
-
+                    await _client.SetStatusAsync(UserStatus.DoNotDisturb);
                     //PROCESS THE AutoEXEC file
                     ulong id = MainCFG.GetCategoryByName("Application").GetEntryByName("botChannel").GetAsUlong();
                     using (StreamReader fs = File.OpenText("OnStart.bcmd"))
@@ -356,17 +379,24 @@ namespace RMSoftware.ModularBot
                                 {
                                     ISocketMessageChannel ch = _client.GetChannel(id) as ISocketMessageChannel;
                                     await ch.SendMessageAsync(line);
-                                    await Task.Delay(150);
+                                    await Task.Delay(1500);
                                 }
                             }
                         }
                     }
                     BCMDStarted = true;
+                    await _client.SetGameAsync("READY!");
+                    await _client.SetStatusAsync(UserStatus.Online);
+                    foreach (var item in messageQueue)
+                    {
+                        await _client_MessageReceived(item);
+                        await Task.Delay(500);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                BCMDStarted = false ;
+                BCMDStarted = false;
                 LogToConsole("CritERR", ex.Message);
                 ConsoleColor Last = Console.ForegroundColor;
                 Console.ForegroundColor = ConsoleColor.Gray;
@@ -374,9 +404,7 @@ namespace RMSoftware.ModularBot
                 Console.ForegroundColor = Last;
 
             }
-          
         }
-
         public static void LogToConsole(string category,string logText)
         {
             Console.WriteLine("{0} {1}{2}", DateTime.Now.ToString("HH:mm:ss"), category.PadRight(12), logText);
@@ -384,6 +412,7 @@ namespace RMSoftware.ModularBot
 
         private async Task _client_MessageReceived(SocketMessage arg)
         {
+            
             //DEBUG: Output the bot-mentioned chat message to the console
             foreach (SocketUser item in arg.MentionedUsers)
             {
@@ -398,8 +427,7 @@ namespace RMSoftware.ModularBot
                 LogToConsole("Command", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content);
 
             }
-            //Process CoreCustom commands
-            ccmg.Process(arg);
+            
             // Don't process the command if it was a System Message
             var message = arg as SocketUserMessage;
             if (message == null) return;
@@ -407,7 +435,17 @@ namespace RMSoftware.ModularBot
             int argPos = 0;
             // Determine if the message is a command, based on if it starts with '!' or a mention prefix. if not, ignore it.
             if(!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
+            if (!arg.Author.IsBot && !BCMDStarted)
+            {
+                messageQueue.Add(arg);  //queue it up. The bcmdStarted check should 
+                                        //provide PLENTY (if not an excessive amount) of time for modules,and extra commands 
+                                        //to be fully loaded by the time it is set to true. Preemptively solving the "hey can you hear me" 
+                                        //when the bot starts and doesn't respond to a command at first
+                return;
+            }
             // Create a Command Context for command modules
+            //Process CoreCustom commands
+            ccmg.Process(arg);
             var context = new CommandContext(_client, message);
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
