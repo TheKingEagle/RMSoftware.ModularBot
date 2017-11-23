@@ -23,6 +23,19 @@ namespace RMSoftware.ModularBot
             await Retry.Do(async () => await Context.Channel.SendMessageAsync(format + " " + args), TimeSpan.FromMilliseconds(140));
 
         }
+
+
+        [Command("status"), Summary("[DevCommand] Set the bot's 'Playing' status")]
+        public async Task setStatus([Remainder]string args = null)
+        {
+           await Program._client.SetGameAsync(args);
+        }
+        [Command("streamstatus"), Summary("[DevCommand] Set the bot's 'streaming' status")]
+        public async Task setStatus(bool isStreaming, string streamurl, [Remainder]string args)
+        {
+            StreamType type = isStreaming ? StreamType.Twitch : StreamType.NotStreaming;
+            await Program._client.SetGameAsync(args, streamurl, type);
+        }
         [Command("about"), Summary("Display information about the bot")]
         public async Task ShowAbout()
         {
@@ -63,11 +76,63 @@ namespace RMSoftware.ModularBot
             }
             if (hasrole)
             {
-                await Context.Channel.SendMessageAsync("[BotMaster] called ***StopBot***... g'day m8 ;)");
+                await Context.Channel.SendMessageAsync("**[BotMaster]** called ***StopBot***... *Ending Session*");
                 DiscordSocketClient c = (DiscordSocketClient)Context.Client;
+                Program.BCMDStarted = false;
+                await c.SetGameAsync("");
+                await Task.Delay(1000);
                 await c.SetStatusAsync(UserStatus.Invisible);
+                await Task.Delay(1000);
+                Program.BCMDStarted = false;
                 await c.StopAsync();
                 await Task.Delay(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
+                Program.discon = true;
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync("You don't have the *BotMaster* role...");
+            }
+
+        }
+
+        [Command("RESTARTBOT", RunMode = RunMode.Async), Summary("[BotMaster] closes the bot")]
+        public async Task RestartBot()
+        {
+            if (Context.Guild == null)
+            {
+                await Context.Channel.SendMessageAsync("This command is locked to a specific guild... My DM is no exception to the rule.");
+            }
+            if (Context.Guild?.Id != Program.MainCFG.GetCategoryByName("Application").GetEntryByName("masterGuild").GetAsUlong())
+            {
+                await Context.Channel.SendMessageAsync("You cannot use that command on this guild server...");
+                return;
+            }
+            SocketGuildUser user = ((SocketGuildUser)Context.User);
+            bool hasrole = false;
+            foreach (SocketRole role in user.Roles)
+            {
+                hasrole = false;
+                if (role.Name == "BotMaster")
+                {
+
+                    Program.LogToConsole("CmdExec", "User has specific role");
+                    hasrole = true;
+                    break;
+                }
+            }
+            if (hasrole)
+            {
+                await Context.Channel.SendMessageAsync("**[BotMaster]** called ***RestartBot***... *Ending Session, then restarting the program...*");
+                DiscordSocketClient c = (DiscordSocketClient)Context.Client;
+                Program.BCMDStarted = false;
+                await c.SetGameAsync("");
+                await Task.Delay(1000);
+                await c.SetStatusAsync(UserStatus.Invisible);
+                await Task.Delay(1000);
+                Program.BCMDStarted = false;
+                await c.StopAsync();
+                await Task.Delay(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
+                Program.RestartRequested = true;
                 Program.discon = true;
             }
             else
@@ -371,7 +436,7 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", "https://cdn.discordapp.com/app-icons/350413323180834818/dc9bbd8d4ba0beb5e148de4279db0080.png", "");
-            eb.AddField("v1.3.269 (1.4.0-PRERELEASE)", "• Re-wrote StopBot to function without blocking gateway task.\r\n• Removed `!crash`\r\n•Removed logout event and replaced with disconnect event\r\n•Added instruction to prompt for application termination when the bot fails to resume a previous connection to the discord gateway.");
+            eb.AddField("v1.3.289 (1.4.0 PRE RELEASE; The Control-Center Update)", "• Added `!RESTARTBOT` for BotMaster to restart the bot from the master-guild\r\n• Added `!status <status text>` to set the bot's playing status (finally)\r\n• Added `!streamstatus <isStreaming> <streamURL> <streamText>` to set the bot's streaming status (finally)\r\n• Message queue & delayed start up is staying around. This will ensure every command module and external function is properly initialized before being called.");
             eb.WithFooter("Powered by: RMSoftware.ModularBot\r\n Copyright © 2017 RMSoftware Development");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
