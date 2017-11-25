@@ -31,6 +31,6 @@ When you first start the bot, you will be prompted with a first time setup.
 This setup will require Guild IDs, Channel IDs, and an Authorization token.
 Follow the wizard for further instructions.
 
-##Getting your channel ID and Master-Guild
+## Getting your channel ID and Master-Guild
 
 Please visit http://rms0.org?a=GuildIDs101 for additional instruction.
