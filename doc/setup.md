@@ -7,6 +7,7 @@ You will be required to make a discord application.
 2. Click *New App*
 3. Choose an app name, (optional) description, and (Optional) app icon
 4. Click *Create App*
+![App Creator](http://cdn.rms0.org/img/NewApp1.png)
 ![App Creator](http://cdn.rms0.org/img/NewApp2.png)
 
 ## Getting your bot's token
