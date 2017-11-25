@@ -19,7 +19,7 @@ You will be required to make a discord application.
 
 ## Adding bot to your guild
 1. Open your browser
-2. Take this link, and replace <ClientID> with your bot user's clientID https://discordapp.com/oauth2/authorize?client_id=<ClientID>&scope=bot
+2. Take this link, and replace {ClientID} with your bot user's clientID https://discordapp.com/oauth2/authorize?client_id={ClientID}&scope=bot
 3. Choose the guild you want to add the bot to.
 4. Click *Authorize*
 
