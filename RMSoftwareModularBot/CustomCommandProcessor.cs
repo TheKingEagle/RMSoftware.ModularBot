@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,7 +22,7 @@ namespace RMSoftware.ModularBot
         /// </summary>
         /// <param name="Command">command tag (without !)</param>
         /// <param name="Action">The command response/action</param>
-        /// <param name="Restricted">If restricted, only people with the @DevCommand tag can use it</param>
+        /// <param name="Restricted">If restricted, only people with roles that are whitelisted in the rolemgmt's database can use the command.</param>
         public string AddCommand(string Command, string Action, bool Restricted)
         {
             if(CmdDB.CheckForCategory(Command.Replace("!","")))
@@ -118,14 +118,10 @@ namespace RMSoftware.ModularBot
 
 
                             SocketGuildUser user = ((SocketGuildUser)arg.Author);
-                            foreach (SocketRole role in user.Roles)
+
+                            if (Program.rolemgt.CheckUserRole(user))
                             {
-                                hasrole = false;
-                                if (role.Name == "DevCommand")
-                                {
-                                    hasrole = true;
-                                    break;
-                                }
+                                hasrole = true;
                             }
                             if (!hasrole)
                             {
