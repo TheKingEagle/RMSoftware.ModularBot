@@ -23,6 +23,7 @@ namespace RMSoftware.ModularBot
         private IServiceProvider services;
         public static bool BCMDStarted = false;
         public static CustomCommandManager ccmg { get; private set; }
+        public static CmdRoleManager rolemgt { get; private set; }
         public static Discord.Commands.CommandService cmdsvr = new Discord.Commands.CommandService();
         public static CancellationToken t;
         public static bool WizardDebug = false;
@@ -50,6 +51,7 @@ namespace RMSoftware.ModularBot
             System.Threading.Thread.Sleep(3000);
             ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
             ccmg = new CustomCommandManager();
+            rolemgt = new CmdRoleManager();
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             string[] NonConfigArgs = args;
             if (InitializeConfig())//If true, do setup.
@@ -94,28 +96,16 @@ namespace RMSoftware.ModularBot
                 #endregion
 
                 #region Page 3
-                ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Step 2: Master-Guild commands");
+                ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Step 2: Your bot's Initialization Channel");
 
-                Console.WriteLine("Ah, yes... Master-guild commands.... These commands will only work in the set guild.");
-                Console.WriteLine("\t- Look it as like a main 'guild' or discord server, your bot will start in...");
-                Console.WriteLine("\t- All we need is the ID of that guild/server to put into the configuration.");
-                Console.WriteLine("\t- If you need a refresher on how to find a guild ID: https://goo.gl/nqAbhw \r\n\t"+
+                Console.WriteLine("Ah, yes... The initialization channel...");
+                Console.WriteLine("\t- Whenever you start your bot, it will execute AutoStart.bcmd, a script full of commands to prepare for that bot life...");
+                Console.WriteLine("\t- However, in order to do this, the bot needs to know where to send these messages and commands...");
+                Console.WriteLine("\t- Not doing this now would result in a crashing bot that doesn't know what to do with its life.");
+                Console.WriteLine("\t- All I need is the ID of that channel to put into the configuration.");
+                Console.WriteLine("\t- If you need a refresher on how to find a channel ID: https://goo.gl/nqAbhw \r\n\t"+
                     "(It goes to the discord's official docs)");
-                Console.WriteLine("copy/paste or painfully type in your 'master guild' id and press enter");
-                Console.Write("> ");
-                string conf_MasterGuild = Console.ReadLine();
-                //TODO: UNCOMMENT THIS WHEN READY
-                if(!WizardDebug)
-                {
-                    MainCFG.CreateEntry("Application", "masterGuild", conf_MasterGuild);
-                }
-                
-                Console.WriteLine("Cool! Now that guild id will be the only one you can use to access Master-guild Commands...");
-                Console.WriteLine();
-                Console.WriteLine("Okay, Now you will set up your master-guild's dedicated bot channel.");
-                Console.WriteLine("This will be where the bot will post messages and commands from OnStart.bcmd\r\nIt is best to use a channel from your master guild,\r\n"+
-                    "but any channel ID will work, so long as your bot has access to it");
-                Console.WriteLine("Please copy/paste or painfully type in your 'dedicated bot' channel id and press enter");
+                Console.WriteLine("copy/paste or painfully type in your Initialization Channel's id and press enter");
                 Console.Write("> ");
                 string conf_BotChannel = Console.ReadLine();
                 if(!WizardDebug)
@@ -123,7 +113,7 @@ namespace RMSoftware.ModularBot
                     Program.MainCFG.CreateEntry("Application", "botChannel", conf_BotChannel);
                     Program.MainCFG.SaveConfiguration();//save
                 }
-                Console.WriteLine("Great! Now that channel will be the bot's main log or channel.");
+                Console.WriteLine("Great! Now that channel will be the bot's main log channel.");
                 Console.WriteLine("Be advised, if you want to change this (or any other settings),\r\nyou will have to manually edit the config file.");
                 Console.WriteLine("\r\nPress ENTER to continue...");
                 Console.ReadLine();
@@ -136,9 +126,8 @@ namespace RMSoftware.ModularBot
                 Console.WriteLine("\t- If you want to re-run this configuration wizard, delete the 'rmsftModBot.ini' file in the program directory.");
                 Console.WriteLine("\t- The source code for this bot is available on http://rmsoftware.org");
                 Console.WriteLine("\r\nCORE Command usage (in discord):");
-                Console.WriteLine("\t- Create three roles in your server. DevCommand & BotMaster, and a custom role (Optional) to give to your bot.");
-                Console.WriteLine("\t- (OPTIONAL) You could give the custom role administrative rights, just so you ensure everything works for your bot.");
-                Console.WriteLine("\t- usage: !addcmd <command name> <DevCommandOnly[true/false]> <LockToGuild[true/false]> <action>");
+                Console.WriteLine("\t- use !addmgrole [@roles] to add roles to the command user database.");
+                Console.WriteLine("\t- usage: !addcmd <command name> <CmdMgmtOnly[true/false]> <LockToGuild[true/false]> <action>");
                 Console.WriteLine("\t- Actions: Any text/emotes with optional formatting.");
                 Console.WriteLine("\t- !addcmd sample1SplitParam false false splitparam 3|"+
                     " This is a sample of splitparam. Var1: {0} var2: {1} and var3: {2} all walked into a bar");
@@ -604,5 +593,73 @@ namespace RMSoftware.ModularBot
         }
     }
 
+    public class CmdRoleManager
+    {
+        INIFile mgmt;
+        public CmdRoleManager()
+        {
+            mgmt = new INIFile("cmdMgr.ini");
+        }
+        public void AddCommandManagerRole(SocketRole role)
+        {
+            string guildCat = role.Guild.Id.ToString();
+            bool check = mgmt.CheckForCategory(guildCat);
+            int indx = -1;
+            if(check)
+            {
+                indx = mgmt.GetCategoryByName(guildCat).Entries.Count-1;
+                mgmt.CreateEntry(guildCat, "role" + (indx + 1), role.Id);
+            }
+            else
+            {
+                mgmt.CreateCategory(guildCat);
+                indx = mgmt.GetCategoryByName(guildCat).Entries.Count - 1;
+                mgmt.CreateEntry(guildCat, "role" + (indx + 1), role.Id);
+            }
+            mgmt.SaveConfiguration();
+        }
+        public string DeleteCommandManager(SocketRole role)
+        {
+            string guildCat = role.Guild.Id.ToString();
+            bool check = mgmt.CheckForCategory(guildCat);
+            int indx = -1;
+            if (check)
+            {
+                indx = mgmt.GetCategoryByName(guildCat).Entries.Count - 1;
+                try
+                {
+                    mgmt.DeleteEntry(guildCat, mgmt.GetCategoryByName(guildCat).Entries.Find(x => x.GetAsUlong() == role.Id).Name);
+                }
+                catch (Exception ex)
+                {
 
+                    return ex.Message;
+                }
+                
+            }
+            else
+            {
+                return "No results. The guild ID didn't exist in the database.";
+            }
+            mgmt.SaveConfiguration();
+            return "Command Manager database updated.";
+        }
+        public bool CheckUserRole(SocketGuildUser user)
+        {
+            string guildcat = user.Guild.Id.ToString();//if the category does not exist, return false... can't have that;
+            if(!mgmt.CheckForCategory(guildcat))
+            {
+                return false;
+            }
+            foreach (var role in user.Roles)
+            {
+                ulong id = role.Id;
+                if (mgmt.GetCategoryByName(guildcat).Entries.Exists(x => x.GetAsUlong() == id))
+                {
+                    return true;//keep doing it until it returns true.
+                }
+            }
+            return false;//default;
+        }
+    }
 }
