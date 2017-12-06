@@ -73,7 +73,7 @@ namespace RMSoftware.ModularBot
         /// Process user input for custom command module
         /// </summary>
         /// <param name="arg"></param>
-        public async Task<bool> Process(IMessage arg)
+        public async Task<bool> Process(IMessage arg)//Arg Change
         {
             
             string content = arg.Content;
