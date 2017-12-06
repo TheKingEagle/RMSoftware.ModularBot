@@ -8,9 +8,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Net;
+using System.Net.Http;
 namespace RMSoftware.ModularBot
 {
+    
     public class CoreModule : ModuleBase
     {
         [Command("about"), Summary("Display information about the bot")]
@@ -106,7 +108,7 @@ namespace RMSoftware.ModularBot
                     Program.LogToConsole("cmdMgmt", "User has a role in cmdMgrDB");
 
                     string tosend = "";
-                    if (action.StartsWith("!"))
+                    if (action.StartsWith(Program.cmdPrefix.toString()))
                     {
                         tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
 
@@ -164,7 +166,7 @@ namespace RMSoftware.ModularBot
 
                     string tosend = "";
 
-                    if (newaction.StartsWith("!"))
+                    if (newaction.StartsWith(Program.cmdPrefix.toString()))
                     {
                         tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
 
@@ -260,9 +262,11 @@ namespace RMSoftware.ModularBot
                 //embed builder...
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.Color = Color.Green;
+                builder.Title = "Available commands for: " + Program._client.CurrentUser.Username;
                 string cmdlist = "";
                 string modulecmds = "";
                 INICategory[] cmdcats = Program.ccmg.GetAllCommand();
+                
                 if (cmdcats.Length == 0)
                 {
                     cmdlist = "There are no custom commands available for this guild.";
@@ -278,7 +282,7 @@ namespace RMSoftware.ModularBot
 
                     }
                     string restricted = item.GetEntryByName("restricted").GetAsBool() ? "[CommandMGMT]" : "";
-                    cmdlist += "`!" + item.Name + "` " + restricted + "\r\n";
+                    cmdlist += "<li>" + Program.CommandPrefix + item.Name + " - - - " + restricted + "</li>\r\n";
 
                 }
                 if (cmdlist.Length == 0)
@@ -292,17 +296,47 @@ namespace RMSoftware.ModularBot
                     {
                         group = "";//Command's groupAttribute?
                     }
-                    modulecmds += "`!" + group + "" + item.Name + "`" + " " + item.Summary + "\r\n";
+                    modulecmds += "<li>" + Program.CommandPrefix + group + "" + item.Name + "" + " - - - " + item.Summary + "</li>\r\n";
+                    if(item.Module.Name == "CoreModule")
+                    {
+                        builder.AddField("`" + Program.CommandPrefix + item.Name + "`", item.Summary);
+                    }
                 }
 
-                builder.AddField("**Core & Module Commands**", modulecmds);
-                builder.AddField("**Custom Commands**", cmdlist);
-                builder.WithAuthor("Command List");
-                builder.Description = "These are the available commands for the bot.";
-                builder.WithFooter("Powered by RMSoftwareModules DevBOT");
+
                 try
                 {
-                    await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
+
+                    using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+                    {
+                        using (System.IO.StreamWriter sw = new System.IO.StreamWriter(ms))
+                        {
+                            sw.WriteLine(string.Format("<h1>Command List - {0} [RMSoftware.ModularBot]</h1>", Program._client.CurrentUser.Username));
+                            sw.WriteLine("<hr/>");
+                            sw.WriteLine("<h3>Module & Core Commands:</h3>");
+                            sw.WriteLine("<hr/>");
+                            sw.WriteLine("<ul>");
+                            sw.WriteLine(modulecmds);
+                            sw.WriteLine("</ul>");
+                            sw.WriteLine("<hr/>");
+                            sw.WriteLine("<h3>Custom Commands:</h3>");
+                            sw.WriteLine("<hr/>");
+                            sw.WriteLine("<ul>");
+                            sw.WriteLine(cmdlist);
+                            sw.WriteLine("</ul>");
+                            sw.Flush();
+                            ms.Position = 0;
+                          
+                            builder.AddField("```\r\nCustom Commands\r\n```", "`Refer to the attachment below.`");
+                            await arg.Channel.SendMessageAsync("", false, builder.Build());
+                            await arg.Channel.SendFileAsync(ms, "AllCommands.html");
+
+                        }
+                    }
+                        
+
+                    
+                        
                 }
                 catch (AggregateException ex)
                 {
@@ -345,12 +379,7 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", "https://cdn.discordapp.com/app-icons/350413323180834818/dc9bbd8d4ba0beb5e148de4279db0080.png", "");
-            eb.AddField("v1.3.294 (1.4.0 PRE RELEASE; The Permissions update)", "• Added a new role management system.\r\n• Removed the need for dedicated role names [DevCommand, BotMaster,etc.], This is purely up to you now." +
-                "\r\n• Updated ALL core commands to use role management system. All BotMaster commands now rely on a built-in RequireOwner permission.\r\n• Bot owners now have `!addmgrole` and `!delmgrole`." +
-                " Simply @ all of the roles you want to add/remove" +
-                "\r\n• Note: BotMaster commands still refer to you bot owners, as [BotMaster], because who wouldn't want this?" +
-                "\r\n• Updated initial setup wizard. We do not need a master-guild anymore.\r\n• Fixed an error with listcmd when no custom commands existed.\r\n• Made command summary look cleaner." +
-                "\r\n• Improved some text.");
+            eb.AddField("v1.3.331 (1.4.0 PRE RELEASE)", "• Added custom prefix character support\r\n• Fixed a bug where custom commands could have as many prefixes as possible, and the command would still work. LOL\r\n• THIS VERSION REQUIRES NEW CONFIGURATION ENTRY: cmdPrefix=<prefixCode> ");
             eb.WithFooter("Powered by: RMSoftware.ModularBot\r\n Copyright © 2017 RMSoftware Development");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
@@ -380,5 +409,8 @@ namespace RMSoftware.ModularBot
             }
             await Context.Channel.SendMessageAsync("Successfully removed `" + del + "` role(s) from the CommandMGMT database for guild: `" + Context.Guild.Name + "`.");
         }
+
+
+
     }
 }
