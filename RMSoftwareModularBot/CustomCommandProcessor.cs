@@ -8,6 +8,8 @@ using Discord.WebSocket;
 using Discord;
 using System.Runtime.InteropServices;
 using System.Reflection;
+using Discord.Commands;
+
 namespace RMSoftware.ModularBot
 {
     /// <summary>
@@ -71,18 +73,19 @@ namespace RMSoftware.ModularBot
         /// Process user input for custom command module
         /// </summary>
         /// <param name="arg"></param>
-        public async void Process(SocketMessage arg)
+        public async Task<bool> Process(IMessage arg)
         {
             
             string content = arg.Content;
             bool hasrole = false;
+            int argPos = 1;
+            if (!arg.Content.StartsWith(Program.CommandPrefix.ToString())) return false ;
             //substring the text into two parts.
             try
             {
-                if (content.StartsWith("!"))
-                {
-                    string cmd = content.Split(' ')[0].Replace("!", "");//get the command bit, no ! mark, because it will murder everything
-                    string parameters = content.Trim().Substring(cmd.Length+1).Trim();//get the parameters, without space before/after.
+                
+                    string cmd = content.Substring(argPos).Split(' ')[0];//get the command bit.
+                    string parameters = content.Trim().Substring(cmd.Length).Trim();//get the parameters, without space before/after.
 
                     //find the command in the file.
 
@@ -96,21 +99,21 @@ namespace RMSoftware.ModularBot
                                 await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey, I know you really want to see that work, but this is my dm..."+
                                     " This command will only work on a specific guild. "), TimeSpan.FromMilliseconds(140));
                                 
-                                return;
+                                return true;
                             }
                             if ((arg.Author as IGuildUser)?.Guild == null)
                             {
                                 await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey, I know you really want to see that work, but this is my dm..."+
                                     " This command will only work on a specific guild. "), TimeSpan.FromMilliseconds(140));
                                 
-                                return;
+                                return true;
                             }
                             
                             if (id != (arg.Author as IGuildUser).Guild?.Id)
                             {
                                 await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", Wrong guild."), TimeSpan.FromMilliseconds(140));
                                 
-                                return;
+                                return true;
                             }
                         }
                         if (CmdDB.GetCategoryByName(cmd).GetEntryByName("restricted").GetAsBool())
@@ -128,7 +131,7 @@ namespace RMSoftware.ModularBot
                                 await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
                                 
                                 successful = false;
-                                return;
+                                return true;
                             }
                         }
                         
@@ -163,7 +166,7 @@ namespace RMSoftware.ModularBot
                                 await Retry.Do(async () => await arg.Channel.SendMessageAsync("The command failed to execute... EXEC method malformed"), TimeSpan.FromMilliseconds(140));
                                 
                                 successful = true;
-                                return;
+                                return true;
                             }
                             string modpath = System.IO.Path.GetFullPath("ext/" + resplit[0]);
                             string nsdotclass = resplit[1];
@@ -179,7 +182,7 @@ namespace RMSoftware.ModularBot
                             MethodInfo info = t.GetMethod(mthd,BindingFlags.Public | BindingFlags.Static);
                             info.Invoke(null, parameter);
                             successful = true;
-                            return;
+                            return true;
                         }
                         if (response.StartsWith("CLI_EXEC"))//EXEC with client instead of context
                         {
@@ -189,7 +192,7 @@ namespace RMSoftware.ModularBot
                                 await Retry.Do(async () => await arg.Channel.SendMessageAsync("The command failed to execute... CLI_EXEC method malformed"), TimeSpan.FromMilliseconds(140));
                                 
                                 successful = true;
-                                return;
+                                return true;
                             }
                             string modpath = System.IO.Path.GetFullPath("ext/" + resplit[0]);
                             string nsdotclass = resplit[1];
@@ -205,7 +208,7 @@ namespace RMSoftware.ModularBot
                             MethodInfo info = t.GetMethod(mthd, BindingFlags.Public | BindingFlags.Static);
                             info.Invoke(null, parameter);
                             successful = true;
-                            return;
+                            return true;
                         }
                         string version = String.Format("{0}", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
 
@@ -217,10 +220,14 @@ namespace RMSoftware.ModularBot
                         
                         
                         successful = true;
+                        return true ;
 
                     }
-
-                }
+                    else
+                    {
+                        return false;
+                    }
+                
             }
             catch (AggregateException ex)
             {
@@ -230,6 +237,7 @@ namespace RMSoftware.ModularBot
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("DevBOT.Exception: " + ex.ToString());
                 Console.ForegroundColor = ConsoleColor.White;
+                return false;
             }
             catch (Exception ex)
             {
@@ -239,6 +247,7 @@ namespace RMSoftware.ModularBot
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("DevBOT.Exception: " + ex.ToString());
                 Console.ForegroundColor = ConsoleColor.White;
+                return false;
             }
         }
 
