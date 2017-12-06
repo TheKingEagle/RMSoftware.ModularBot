@@ -2,4 +2,4 @@
 \\Any other line will parse as a message. The bot will say anything you put in here... Including commands.
 \\Remember, one message/command per line.
 Modular bot OnStart.bcmd is running
-!about
+%p_about
