@@ -108,7 +108,7 @@ namespace RMSoftware.ModularBot
                     Program.LogToConsole("cmdMgmt", "User has a role in cmdMgrDB");
 
                     string tosend = "";
-                    if (action.StartsWith(Program.cmdPrefix.toString()))
+                    if (action.StartsWith(Program.CommandPrefix.ToString()))
                     {
                         tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
 
@@ -166,7 +166,7 @@ namespace RMSoftware.ModularBot
 
                     string tosend = "";
 
-                    if (newaction.StartsWith(Program.cmdPrefix.toString()))
+                    if (newaction.StartsWith(Program.CommandPrefix.ToString()))
                     {
                         tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
 
