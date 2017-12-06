@@ -30,6 +30,7 @@ namespace RMSoftware.ModularBot
         public static bool discon = false;
         public static bool InvalidSession = false;
         public static bool RestartRequested = false;
+        public static char CommandPrefix { get; private set; }
         static List<SocketMessage> messageQueue = new List<SocketMessage>();
         /// <summary>
         /// Application's main configuration file
@@ -96,9 +97,9 @@ namespace RMSoftware.ModularBot
                 #endregion
 
                 #region Page 3
-                ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Step 2: Your bot's Initialization Channel");
+                ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Step 2: Control Channel & Command prefix");
 
-                Console.WriteLine("Ah, yes... The initialization channel...");
+                Console.WriteLine("Ah, yes... The Control channel...");
                 Console.WriteLine("\t- Whenever you start your bot, it will execute AutoStart.bcmd, a script full of commands to prepare for that bot life...");
                 Console.WriteLine("\t- However, in order to do this, the bot needs to know where to send these messages and commands...");
                 Console.WriteLine("\t- Not doing this now would result in a crashing bot that doesn't know what to do with its life.");
@@ -111,10 +112,18 @@ namespace RMSoftware.ModularBot
                 if(!WizardDebug)
                 {
                     Program.MainCFG.CreateEntry("Application", "botChannel", conf_BotChannel);
+                }
+                Console.WriteLine("Great! Now that channel will be the bot's main log channel...");
+                Console.WriteLine();
+                Console.WriteLine("Finally, the Command Prefix: Please enter a single character (Recommended: A symbol of some kind), to use as the bot's command prefix");
+                Console.Write("> ");
+                int conf_cmdPrefix = Console.Read();
+                if (!WizardDebug)
+                {
+                    Program.MainCFG.CreateEntry("Application", "cmdPrefix", conf_cmdPrefix);
                     Program.MainCFG.SaveConfiguration();//save
                 }
-                Console.WriteLine("Great! Now that channel will be the bot's main log channel.");
-                Console.WriteLine("Be advised, if you want to change this (or any other settings),\r\nyou will have to manually edit the config file.");
+                Console.WriteLine("Great! Your bot will use '" + Convert.ToChar(conf_cmdPrefix) + "' [without quotes] as a prefix for it's commands!");
                 Console.WriteLine("\r\nPress ENTER to continue...");
                 Console.ReadLine();
 
@@ -126,15 +135,15 @@ namespace RMSoftware.ModularBot
                 Console.WriteLine("\t- If you want to re-run this configuration wizard, delete the 'rmsftModBot.ini' file in the program directory.");
                 Console.WriteLine("\t- The source code for this bot is available on http://rmsoftware.org");
                 Console.WriteLine("\r\nCORE Command usage (in discord):");
-                Console.WriteLine("\t- use !addmgrole [@roles] to add roles to the command user database.");
-                Console.WriteLine("\t- usage: !addcmd <command name> <CmdMgmtOnly[true/false]> <LockToGuild[true/false]> <action>");
+                Console.WriteLine("\t- use <prefix>addmgrole [@roles] to add roles to the command user database.");
+                Console.WriteLine("\t- usage: <prefix>addcmd <command name> <CmdMgmtOnly[true/false]> <LockToGuild[true/false]> <action>");
                 Console.WriteLine("\t- Actions: Any text/emotes with optional formatting.");
-                Console.WriteLine("\t- !addcmd sample1SplitParam false false splitparam 3|"+
+                Console.WriteLine("\t- <prefix>addcmd sample1SplitParam false false splitparam 3|"+
                     " This is a sample of splitparam. Var1: {0} var2: {1} and var3: {2} all walked into a bar");
-                Console.WriteLine("\t- !addcmd hug false false You hug {params} for a long time");
+                Console.WriteLine("\t- <prefix>addcmd hug false false You hug {params} for a long time");
                 Console.WriteLine("\t- More Action parameters: EXEC and CLI_EXEC ");
-                Console.WriteLine("\t- !addcmd exectest falase false EXEC modname.dll ModNameSpace.ModClass StaticMethod {params}");
-                Console.WriteLine("\t- !addcmd exectest falase false CLI_EXEC modname.dll ModNameSpace.ModClass StaticMethod {params}");
+                Console.WriteLine("\t- <prefix>addcmd exectest falase false EXEC modname.dll ModNameSpace.ModClass StaticMethod {params}");
+                Console.WriteLine("\t- <prefix>addcmd exectest falase false CLI_EXEC modname.dll ModNameSpace.ModClass StaticMethod {params}");
                 Console.WriteLine("\t  - NOTE: splitparam is not supported for EXEC or CLI_EXEC");
                 Console.WriteLine("\t  - NOTE: EXEC: Allows you to execute a class method for a more advanced command");
                 Console.WriteLine("\t  - NOTE: CLI_EXEC is the same thing, but it gives the class access to the bot directly...");
@@ -152,7 +161,10 @@ namespace RMSoftware.ModularBot
                 NonConfigArgs = new string[] { Program.MainCFG.GetCategoryByName("Application").GetEntryByName("botToken").GetAsString()};
             }
 
-            
+            //set command prefix
+
+            CommandPrefix = Convert.ToChar(MainCFG.GetCategoryByName("Application").GetEntryByName("cmdPrefix").GetAsInteger());
+            LogToConsole("Initialize", "Using command prefix: " + CommandPrefix.ToString());
             new Program().MainAsync(NonConfigArgs[0]).GetAwaiter().GetResult();
             
             SpinWait.SpinUntil(BotShutdown);//Wait until shutdown;
@@ -367,7 +379,29 @@ namespace RMSoftware.ModularBot
                                 if (!line.StartsWith(@"\\"))
                                 {
                                     ISocketMessageChannel ch = _client.GetChannel(id) as ISocketMessageChannel;
-                                    await ch.SendMessageAsync(line);
+                                    line = line.Replace("%p_", CommandPrefix.ToString());
+                                    if (!line.StartsWith(CommandPrefix.ToString()))
+                                    {
+
+                                        await ch.SendMessageAsync(line);
+                                    }
+                                    else
+                                    {
+
+
+                                        if (await ccmg.Process(new PsuedoMessage(line, _client.CurrentUser, ch, MessageSource.Bot)))
+                                        {
+                                            LogToConsole("OnStart", line);
+                                            LogToConsole("OnStart", "CustomCMD Success");
+                                            continue;
+                                        }
+                                        var context = new CommandContext(_client, new PsuedoMessage(line,_client.CurrentUser,ch,MessageSource.User));
+                                        // Execute the command. (result does not indicate a return value, 
+                                        // rather an object stating if the command executed successfully)
+                                        var result = await cmdsvr.ExecuteAsync(context, 1, services);
+                                        LogToConsole("OnStart", line);
+                                        LogToConsole("OnStart", result.ToString());
+                                    }
                                     await Task.Delay(1500);
                                 }
                             }
@@ -396,7 +430,8 @@ namespace RMSoftware.ModularBot
         }
         public static void LogToConsole(string category,string logText)
         {
-            Console.WriteLine("{0} {1}{2}", DateTime.Now.ToString("HH:mm:ss"), category.PadRight(12), logText);
+            LogMessage l = new LogMessage(LogSeverity.Info, category, logText);
+            Console.WriteLine(l);
         }
 
         private async Task _client_MessageReceived(SocketMessage arg)
@@ -411,19 +446,20 @@ namespace RMSoftware.ModularBot
                 }
             }
             //DEBUG: output ! prefixed messages to console.
-            if (arg.Content.StartsWith("!"))
+            if (arg.Content.StartsWith(CommandPrefix.ToString()))
             {
                 LogToConsole("Command", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content);
 
             }
             
+
             // Don't process the command if it was a System Message
             var message = arg as SocketUserMessage;
             if (message == null) return;
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
-            // Determine if the message is a command, based on if it starts with '!' or a mention prefix. if not, ignore it.
-            if(!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
+            // Determine if the message is a command, based on if it starts with 'commandprefix' or a mention prefix. if not, ignore it.
+            if(!(message.HasCharPrefix(CommandPrefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
             if (!arg.Author.IsBot && !BCMDStarted)
             {
                 messageQueue.Add(arg);  //queue it up. The bcmdStarted check should 
@@ -434,7 +470,10 @@ namespace RMSoftware.ModularBot
             }
             // Create a Command Context for command modules
             //Process CoreCustom commands
-            ccmg.Process(arg);
+            if (await ccmg.Process(arg))
+            {
+                return;
+            };
             var context = new CommandContext(_client, message);
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
@@ -660,6 +699,159 @@ namespace RMSoftware.ModularBot
                 }
             }
             return false;//default;
+        }
+    }
+    public class PsuedoMessage : IMessage, IUserMessage
+    {
+        string _content = "";
+        SocketUser _author;
+        ISocketMessageChannel _c;
+        MessageSource _source;
+        public PsuedoMessage(string content,SocketUser author,ISocketMessageChannel ch ,MessageSource source)
+        {
+            _content = content;
+            _author = author;
+            _c = ch;
+            _source = source;
+        }
+
+
+        IReadOnlyCollection<IAttachment> IMessage.Attachments
+        {
+            get;
+        }
+
+        IUser IMessage.Author
+        {
+            get { return _author; }
+        }
+
+        IMessageChannel IMessage.Channel
+        {
+            get { return _c; }
+        }
+
+        string IMessage.Content
+        {
+            get { return _content; }
+        }
+
+        DateTimeOffset ISnowflakeEntity.CreatedAt
+        {
+            get;
+        }
+
+        DateTimeOffset? IMessage.EditedTimestamp
+        {
+            get;
+        }
+
+        IReadOnlyCollection<IEmbed> IMessage.Embeds
+        {
+            get;
+        }
+
+        ulong IEntity<ulong>.Id
+        {
+            get { return (ulong)new Random().Next(0,int.MaxValue); }
+        }
+
+        bool IMessage.IsPinned
+        {
+            get { return false; }
+        }
+
+        bool IMessage.IsTTS
+        {
+            get { return false; }
+        }
+
+        IReadOnlyCollection<ulong> IMessage.MentionedChannelIds
+        {
+            get;
+        }
+
+        IReadOnlyCollection<ulong> IMessage.MentionedRoleIds
+        {
+            get;
+        }
+
+        IReadOnlyCollection<ulong> IMessage.MentionedUserIds
+        {
+            get;
+        }
+
+        MessageSource IMessage.Source
+        {
+            get { return _source; }
+        }
+
+        IReadOnlyCollection<ITag> IMessage.Tags
+        {
+            get;
+        }
+
+        DateTimeOffset IMessage.Timestamp
+        {
+            get;
+        }
+
+        MessageType IMessage.Type
+        {
+            get;
+        }
+
+        public IReadOnlyDictionary<IEmote, ReactionMetadata> Reactions
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        Task IDeletable.DeleteAsync(RequestOptions options)
+        {
+            return Task.Delay(0);
+        }
+
+        public Task ModifyAsync(Action<MessageProperties> func, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task PinAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UnpinAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task AddReactionAsync(IEmote emote, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveReactionAsync(IEmote emote, IUser user, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RemoveAllReactionsAsync(RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyCollection<IUser>> GetReactionUsersAsync(string emoji, int limit = 100, ulong? afterUserId = default(ulong?), RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string Resolve(TagHandling userHandling = TagHandling.Name, TagHandling channelHandling = TagHandling.Name, TagHandling roleHandling = TagHandling.Name, TagHandling everyoneHandling = TagHandling.Ignore, TagHandling emojiHandling = TagHandling.Name)
+        {
+            throw new NotImplementedException();
         }
     }
 }
