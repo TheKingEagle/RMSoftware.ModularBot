@@ -83,9 +83,9 @@ namespace RMSoftware.ModularBot
             //substring the text into two parts.
             try
             {
-
+                
                 string cmd = content.Substring(argPos).Split(' ')[0];//get the command bit.
-                string parameters = content.Trim().Substring(cmd.Length).Trim();//get the parameters, without space before/after.
+                string parameters = content.Replace(Program.CommandPrefix.ToString()+""+cmd, "").Trim();
 
                 //find the command in the file.
 
