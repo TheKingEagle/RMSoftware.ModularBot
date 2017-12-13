@@ -15,16 +15,26 @@ namespace RMSoftware.ModularBot
     
     public class CoreModule : ModuleBase
     {
+
+         DiscordSocketClient Client { get; set; }
+
+         CommandService cmdsvr { get; set; }
+        public CoreModule(DiscordSocketClient client, CommandService cmdservice)
+        {
+            Client = client;
+            cmdsvr = cmdservice;
+        }
         [Command("about"), Summary("Display information about the bot")]
         public async Task ShowAbout()
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder.Title = "About";
+            builder.WithAuthor(Context.Client.CurrentUser);
             builder.Color = Color.Blue;
             builder.Description = "A Multi-purpose, multi-module bot designed for discord. Tailor it for your specific server, create your own modules and plug-ins. Includes a core module for custom text-based commands & EXEC functionality";
             builder.AddField("Copyright", "Copyright © 2017 RMSoftware Development");
             builder.AddField("Version", Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
-            builder.WithFooter("RMSoftwareModularBot, created by rmsoft1");
+            builder.WithFooter("RMSoftware.ModularBot, created by rmsoft1");
             await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
         }
 
@@ -41,14 +51,14 @@ namespace RMSoftware.ModularBot
         [Command("status"), Summary("`[CommandMGMT]` Set the bot's 'Playing' status")]
         public async Task setStatus([Remainder]string args = null)
         {
-           await Program._client.SetGameAsync(args);
+           await Client.SetGameAsync(args);
         }
 
         [Command("streamstatus"), Summary("`[CommandMGMT]` Set the bot's status to streaming on twitch, with twitch url and custom text.")]
         public async Task setStatus(string streamurl, [Remainder]string args)
         {
             
-            await Program._client.SetGameAsync(args, streamurl, StreamType.Twitch);
+            await Client.SetGameAsync(args, streamurl, StreamType.Twitch);
         }
 
         [Command("STOPBOT",RunMode=RunMode.Async), Summary("[BotMaster] can shutdown the bot"), RequireOwner]
@@ -83,15 +93,6 @@ namespace RMSoftware.ModularBot
                 await Task.Delay(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
                 Program.RestartRequested = true;
                 Program.discon = true;
-
-        }
-
-        [Command("reloadModules"), Summary("`[BotMaster]` Reload all modules & commands"),RequireOwner]
-        public async Task Reload()
-        {
-            Program.LogToConsole("CmdExec", "User has required permissions");
-            await Program.LoadModules();
-            await Context.Channel.SendMessageAsync("Reloading command modules!");
 
         }
 
@@ -262,7 +263,7 @@ namespace RMSoftware.ModularBot
                 //embed builder...
                 EmbedBuilder builder = new EmbedBuilder();
                 builder.Color = Color.Green;
-                builder.Title = "Available commands for: " + Program._client.CurrentUser.Username;
+                builder.Title = "Available commands for: " + Client.CurrentUser.Username;
                 string cmdlist = "";
                 string modulecmds = "";
                 INICategory[] cmdcats = Program.ccmg.GetAllCommand();
@@ -289,7 +290,7 @@ namespace RMSoftware.ModularBot
                 {
                     cmdlist = "There are no custom commands available for this guild.";
                 }
-                foreach (CommandInfo item in Program.cmdsvr.Commands)
+                foreach (CommandInfo item in cmdsvr.Commands)
                 {
                     string group = item.Module.Aliases[0] + " ";
                     if (string.IsNullOrWhiteSpace(group))
@@ -311,7 +312,7 @@ namespace RMSoftware.ModularBot
                     {
                         using (System.IO.StreamWriter sw = new System.IO.StreamWriter(ms))
                         {
-                            sw.WriteLine(string.Format("<h1>Command List - {0} [RMSoftware.ModularBot]</h1>", Program._client.CurrentUser.Username));
+                            sw.WriteLine(string.Format("<h1>Command List - {0} [RMSoftware.ModularBot]</h1>", Client.CurrentUser.Username));
                             sw.WriteLine("<hr/>");
                             sw.WriteLine("<h3>Module & Core Commands:</h3>");
                             sw.WriteLine("<hr/>");
@@ -379,7 +380,7 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", "https://cdn.discordapp.com/app-icons/350413323180834818/dc9bbd8d4ba0beb5e148de4279db0080.png", "");
-            eb.AddField("v1.3.331 (1.4.0 PRE RELEASE)", "• Added custom prefix character support\r\n• Fixed a bug where custom commands could have as many prefixes as possible, and the command would still work. LOL\r\n• THIS VERSION REQUIRES NEW CONFIGURATION ENTRY: cmdPrefix=<prefixCode> ");
+            eb.AddField("v1.3.348 (Beta release)", "• Changed some logging events.\r\n• Removed RMSoftware.IO.INIFile console writes.\r\n• Code refactoring, sorting, and optimization.");
             eb.WithFooter("Powered by: RMSoftware.ModularBot\r\n Copyright © 2017 RMSoftware Development");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
