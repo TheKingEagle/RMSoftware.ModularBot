@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -294,28 +294,28 @@ namespace RMSoftware.IO
             string pathfull = Path.GetFullPath(path);
             if (!Directory.Exists(Path.GetDirectoryName(pathfull))) //The directory does not exist. Impossible for the file to exist.
             {
-                Console.WriteLine("DIRECTORY NOT FOUND. " + Path.GetDirectoryName(path));
+                //Console.WriteLine("DIRECTORY NOT FOUND. " + Path.GetDirectoryName(path));
 
                 Directory.CreateDirectory(Path.GetDirectoryName(pathfull));
 
-                Console.WriteLine("FILE NOT FOUND. " + Path.GetFileName(path));
+                //Console.WriteLine("FILE NOT FOUND. " + Path.GetFileName(path));
                 FileStream fs = File.Create(pathfull);
                 fs.Close();
                 _GeneratedNewFile = true;
             }
             else//The directory exists
             {
-                Console.WriteLine("DIRECTORY FOUND. " + Path.GetDirectoryName(path));
+                //Console.WriteLine("DIRECTORY FOUND. " + Path.GetDirectoryName(path));
                 if (!File.Exists(pathfull)) //and the file does not exist.
                 {
-                    Console.WriteLine("FILE NOT FOUND. " + Path.GetFileName(path));
+                    //Console.WriteLine("FILE NOT FOUND. " + Path.GetFileName(path));
                     FileStream fs = File.Create(pathfull);
                     fs.Close();
                     _GeneratedNewFile = true;
                 }
                 else
                 {
-                    Console.WriteLine("FILE FOUND. " + Path.GetFileName(path));
+                    //Console.WriteLine("FILE FOUND. " + Path.GetFileName(path));
                 }
             }
         }
