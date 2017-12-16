@@ -48,20 +48,20 @@ namespace RMSoftware.ModularBot
 
         }
 
-        [Command("status"), Summary("`[CommandMGMT]` Set the bot's 'Playing' status")]
+        [Command("status"), Summary("Set the bot's 'Playing' status"), Remarks("[CMDMgmt]")]
         public async Task setStatus([Remainder]string args = null)
         {
            await Client.SetGameAsync(args);
         }
 
-        [Command("streamstatus"), Summary("`[CommandMGMT]` Set the bot's status to streaming on twitch, with twitch url and custom text.")]
+        [Command("streamstatus"), Summary("Set the bot's status to streaming on twitch, with twitch url and custom text."), Remarks("[CMDMgmt]")]
         public async Task setStatus(string streamurl, [Remainder]string args)
         {
             
             await Client.SetGameAsync(args, streamurl, StreamType.Twitch);
         }
 
-        [Command("STOPBOT",RunMode=RunMode.Async), Summary("[BotMaster] can shutdown the bot"), RequireOwner]
+        [Command("STOPBOT",RunMode=RunMode.Async), Summary("Shutdown the bot"), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task StopBot()
         {
                 await Context.Channel.SendMessageAsync("**[BotMaster]** called ***StopBot***... *Ending Session*");
@@ -77,7 +77,7 @@ namespace RMSoftware.ModularBot
                 Program.discon = true;
         }
 
-        [Command("RESTARTBOT", RunMode = RunMode.Async), Summary("`[BotMaster]` restarts the bot"), RequireOwner]
+        [Command("RESTARTBOT", RunMode = RunMode.Async), Summary("Restart the bot"), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task RestartBot()
         {
 
@@ -96,7 +96,7 @@ namespace RMSoftware.ModularBot
 
         }
 
-        [Command("addcmd"), Summary("`[CommandMGMT]` Add a custom command to the bot"),RequireContext(ContextType.Guild)]
+        [Command("addcmd"), Summary("Add a custom command to the bot"),RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
         public async Task AddCmd(string cmdTag, bool DevCmdOnly, bool lockToGuild, [Remainder]string action)
         {
             SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
@@ -153,7 +153,7 @@ namespace RMSoftware.ModularBot
             return;
         }
 
-        [Command("editcmd"), Summary("`[CommandMGMT]` Add a custom command to the bot"), RequireContext(ContextType.Guild)]
+        [Command("editcmd"), Summary("edit an existing custom command"), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
         public async Task editcmd(string cmdTag, bool newDevCmdOnly, [Remainder]string newaction)
         {
             SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
@@ -208,7 +208,7 @@ namespace RMSoftware.ModularBot
             return;
         }
 
-        [Command("delcmd"), Summary("`[CommandMGMT]` Remove specified custom command."), RequireContext(ContextType.Guild)]
+        [Command("delcmd"), Summary("Remove specified custom command."), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
         public async Task delcmd(string cmdTag)
         {
             SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
@@ -218,7 +218,6 @@ namespace RMSoftware.ModularBot
             {
                 try
                 {
-
                     Program.ccmg.DeleteCommand(cmdTag);
                     RequestOptions op = new RequestOptions();
                     op.Timeout = 256;
@@ -251,114 +250,104 @@ namespace RMSoftware.ModularBot
             return;
         }
 
-        [Command("listcmd"), Summary("`[CommandMGMT]` Shows a list of available commands."), RequireContext(ContextType.Guild)]
+        [Command("listcmd"), Summary("Shows a list of available commands."), RequireContext(ContextType.Guild)]
         public async Task listCmds()
         {
-            SocketMessage arg = Context.Message as SocketMessage;
-            SocketGuildUser user = ((SocketGuildUser)arg.Author);
-            if (Program.rolemgt.CheckUserRole(user))
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.Color = Color.Green;
+            builder.Title = "Available commands for: " + Client.CurrentUser.Username;
+            CommandList commandList = new CommandList(Client.CurrentUser.Username);
+            INICategory[] cmdcats = Program.ccmg.GetAllCommand();
+
+
+            #region CORE
+            foreach (CommandInfo item in cmdsvr.Commands)
+            {
+                string group = item.Module.Aliases[0] + " ";
+                if (string.IsNullOrWhiteSpace(group))
+                {
+                    group = "";//Command's groupAttribute?
+                }
+
+                if (item.Module.Name == "CoreModule")
+                {
+                    builder.AddField("`" + Program.CommandPrefix + item.Name + "`", item.Summary);
+                }
+                string usage = Program.CommandPrefix + group + item.Name + " ";
+                foreach (var param in item.Parameters)
+                {
+                    if (param.IsOptional)
+                    {
+                        usage += $"[{param.Type.Name} {param.Name}] ";
+                    }
+                    if (!param.IsOptional)
+                    {
+                        usage += $"<{param.Type.Name} {param.Name}> ";
+                    }
+                }
+                commandList.AddCommand(Program.CommandPrefix + group + item.Name, item.Remarks == "[CMDMgmt]", item.Module.Name == "CoreModule", item.Summary, usage);
+            }
+            #endregion
+
+            #region Custom Commands
+            foreach (INICategory item in cmdcats)
+            {
+                if (item.CheckForEntry("guildID"))
+                {
+                    if (item.GetEntryByName("guildID").GetAsUlong() != Context.Guild.Id)
+                    {
+                        continue;//if the entry exists, and it doesn't match the guild listcmd was called in, don't add it to the list.
+                    }
+
+                }
+                string commandSummary = "";
+                string usage = "";
+                if (item.CheckForEntry("summary"))
+                {
+                    commandSummary = item.GetEntryByName("summary").GetAsString();
+
+                }
+                if (item.CheckForEntry("usage"))
+                {
+                    usage = item.GetEntryByName("usage").GetAsString();
+
+                }
+                commandList.AddCommand(Program.CommandPrefix + item.Name, item.GetEntryByName("restricted").GetAsBool(), false, commandSummary, usage);
+
+            }
+            #endregion
+            
+            try
             {
 
-                Program.LogToConsole("CmdExec", "User has required permissions");
-                //embed builder...
-                EmbedBuilder builder = new EmbedBuilder();
-                builder.Color = Color.Green;
-                builder.Title = "Available commands for: " + Client.CurrentUser.Username;
-                string cmdlist = "";
-                string modulecmds = "";
-                INICategory[] cmdcats = Program.ccmg.GetAllCommand();
-                
-                if (cmdcats.Length == 0)
+                using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
                 {
-                    cmdlist = "There are no custom commands available for this guild.";
-                }
-                foreach (INICategory item in cmdcats)
-                {
-                    if (item.CheckForEntry("guildID"))
+                    using (System.IO.StreamWriter sw = new System.IO.StreamWriter(ms))
                     {
-                        if (item.GetEntryByName("guildID").GetAsUlong() != Context.Guild.Id)
-                        {
-                            continue;//if the entry exists, and it doesn't match the guild listcmd was called in, don't add it to the list.
-                        }
+
+                        sw.WriteLine(commandList.GetFullHTML());
+                        sw.Flush();
+                        ms.Position = 0;
+                        builder.WithFooter("See attachment for all commands.");
+                        await Context.Channel.SendMessageAsync("", false, builder.Build());
+                        await Context.Channel.SendFileAsync(ms, $"{Context.Guild.Name}_{Context.Client.CurrentUser.Username}_AllCommands.html");
 
                     }
-                    string restricted = item.GetEntryByName("restricted").GetAsBool() ? "[CommandMGMT]" : "";
-                    cmdlist += "<li>" + Program.CommandPrefix + item.Name + " - - - " + restricted + "</li>\r\n";
-
                 }
-                if (cmdlist.Length == 0)
-                {
-                    cmdlist = "There are no custom commands available for this guild.";
-                }
-                foreach (CommandInfo item in cmdsvr.Commands)
-                {
-                    string group = item.Module.Aliases[0] + " ";
-                    if (string.IsNullOrWhiteSpace(group))
-                    {
-                        group = "";//Command's groupAttribute?
-                    }
-                    modulecmds += "<li>" + Program.CommandPrefix + group + "" + item.Name + "" + " - - - " + item.Summary + "</li>\r\n";
-                    if(item.Module.Name == "CoreModule")
-                    {
-                        builder.AddField("`" + Program.CommandPrefix + item.Name + "`", item.Summary);
-                    }
-                }
-
-
-                try
-                {
-
-                    using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
-                    {
-                        using (System.IO.StreamWriter sw = new System.IO.StreamWriter(ms))
-                        {
-                            sw.WriteLine(string.Format("<h1>Command List - {0} [RMSoftware.ModularBot]</h1>", Client.CurrentUser.Username));
-                            sw.WriteLine("<hr/>");
-                            sw.WriteLine("<h3>Module & Core Commands:</h3>");
-                            sw.WriteLine("<hr/>");
-                            sw.WriteLine("<ul>");
-                            sw.WriteLine(modulecmds);
-                            sw.WriteLine("</ul>");
-                            sw.WriteLine("<hr/>");
-                            sw.WriteLine("<h3>Custom Commands:</h3>");
-                            sw.WriteLine("<hr/>");
-                            sw.WriteLine("<ul>");
-                            sw.WriteLine(cmdlist);
-                            sw.WriteLine("</ul>");
-                            sw.Flush();
-                            ms.Position = 0;
-                          
-                            builder.AddField("```\r\nCustom Commands\r\n```", "`Refer to the attachment below.`");
-                            await arg.Channel.SendMessageAsync("", false, builder.Build());
-                            await arg.Channel.SendFileAsync(ms, "AllCommands.html");
-
-                        }
-                    }
-                        
-
-                    
-                        
-                }
-                catch (AggregateException ex)
-                {
-
-                    await arg.Channel.SendMessageAsync("Tried to do this THREE different times, and Quite honestly, I just could not do it... I'm sorry...");
-                    Program.LogToConsole("CritERR", ex.Message);
-                }
-                return;
             }
+            catch (AggregateException ex)
+            {
 
-            await Retry.Do(async () => await Context.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
-           
-
+                await Context.Channel.SendMessageAsync("Tried to do this THREE different times, and Quite honestly, I just could not do it... I'm sorry...");
+                Program.LogToConsole("CritERR", ex.Message);
+            }
             return;
+
         }
 
-        [Command("save"), Summary("`[CommandMGMT]` Save the command database."), RequireContext(ContextType.Guild)]
+        [Command("save"), Summary("Save the command database."), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
         public async Task SaveCmd()
         {
-
-
             SocketMessage arg = Context.Message as SocketMessage;
             SocketGuildUser user = ((SocketGuildUser)arg.Author);
 
@@ -379,16 +368,16 @@ namespace RMSoftware.ModularBot
         {
             EmbedBuilder eb = new EmbedBuilder();
 
-            eb.WithAuthor("What's New", "https://cdn.discordapp.com/app-icons/350413323180834818/dc9bbd8d4ba0beb5e148de4279db0080.png", "");
-            eb.AddField("v1.3.348 (Beta release)", "• Changed some logging events.\r\n• Removed RMSoftware.IO.INIFile console writes.\r\n• Code refactoring, sorting, and optimization.");
-            eb.WithFooter("Powered by: RMSoftware.ModularBot\r\n Copyright © 2017 RMSoftware Development");
+            eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (Beta release)", "• Fixed a minor open/close glitch in command list html.\r\n• Fixed HTML's title. lel.\r\n• Changed the changes (wow, changing the changes again?) command to always reflect app version\r\n• *Added more sass*");
+            eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
             op.RetryMode = RetryMode.AlwaysRetry;
             await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build(), op);
         }
 
-        [Command("addmgrole"), Summary("`[BotMaster]` add a role to CommandMGMT database"), RequireContext(ContextType.Guild),RequireOwner]
+        [Command("addmgrole"), Summary("add a role to CommandMGMT database"), RequireContext(ContextType.Guild),RequireOwner, Remarks("[CMDMgmt]")]
         public async Task AddRoletoDB([Remainder] string param = null)
         {
             int added = 0;
@@ -399,7 +388,7 @@ namespace RMSoftware.ModularBot
             }
             await Context.Channel.SendMessageAsync("Successfully added `" + added + "` role(s) to the CommandMGMT database for guild: `"+Context.Guild.Name+"`.");
         }
-        [Command("delmgrole"), Summary("`[BotMaster]` Delete a role from CommandMGMT database"), RequireContext(ContextType.Guild), RequireOwner]
+        [Command("delmgrole"), Summary("Delete a role from CommandMGMT database"), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task DelRoleFromDB([Remainder] string param = null)
         {
             int del = 0;
@@ -410,8 +399,5 @@ namespace RMSoftware.ModularBot
             }
             await Context.Channel.SendMessageAsync("Successfully removed `" + del + "` role(s) from the CommandMGMT database for guild: `" + Context.Guild.Name + "`.");
         }
-
-
-
     }
 }
