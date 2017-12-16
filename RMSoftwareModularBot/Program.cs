@@ -433,14 +433,13 @@ namespace RMSoftware.ModularBot
         #region Async tasks
         public async Task LoadModules()
         {
-            cmdsvr = new CommandService();//clear and re-add
+            cmdsvr = new CommandService();
             serviceCollection = serviceCollection.AddSingleton(_client);
             serviceCollection = serviceCollection.AddSingleton(cmdsvr);
-            
-         
+
             foreach (string item in Directory.EnumerateFiles("CMDModules","*.dll",SearchOption.TopDirectoryOnly))
             {
-                LogToConsole("Modules", "Adding commands from module library: " + item);
+                LogToConsole("Modules", $"Adding commands from module library: {item}");
                 try
                 {
                     Assembly asmb = Assembly.LoadFile(Path.GetFullPath(item));
@@ -452,27 +451,19 @@ namespace RMSoftware.ModularBot
                         foreach (INIEntry entryitem in serviceFile.GetCategoryByName("Services").Entries)
                         {
                             string typename = entryitem.GetAsString();
-                            LogMessage l = new LogMessage(LogSeverity.Info, "Modules", "Injecting service: " + typename);
-                            Console.WriteLine(l);
+                            LogToConsole("Modules", $"Injecting service: {typename} from {asmb.GetName().Name}");
                             serviceCollection = serviceCollection.AddSingleton(asmb.GetType(typename),asmb.CreateInstance(typename));
                         }
                     }
-                    //TODO Add services from same module
                     await cmdsvr.AddModulesAsync(asmb);//ADD EXTERNAL.
                 }
                 catch (Exception ex)
                 {
-
                     LogToConsole("CritERR", ex.Message);
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
-                    Console.ForegroundColor = Last;
                 }
             }
-
-            await cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly());//ADD CORE.
             services = serviceCollection.BuildServiceProvider();
+            await cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly());//ADD CORE.
         }
 
         public async Task MainAsync(string token)
