@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
+using System.IO;
 using System.Net.Http;
 namespace RMSoftware.ModularBot
 {
@@ -64,7 +65,12 @@ namespace RMSoftware.ModularBot
         [Command("STOPBOT",RunMode=RunMode.Async), Summary("Shutdown the bot"), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task StopBot()
         {
-                await Context.Channel.SendMessageAsync("**[BotMaster]** called ***StopBot***... *Ending Session*");
+            if (Program.LOG_ONLY_MODE)
+            {
+                await Context.Channel.SendMessageAsync("Unable to run command. Origin instance started with `-log_only` parameter. Stop it from console or UI Host instead.");
+                return;
+            }
+            await Context.Channel.SendMessageAsync("**[BotMaster]** called ***StopBot***... *Ending Session*");
                 DiscordSocketClient c = (DiscordSocketClient)Context.Client;
                 Program.BCMDStarted = false;
                 await c.SetGameAsync("");
@@ -80,7 +86,11 @@ namespace RMSoftware.ModularBot
         [Command("RESTARTBOT", RunMode = RunMode.Async), Summary("Restart the bot"), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task RestartBot()
         {
-
+            if(Program.LOG_ONLY_MODE)
+            {
+                await Context.Channel.SendMessageAsync("Unable to run command. Origin instance started with `-log_only` parameter. Restart it from console or UI Host instead.");
+                return;
+            }
                 await Context.Channel.SendMessageAsync("**[BotMaster]** called ***RestartBot***... *Ending Session, then restarting the program...*");
                 DiscordSocketClient c = (DiscordSocketClient)Context.Client;
                 Program.BCMDStarted = false;
@@ -93,6 +103,7 @@ namespace RMSoftware.ModularBot
                 await Task.Delay(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
                 Program.RestartRequested = true;
                 Program.discon = true;
+            
 
         }
 
@@ -218,6 +229,7 @@ namespace RMSoftware.ModularBot
             {
                 try
                 {
+
                     Program.ccmg.DeleteCommand(cmdTag);
                     RequestOptions op = new RequestOptions();
                     op.Timeout = 256;
@@ -253,6 +265,8 @@ namespace RMSoftware.ModularBot
         [Command("listcmd"), Summary("Shows a list of available commands."), RequireContext(ContextType.Guild)]
         public async Task listCmds()
         {
+
+
             EmbedBuilder builder = new EmbedBuilder();
             builder.Color = Color.Green;
             builder.Title = "Available commands for: " + Client.CurrentUser.Username;
@@ -316,7 +330,9 @@ namespace RMSoftware.ModularBot
 
             }
             #endregion
+
             
+
             try
             {
 
@@ -334,6 +350,10 @@ namespace RMSoftware.ModularBot
 
                     }
                 }
+
+
+
+
             }
             catch (AggregateException ex)
             {
@@ -348,6 +368,8 @@ namespace RMSoftware.ModularBot
         [Command("save"), Summary("Save the command database."), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
         public async Task SaveCmd()
         {
+
+
             SocketMessage arg = Context.Message as SocketMessage;
             SocketGuildUser user = ((SocketGuildUser)arg.Author);
 
@@ -369,7 +391,7 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (Beta release)", "• Fixed a minor open/close glitch in command list html.\r\n• Fixed HTML's title. lel.\r\n• Changed the changes (wow, changing the changes again?) command to always reflect app version\r\n• *Added more sass*");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (Beta release)", "• Disabled stopbot & restartbot commands when using `-log_only` launch parameter. This solved a problem with the console not actually closing when called.\r\n• `-log_only` mode now outputs all log entries in JSON format. This provides object based entries for *fancy* output log formats.\r\n• Shortened some Log sources\r\n• Config Option: disableCore - It does exactly what you think it does.\r\n• Made configuration corruption less likely to crash the application.\r\n• Added a user blacklist. This can make the bot ignore specific users. Good for preventing spam...");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
@@ -377,27 +399,117 @@ namespace RMSoftware.ModularBot
             await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build(), op);
         }
 
-        [Command("addmgrole"), Summary("add a role to CommandMGMT database"), RequireContext(ContextType.Guild),RequireOwner, Remarks("[CMDMgmt]")]
-        public async Task AddRoletoDB([Remainder] string param = null)
+        [Command("shadowban"), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
+        public async Task IgnoreUser(params IUser[] users)
         {
-            int added = 0;
-            foreach (ulong item in Context.Message.MentionedRoleIds)
+            int count = 0;
+            foreach (var item in users)
             {
-                Program.rolemgt.AddCommandManagerRole((SocketRole)Context.Guild.GetRole(item));
-                added++;
+                if (Program.rolemgt.AddUserToBlacklist(item as SocketUser))
+                {
+                    count++;
+                }
             }
-            await Context.Channel.SendMessageAsync("Successfully added `" + added + "` role(s) to the CommandMGMT database for guild: `"+Context.Guild.Name+"`.");
+            await Context.Channel.SendMessageAsync($"Added `{count}` user(s) to the blacklist. they can no longer access my commands.");
+        }
+
+        [Command("shadowunban"), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
+        public async Task UnIgnoreUser(params IUser[] users)
+        {
+            int count = 0;
+            foreach (var item in users)
+            {
+                if (Program.rolemgt.DeleteUserFromBlacklist(item as SocketUser))
+                {
+                    count++;
+                }
+            }
+            await Context.Channel.SendMessageAsync($"Removed `{count}` user(s) from the blacklist. they can now access my commands.");
+        }
+
+        [Command("addmgrole"), Summary("add a role to CommandMGMT database"), RequireContext(ContextType.Guild),RequireOwner, Remarks("[CMDMgmt]")]
+        public async Task AddRoletoDB(params IRole[] roles)
+        {
+            foreach (var item in roles)
+            {
+                Program.rolemgt.AddCommandManagerRole(item as SocketRole);
+            }
+            await Context.Channel.SendMessageAsync($"Successfully added `{roles.Length}` role(s) to the CommandMGMT database for guild: `{Context.Guild.Name}`.");
         }
         [Command("delmgrole"), Summary("Delete a role from CommandMGMT database"), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
-        public async Task DelRoleFromDB([Remainder] string param = null)
+        public async Task DelRoleFromDB(params IRole[] roles)
         {
-            int del = 0;
-            foreach (ulong item in Context.Message.MentionedRoleIds)
+            foreach (var item in roles)
             {
-                Program.rolemgt.DeleteCommandManager((SocketRole)Context.Guild.GetRole(item));
-                del++;
+                Program.rolemgt.DeleteCommandManager(item as SocketRole);
             }
-            await Context.Channel.SendMessageAsync("Successfully removed `" + del + "` role(s) from the CommandMGMT database for guild: `" + Context.Guild.Name + "`.");
+            await Context.Channel.SendMessageAsync($"Successfully removed `{roles.Length}` role(s) from the CommandMGMT database for guild: `{Context.Guild.Name}`.");
         }
+        [Command("listmgrole",RunMode=RunMode.Async), Summary("lists the authorized management roles for the guild where the command was called."), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
+        public async Task listmgroledbguild()
+        {
+            await Context.Channel.SendMessageAsync($"This could take a while...");
+            await Task.Delay(500);
+            using (Context.Channel.EnterTypingState())
+            {
+                SocketRole[] items = Program.rolemgt.GetRolesForGuild(Context.Guild as SocketGuild);
+                string roles = "";
+                foreach (var item in items)
+                {
+                    roles += $"{item.Id} - {item.Name}{Environment.NewLine}";
+                }
+                await Context.Channel.SendMessageAsync($"All authorized management roles for `{Context.Guild.Name}`:\r\n```\r\n{roles}\r\n```");
+            }
+                
+        }
+
+        [Command("listallmgroles", RunMode = RunMode.Async), Summary("lists the authorized management roles for all guilds"), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
+        public async Task listmgroledball()
+        {
+            int zint = 0;
+            await Context.Channel.SendMessageAsync($"This could take a while...");
+            await Task.Delay(500);
+            using (Context.Channel.EnterTypingState())
+            {
+                
+                SocketRole[] items = Program.rolemgt.GetAllRoles();
+                List<string> book = new List<string>();
+                string roles = "";
+                foreach (var item in items)
+                {
+                    string toAddTo = $"{item.Id} - {item.Name}{Environment.NewLine}";
+                    int len = roles.Length + toAddTo.Length;
+
+                    if(len >600)
+                    {
+                        len = 0;
+                        book.Add(new String(roles.ToCharArray()));//This is probably super dumb, but I want to add the string to the list and change the roles string without affecting the entry in the list. Im doing this to be safe.
+                        roles = "";
+
+                    }
+                    roles += $"{item.Guild.Name} - {item.Id} - {item.Name}{Environment.NewLine}";
+                }
+                book.Add(roles);
+                foreach (string item in book)
+                {
+                    if(zint <1)
+                    {
+                        await Context.Channel.SendMessageAsync($"All authorized management roles in the database:\r\n```\r\n{item}\r\n```");
+                    }
+                    if (zint >= 1)
+                    {
+                        await Context.Channel.SendMessageAsync($"```\r\n{item}\r\n```");
+                    }
+                    zint++;
+
+                    SocketGuildUser r = Context.User as SocketGuildUser;
+
+                    string display = r.Nickname ?? r.Username;
+                }
+            }
+
+        }
+
     }
+
 }
