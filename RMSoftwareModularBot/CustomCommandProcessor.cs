@@ -78,6 +78,7 @@ namespace RMSoftware.ModularBot
 
             string content = arg.Content;
             bool hasrole = false;
+            bool IsTTS = false;
             int argPos = 1;
             if (!arg.Content.StartsWith(Program.CommandPrefix.ToString())) return false;
             //substring the text into two parts.
@@ -85,6 +86,23 @@ namespace RMSoftware.ModularBot
             {
                 
                 string cmd = content.Substring(argPos).Split(' ')[0];//get the command bit.
+                if(cmd.EndsWith("TTS"))
+                {
+                    SocketGuildUser a = arg.Author as SocketGuildUser;
+                    if(a == null)
+                    {
+                        return false;
+                    }
+                    if(Program.rolemgt.CheckUserRole(a))
+                    {
+                        IsTTS = true;
+                        cmd = cmd.Remove(cmd.Length - 3);
+                    }
+                    else
+                    {
+                        await arg.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to TTS this command.");
+                    }
+                }
                 string parameters = content.Replace(Program.CommandPrefix.ToString()+""+cmd, "").Trim();
 
                 //find the command in the file.
@@ -215,10 +233,9 @@ namespace RMSoftware.ModularBot
                     RequestOptions op = new RequestOptions();
                     op.RetryMode = RetryMode.AlwaysRetry;
                     op.Timeout = 256;
-                    await Retry.Do(async () => await arg.Channel.SendMessageAsync(response.Replace("%appv%", "v" + version).Trim()), TimeSpan.FromMilliseconds(140));
+                    await Retry.Do(async () => await arg.Channel.SendMessageAsync(response.Replace("%appv%", "v" + version).Trim(),IsTTS), TimeSpan.FromMilliseconds(140));
 
-
-
+                    
                     successful = true;
                     return true;
 
