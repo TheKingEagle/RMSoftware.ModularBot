@@ -1,14 +1,14 @@
 # !addcmd Usage
-* Normal usage: `!addcmd <cmdName> <boolDevCmdOnly> <boolLockToGuild> <Action>`
+* Normal usage: `!addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Action>`
 * This command is restricted to users with a DevCommand named role only.
 ### Action Parameter
 The action can be several things, Most of the time, it can be a combination of text and emotes. More advanced things are covered later.
 ### cmdName
 A small command name, The bot uses the ! prefix, but you do not need to specify the prefix when adding command. **Commands are Case Sensitive**
-### boolDevCmdOnly
-True/false. If true, only users with the DevCommand role can use this command.
+### CommandManagersOnly
+True/false. If true, Only users with one or more roles added to the bot's CommandManagement database, may access the command.
 ### boolLockToGuild
-True/false. If true, The command will only be available on the guild it was created.
+True/false. If true, The command will only be available on the guild it was created from.
 
 # Advanced command actions
 
