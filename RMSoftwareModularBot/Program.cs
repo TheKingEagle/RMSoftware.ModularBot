@@ -126,7 +126,6 @@ namespace RMSoftware.ModularBot
                             }
                             ARGS = restart_args.ToArray();
                             sw.Flush();
-
                         }
                     }
                     if (!LOG_ONLY_MODE)
@@ -185,6 +184,7 @@ namespace RMSoftware.ModularBot
                 p.StartInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, flattened);
                 ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
                 writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 3..."));//using direct writer to try and prevent blanks.
+
                 Thread.Sleep(1000);
                 ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
                 writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 2..."));
@@ -248,10 +248,10 @@ namespace RMSoftware.ModularBot
                     System.Threading.Thread.Sleep(2000);
                     _client.SetStatusAsync(UserStatus.Invisible);
                     System.Threading.Thread.Sleep(2000);
-                    Program.BCMDStarted = false;
+                    BCMDStarted = false;
                     _client.StopAsync();
                     System.Threading.Thread.Sleep(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
-                    Program.discon = true;
+                    discon = true;
                     break;
                 }
                 if (input.ToLower() == "cn_term")
@@ -261,7 +261,7 @@ namespace RMSoftware.ModularBot
                 }
                 if (input.ToLower() == "bot.disablecmd")
                 {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
+                    LogToConsole(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
 
                     _client.SetStatusAsync(UserStatus.DoNotDisturb);
                     _client.SetGameAsync("");
@@ -269,7 +269,7 @@ namespace RMSoftware.ModularBot
                 }
                 if (input.ToLower() == "bot.enablecmd")
                 {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
+                    LogToConsole(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
 
                     _client.SetStatusAsync(UserStatus.Online);
                     _client.SetGameAsync("READY!");
@@ -278,7 +278,7 @@ namespace RMSoftware.ModularBot
                 if (input.ToLower().StartsWith("bot.status"))
                 {
                     string status = input.Remove(0, 10).Trim();
-                    Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Client", "client status changed."));
+                    LogToConsole(new LogMessage(LogSeverity.Warning, "Client", "client status changed."));
 
                     _client.SetGameAsync(status);
                 }
@@ -287,8 +287,7 @@ namespace RMSoftware.ModularBot
                     input = input.Remove(0, 6).Trim();
                     if (!ulong.TryParse(input, out chID))
                     {
-                        Program.LogToConsole(new LogMessage(LogSeverity.Error, "Console", "Invalid ULONG."));
-
+                        LogToConsole(new LogMessage(LogSeverity.Error, "Console", "Invalid ULONG."));
                         continue;
                     }
                 }
@@ -298,8 +297,7 @@ namespace RMSoftware.ModularBot
                     SocketTextChannel Channel = _client.GetChannel(chID) as SocketTextChannel;
                     if (Channel == null)
                     {
-                        Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Console", "Invalid channel."));
-
+                        LogToConsole(new LogMessage(LogSeverity.Warning, "Console", "Invalid channel."));
                         continue;
                     }
                     Channel.SendMessageAsync(input);
@@ -482,12 +480,16 @@ namespace RMSoftware.ModularBot
             
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
+
             DecorateTop();
+
             string WTitle = (""+DateTime.Now.ToString("HH:mm:ss") + " " + title + " - RMSoftwareModularBot v" + Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
             string pTitle = WTitle.PadLeft(71+WTitle.Length/2);
             pTitle += "".PadRight(71-WTitle.Length/2);
             Console.Write("\u2551{0}\u2551", pTitle);
+
             DecorateBottom();
+
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
 
@@ -518,14 +520,16 @@ namespace RMSoftware.ModularBot
 
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
+
             DecorateTop();
+
             string WTitle = ("" + DateTime.Now.ToString("HH:mm:ss") + " " + title + " - RMSoftwareModularBot v" + Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
             string pTitle = WTitle.PadLeft(((w/2)+2) + WTitle.Length / 2);
             pTitle += "".PadRight(((w / 2)-3) - WTitle.Length / 2);
             Console.Write("\u2551{0}\u2551", pTitle);
 
-
             DecorateBottom();
+
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
             ConsoleBackgroundColor = back;
@@ -565,6 +569,7 @@ namespace RMSoftware.ModularBot
                     Console.Write("\u255D");
                     break;
                 }
+
                 Console.Write("\u2550");
             }
         }
@@ -573,7 +578,6 @@ namespace RMSoftware.ModularBot
         {
             if(!LOG_ONLY_MODE)
             {
-                
                 writer.WriteEntry(msg);
             }
             else
@@ -586,10 +590,8 @@ namespace RMSoftware.ModularBot
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
-
                         sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + msg.ToString());
                         sw.Flush();
-
                     }
                 }
             }
@@ -599,7 +601,6 @@ namespace RMSoftware.ModularBot
         {
             if (!LOG_ONLY_MODE)
             {
-
                 writer.WriteEntry(msg,entryColor);
             }
             else
@@ -612,10 +613,8 @@ namespace RMSoftware.ModularBot
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
-
                         sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + msg.ToString());
                         sw.Flush();
-
                     }
                 }
             }
@@ -658,7 +657,6 @@ namespace RMSoftware.ModularBot
                 }
             }
             return false;//basically the file is found and nothing broke.
-
         }
 
 
@@ -760,10 +758,8 @@ namespace RMSoftware.ModularBot
                     {
                         using (StreamWriter sw = new StreamWriter(fs))
                         {
-
                             sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
                             sw.Flush();
-
                         }
                     }
                 }
@@ -829,10 +825,8 @@ namespace RMSoftware.ModularBot
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
-
                         sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
                         sw.Flush();
-
                     }
                 }
             }
@@ -852,7 +846,6 @@ namespace RMSoftware.ModularBot
             LogToConsole(new LogMessage(LogSeverity.Warning,"Session", "Disconnected: "+ arg.Message,arg));
             Console.Title = "RMSoftware.ModularBot - Disconnected";
             LogToConsole(new LogMessage(LogSeverity.Info,"Uptime", "The client is disconnected."));
-            
             return Task.Delay(3);
         }
 
@@ -861,7 +854,6 @@ namespace RMSoftware.ModularBot
             await Log(new LogMessage(LogSeverity.Info, "TaskMgr", "Running Onstart.bcmd - task"));
             await Task.Run(new Action(OffloadReady));
             Console.Title = "RMSoftware.ModularBOT -> " + _client.CurrentUser.Username + " | Connected to " + _client.Guilds.Count + " guilds.";
-          
         }
 
         private async void OffloadReady()
@@ -886,9 +878,7 @@ namespace RMSoftware.ModularBot
                                     //line = line.Replace("%p_", CommandPrefix.ToString());
                                     if (CRASH)
                                     {
-                                        
                                         LogToConsole(new LogMessage(LogSeverity.Critical,"Program", "The program was auto-restarted due to a crash. Please see CRASH.LOG for details on what happened."));
-                                        
                                         await ((IMessageChannel)ch).SendMessageAsync("**WARNING:** `The bot was auto-restarted due to a crash. Please see CRASH.LOG for details on what happened.`");
                                         CRASH = false;//don't make it happen more than once pls.
                                     }
@@ -908,7 +898,8 @@ namespace RMSoftware.ModularBot
                                             LogToConsole(new LogMessage(LogSeverity.Info, "OnStart", "CustomCMD Success..."));
                                             continue;
                                         }
-                                        //Damn, I can't be sassy here... If it was a command, but not a ccmg command, then try the context for modules. If THAT didn't work
+                                        //Damn, I can't be sassy here... If it was a command, but not a ccmg command, 
+                                        //then try the context for modules. If THAT didn't work
                                         //Then it will output the result of the context.
                                         var context = new CommandContext(_client, new PsuedoMessage(line,_client.CurrentUser,ch,MessageSource.User));
                                         // Execute the command. (result does not indicate a return value, 
@@ -960,13 +951,15 @@ namespace RMSoftware.ModularBot
             {
                 if (item.Mention == _client.CurrentUser.Mention)
                 {
-                    LogToConsole(new LogMessage(LogSeverity.Info,"Mention", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content));
+                    LogToConsole(new LogMessage(LogSeverity.Info,"Mention", "<[" + arg.Channel.Name + "] " 
+                                                + arg.Author.Username + " >: " + arg.Content));
                 }
             }
             //DEBUG: output ! prefixed messages to console.
             if (arg.Content.StartsWith(CommandPrefix.ToString()))
             {
-                LogToConsole(new LogMessage(LogSeverity.Info,"Command", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content));
+                LogToConsole(new LogMessage(LogSeverity.Info,"Command", "<[" + arg.Channel.Name + "] " 
+                                            + arg.Author.Username + " >: " + arg.Content));
 
             }
 
@@ -977,13 +970,16 @@ namespace RMSoftware.ModularBot
             if (message == null) return;
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
-            // Determine if the message is a command, based on if it starts with 'commandprefix' or a mention prefix. if not, ignore it.
-            if (!(message.HasCharPrefix(CommandPrefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
+            // Determine if the message is a command, based on if it starts with 'commandprefix' 
+            // or a mention prefix. if not, ignore it.
+            if (!(message.HasCharPrefix(CommandPrefix, ref argPos) 
+                  || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
             if (!arg.Author.IsBot && !BCMDStarted)
             {
                 messageQueue.Add(arg);  //queue it up. The bcmdStarted check should 
                                         //provide PLENTY (if not an excessive amount) of time for modules,and extra commands 
-                                        //to be fully loaded by the time it is set to true. Preemptively solving the "hey, you just ignored my commands completely" 
+                                        //to be fully loaded by the time it is set to true. Preemptively solving the 
+                                        //"hey, you just ignored my commands completely" 
                                         //when the bot starts and doesn't respond to a command at first
                 return;
             }
@@ -1009,8 +1005,6 @@ namespace RMSoftware.ModularBot
                     await arg.Channel.SendMessageAsync(result.ErrorReason);
                 }
             }
-
-
         }
 
         private Task Log(LogMessage msg)
@@ -1038,10 +1032,8 @@ namespace RMSoftware.ModularBot
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
-                        
                         sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy")+"   "+msg.ToString());
                         sw.Flush();
-
                     }
                 }
             }
