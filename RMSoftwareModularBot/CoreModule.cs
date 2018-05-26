@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Net;
 using System.IO;
 using System.Net.Http;
+using System.Text.RegularExpressions;
+
 namespace RMSoftware.ModularBot
 {
     
@@ -83,6 +85,62 @@ namespace RMSoftware.ModularBot
                 Program.discon = true;
         }
 
+#if DEBUG
+        [Command("Session", RunMode = RunMode.Async), Summary("Shutdown the bot with a session error."), RequireOwner, Remarks("[CMDMgmt]")]
+        public async Task InvalidateSession()
+        {
+            if (Program.LOG_ONLY_MODE)
+            {
+                await Context.Channel.SendMessageAsync("Unable to run command. Origin instance started with `-log_only` parameter. Stop it from console or UI Host instead.");
+                return;
+            }
+            await Context.Channel.SendMessageAsync("`CRITICAL: Instance owner triggered a session invalidation. Immediately terminating session and calling for restart.`");
+            await Task.Delay(200);
+            await Context.Channel.SendMessageAsync("`CRITICAL: If restart fails, please verify the install & ensure you can properly contact discord API.`");
+            await Task.Delay(400);
+            await Context.Channel.SendMessageAsync("`CRITICAL: This command is for DEBUG builds only!`");
+            DiscordSocketClient c = (DiscordSocketClient)Context.Client;
+            Program.BCMDStarted = false;
+            await c.SetGameAsync("");
+            await Task.Delay(1000);
+            await c.SetStatusAsync(UserStatus.Invisible);
+            await Task.Delay(1000);
+            Program.BCMDStarted = false;
+            await c.StopAsync();
+            await Task.Delay(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
+            Program.discon = true;
+            Program.CriticalError = true;
+            Program.crashException = new Discord.Net.WebSocketClosedException(4007, "Forced invalidate session.");
+        }
+
+        [Command("Throw", RunMode = RunMode.Async), Summary("Shutdown the bot with a session error."), RequireOwner, Remarks("[CMDMgmt]")]
+        public async Task crash()
+        {
+            if (Program.LOG_ONLY_MODE)
+            {
+                await Context.Channel.SendMessageAsync("Unable to run command. Origin instance started with `-log_only` parameter. Stop it from console or UI Host instead.");
+                return;
+            }
+            await Context.Channel.SendMessageAsync("`CRITICAL: Instance owner triggered a manual crash!`");
+            await Task.Delay(200);
+            await Context.Channel.SendMessageAsync("`CRITICAL: If restart fails, please verify the install & ensure you can properly contact discord API.`");
+            await Task.Delay(400);
+            await Context.Channel.SendMessageAsync("`CRITICAL: This command is for DEBUG builds only!`");
+            DiscordSocketClient c = (DiscordSocketClient)Context.Client;
+            Program.BCMDStarted = false;
+            await c.SetGameAsync("");
+            await Task.Delay(1000);
+            await c.SetStatusAsync(UserStatus.Invisible);
+            await Task.Delay(1000);
+            Program.BCMDStarted = false;
+            await c.StopAsync();
+            await Task.Delay(3000);//Allow the bot to shut down fully before telling Main() to scream at user to finger the keyboard to close the console.
+            Program.discon = true;
+            Program.CriticalError = true;
+            Program.crashException = new Exception("THIS IS A MANUAL DEBUG CRASH!");
+            throw (Program.crashException);
+        }
+#endif
         [Command("RESTARTBOT", RunMode = RunMode.Async), Summary("Restart the bot"), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task RestartBot()
         {
@@ -117,7 +175,7 @@ namespace RMSoftware.ModularBot
             {
                 try
                 {
-                    Program.LogToConsole("cmdMgmt", "User has a role in cmdMgrDB");
+                    Program.LogToConsole(new LogMessage(LogSeverity.Info,"CmdMgmt","User has a role in cmdMgrDB"));
 
                     string tosend = "";
                     if (action.StartsWith(Program.CommandPrefix.ToString()))
@@ -144,18 +202,14 @@ namespace RMSoftware.ModularBot
 
                     await arg.Channel.SendMessageAsync("The request failed due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely added anyway~)");
 
-                    Program.LogToConsole("CritERR", ex.Message);
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Program.LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
-                    Console.ForegroundColor = Last;
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error,"CritERR",ex.Message,ex));
                 }
                 catch (Exception ex)
                 {
-                    Program.LogToConsole("CritERR", ex.Message);
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                     ConsoleColor Last = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    Program.LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
+                    
                     Console.ForegroundColor = Last;
                 }
                 return;
@@ -174,7 +228,7 @@ namespace RMSoftware.ModularBot
             {
                 try
                 {
-                    Program.LogToConsole("cmdMgmt", "User has required permissions");
+                    Program.LogToConsole(new LogMessage(LogSeverity.Info,"CmdMgmt","User has required permission."));
 
                     string tosend = "";
 
@@ -198,18 +252,16 @@ namespace RMSoftware.ModularBot
 
                     await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely changed anyway~)");
 
-                    Program.LogToConsole("CritERR", ex.Message);
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error,"CritERR",ex.Message,ex));
                     ConsoleColor Last = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    Program.LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
                     Console.ForegroundColor = Last;
                 }
                 catch (Exception ex)
                 {
-                    Program.LogToConsole("CritERR", ex.Message);
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                     ConsoleColor Last = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    Program.LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
                     Console.ForegroundColor = Last;
                 }
                 return;
@@ -234,27 +286,24 @@ namespace RMSoftware.ModularBot
                     RequestOptions op = new RequestOptions();
                     op.Timeout = 256;
                     op.RetryMode = RetryMode.AlwaysRetry;
-                    await Retry.Do(async () => await Context.Channel.SendMessageAsync("Command removed!make sure to save."), TimeSpan.FromMilliseconds(140));
+                    await Retry.Do(async () => await Context.Channel.SendMessageAsync("Command removed! Please make sure to save."), TimeSpan.FromMilliseconds(140));
                 }
                 catch (AggregateException ex)
                 {
 
                     await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command probably still got removed though)");
 
-                    Program.LogToConsole("CritERR", ex.Message);
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                     ConsoleColor Last = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    Program.LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
                     Console.ForegroundColor = Last;
                 }
                 catch (Exception ex)
                 {
                     await arg.Channel.SendMessageAsync("Command is probably removed, but I threw some kind of error... My master will look into it...");
-
-                    Program.LogToConsole("CritERR", ex.Message);
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                     ConsoleColor Last = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    Program.LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
                     Console.ForegroundColor = Last;
                 }
             }
@@ -265,19 +314,14 @@ namespace RMSoftware.ModularBot
         [Command("listcmd"), Summary("Shows a list of available commands."), RequireContext(ContextType.Guild)]
         public async Task listCmds()
         {
-
-
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.Color = Color.Green;
-            builder.Title = "Available commands for: " + Client.CurrentUser.Username;
             CommandList commandList = new CommandList(Client.CurrentUser.Username);
             INICategory[] cmdcats = Program.ccmg.GetAllCommand();
-
-
-            #region CORE
+            
+#region CORE
             foreach (CommandInfo item in cmdsvr.Commands)
             {
                 string group = item.Module.Aliases[0] + " ";
+                string sum = item.Summary;
                 if (string.IsNullOrWhiteSpace(group))
                 {
                     group = "";//Command's groupAttribute?
@@ -285,7 +329,12 @@ namespace RMSoftware.ModularBot
 
                 if (item.Module.Name == "CoreModule")
                 {
-                    builder.AddField("`" + Program.CommandPrefix + item.Name + "`", item.Summary);
+                    
+                    if (string.IsNullOrEmpty(sum))
+                    {
+                        sum = "No summary was provided.";
+                    }
+                    
                 }
                 string usage = Program.CommandPrefix + group + item.Name + " ";
                 foreach (var param in item.Parameters)
@@ -299,11 +348,11 @@ namespace RMSoftware.ModularBot
                         usage += $"<{param.Type.Name} {param.Name}> ";
                     }
                 }
-                commandList.AddCommand(Program.CommandPrefix + group + item.Name, item.Remarks == "[CMDMgmt]", item.Module.Name == "CoreModule", item.Summary, usage);
+                commandList.AddCommand(Program.CommandPrefix + group + item.Name, item.Remarks == "[CMDMgmt]", item.Module.Name == "CoreModule", sum, usage);
             }
-            #endregion
+#endregion
 
-            #region Custom Commands
+#region Custom Commands
             foreach (INICategory item in cmdcats)
             {
                 if (item.CheckForEntry("guildID"))
@@ -329,9 +378,7 @@ namespace RMSoftware.ModularBot
                 commandList.AddCommand(Program.CommandPrefix + item.Name, item.GetEntryByName("restricted").GetAsBool(), false, commandSummary, usage);
 
             }
-            #endregion
-
-            
+#endregion
 
             try
             {
@@ -344,8 +391,8 @@ namespace RMSoftware.ModularBot
                         sw.WriteLine(commandList.GetFullHTML());
                         sw.Flush();
                         ms.Position = 0;
-                        builder.WithFooter("See attachment for all commands.");
-                        await Context.Channel.SendMessageAsync("", false, builder.Build());
+                        await Context.Channel.SendMessageAsync("**See the attached web document for a full list of commands.**", false);
+                        
                         await Context.Channel.SendFileAsync(ms, $"{Context.Guild.Name}_{Context.Client.CurrentUser.Username}_AllCommands.html");
 
                     }
@@ -359,7 +406,7 @@ namespace RMSoftware.ModularBot
             {
 
                 await Context.Channel.SendMessageAsync("Tried to do this THREE different times, and Quite honestly, I just could not do it... I'm sorry...");
-                Program.LogToConsole("CritERR", ex.Message);
+                Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
             }
             return;
 
@@ -376,7 +423,7 @@ namespace RMSoftware.ModularBot
             if (Program.rolemgt.CheckUserRole(user))
             {
 
-                Program.LogToConsole("CmdExec", "User has required permissions");
+                Program.LogToConsole(new LogMessage(LogSeverity.Info, "CmdEXEC","User has required permission"));
                 await arg.Channel.SendMessageAsync("Command DB saved.");
                 Program.ccmg.Save();
                 
@@ -391,7 +438,7 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (Beta release)", "• Disabled stopbot & restartbot commands when using `-log_only` launch parameter. This solved a problem with the console not actually closing when called.\r\n• `-log_only` mode now outputs all log entries in JSON format. This provides object based entries for *fancy* output log formats.\r\n• Shortened some Log sources\r\n• Config Option: disableCore - It does exactly what you think it does.\r\n• Made configuration corruption less likely to crash the application.\r\n• Added a user blacklist. This can make the bot ignore specific users. Good for preventing spam...");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (CoreScript update part 2)", "• Reverted to old startup screen. It looks better and quite honestly, the size change isn't that bad.");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
@@ -436,6 +483,7 @@ namespace RMSoftware.ModularBot
             }
             await Context.Channel.SendMessageAsync($"Successfully added `{roles.Length}` role(s) to the CommandMGMT database for guild: `{Context.Guild.Name}`.");
         }
+
         [Command("delmgrole"), Summary("Delete a role from CommandMGMT database"), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task DelRoleFromDB(params IRole[] roles)
         {
@@ -445,6 +493,7 @@ namespace RMSoftware.ModularBot
             }
             await Context.Channel.SendMessageAsync($"Successfully removed `{roles.Length}` role(s) from the CommandMGMT database for guild: `{Context.Guild.Name}`.");
         }
+
         [Command("listmgrole",RunMode=RunMode.Async), Summary("lists the authorized management roles for the guild where the command was called."), RequireContext(ContextType.Guild), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task listmgroledbguild()
         {
@@ -512,4 +561,98 @@ namespace RMSoftware.ModularBot
 
     }
 
+    public class CoreScript
+    {
+        public CoreScript(Dictionary<string,object> dict = null)
+        {
+            if(dict == null)
+            {
+                Variables = new Dictionary<string, object>();
+            }
+            else
+            {
+                Variables = dict;
+            }
+        }
+        private Dictionary<string, object> Variables { get; set; }
+        /// <summary>
+        /// These are variable names that are defined by the custom commands class.
+        /// They are not managed by the CoreScript in any way.
+        /// </summary>
+        private readonly string[] SystemVars = { "counter", "invoker", "self", "version"};
+
+        public bool Set(string var, object value)
+        {
+            object v = null;
+            if(SystemVars.Contains(var))
+            {
+                throw (new ArgumentException("This variable cannot be modified."));
+            }
+            bool result = Variables.TryGetValue(var, out v);
+            if (!result)
+            {
+                //add the new variable.
+                Variables.Add(var, value);
+                return true;
+            }
+            else
+            {
+                Variables.Remove(var);//remove the old value.
+                Variables.Add(var, value);//add the new value.
+                return true;
+            }
+        }
+
+        public object Get(string var)
+        {
+            object v = null;
+            bool result = Variables.TryGetValue(var, out v);
+            if (!result)
+            {
+                return null;
+            }
+            else
+            {
+                return v;
+            }
+
+        }
+
+        public string ProcessVariableString(string response,INIFile CmdDB, string cmd, DiscordSocketClient client, IMessage message)
+        {
+            
+            if (response.Contains("%counter%"))
+            {
+                int counter = CmdDB.GetCategoryByName(cmd).GetEntryByName("counter").GetAsInteger() + 1;
+                CmdDB.GetCategoryByName(cmd).GetEntryByName("counter").SetValue(counter);
+                CmdDB.SaveConfiguration();
+                response = response.Replace("%counter%", counter.ToString());
+            }
+            if (response.Contains("%self%"))
+            {
+              
+                response = response.Replace("%self%", client.CurrentUser.Mention);
+            }
+            if (response.Contains("%invoker%"))
+            {
+                response = response.Replace("%invoker%", message.Author.Mention);
+            }
+            if (response.Contains("%version%"))
+            {
+                response = response.Replace("%version%", Assembly.GetCallingAssembly().GetName().Version.ToString(4));
+            }
+            //Check for use of Custom defined variables.
+            
+            foreach (Match item in Regex.Matches(response, @"%[^%]*%", RegexOptions.ExplicitCapture))
+            {
+                string vname = item.Value.Replace("%", "");
+                if(Get(vname) != null)
+                {
+                    response = response.Replace(item.Value.ToString(), Get(vname).ToString());
+                }
+            }
+            //Final variable.
+            return response;
+        }
+    }
 }
