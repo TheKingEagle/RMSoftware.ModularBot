@@ -112,7 +112,6 @@
     <Compile Include="CustomCommandProcessor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RDTClient.cs" />
     <Compile Include="Resource1.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -120,7 +119,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\RMSoftwareICO32.png" />
     <None Include="Resources\RMSoftwareICO.png" />
     <None Include="App.config" />
     <Content Include="OnStart.bcmd">
