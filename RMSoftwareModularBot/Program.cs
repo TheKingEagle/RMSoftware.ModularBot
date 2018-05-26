@@ -12,6 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using RMSoftware.IO;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using System.Runtime.ExceptionServices;
+
 namespace RMSoftware.ModularBot
 {
     class Program
@@ -21,17 +23,22 @@ namespace RMSoftware.ModularBot
         public static bool BCMDStarted = false;
         public static bool WizardDebug = false;
         public static bool discon = false;
-        public static bool InvalidSession = false;
+        public static bool CriticalError = false;
         public static bool RestartRequested = false;
+        public static Exception crashException = null;
+        public static ConsoleColor ConsoleBackgroundColor { get; set; }
+        public static ConsoleColor ConsoleForegroundColor { get; set; }
         static string auth = "";
-        public static CustomCommandManager ccmg { get; private set; }//TODO: Inject into service provider.
-        public static CmdRoleManager rolemgt { get; private set; }//TODO: Inject into service provider.
-        public static char CommandPrefix { get; private set; }//TODO: Inject into service provider.
+        static bool CRASH = false;
+        public static string[] ARGS = null;
+        public static CustomCommandManager ccmg { get; private set; }
+        public static CmdRoleManager rolemgt { get; private set; }
+        public static char CommandPrefix { get; private set; }
         public static DiscordSocketClient _client;
         static List<SocketMessage> messageQueue = new List<SocketMessage>();
-
         public static bool LOG_ONLY_MODE = false;//Set by args on start. if true, console header and resets are ignored. Should only be done if hosting the process in a UI.
         public static bool MessagesDisabled = false;
+        public static ConsoleLogWriter writer = new ConsoleLogWriter();
         /// <summary>
         /// Application's main configuration file
         /// </summary>
@@ -48,82 +55,151 @@ namespace RMSoftware.ModularBot
 
         public static int Main(string[] args)
         {
-            foreach (string item in args)
+            ARGS = args;
+            try
             {
-                if(item.ToLower() == "-log_only")
+                foreach (string item in args)
                 {
-                    LOG_ONLY_MODE = true;
+                    if (item.ToLower() == "-log_only")
+                    {
+                        LOG_ONLY_MODE = true;
+                    }
+                    if (item.ToLower() == "-crashed")
+                    {
+                        CRASH = true;
+                    }
+                    if (item.StartsWith("-auth"))
+                    {
+                        auth = item.Split(' ')[1];
+                    }
                 }
-                if (item.StartsWith("-auth"))
+                BCMDStarted = false;
+                ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome",79,45);
+                Console.Title = "RMSoftware.ModularBOT";
+                Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
+                System.Threading.Thread.Sleep(800);
+                ConsoleWriteImage(Prog.res1.Resource1.RMSoftwareICO);
+                System.Threading.Thread.Sleep(3000);
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
+                ccmg = new CustomCommandManager();
+                rolemgt = new CmdRoleManager();
+
+                AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+                //AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
+
+                SetupWizard();
+
+                if (auth.Length == 0)
                 {
-                    auth = item.Split(' ')[1];
+                    ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Initializing");
+                    writer.WriteEntry(new LogMessage(LogSeverity.Warning,"Program","Auth token not specified in parameters."));
+                    writer.WriteEntry(new LogMessage(LogSeverity.Info, "Program", "Usage: RMSoftwareModularBot.exe -auth <token string>"), ConsoleColor.Cyan);
+                    writer.WriteEntry(new LogMessage(LogSeverity.Info, "Program", "Using auth token from configuration."), ConsoleColor.Cyan);
+                    auth = Program.MainCFG.GetCategoryByName("Application").GetEntryByName("botToken").GetAsString();
+                    Thread.Sleep(1000);
+                }
+
+                //set command prefix
+
+                CommandPrefix = Convert.ToChar(MainCFG.GetCategoryByName("Application").GetEntryByName("cmdPrefix").GetAsInteger());
+                Program.LogToConsole(new LogMessage(LogSeverity.Info, "Initialize", $"Using the command prefix: {(char)CommandPrefix}"));
+                var prg = new Program();
+                prg.MainAsync(auth).GetAwaiter().GetResult();
+                Task.Run(new Action(ReadConsole));
+                SpinWait.SpinUntil(BotShutdown);//Wait until shutdown;
+                BCMDStarted = false;
+                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
+                if (CriticalError)
+                {
+                    Program.LogToConsole(new LogMessage(LogSeverity.Critical, "Session", "Failed to resume previous session.",crashException));
+                    using (FileStream fs = File.Create("CRASH.LOG"))
+                    {
+                        using (StreamWriter sw = new StreamWriter(fs))
+                        {
+                            LogMessage m = new LogMessage(LogSeverity.Critical, "Session", crashException.Message, crashException);
+                            sw.WriteLine(m.ToString());
+                            List<string> restart_args = new List<string>();
+                            restart_args.AddRange(ARGS);
+                            if (!restart_args.Contains("-crashed"))
+                            {
+                                restart_args.Add("-crashed");
+                            }
+                            ARGS = restart_args.ToArray();
+                            sw.Flush();
+
+                        }
+                    }
+                    if (!LOG_ONLY_MODE)
+                    {
+                        Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Application", "Restarting in 4 seconds..."));
+                        Thread.Sleep(1000);
+                    }
+
+                    RestartRequested = true;
+                    _client = null;
                 }
             }
-            BCMDStarted = false;
-            ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
-            Console.Title = "RMSoftware.ModularBOT";
-            Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
-            System.Threading.Thread.Sleep(800);
-            ConsoleWriteImage(Prog.res1.Resource1.RMSoftwareICO);
-            System.Threading.Thread.Sleep(3000);
-            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
-            ccmg = new CustomCommandManager();
-            rolemgt = new CmdRoleManager();
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            #if DEBUG
-            AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
-            #endif
-           
-
-            SetupWizard();
-
-            if (auth.Length == 0)
+            catch (Exception ex)
             {
-                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Initializing");
-                Console.WriteLine("You didn't specify an authorization token as parameter....");
-                Console.WriteLine("usage: RMSoftwareModularBot.exe <authToken>");
-                Console.WriteLine("No big deal though, Will use configuration instead");
-                auth = Program.MainCFG.GetCategoryByName("Application").GetEntryByName("botToken").GetAsString();
-            }
-
-            //set command prefix
-
-            CommandPrefix = Convert.ToChar(MainCFG.GetCategoryByName("Application").GetEntryByName("cmdPrefix").GetAsInteger());
-            LogToConsole("Initialize", "Using command prefix: " + CommandPrefix.ToString());
-            var prg = new Program();
-            prg.MainAsync(auth).GetAwaiter().GetResult();
-            Task.Run(new Action(ReadConsole));
-            SpinWait.SpinUntil(BotShutdown);//Wait until shutdown;
-            BCMDStarted = false;
-            ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
-            if (InvalidSession)
-            {
-                LogToConsole("Session", "Failed to resume previous session. Please restart the application.");
-                if(!LOG_ONLY_MODE)
+                crashException = ex;
+                ConsoleGUIReset(ConsoleColor.White,ConsoleColor.DarkRed,"Critical Application Error.");
+                Program.LogToConsole(new LogMessage(LogSeverity.Critical, "Exception", ex.Message, ex));
+                CriticalError = true;
+                RestartRequested = true;
+                using (FileStream fs = File.Create("CRASH.LOG"))
                 {
-                    LogToConsole("Program", "Press [Enter] twice to exit.");
-                    Console.ReadLine();
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        LogMessage m = new LogMessage(LogSeverity.Critical, "Session", ex.Message, ex);
+                        sw.WriteLine(m.ToString());
+                        List<string> restart_args = new List<string>();
+                        restart_args.AddRange(ARGS);
+                        if (!restart_args.Contains("-crashed"))
+                        {
+                            restart_args.Add("-crashed");
+                        }
+                        ARGS = restart_args.ToArray();
+                        sw.Flush();
+
+                    }
                 }
-                _client = null;
+                using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
+                        sw.Flush();
+
+                    }
+                }
             }
             if (RestartRequested)
             {
                 Process p = new Process();
-                p.StartInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName);
+                string flattened = "";
+                foreach (string item in ARGS)
+                {
+                    flattened += item + " ";
+                }
+                p.StartInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, flattened);
                 ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
-                LogToConsole("Program", "Restarting the bot... this console window will close in 3 seconds.");
+                writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 3..."));//using direct writer to try and prevent blanks.
                 Thread.Sleep(1000);
                 ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
-                LogToConsole("Program", "Restarting the bot... this console window will close in 2 seconds.");
+                writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 2..."));
+
                 Thread.Sleep(1000);
                 ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
-                LogToConsole("Program", "Restarting the bot... this console window will close in 1 second.");
+                writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 1..."));
+
                 Thread.Sleep(1000);
                 p.Start();
                 return 0x00000c4;
             }
-            LogToConsole("Program", "Closing...");
-            if (!InvalidSession)
+            writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Termination."));
+
+            if (!CriticalError)
             {
 
                 return 4007;//NOT OKAY
@@ -135,6 +211,12 @@ namespace RMSoftware.ModularBot
             }
         }
 
+        private static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
+        {
+            writer.WriteEntry(new LogMessage(LogSeverity.Critical, "FirstERR", e.Exception.ToString()));
+            Console.ReadLine();
+        }
+
         static void ReadConsole()
         {
             ulong chID = 0;
@@ -144,7 +226,15 @@ namespace RMSoftware.ModularBot
                 {
                     break;
                 }
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write(">");//set cursor: 1,top & add black color (default)
+                
+                Console.BackgroundColor = ConsoleBackgroundColor;
+                Console.ForegroundColor = ConsoleForegroundColor;
                 string input = Console.ReadLine();
+                Console.SetCursorPosition(0, Console.CursorTop-1);
+                writer.WriteEntry(new LogMessage(LogSeverity.Info, "Console", input));
                 if (discon)
                 {
                     if(string.IsNullOrWhiteSpace(input))
@@ -171,14 +261,16 @@ namespace RMSoftware.ModularBot
                 }
                 if (input.ToLower() == "bot.disablecmd")
                 {
-                    LogToConsole("Console", "Disabled message processing.");
+                    Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
+
                     _client.SetStatusAsync(UserStatus.DoNotDisturb);
                     _client.SetGameAsync("");
                     MessagesDisabled = true;
                 }
                 if (input.ToLower() == "bot.enablecmd")
                 {
-                    LogToConsole("Console", "Enabled message processing.");
+                    Program.LogToConsole(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
+
                     _client.SetStatusAsync(UserStatus.Online);
                     _client.SetGameAsync("READY!");
                     MessagesDisabled = false;
@@ -186,7 +278,8 @@ namespace RMSoftware.ModularBot
                 if (input.ToLower().StartsWith("bot.status"))
                 {
                     string status = input.Remove(0, 10).Trim();
-                    LogToConsole("Console", "Status changed.");
+                    Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Client", "client status changed."));
+
                     _client.SetGameAsync(status);
                 }
                 if (input.StartsWith("setgch"))
@@ -194,7 +287,8 @@ namespace RMSoftware.ModularBot
                     input = input.Remove(0, 6).Trim();
                     if (!ulong.TryParse(input, out chID))
                     {
-                        LogToConsole("Console", "Malformed ULONG");
+                        Program.LogToConsole(new LogMessage(LogSeverity.Error, "Console", "Invalid ULONG."));
+
                         continue;
                     }
                 }
@@ -204,10 +298,19 @@ namespace RMSoftware.ModularBot
                     SocketTextChannel Channel = _client.GetChannel(chID) as SocketTextChannel;
                     if (Channel == null)
                     {
-                        LogToConsole("Console", "This channel is not valid.");
+                        Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Console", "Invalid channel."));
+
                         continue;
                     }
                     Channel.SendMessageAsync(input);
+                }
+                if (input.StartsWith("setvar"))
+                {
+                    input = input.Remove(0, 6).Trim();
+                    string varname = input.Split(' ')[0];
+                    input = input.Remove(0,varname.Length);
+                    input = input.Trim();
+                    ccmg.scriptService.Set(varname, input);
                 }
 
             }
@@ -241,7 +344,7 @@ namespace RMSoftware.ModularBot
                 Console.WriteLine("*Only if your CMD console will let you... If not, that sucks... You can painfully type it in also...");
                 Console.Write("> ");
                 string conf_Token = Console.ReadLine();
-                //TODO: Uncomment when needed.
+                
                 if (!WizardDebug)
                 {
                     MainCFG.CreateCategory("Application");
@@ -319,25 +422,40 @@ namespace RMSoftware.ModularBot
             }
         }
 
-        #if DEBUG
-        private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
-        {
-            
-            LogToConsole("Exception", e.Exception.ToString());
-            
-        }
-        #endif
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Exception ex = e.ExceptionObject as Exception;
-            LogToConsole("CritERR", ex.Message);
-            ConsoleColor Last = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.Gray;
-            LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
-            Console.ForegroundColor = Last;
-        }
+            CriticalError = true;
+            RestartRequested = true;
+            crashException = (Exception)e.ExceptionObject;
+            using (FileStream fs = File.Create("CRASH.LOG"))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    LogMessage m = new LogMessage(LogSeverity.Critical, "Session", crashException.Message, crashException);
+                    sw.WriteLine(m.ToString());
+                    List<string> restart_args = new List<string>();
+                    restart_args.AddRange(ARGS);
+                    if (!restart_args.Contains("-crashed"))
+                    {
+                        restart_args.Add("-crashed");
+                    }
+                    ARGS = restart_args.ToArray();
+                    sw.Flush();
 
+                }
+            }
+            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+
+                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ((Exception)e.ExceptionObject).ToString());
+                    sw.Flush();
+
+                }
+            }
+        }
         static Func<bool> BotShutdown = delegate ()
         {
             return discon;
@@ -356,8 +474,8 @@ namespace RMSoftware.ModularBot
                 return;
             }
             Console.Clear();
-            Console.SetWindowSize(144, 32);
-            Console.SetBufferSize(144, 256);
+            Console.SetWindowSize(144, 32);//Seems to be a reasonable console size.
+            Console.SetBufferSize(144, 512);//Extra buffer room just because why not.
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
             Console.Clear();
@@ -372,6 +490,9 @@ namespace RMSoftware.ModularBot
             DecorateBottom();
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
+
+            ConsoleBackgroundColor = back;
+            ConsoleForegroundColor = fore;
         }
 
         /// <summary>
@@ -407,6 +528,7 @@ namespace RMSoftware.ModularBot
             DecorateBottom();
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
+            ConsoleBackgroundColor = back;
         }
 
         private static void DecorateTop()
@@ -447,18 +569,55 @@ namespace RMSoftware.ModularBot
             }
         }
 
-        public static void LogToConsole(string category, string logText)
+        public static void LogToConsole(LogMessage msg)
         {
             if(!LOG_ONLY_MODE)
             {
-
-                LogMessage l = new LogMessage(LogSeverity.Info, category, logText);
-                Console.WriteLine(l);
+                
+                writer.WriteEntry(msg);
             }
             else
             {
-                LogMessage l = new LogMessage(LogSeverity.Info, category, logText);
-                Console.WriteLine(JsonConvert.SerializeObject(l));
+                Console.WriteLine(JsonConvert.SerializeObject(msg));
+            }
+            if (msg.Exception != null)
+            {
+                using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + msg.ToString());
+                        sw.Flush();
+
+                    }
+                }
+            }
+        }
+
+        public static void LogToConsole(LogMessage msg,ConsoleColor entryColor)
+        {
+            if (!LOG_ONLY_MODE)
+            {
+
+                writer.WriteEntry(msg,entryColor);
+            }
+            else
+            {
+                Console.WriteLine(JsonConvert.SerializeObject(msg));
+            }
+            if (msg.Exception != null)
+            {
+                using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + msg.ToString());
+                        sw.Flush();
+
+                    }
+                }
             }
         }
 
@@ -490,7 +649,8 @@ namespace RMSoftware.ModularBot
                         !Program.MainCFG.GetCategoryByName("Application").CheckForEntry("botChannel") ||
                         !Program.MainCFG.GetCategoryByName("Application").CheckForEntry("cmdPrefix"))
                     {
-                        LogToConsole("Warning", "The configuration file was missing one or more required entries. Entering setup wizard.");
+                        Program.LogToConsole(new LogMessage(LogSeverity.Warning, "Warning", "Invalid or missing config. Reset all settings."));
+
                         File.Delete("rmsftModBot.ini");
                         Program.MainCFG = new INIFile("rmsftModBot.ini");//Re-write from scratch.
                         return true;
@@ -504,7 +664,7 @@ namespace RMSoftware.ModularBot
 
         #region Console pixel art - Courtesy of Stackoverflow.com
         static int[] cColors = { 0x000000, 0x000080, 0x008000, 0x008080, 0x800000, 0x800080, 0x808000, 0xC0C0C0, 0x808080, 0x0000FF, 0x00FF00, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFFFF00, 0xFFFFFF };
-        private static bool term;
+        
 
         public static void ConsoleWritePixel(System.Drawing.Color cValue)
         {
@@ -569,12 +729,12 @@ namespace RMSoftware.ModularBot
         public async Task LoadModules()
         {
             cmdsvr = new CommandService();
-            serviceCollection = serviceCollection.AddSingleton(_client);
-            serviceCollection = serviceCollection.AddSingleton(cmdsvr);
+            
+           
 
             foreach (string item in Directory.EnumerateFiles("CMDModules","*.dll",SearchOption.TopDirectoryOnly))
             {
-                LogToConsole("Modules", $"Adding commands from module library: {item}");
+                LogToConsole(new LogMessage(LogSeverity.Info,"Modules", $"Adding commands from module library: {item}"),ConsoleColor.DarkGreen);
                 try
                 {
                     Assembly asmb = Assembly.LoadFile(Path.GetFullPath(item));
@@ -586,7 +746,7 @@ namespace RMSoftware.ModularBot
                         foreach (INIEntry entryitem in serviceFile.GetCategoryByName("Services").Entries)
                         {
                             string typename = entryitem.GetAsString();
-                            LogToConsole("Modules", $"Injecting service: {typename} from {asmb.GetName().Name}");
+                            LogToConsole(new LogMessage(LogSeverity.Verbose,"Modules", $"Injecting service: {typename} from {asmb.GetName().Name}"));
                             serviceCollection = serviceCollection.AddSingleton(asmb.GetType(typename));
                         }
                     }
@@ -594,17 +754,31 @@ namespace RMSoftware.ModularBot
                 }
                 catch (Exception ex)
                 {
-                    LogToConsole("CritERR", ex.Message);
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR",ex.Message,ex));
+
+                    using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                    {
+                        using (StreamWriter sw = new StreamWriter(fs))
+                        {
+
+                            sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
+                            sw.Flush();
+
+                        }
+                    }
                 }
             }
+            serviceCollection = serviceCollection.AddSingleton(_client);
+            serviceCollection = serviceCollection.AddSingleton(writer);
+            serviceCollection = serviceCollection.AddSingleton(cmdsvr);
             services = serviceCollection.BuildServiceProvider();
             //check cfg for disabled core.
             if(MainCFG.GetCategoryByName("Application").CheckForEntry("disableCore"))
             {
                 if(MainCFG.GetCategoryByName("Application").GetEntryByName("disableCore").GetAsBool())
                 {
-                    LogToConsole("Warning", "RMSoftware.ModularBOT CORE was disabled in the configuration.");
-                    LogToConsole("Warning", "You will not be able to manage existing commands, nor add new ones, via discord.");
+                    LogToConsole(new LogMessage(LogSeverity.Warning,"Program", "RMSoftware.ModularBOT CORE was disabled in the configuration."));
+                    LogToConsole(new LogMessage(LogSeverity.Warning,"Program", "You will not be able to manage existing commands, nor add new ones, via discord."));
                     return;//DO NOT LOAD CORE IF THIS IS TRUE.
                 }
             }
@@ -613,33 +787,71 @@ namespace RMSoftware.ModularBot
 
         public async Task MainAsync(string token)
         {
-            ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Application Running");
-            _client = new DiscordSocketClient();
-            _client.Log += Log;
-            serviceCollection = new ServiceCollection();
-            
-            _client.Ready += _ClientReady;
-            _client.Connected += _client_Connected;
-            _client.MessageReceived += _client_MessageReceived;
-            _client.Disconnected += _client_Disconnected;
-            
-            await LoadModules();//ADD CORE AND EXTERNAL MODULES
-            await _client.LoginAsync(TokenType.Bot, token);
-            await _client.StartAsync();            
+            try
+            {
+                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Application Running");
+
+                _client = new DiscordSocketClient();
+                _client.Log += Log;
+                serviceCollection = new ServiceCollection();
+
+                _client.Ready += _ClientReady;
+                _client.Connected += _client_Connected;
+                _client.MessageReceived += _client_MessageReceived;
+                _client.Disconnected += _client_Disconnected;
+
+                await LoadModules();//ADD CORE AND EXTERNAL MODULES
+                await _client.LoginAsync(TokenType.Bot, token);
+                await _client.StartAsync();
+            }
+            catch (Exception ex)
+            {
+                CriticalError = true;
+                RestartRequested = true;
+                crashException = ex;
+                using (FileStream fs = File.Create("CRASH.LOG"))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        LogMessage m = new LogMessage(LogSeverity.Critical, "Exception", crashException.Message, crashException);
+                        sw.WriteLine(m.ToString());
+                        List<string> restart_args = new List<string>();
+                        restart_args.AddRange(ARGS);
+                        if (!restart_args.Contains("-crashed"))
+                        {
+                            restart_args.Add("-crashed");
+                        }
+                        ARGS = restart_args.ToArray();
+                        sw.Flush();
+                    }
+                }
+                using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
+                        sw.Flush();
+
+                    }
+                }
+            }
+                   
         }
 
         private Task _client_Connected()
         {
             StartTime = DateTime.Now;
-            LogToConsole("Uptime", "Reset uptime to ALL zero.");
+            LogToConsole(new LogMessage(LogSeverity.Info,"Uptime", "Reset uptime to ALL zero."));
+            Console.Title = "RMSoftware.ModularBOT -> " + _client.CurrentUser.Username + " | Connected to " + _client.Guilds.Count + " guilds.";
             return Task.Delay(1);
         }
 
         private Task _client_Disconnected(Exception arg)
         {
-            LogToConsole("Session", "Disconnected: "+ arg.Message);
+            LogToConsole(new LogMessage(LogSeverity.Warning,"Session", "Disconnected: "+ arg.Message,arg));
             Console.Title = "RMSoftware.ModularBot - Disconnected";
-            LogToConsole("Uptime", "The client is disconnected.");
+            LogToConsole(new LogMessage(LogSeverity.Info,"Uptime", "The client is disconnected."));
             
             return Task.Delay(3);
         }
@@ -671,8 +883,16 @@ namespace RMSoftware.ModularBot
                                 if (!line.StartsWith(@"\\"))
                                 {
                                     IGuildChannel ch = _client.GetChannel(id) as IGuildChannel;
-                                    line = line.Replace("%p_", CommandPrefix.ToString());
-                                    if (!line.StartsWith(CommandPrefix.ToString()))
+                                    //line = line.Replace("%p_", CommandPrefix.ToString());
+                                    if (CRASH)
+                                    {
+                                        
+                                        LogToConsole(new LogMessage(LogSeverity.Critical,"Program", "The program was auto-restarted due to a crash. Please see CRASH.LOG for details on what happened."));
+                                        
+                                        await ((IMessageChannel)ch).SendMessageAsync("**WARNING:** `The bot was auto-restarted due to a crash. Please see CRASH.LOG for details on what happened.`");
+                                        CRASH = false;//don't make it happen more than once pls.
+                                    }
+                                    if (!line.StartsWith("%p_"))
                                     {
 
                                         await ((IMessageChannel)ch).SendMessageAsync(line);
@@ -680,12 +900,12 @@ namespace RMSoftware.ModularBot
                                     else
                                     {
 
-                                        
-                                        
+
+                                        line = line.Replace("%p_", CommandPrefix.ToString());
                                         if (await ccmg.Process(new PsuedoMessage(line, _client.CurrentUser, ch, MessageSource.User)))
                                         {
-                                            LogToConsole("OnStart", line);
-                                            LogToConsole("OnStart", "CustomCMD Success...");
+                                            LogToConsole(new LogMessage(LogSeverity.Info,"OnStart", line));
+                                            LogToConsole(new LogMessage(LogSeverity.Info, "OnStart", "CustomCMD Success..."));
                                             continue;
                                         }
                                         //Damn, I can't be sassy here... If it was a command, but not a ccmg command, then try the context for modules. If THAT didn't work
@@ -694,36 +914,32 @@ namespace RMSoftware.ModularBot
                                         // Execute the command. (result does not indicate a return value, 
                                         // rather an object stating if the command executed successfully)
                                         var result = await cmdsvr.ExecuteAsync(context, 1, services);
-                                        LogToConsole("OnStart", line);
-                                        LogToConsole("OnStart", result.ToString());
+                                        LogToConsole(new LogMessage(LogSeverity.Info,"OnStart", line));
+                                        LogToConsole(new LogMessage(LogSeverity.Info,"OnStart", result.ToString()));
                                     }
-                                    await Task.Delay(1500);
+                                    await Task.Delay(250);
                                 }
                             }
                         }
                     }
                     BCMDStarted = true;
                     await _client.SetGameAsync("READY!");
-                    LogToConsole("TaskMgr", "Task is complete.");
+                    LogToConsole(new LogMessage(LogSeverity.Info,"TaskMgr", "Task is complete."));
                     await _client.SetStatusAsync(UserStatus.Online);
-                    LogToConsole("TaskMgr", "Running Message Queue - task");
+                    LogToConsole(new LogMessage(LogSeverity.Info,"TaskMgr", "Running Message Queue - task"));
                     foreach (var item in messageQueue)
                     {
                         
                         await _client_MessageReceived(item);
                         await Task.Delay(500);
                     }
-                    LogToConsole("TaskMgr", "Task is complete");
+                    LogToConsole(new LogMessage(LogSeverity.Info,"TaskMgr", "Task is complete"));
                 }
             }
             catch (Exception ex)
             {
                 BCMDStarted = false;
-                LogToConsole("CritERR", ex.Message);
-                ConsoleColor Last = Console.ForegroundColor;
-                Console.ForegroundColor = ConsoleColor.Gray;
-                LogToConsole("ExStack\r\n\r\n", ex.StackTrace);
-                Console.ForegroundColor = Last;
+                LogToConsole(new LogMessage(LogSeverity.Error,"CritERR", ex.Message,ex));
 
             }
         }
@@ -744,13 +960,13 @@ namespace RMSoftware.ModularBot
             {
                 if (item.Mention == _client.CurrentUser.Mention)
                 {
-                    LogToConsole("Mention", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content);
+                    LogToConsole(new LogMessage(LogSeverity.Info,"Mention", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content));
                 }
             }
             //DEBUG: output ! prefixed messages to console.
             if (arg.Content.StartsWith(CommandPrefix.ToString()))
             {
-                LogToConsole("Command", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content);
+                LogToConsole(new LogMessage(LogSeverity.Info,"Command", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content));
 
             }
 
@@ -801,7 +1017,7 @@ namespace RMSoftware.ModularBot
         {
             if(!LOG_ONLY_MODE)
             {
-                Console.WriteLine(msg.ToString());
+                LogToConsole(msg);
             }
             else
             {
@@ -810,8 +1026,24 @@ namespace RMSoftware.ModularBot
             if (msg.Message == "Failed to resume previous session")
             {
                 _client.StopAsync();
-                InvalidSession = true;
+                _client = null;
+                crashException = new Exception("Failed to resume previous session. See ERRORS.LOG for any additional information.");
+                CriticalError = true;
                 discon = true;
+                Thread.Sleep(3000);
+            }
+            if(msg.Exception != null)
+            {
+                using (FileStream fs = new FileStream("ERRORS.LOG",FileMode.Append))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy")+"   "+msg.ToString());
+                        sw.Flush();
+
+                    }
+                }
             }
             return Task.Delay(0);
         }
@@ -855,8 +1087,8 @@ namespace RMSoftware.ModularBot
                 catch (Exception ex)
                 {
                     exceptions.Add(ex);
-                    Program.LogToConsole("CmdWARN", ex.Message);
-                    Program.LogToConsole("CmdINFO", "Retrying " + (maxAttemptCount-attempted) + " more time(s)");
+                    Program.LogToConsole(new LogMessage(LogSeverity.Warning,"API_RETRY", ex.Message,ex));
+                    Program.LogToConsole(new LogMessage(LogSeverity.Warning,"API_RETRY", "Retrying " + (maxAttemptCount-attempted) + " more time(s)"));
                 }
             }
             throw new AggregateException(exceptions);
