@@ -1,6 +1,8 @@
 # {p}addcmd Usage
 * Normal usage: `{p}addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Action>`
 * This command is restricted to users with a DevCommand named role only.
+* Please note: {p} defines a custom prefix you will asign for your bot when you run initial setup.
+* Prefixes are One character, usually a symbol of some kind.
 ### Action Parameter
 The action can be several things, Most of the time, it can be a combination of text and emotes. More advanced things are covered later.
 ### Variables, Flags & More.
