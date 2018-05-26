@@ -9,6 +9,7 @@ using Discord;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using Discord.Commands;
+using System.Text.RegularExpressions;
 
 namespace RMSoftware.ModularBot
 {
@@ -19,6 +20,7 @@ namespace RMSoftware.ModularBot
     {
 
         INIFile CmdDB = new INIFile("commands.ini");
+        public CoreScript scriptService = new CoreScript();
         /// <summary>
         /// Adds a command to the bot.
         /// </summary>
@@ -32,9 +34,13 @@ namespace RMSoftware.ModularBot
                 return "That command already exists!";
             }
             CmdDB.CreateCategory(Command.Replace(Program.CommandPrefix.ToString(), ""));
+            if(Action.Contains("%counter%"))
+            {
+                CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "counter", 0);
+            }
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "action", Action);
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "restricted", Restricted);
-            return "Command added to the DB. Please remember to save with `!save`";
+            return "Command added to the DB. Please remember to save.";
         }
         public string EditCommand(string Command, string newAction, bool Restricted)
         {
@@ -44,7 +50,7 @@ namespace RMSoftware.ModularBot
             }
             CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction);
             CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").SetValue(Restricted);
-            return "Command edited. Please remember to save with `!save`";
+            return "Command edited. Please remember to save.";
         }
 
         public string AddCommand(string Command, string Action, bool Restricted, ulong guildID)
@@ -57,7 +63,7 @@ namespace RMSoftware.ModularBot
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "action", Action);
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "restricted", Restricted);
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "guildID", guildID);
-            return "Command added to the DB. Please remember to save with `!save`";
+            return "Command added to the DB. Please remember to save.";
         }
 
         public void Save()
@@ -85,8 +91,8 @@ namespace RMSoftware.ModularBot
             try
             {
                 
-                string cmd = content.Substring(argPos).Split(' ')[0];//get the command bit.
-                if(cmd.EndsWith("TTS"))
+                string cmd = content.Substring(argPos).Split(' ')[0].ToLower();//get the command bit. To lowercase because it doesnt matter.
+                if(cmd.EndsWith(".tts"))
                 {
                     SocketGuildUser a = arg.Author as SocketGuildUser;
                     if(a == null)
@@ -96,7 +102,7 @@ namespace RMSoftware.ModularBot
                     if(Program.rolemgt.CheckUserRole(a))
                     {
                         IsTTS = true;
-                        cmd = cmd.Remove(cmd.Length - 3);
+                        cmd = cmd.Remove(cmd.Length - 4);
                     }
                     else
                     {
@@ -104,7 +110,7 @@ namespace RMSoftware.ModularBot
                     }
                 }
                 string parameters = content.Replace(Program.CommandPrefix.ToString()+""+cmd, "").Trim();
-
+                
                 //find the command in the file.
 
                 if (CmdDB.CheckForCategory(cmd))
@@ -153,29 +159,18 @@ namespace RMSoftware.ModularBot
                         }
                     }
 
-                    //todo: Add exec commands to allow the program to execute methods in expansions
-                    //perform the action with specified parameters if needed
-
-                    //response sample: splitparam 3 | You hug {0}, {1}, and {2}, at the same time!
-                    //response sample You hug {params}, for a long time
-                    //resp EXEC: EXEC modname.dll ns.class mthdname <args split with spaces>
+                   
                     string response = CmdDB.GetCategoryByName(cmd).GetEntryByName("action").GetAsString();
+                    //Counter support!
+                    response = scriptService.ProcessVariableString(response, CmdDB, cmd, Program._client, arg);
+                    response = response.Replace("{params}", parameters);//Uses all parameters.
+                    List<string> individualParams = Regex.Matches(parameters, @"[\""].+?[\""]|[^ ]+").Cast<Match>().Select(m => m.Value).ToList();//selects individual parameters.
+                    //Count through all individual parameters and replace {i} with that parameter (Without quotations)
+                    for (int i = 0; i < individualParams.Count; i++)
+                    {
+                        response = response.Replace("{"+i+"}", individualParams[i].Replace("\"",""));
+                    }
 
-                    if (response.StartsWith("splitparam"))
-                    {
-                        string[] responsearray = CmdDB.GetCategoryByName(cmd).GetEntryByName("action").GetAsString().Split('|');
-                        int paramcount = int.Parse(responsearray[0].Trim().Split(' ')[1]);
-                        string[] paramarray = parameters.Split(' ');
-                        response = responsearray[1].Trim();
-                        for (int i = 0; i < paramcount; i++)
-                        {
-                            response = response.Replace("{" + i + "}", paramarray[i]);
-                        }
-                    }
-                    else
-                    {
-                        response = response.Replace("{params}", parameters);
-                    }
                     if (response.StartsWith("EXEC"))
                     {
                         string[] resplit = response.Replace("EXEC ", "").Split(' ');
@@ -233,7 +228,7 @@ namespace RMSoftware.ModularBot
                     RequestOptions op = new RequestOptions();
                     op.RetryMode = RetryMode.AlwaysRetry;
                     op.Timeout = 256;
-                    await Retry.Do(async () => await arg.Channel.SendMessageAsync(response.Replace("%appv%", "v" + version).Trim(),IsTTS), TimeSpan.FromMilliseconds(140));
+                    await Retry.Do(async () => await arg.Channel.SendMessageAsync(response.Trim(),IsTTS), TimeSpan.FromMilliseconds(140));//we want to allow for custom variables.
 
                     
                     successful = true;
@@ -251,9 +246,7 @@ namespace RMSoftware.ModularBot
 
                 await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to some API related thing I can't sort out right now... please forgive me... (You can try that again if you want...)");
                 successful = false;
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("DevBOT.Exception: " + ex.ToString());
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                 return false;
             }
             catch (Exception ex)
@@ -261,9 +254,7 @@ namespace RMSoftware.ModularBot
 
                 await arg.Channel.SendMessageAsync("There was a problem performing this command. See bot console for info");
                 successful = false;
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("DevBOT.Exception: " + ex.ToString());
-                Console.ForegroundColor = ConsoleColor.White;
+                Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                 return false;
             }
         }
