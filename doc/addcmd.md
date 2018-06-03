@@ -102,7 +102,7 @@ If you are looking for timing, please be aware, that the script adds a deliberat
 ECHO <message or command>
 SETVAR <VariableName> <Value>
 BOTSTATUS <TEXT>
-BOTGOLIVE <TWITCH_USERNAME> <TEXT>
+BOTGOLIVE <TWITCH_URL> <TEXT>
 CMD <CommandName>
 ```
 * CMD notes: This will execute a command without writing the command out to the channel (Example: `!about`). However, the executed command will output results as required. (The same way OnStart.BCMD runs.
