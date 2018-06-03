@@ -1,5 +1,5 @@
 # EXEC &amp; CLI_EXEC
-
+#### Please note, for all these examples, we will use `!` as a prefix.
 * EXEC Usage: `!addcmd excCmd false false EXEC <dllName>.dll <Namespace>.<Class> <FunctionName> <{params}>`
 	* DllName: The name of the DLL file located in the bot's "ext" folder (in the working directory of your bot).
 	* Namespace, Class, and FunctionName: These parameters should be found in a readme of the dll.
