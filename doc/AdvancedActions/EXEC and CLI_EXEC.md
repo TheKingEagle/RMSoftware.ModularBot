@@ -1,4 +1,4 @@
-### EXEC &amp; CLI_EXEC
+# EXEC &amp; CLI_EXEC
 
 * EXEC Usage: `!addcmd excCmd false false EXEC <dllName>.dll <Namespace>.<Class> <FunctionName> <{params}>`
 	* DllName: The name of the DLL file located in the bot's "ext" folder (in the working directory of your bot).
