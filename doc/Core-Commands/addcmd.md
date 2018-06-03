@@ -4,6 +4,7 @@
 * This command is restricted to users with a DevCommand named role only.
 * Prefixes are One character, usually a symbol of some kind.
 
+### Parameter breakdown
 * **\<cmdName>**
   * A small command name. You do not specify the prefix to the name when adding commands. 
 
