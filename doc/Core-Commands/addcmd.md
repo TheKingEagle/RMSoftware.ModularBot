@@ -1,6 +1,6 @@
 # Core Command: `addcmd`
-#### Please note {p} defines a custom prefix you will asign for your bot when you run initial setup. We will be using `!` as a command prefix for future examples.
-* Normal usage: `{p}addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Action>`
+#### Please note: You will assign a custom prefix for your bot when you run initial setup. We will be using `!` as a command prefix for all future examples.
+* Normal usage: `!addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Action>`
 * This command is restricted to users with a DevCommand named role only.
 * Prefixes are One character, usually a symbol of some kind.
 
