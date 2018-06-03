@@ -25,7 +25,7 @@ Addcmd allows for one ACTION such as:
 These will not output a message directly, but they perform tasks that once executed, the tasks may output messages instead.
 
 ## Variables, Flags & More.
-Items in the <Response> or <Action parameters> segment of the command, you can specify variables and flags that will output a specific value.
+Items in the \<Response> or \<Action parameters> segment of the command, you can specify variables and flags that will output a specific value.
 * `{params}` will take all text typed after the original command and output it into the response/action.
 * `{n}` will take 'n' parameter from the text. Words wrapped in Quotes will count as one parameter.
 * `%self%` will output the bot's mention.
