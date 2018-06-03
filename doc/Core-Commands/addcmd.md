@@ -35,6 +35,10 @@ True/false. If true, Only users with one or more roles added to the bot's Comman
 ### boolLockToGuild
 True/false. If true, The command will only be available on the guild it was created from.
 
-# Special Command Actions
+# Advanced Actions
+Addcmd allows for one ACTION such as:
 * [`EXEC` and `CLI_EXEC`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/ExternalLibs.md)
 * [`SCRIPT`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/scripting.md)
+
+### Example Usage: `!addcmd MyCommand false false <ACTION> <Action parameters>`
+These will not output a message directly, but they perform tasks that once executed, the tasks may output messages instead.
