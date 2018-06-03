@@ -1,7 +1,7 @@
-# {p}addcmd Usage
+# addcmd Usage
+#### Please note {p} defines a custom prefix you will asign for your bot when you run initial setup. We will be using `!` as a command prefix for future examples.
 * Normal usage: `{p}addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Action>`
 * This command is restricted to users with a DevCommand named role only.
-* Please note: {p} defines a custom prefix you will asign for your bot when you run initial setup.
 * Prefixes are One character, usually a symbol of some kind.
 
 ### Action Parameter
@@ -18,7 +18,7 @@ Within the action parameter, you can specify flags, parameters and more.
 
 At this time, you can set temporary `%flags%` by using the console command `setvar <variableName-NoPercents> <value>`. Please note, these are case sensitive.
 
-Example usage for a bot using `!` as a prefix.: `!addcmd hug false false %invoker% hugs {params} for a long time!`
+Example usage: `!addcmd hug false false %invoker% hugs {params} for a long time!`
 Command: `!hug @TheBotFather`
 Output: `@GordonTrollman hugs @TheBotFather for a long time!`
 
