@@ -37,4 +37,4 @@ True/false. If true, The command will only be available on the guild it was crea
 
 # Advanced command actions
 * [EXEC & CLI_EXEC](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/EXEC-and-CLI_EXEC.md)
-* [Scripting suppor](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/scripting.md)
+* [Scripting support](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/scripting.md)
