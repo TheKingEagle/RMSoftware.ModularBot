@@ -105,6 +105,6 @@ BOTSTATUS <TEXT>
 BOTGOLIVE <TWITCH_URL> <TEXT>
 CMD <CommandName>
 ```
-* CMD notes: This will execute a command without writing the command out to the channel (Example: `!about`). However, the executed command will output results as required. (The same way OnStart.BCMD runs.
+* CMD notes: This will execute a command without writing the command out to the channel (Example: `!about`). However, the executed command will output results as required. (The same way OnStart.BCMD runs.)
 * You will not be able to execute user-restricted or guild-restricted commands with this feature.
 * All of these commands are subject to discord's API rate limits. Please be respectful of this.
