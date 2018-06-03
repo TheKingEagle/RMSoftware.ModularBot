@@ -1,4 +1,4 @@
-# SCRIPT support
+# Advanced Features: `SCRIPT` Action
 #### Please note, We will use `!` as a command prefix for these examples.
 #### Please note: This is for a future version of RMSoftware.ModularBOT. The code has not yet been updated for this feature yet.
 ModularBOT after version 1.3.689 supports this tag.
