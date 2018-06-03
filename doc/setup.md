@@ -7,6 +7,8 @@ You will be required to make a discord application.
 2. Click *New App*
 3. Choose an app name, (optional) description, and (Optional) app icon
 4. Click *Create App*
+
+##### Screenshots
 ![App Creator](http://cdn.rms0.org/img/NewApp1.png)
 ![App Creator](http://cdn.rms0.org/img/NewApp2.png)
 
@@ -15,6 +17,7 @@ You will be required to make a discord application.
 2. You choose whether or not to make your app's bot public, but leave OAuth grant unchecked.
 3. To get your bot user's token, click *Click to Reveal* token. You can regenerate the token if needed, but you will be required to update the ModularBot app config later.
 
+##### Screenshots
 ![Bot User](http://cdn.rms0.org/img/NewApp3.png)
 ![Bot User](http://cdn.rms0.org/img/NewApp4.png)
 
@@ -24,6 +27,7 @@ You will be required to make a discord application.
 3. Choose the guild you want to add the bot to.
 4. Click *Authorize*
 
+##### Screenshots
 ![Bot User](http://cdn.rms0.org/img/NewApp5.png)
 ![Bot User](http://cdn.rms0.org/img/NewApp6.png)
 
