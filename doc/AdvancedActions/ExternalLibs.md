@@ -15,7 +15,8 @@ Basic info: These sub commands allow you to execute a static C# method from a dl
 CLI_EXEC is pretty much the same thing, but the bot adds another internal parameter to provide more control to the bot itself.
 * Please refer to the DLL readme to get the EXEC Type for the specified function.
 
-
+## TODO:
+* Documentation will soon be available for creating a library that can be called using these EXEC and CLI_EXEC methods.
 ## Sample EXEC Command DLL ReadMe
 
 ```
