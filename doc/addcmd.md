@@ -91,7 +91,8 @@ USAGE (using prefix `!` for example):
 !addcmd advancedscream false false SCRIPT ```DOS
 ECHO SCREAMING HARD CORE! AHHHHHHHHHHHHHHHHHHHH!
 SETVAR var1 I can do variables too!
-ECHO %var1% -- Isn't that amazing?```
+ECHO %var1% -- Isn't that amazing?
+­```
 ```
 ![Image of output](https://img.rms0.org/persist/gitimg/modu1.png)
 
