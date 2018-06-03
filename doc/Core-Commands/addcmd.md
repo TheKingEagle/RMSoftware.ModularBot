@@ -1,6 +1,6 @@
 # Core Command: `addcmd`
 #### Please note: You will assign a custom prefix for your bot when you run initial setup. We will be using `!` as a command prefix for all future examples.
-* Normal usage: `!addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Action>`
+* Normal usage: `!addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Response>`
 * This command is restricted to users with a DevCommand named role only.
 * Prefixes are One character, usually a symbol of some kind.
 
@@ -13,10 +13,10 @@
 * **\<bool LockToGuild>**
   * True/false. If true, The command will only be available on the guild it was created from.
 
-* **\<Action>**
+* **\<Response>**
   * The action can be several things, Most of the time, it can be a combination of text and emotes. More advanced things are covered later.
   
-# Advanced Actions
+# Advanced Response Actions
 Addcmd allows for one ACTION such as:
 * [`EXEC` and `CLI_EXEC`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/ExternalLibs.md)
 * [`SCRIPT`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/scripting.md)
@@ -25,7 +25,7 @@ Addcmd allows for one ACTION such as:
 These will not output a message directly, but they perform tasks that once executed, the tasks may output messages instead.
 
 ## Variables, Flags & More.
-You can specify variables and flags that will output a specific value.
+Items in the <Response> or <Action parameters> segment of the command, you can specify variables and flags that will output a specific value.
 * `{params}` will take all text typed after the original command and output it into the response/action.
 * `{n}` will take 'n' parameter from the text. Words wrapped in Quotes will count as one parameter.
 * `%self%` will output the bot's mention.
