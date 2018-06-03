@@ -5,7 +5,7 @@
 * Prefixes are One character, usually a symbol of some kind.
 
 * **\<cmdName>**
-  * A small command name, The bot uses a custom prefix (as noted by {p}), but you do not need to specify the prefix when adding command. 
+  * A small command name. You do not specify the prefix to the name when adding commands. 
 
 * **\<bool CommandManagersOnly>**
   * True/false. If true, Only users with one or more roles added to the bot's CommandManagement database, may access the command.
