@@ -1,11 +1,14 @@
 # Advanced Features: `EXEC` and `CLI_EXEC` External Libraries
 #### Please note, for all these examples, we will use `!` as a prefix.
-* EXEC Usage: `!addcmd excCmd false false EXEC <dllName>.dll <Namespace>.<Class> <FunctionName> <{params}>`
+Basic info: These sub commands allow you to execute a static C# method from a dll file.
+
+* EXEC Usage: `!addcmd excCmd false false <EXECType> <dllName>.dll <Namespace>.<Class> <FunctionName> <{params}>`
+	* EXECType: Either `EXEC` or `CLI_EXEC`. Refer to a function list within a DLL readme.
 	* DllName: The name of the DLL file located in the bot's "ext" folder (in the working directory of your bot).
 	* Namespace, Class, and FunctionName: These parameters should be found in a readme of the dll.
 	* {params}: This is how you get your bot to accept parameters for EXEC commands. This bit is usually optional. but some commands require you to add this. If you do not, the command will not work correctly.
 * Example: `!addcmd AACore false false EXEC Coremod.dll Coremod.Core AArcadeCORE`
-* Example: `!addcmd Scream false true EXEC Screamer.dll Scream.Io.Screamer ScreamText {params}`
+* Example: `!addcmd Scream false true CLI_EXEC Screamer.dll Scream.Io.Screamer ScreamText {params}`
 	* Result: `!Scream Hello World`
 	* Output: `HELLO WORLD!!!!!`
 
