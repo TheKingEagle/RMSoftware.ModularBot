@@ -35,6 +35,6 @@ True/false. If true, Only users with one or more roles added to the bot's Comman
 ### boolLockToGuild
 True/false. If true, The command will only be available on the guild it was created from.
 
-# Advanced command actions
-* [EXEC & CLI_EXEC](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/EXEC-and-CLI_EXEC.md)
-* [Scripting support](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/scripting.md)
+# Special Command Actions
+* [`EXEC` and `CLI_EXEC`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/ExternalLibs.md)
+* [`SCRIPT`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/scripting.md)
