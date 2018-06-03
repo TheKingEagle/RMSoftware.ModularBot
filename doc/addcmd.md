@@ -18,13 +18,13 @@ Within the action parameter, you can specify flags, parameters and more.
 
 At this time, you can set temporary `%flags%` by using the console command `setvar <variableName-NoPercents> <value>`. Please note, these are case sensitive.
 
-Example usage: `!addcmd hug false false %invoker% hugs {params} for a long time!`
-Command: `!hug @TheBotFather`
-Output: `@GordonTrollman hugs @TheBotFather for a long time!`
+#### Example usage: `!addcmd hug false false %invoker% hugs {params} for a long time!`
+* Command: `!hug @TheBotFather`
+* Output: `@GordonTrollman hugs @TheBotFather for a long time!`
 
-Example usage of `{n}` flags: `!addcmd grouphug false false %invoker% brings {0}, {1}, {2}, and {3} all in for a big hug!`
-Command: `!grouphug @TheBotFather @psuedonamesslul @NotSoBot "A large cat"`
-Output: `@GordonTrollman brings @TheBotFather, @psuedonamesslul, @NotSoBot, and A large cat all in for a big hug!`
+#### Example usage of `{n}` flags: `!addcmd grouphug false false %invoker% brings {0}, {1}, {2}, and {3} all in for a big hug!`
+* Command: `!grouphug @TheBotFather @psuedonamesslul @NotSoBot "A large cat"`
+* Output: `@GordonTrollman brings @TheBotFather, @psuedonamesslul, @NotSoBot, and A large cat all in for a big hug!`
 
 ### cmdName
 A small command name, The bot uses a custom prefix (as noted by {p}), but you do not need to specify the prefix when adding command. **Commands are Case Sensitive**
