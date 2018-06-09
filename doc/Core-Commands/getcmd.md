@@ -1,6 +1,5 @@
 # Core Command: `getcmd`
 #### Please note: We will always use `!` as a command prefix for usage examples.
-#### Please note: This is for a future version of RMSoftware.ModularBOT. The code has not yet been updated for this feature yet.
 * Usage: `!getcmd <commandTag>`
 
 ##### Output
