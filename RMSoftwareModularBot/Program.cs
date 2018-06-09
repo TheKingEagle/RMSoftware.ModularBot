@@ -55,6 +55,8 @@ namespace RMSoftware.ModularBot
 
         public static int Main(string[] args)
         {
+
+            rolemgt = new CmdRoleManager();
             ARGS = args;
             try
             {
@@ -81,8 +83,7 @@ namespace RMSoftware.ModularBot
                 ConsoleWriteImage(Prog.res1.Resource1.RMSoftwareICO);
                 System.Threading.Thread.Sleep(3000);
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
-                ccmg = new CustomCommandManager();
-                rolemgt = new CmdRoleManager();
+                
 
                 AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
                 //AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
@@ -378,6 +379,7 @@ namespace RMSoftware.ModularBot
                 Console.WriteLine("Now... The Command Prefix: Please enter a single character (Recommended: A symbol of some kind), to use as the bot's command prefix");
                 Console.Write("> ");
                 int conf_cmdPrefix = Console.Read();
+                CommandPrefix = (char)conf_cmdPrefix;
                 if (!WizardDebug)
                 {
                     Program.MainCFG.CreateEntry("Application", "cmdPrefix", conf_cmdPrefix);
@@ -395,15 +397,16 @@ namespace RMSoftware.ModularBot
                 Console.WriteLine("\t- If you want to re-run this configuration wizard, delete the 'rmsftModBot.ini' file in the program directory.");
                 Console.WriteLine("\t- The source code for this bot is available on http://rmsoftware.org");
                 Console.WriteLine("\r\nCORE Command usage (in discord):");
-                Console.WriteLine("\t- use <prefix>addmgrole [@roles] to add roles to the command user database.");
-                Console.WriteLine("\t- usage: <prefix>addcmd <command name> <CmdMgmtOnly[true/false]> <LockToGuild[true/false]> <action>");
+                Console.WriteLine("\t- You will need to add command management roles to the bot, if you want other users to be able to add or remove commands\r\n\t  and interact with restricted commands.");
+                Console.WriteLine("\t- Since you own the bot account that uses the token you provided, you are considered a bot owner. \r\n\t  This means you will automatically have access to all commands, regardless of the restrictions in place.");
+                Console.WriteLine($"\t- use {CommandPrefix}addmgrole [@roles] to add roles to the command user database.");
+                Console.WriteLine($"\t- usage: {CommandPrefix}addcmd <command name> <CmdMgmtOnly[true/false]> <LockToGuild[true/false]> <action>");
                 Console.WriteLine("\t- Actions: Any text/emotes with optional formatting.");
-                Console.WriteLine("\t- <prefix>addcmd sample1SplitParam false false splitparam 3|" +
-                    " This is a sample of splitparam. Var1: {0} var2: {1} and var3: {2} all walked into a bar");
-                Console.WriteLine("\t- <prefix>addcmd hug false false You hug {params} for a long time");
+                Console.WriteLine($"\t- {CommandPrefix}addcmd hug false false You hug {{params}} for a long time");
+                Console.WriteLine($"\t- {CommandPrefix}addcmd grouphug false false You hug {{0}}, {{1}}, {{2}}, and {{3}} for a long time");
                 Console.WriteLine("\t- More Action parameters: EXEC and CLI_EXEC ");
-                Console.WriteLine("\t- <prefix>addcmd exectest falase false EXEC modname.dll ModNameSpace.ModClass StaticMethod {params}");
-                Console.WriteLine("\t- <prefix>addcmd exectest falase false CLI_EXEC modname.dll ModNameSpace.ModClass StaticMethod {params}");
+                Console.WriteLine($"\t- {CommandPrefix}addcmd exectest falase false EXEC modname.dll ModNameSpace.ModClass StaticMethod {{params}}");
+                Console.WriteLine($"\t- {CommandPrefix}addcmd exectest falase false CLI_EXEC modname.dll ModNameSpace.ModClass StaticMethod {{params}}");
                 Console.WriteLine("\t  - NOTE: splitparam is not supported for EXEC or CLI_EXEC");
                 Console.WriteLine("\t  - NOTE: EXEC: Allows you to execute a class method for a more advanced command");
                 Console.WriteLine("\t  - NOTE: CLI_EXEC is the same thing, but it gives the class access to the bot directly...");
@@ -412,7 +415,7 @@ namespace RMSoftware.ModularBot
                 Console.WriteLine("\t     - Remember this will disable the ability to manage commands. putting the bot in a sort of 'read-only' state.");
            
                 Console.WriteLine("Override core: ");
-                Console.WriteLine("\t  - You can create custom commands that use the same name as core commands. This is useful for overriding core commands for even more customization...");
+                Console.WriteLine("\t  - You can create custom commands that use the same name as core commands.\r\n\t   This is useful for overriding core commands for even more customization...");
                 Console.WriteLine("\r\nPlease visit http://rmsoftware.org/rmsoftwareModularBot for more information and documentation.");
                 Console.WriteLine("\r\nPress ENTER to launch the bot!");
                 Console.ReadLine();
@@ -728,7 +731,7 @@ namespace RMSoftware.ModularBot
         {
             cmdsvr = new CommandService();
             
-           
+
 
             foreach (string item in Directory.EnumerateFiles("CMDModules","*.dll",SearchOption.TopDirectoryOnly))
             {
@@ -779,6 +782,7 @@ namespace RMSoftware.ModularBot
                 }
             }
             await cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly());//ADD CORE.
+            ccmg = new CustomCommandManager(ref cmdsvr, ref services);
         }
 
         public async Task MainAsync(string token)
@@ -825,8 +829,10 @@ namespace RMSoftware.ModularBot
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
+
                         sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
                         sw.Flush();
+
                     }
                 }
             }
@@ -898,8 +904,7 @@ namespace RMSoftware.ModularBot
                                             LogToConsole(new LogMessage(LogSeverity.Info, "OnStart", "CustomCMD Success..."));
                                             continue;
                                         }
-                                        //Damn, I can't be sassy here... If it was a command, but not a ccmg command, 
-                                        //then try the context for modules. If THAT didn't work
+                                        //Damn, I can't be sassy here... If it was a command, but not a ccmg command, then try the context for modules. If THAT didn't work
                                         //Then it will output the result of the context.
                                         var context = new CommandContext(_client, new PsuedoMessage(line,_client.CurrentUser,ch,MessageSource.User));
                                         // Execute the command. (result does not indicate a return value, 
@@ -951,15 +956,13 @@ namespace RMSoftware.ModularBot
             {
                 if (item.Mention == _client.CurrentUser.Mention)
                 {
-                    LogToConsole(new LogMessage(LogSeverity.Info,"Mention", "<[" + arg.Channel.Name + "] " 
-                                                + arg.Author.Username + " >: " + arg.Content));
+                    LogToConsole(new LogMessage(LogSeverity.Info,"Mention", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content));
                 }
             }
             //DEBUG: output ! prefixed messages to console.
             if (arg.Content.StartsWith(CommandPrefix.ToString()))
             {
-                LogToConsole(new LogMessage(LogSeverity.Info,"Command", "<[" + arg.Channel.Name + "] " 
-                                            + arg.Author.Username + " >: " + arg.Content));
+                LogToConsole(new LogMessage(LogSeverity.Info,"Command", "<[" + arg.Channel.Name + "] " + arg.Author.Username + " >: " + arg.Content));
 
             }
 
@@ -970,16 +973,13 @@ namespace RMSoftware.ModularBot
             if (message == null) return;
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
-            // Determine if the message is a command, based on if it starts with 'commandprefix' 
-            // or a mention prefix. if not, ignore it.
-            if (!(message.HasCharPrefix(CommandPrefix, ref argPos) 
-                  || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
+            // Determine if the message is a command, based on if it starts with 'commandprefix' or a mention prefix. if not, ignore it.
+            if (!(message.HasCharPrefix(CommandPrefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
             if (!arg.Author.IsBot && !BCMDStarted)
             {
                 messageQueue.Add(arg);  //queue it up. The bcmdStarted check should 
                                         //provide PLENTY (if not an excessive amount) of time for modules,and extra commands 
-                                        //to be fully loaded by the time it is set to true. Preemptively solving the 
-                                        //"hey, you just ignored my commands completely" 
+                                        //to be fully loaded by the time it is set to true. Preemptively solving the "hey, you just ignored my commands completely" 
                                         //when the bot starts and doesn't respond to a command at first
                 return;
             }
@@ -1032,8 +1032,10 @@ namespace RMSoftware.ModularBot
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
+                        
                         sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy")+"   "+msg.ToString());
                         sw.Flush();
+
                     }
                 }
             }
@@ -1186,8 +1188,12 @@ namespace RMSoftware.ModularBot
             return "Command Manager database updated.";
         }
 
-        public bool CheckUserRole(SocketGuildUser user)
+        public async Task<bool> CheckUserRole(SocketGuildUser user, DiscordSocketClient client)
         {
+            if((await client.GetApplicationInfoAsync()).Owner == user as IUser)
+            {
+                return true;
+            }
             string guildcat = user.Guild.Id.ToString();//if the category does not exist, return false... can't have that;
             if(!mgmt.CheckForCategory(guildcat))
             {
