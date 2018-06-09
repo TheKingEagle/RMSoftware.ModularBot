@@ -20,7 +20,12 @@ namespace RMSoftware.ModularBot
     {
 
         INIFile CmdDB = new INIFile("commands.ini");
-        public CoreScript scriptService = new CoreScript();
+        public CoreScript scriptService;
+        public CustomCommandManager(ref CommandService cmdsvr,ref IServiceProvider services)
+        {
+             scriptService = new CoreScript(ref services,ref cmdsvr);
+        }
+        
         /// <summary>
         /// Adds a command to the bot.
         /// </summary>
@@ -38,7 +43,7 @@ namespace RMSoftware.ModularBot
             {
                 CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "counter", 0);
             }
-            CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "action", Action);
+            CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "action", Action.Replace("\r","\\r").Replace("\n","\\n"));
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "restricted", Restricted);
             return "Command added to the DB. Please remember to save.";
         }
@@ -48,19 +53,59 @@ namespace RMSoftware.ModularBot
             {
                 return "That command does not exists!";
             }
-            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction);
+
+            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction.Replace("\r", "\\r").Replace("\n", "\\n"));
             CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").SetValue(Restricted);
             return "Command edited. Please remember to save.";
         }
+        public Embed ViewCmd(string Command)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithAuthor(Program._client.CurrentUser);
+            builder.WithTitle("Command Info");
+            if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
+            {
+                
+                
+                builder.WithColor(Color.Red);
+                builder.WithDescription("This command does not exist in the custom database.");
+                builder.AddField("More info:", $"The command you entered could exist, but it might be from a module, or it was a CORE command. `getcmd` is *only* for commands added with {Program.CommandPrefix.ToString()}addcmd.");
+                return builder.Build();
+            }
+            builder.WithColor(Color.Blue);
+            builder.WithDescription($"This is the basic breakdown of the command: `{Program.CommandPrefix.ToString()}{Command.Replace(Program.CommandPrefix.ToString(), "")}`.");
 
+
+            bool hasCounter = CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).CheckForEntry("counter");
+            bool locked = CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).CheckForEntry("guildID");
+            builder.AddField("Has Role Restrictions: ",CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").GetAsString());
+            builder.AddField("Has Guild Restrictions: ",locked);
+            if(locked)
+            {
+                builder.AddField("What guild can use this command: ", Program._client.GetGuild(CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("guildID").GetAsUlong()).Name);
+            }
+
+            builder.AddField("Has counter: ",hasCounter );
+            if(hasCounter)
+            {
+                builder.AddField("usage count: ", CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("counter").GetAsString());
+            }
+
+            builder.AddField("Response/Action: ", CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").GetAsString().Replace("\\r", "\r").Replace("\\n", "\n"));
+            return builder.Build();
+        }
         public string AddCommand(string Command, string Action, bool Restricted, ulong guildID)
         {
             if (CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
             {
                 return "That command already exists!";
             }
+            if (Action.Contains("%counter%"))
+            {
+                CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "counter", 0);
+            }
             CmdDB.CreateCategory(Command.Replace(Program.CommandPrefix.ToString(), ""));
-            CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "action", Action);
+            CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "action", Action.Replace("\r", "\\r").Replace("\n", "\\n"));
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "restricted", Restricted);
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "guildID", guildID);
             return "Command added to the DB. Please remember to save.";
@@ -99,7 +144,7 @@ namespace RMSoftware.ModularBot
                     {
                         return false;
                     }
-                    if(Program.rolemgt.CheckUserRole(a))
+                    if(await Program.rolemgt.CheckUserRole(a, Program._client))
                     {
                         IsTTS = true;
                         cmd = cmd.Remove(cmd.Length - 4);
@@ -146,7 +191,7 @@ namespace RMSoftware.ModularBot
 
                         SocketGuildUser user = ((SocketGuildUser)arg.Author);
 
-                        if (Program.rolemgt.CheckUserRole(user))
+                        if (await Program.rolemgt.CheckUserRole(user, Program._client))
                         {
                             hasrole = true;
                         }
@@ -161,7 +206,9 @@ namespace RMSoftware.ModularBot
 
                    
                     string response = CmdDB.GetCategoryByName(cmd).GetEntryByName("action").GetAsString();
-                    //Counter support!
+                    //replace action newlines with actual new lines.
+                    response = response.Replace("\\r", "\r").Replace("\\n", "\n");
+                    //VariableSupport.
                     response = scriptService.ProcessVariableString(response, CmdDB, cmd, Program._client, arg);
                     response = response.Replace("{params}", parameters);//Uses all parameters.
                     List<string> individualParams = Regex.Matches(parameters, @"[\""].+?[\""]|[^ ]+").Cast<Match>().Select(m => m.Value).ToList();//selects individual parameters.
@@ -196,6 +243,18 @@ namespace RMSoftware.ModularBot
                         info.Invoke(null, parameter);
                         successful = true;
                         return true;
+                    }
+                    if (response.StartsWith("SCRIPT"))
+                    {
+                        string script = response.Replace("SCRIPT ", "");
+                        //thread optimize this.
+                        Task t = new Task(new Action(StartScript));
+                        t.Start();
+                        #pragma warning disable
+                        scriptService.EvaluateScript(script, CmdDB, cmd, Program._client, arg);
+                        successful = true;
+                        return true;
+                      
                     }
                     if (response.StartsWith("CLI_EXEC"))//EXEC with client instead of context
                     {
@@ -258,7 +317,7 @@ namespace RMSoftware.ModularBot
                 return false;
             }
         }
-
+        
         public INICategory[] GetAllCommand()
         {
             return CmdDB.Categories.ToArray();
