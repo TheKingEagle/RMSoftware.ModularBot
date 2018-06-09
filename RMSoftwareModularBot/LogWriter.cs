@@ -1,3 +1,7 @@
+// Pastebin #SELLOUT Links [LOL]
+//https://rms0.org?a=r1 - Rewards1 paid surveys.
+//https://twitch.tv/TheKingEagle - Twitch streaming sometimes.
+//https://rmsoftware.org - The entire reason I exist on this planet.
 
 using Discord;
 using System;
