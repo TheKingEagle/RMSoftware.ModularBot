@@ -27,7 +27,7 @@ SETVAR <VariableName> <Value>
 STATUSORB <Status Type>
 BOTSTATUS <text>
 BOTGOLIVE <twitch_ChannelName> <text>
-CMD <CommandName>
+CMD <CommandName> [command parameters]
 WAIT <time_in_milliseconds(+20ms)>
 ```
 ## Special Notes
