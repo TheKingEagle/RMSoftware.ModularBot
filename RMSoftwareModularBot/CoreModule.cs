@@ -473,7 +473,7 @@ namespace RMSoftware.ModularBot
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (CoreScript update part 5)",
-                "• Enabled script to have comments\r\n• edited console commands to remove `bot.` prefix. Affected commands: `bot.stopbot -> stopbot; bot.enablecmd -> enablecmd; bot.disablecmd -> disablecmd; bot.status -> status; ");
+                "• Enabled script to have comments\r\n• edited console commands to remove `bot.` prefix. Affected commands: `bot.stopbot -> stopbot; bot.enablecmd -> enablecmd; bot.disablecmd -> disablecmd; bot.status -> status;`");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
