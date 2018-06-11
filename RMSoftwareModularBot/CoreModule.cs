@@ -472,8 +472,8 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (CoreScript update part 4)", 
-                "• Implemented all script functions\r\n• Changed role management to always return true when user is bot owner.\r\n• Added console indicator when script is finished.\r\n• Altered wording of setup wizard's final page.");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (CoreScript update part 5)",
+                "• Enabled script to have comments\r\n• edited console commands to remove `bot.` prefix. Affected commands: `bot.stopbot -> stopbot; bot.enablecmd -> enablecmd; bot.disablecmd -> disablecmd; bot.status -> status; ");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
@@ -750,6 +750,13 @@ namespace RMSoftware.ModularBot
                             terminated = true;
                             break;
                         }
+                        if(line.ToUpper().StartsWith("::") || line.ToUpper().StartsWith("REM") || line.ToUpper().StartsWith("//"))
+                        {
+                            //comment line.
+                            LineInScript++;
+                            continue;
+                        }
+                        
                         if (line == "```DOS")
                         {
                             error = true;
