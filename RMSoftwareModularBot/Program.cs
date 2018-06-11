@@ -243,7 +243,7 @@ namespace RMSoftware.ModularBot
                         return;
                     }
                 }
-                if (input.ToLower() == "bot.stopbot")
+                if (input.ToLower() == "stopbot")
                 {
                     _client.SetGameAsync("");
                     System.Threading.Thread.Sleep(2000);
@@ -260,7 +260,7 @@ namespace RMSoftware.ModularBot
                     Console.WriteLine("Termination");
                     break;
                 }
-                if (input.ToLower() == "bot.disablecmd")
+                if (input.ToLower() == "disablecmd")
                 {
                     LogToConsole(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
 
@@ -268,7 +268,7 @@ namespace RMSoftware.ModularBot
                     _client.SetGameAsync("");
                     MessagesDisabled = true;
                 }
-                if (input.ToLower() == "bot.enablecmd")
+                if (input.ToLower() == "enablecmd")
                 {
                     LogToConsole(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
 
@@ -276,7 +276,7 @@ namespace RMSoftware.ModularBot
                     _client.SetGameAsync("READY!");
                     MessagesDisabled = false;
                 }
-                if (input.ToLower().StartsWith("bot.status"))
+                if (input.ToLower().StartsWith("status"))
                 {
                     string status = input.Remove(0, 10).Trim();
                     LogToConsole(new LogMessage(LogSeverity.Warning, "Client", "client status changed."));
