@@ -869,73 +869,41 @@ namespace RMSoftware.ModularBot
                 if (!BCMDStarted)
                 {
                     await _client.SetStatusAsync(UserStatus.DoNotDisturb);
-                    //PROCESS THE AutoEXEC file
                     ulong id = MainCFG.GetCategoryByName("Application").GetEntryByName("botChannel").GetAsUlong();
-                    using (StreamReader fs = File.OpenText("OnStart.bcmd"))
+                    if (CRASH)
                     {
-                        while (!fs.EndOfStream)
-                        {
-                            string line = await fs.ReadLineAsync();
-                            if (!string.IsNullOrWhiteSpace(line))
-                            {
-                                if (!line.StartsWith(@"\\"))
-                                {
-                                    IGuildChannel ch = _client.GetChannel(id) as IGuildChannel;
-                                    //line = line.Replace("%p_", CommandPrefix.ToString());
-                                    if (CRASH)
-                                    {
-                                        LogToConsole(new LogMessage(LogSeverity.Critical,"Program", "The program was auto-restarted due to a crash. Please see CRASH.LOG for details on what happened."));
-                                        await ((IMessageChannel)ch).SendMessageAsync("**WARNING:** `The bot was auto-restarted due to a crash. Please see CRASH.LOG for details on what happened.`");
-                                        CRASH = false;//don't make it happen more than once pls.
-                                    }
-                                    if (!line.StartsWith("%p_"))
-                                    {
-
-                                        await ((IMessageChannel)ch).SendMessageAsync(line);
-                                    }
-                                    else
-                                    {
-
-
-                                        line = line.Replace("%p_", CommandPrefix.ToString());
-                                        if (await ccmg.Process(new PsuedoMessage(line, _client.CurrentUser, ch, MessageSource.User)))
-                                        {
-                                            LogToConsole(new LogMessage(LogSeverity.Info,"OnStart", line));
-                                            LogToConsole(new LogMessage(LogSeverity.Info, "OnStart", "CustomCMD Success..."));
-                                            continue;
-                                        }
-                                        //Damn, I can't be sassy here... If it was a command, but not a ccmg command, then try the context for modules. If THAT didn't work
-                                        //Then it will output the result of the context.
-                                        var context = new CommandContext(_client, new PsuedoMessage(line,_client.CurrentUser,ch,MessageSource.User));
-                                        // Execute the command. (result does not indicate a return value, 
-                                        // rather an object stating if the command executed successfully)
-                                        var result = await cmdsvr.ExecuteAsync(context, 1, services);
-                                        LogToConsole(new LogMessage(LogSeverity.Info,"OnStart", line));
-                                        LogToConsole(new LogMessage(LogSeverity.Info,"OnStart", result.ToString()));
-                                    }
-                                    await Task.Delay(250);
-                                }
-                            }
-                        }
+                        EmbedBuilder builder = new EmbedBuilder();
+                        builder.WithAuthor(_client.CurrentUser);
+                        builder.WithTitle("WARNING");
+                        builder.WithDescription("The program was auto-restarted due to a crash. Please see `Crash.LOG` and `Errors.LOG` for details.");
+                        builder.WithColor(new Color(255, 255, 0));
+                        builder.WithFooter("RMSoftware.ModularBOT Core");
+                        await ((SocketTextChannel)_client.GetChannel(id)).SendMessageAsync("",false,builder.Build());
+                        LogToConsole(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
                     }
+                    //PROCESS THE AutoEXEC file
+                    
+
+                    await ccmg.scriptService.EvaluateScriptFile("OnStart.core", ccmg.CmdDB, "", _client, new PsuedoMessage("", _client.CurrentUser, (IGuildChannel)_client.GetChannel(id), MessageSource.Bot));
+
                     BCMDStarted = true;
                     await _client.SetGameAsync("READY!");
-                    LogToConsole(new LogMessage(LogSeverity.Info,"TaskMgr", "Task is complete."));
+                    LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
                     await _client.SetStatusAsync(UserStatus.Online);
-                    LogToConsole(new LogMessage(LogSeverity.Info,"TaskMgr", "Running Message Queue - task"));
+                    LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Running Message Queue - task"));
                     foreach (var item in messageQueue)
                     {
-                        
+
                         await _client_MessageReceived(item);
                         await Task.Delay(500);
                     }
-                    LogToConsole(new LogMessage(LogSeverity.Info,"TaskMgr", "Task is complete"));
+                    LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete"));
                 }
             }
             catch (Exception ex)
             {
                 BCMDStarted = false;
-                LogToConsole(new LogMessage(LogSeverity.Error,"CritERR", ex.Message,ex));
+                LogToConsole(new LogMessage(LogSeverity.Error, "TaskMgr", ex.Message, ex));
 
             }
         }
@@ -1091,308 +1059,4 @@ namespace RMSoftware.ModularBot
 
     #endregion
 
-    #region Advanced Command Processing
-    public class CmdRoleManager
-    {
-        INIFile mgmt;
-        INIFile userBlackList;
-        public CmdRoleManager()
-        {
-            mgmt = new INIFile("cmdMgr.ini");
-            userBlackList = new INIFile("blacklist.ini");
-            if(!userBlackList.CheckForCategory("Blacklist"))
-            {
-                userBlackList.CreateCategory("Blacklist");
-                userBlackList.SaveConfiguration();
-            }
-        }
-
-        public bool AddUserToBlacklist(SocketUser user)
-        {
-            string guildCat = "Blacklist";
-            bool check = userBlackList.GetCategoryByName(guildCat).CheckForEntry(user.Id.ToString());
-            if(!check)
-            {
-                userBlackList.CreateEntry(guildCat, user.Id.ToString(), user.Username.Replace("=", "_"));
-            }
-            userBlackList.SaveConfiguration();
-            return !check;
-        }
-
-        public bool DeleteUserFromBlacklist(SocketUser user)
-        {
-            string guildCat = "Blacklist";
-            bool check = userBlackList.GetCategoryByName(guildCat).CheckForEntry(user.Id.ToString());
-            if (check)
-            {
-                userBlackList.DeleteEntry(guildCat, user.Id.ToString());
-            }
-            userBlackList.SaveConfiguration();
-            return check;
-        }
-
-        public void AddCommandManagerRole(SocketRole role)
-        {
-            string guildCat = role.Guild.Id.ToString();
-            bool check = mgmt.CheckForCategory(guildCat);
-            int indx = -1;
-            if(check)
-            {
-                indx = mgmt.GetCategoryByName(guildCat).Entries.Count-1;
-                mgmt.CreateEntry(guildCat, "role" + (indx + 1), role.Id);
-            }
-            else
-            {
-                mgmt.CreateCategory(guildCat);
-                indx = mgmt.GetCategoryByName(guildCat).Entries.Count - 1;
-                mgmt.CreateEntry(guildCat, "role" + (indx + 1), role.Id);
-            }
-            mgmt.SaveConfiguration();
-        }
-
-        public bool UserBlacklisted(SocketUser user)
-        {
-            return userBlackList.GetCategoryByName("Blacklist").CheckForEntry(user.Id.ToString());
-        }
-
-        public string DeleteCommandManager(SocketRole role)
-        {
-            string guildCat = role.Guild.Id.ToString();
-            bool check = mgmt.CheckForCategory(guildCat);
-            int indx = -1;
-            if (check)
-            {
-                indx = mgmt.GetCategoryByName(guildCat).Entries.Count - 1;
-                try
-                {
-                    mgmt.DeleteEntry(guildCat, mgmt.GetCategoryByName(guildCat).Entries.Find(x => x.GetAsUlong() == role.Id).Name);
-                    //Then get all entries and rename them.
-
-                    for (int i = 0; i < mgmt.GetCategoryByName(guildCat).Entries.Count; i++)
-                    {
-                        mgmt.GetCategoryByName(guildCat).Entries[i].Name = $"role{i}";
-                    }
-                }
-                catch (Exception ex)
-                {
-
-                    return ex.Message;
-                }
-                
-            }
-            else
-            {
-                return "No results. The guild ID didn't exist in the database.";
-            }
-            mgmt.SaveConfiguration();
-            return "Command Manager database updated.";
-        }
-
-        public async Task<bool> CheckUserRole(SocketGuildUser user, DiscordSocketClient client)
-        {
-            if((await client.GetApplicationInfoAsync()).Owner == user as IUser)
-            {
-                return true;
-            }
-            string guildcat = user.Guild.Id.ToString();//if the category does not exist, return false... can't have that;
-            if(!mgmt.CheckForCategory(guildcat))
-            {
-                return false;
-            }
-            foreach (var role in user.Roles)
-            {
-                ulong id = role.Id;
-                if (mgmt.GetCategoryByName(guildcat).Entries.Exists(x => x.GetAsUlong() == id))
-                {
-                    return true;//keep doing it until it returns true.
-                }
-            }
-            return false;//default;
-        }
-
-        public SocketRole[] GetRolesForGuild(SocketGuild guild)
-        {
-            List<SocketRole> items = new List<SocketRole>();
-            string guildcat = guild.Id.ToString();
-            if (!mgmt.CheckForCategory(guildcat))
-            {
-                return null;
-            }
-            foreach (var item in mgmt.GetCategoryByName(guildcat).Entries)
-            {
-                items.Add(guild.GetRole(item.GetAsUlong()));
-            }
-            return items.ToArray();
-        }
-
-        public SocketRole[] GetAllRoles()
-        {
-            List<SocketRole> items = new List<SocketRole>();
-            foreach (var itemc in mgmt.Categories)
-            {
-                foreach (var item in itemc.Entries)
-                {
-                    items.Add(Program._client.GetGuild(Convert.ToUInt64(itemc.Name)).GetRole(item.GetAsUlong()));
-                }
-            }
-            return items.ToArray();
-        }
-    }
-    public class PsuedoMessage : IMessage, IUserMessage
-    {
-        string _content = "";
-        SocketUser _author;
-        IGuildChannel _c;
-        MessageSource _source;
-        MessageType _type;
-        public PsuedoMessage(string content,SocketUser author,IGuildChannel ch ,MessageSource source)
-        {
-            _content = content;
-            _author = author;
-            _c = ch;
-            _source = source;
-            _type = MessageType.Default;
-        }
-
-
-        IReadOnlyCollection<IAttachment> IMessage.Attachments
-        {
-            get;
-        }
-
-        IUser IMessage.Author
-        {
-            get { return _author; }
-        }
-
-        IMessageChannel IMessage.Channel
-        {
-            get { return _c as IMessageChannel; }
-        }
-
-        string IMessage.Content
-        {
-            get { return _content; }
-        }
-
-        DateTimeOffset ISnowflakeEntity.CreatedAt
-        {
-            get;
-        }
-
-        DateTimeOffset? IMessage.EditedTimestamp
-        {
-            get;
-        }
-
-        IReadOnlyCollection<IEmbed> IMessage.Embeds
-        {
-            get;
-        }
-
-        ulong IEntity<ulong>.Id
-        {
-            get { return (ulong)new Random().Next(0,int.MaxValue); }
-        }
-
-        bool IMessage.IsPinned
-        {
-            get { return false; }
-        }
-
-        bool IMessage.IsTTS
-        {
-            get { return false; }
-        }
-
-        IReadOnlyCollection<ulong> IMessage.MentionedChannelIds
-        {
-            get;
-        }
-
-        IReadOnlyCollection<ulong> IMessage.MentionedRoleIds
-        {
-            get;
-        }
-
-        IReadOnlyCollection<ulong> IMessage.MentionedUserIds
-        {
-            get;
-        }
-
-        MessageSource IMessage.Source
-        {
-            get { return _source; }
-        }
-
-        IReadOnlyCollection<ITag> IMessage.Tags
-        {
-            get;
-        }
-
-        DateTimeOffset IMessage.Timestamp
-        {
-            get;
-        }
-
-        MessageType IMessage.Type
-        {
-            get { return _type; }
-        }
-
-        public IReadOnlyDictionary<IEmote, ReactionMetadata> Reactions
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
-
-        Task IDeletable.DeleteAsync(RequestOptions options)
-        {
-            return Task.Delay(0);
-        }
-
-        public Task ModifyAsync(Action<MessageProperties> func, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task PinAsync(RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task UnpinAsync(RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task AddReactionAsync(IEmote emote, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task RemoveReactionAsync(IEmote emote, IUser user, RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task RemoveAllReactionsAsync(RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IReadOnlyCollection<IUser>> GetReactionUsersAsync(string emoji, int limit = 100, ulong? afterUserId = default(ulong?), RequestOptions options = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string Resolve(TagHandling userHandling = TagHandling.Name, TagHandling channelHandling = TagHandling.Name, TagHandling roleHandling = TagHandling.Name, TagHandling everyoneHandling = TagHandling.Ignore, TagHandling emojiHandling = TagHandling.Name)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    #endregion
 }
