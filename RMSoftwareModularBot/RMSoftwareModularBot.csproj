@@ -109,6 +109,9 @@
     <Compile Include="LogWriter.cs" />
     <Compile Include="CommandList.cs" />
     <Compile Include="CoreModule.cs" />
+    <Compile Include="CoreScript.cs" />
+    <Compile Include="CmdRoleManager.cs" />
+    <Compile Include="PsuedoMessage.cs" />
     <Compile Include="CustomCommandProcessor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -121,7 +124,7 @@
   <ItemGroup>
     <None Include="Resources\RMSoftwareICO.png" />
     <None Include="App.config" />
-    <Content Include="OnStart.bcmd">
+    <Content Include="OnStart.core">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="packages.config" />
@@ -134,6 +137,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="CMDModules\README.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ext\README.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
