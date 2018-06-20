@@ -18,5 +18,4 @@
   * This will display an unprocessed output of the command. Variables will not be processed, but emotes will display.
 
 ## Special Notes
-* You must have a role added to the bot management system in order to use this command.
-* This command will only work for custom commands made using `!addcmd` & commands in the custom database.
+* You must be bot owner, or have a role that has been added to the bot management system in order to use this command.
