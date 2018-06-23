@@ -83,11 +83,11 @@ namespace RMSoftware.ModularBot
                 ConsoleWriteImage(Prog.res1.Resource1.RMSoftwareICO);
                 System.Threading.Thread.Sleep(3000);
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
-                
-
                 AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-                //AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
 
+#if(DEBUG)
+                AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
+#endif
                 SetupWizard();
 
                 if (auth.Length == 0)
@@ -202,21 +202,55 @@ namespace RMSoftware.ModularBot
 
             if (!CriticalError)
             {
-
                 return 4007;//NOT OKAY
             }
             else
             {
-
                 return 200;//OK status
             }
         }
 
+#if(DEBUG)
         private static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
         {
-            writer.WriteEntry(new LogMessage(LogSeverity.Critical, "FirstERR", e.Exception.ToString()));
-            Console.ReadLine();
+            writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "FirstChance", e.Exception.ToString()));
         }
+
+#endif
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            CriticalError = true;
+            RestartRequested = true;
+            crashException = (Exception)e.ExceptionObject;
+            using (FileStream fs = File.Create("CRASH.LOG"))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    LogMessage m = new LogMessage(LogSeverity.Critical, "Session", crashException.Message, crashException);
+                    sw.WriteLine(m.ToString());
+                    List<string> restart_args = new List<string>();
+                    restart_args.AddRange(ARGS);
+                    if (!restart_args.Contains("-crashed"))
+                    {
+                        restart_args.Add("-crashed");
+                    }
+                    ARGS = restart_args.ToArray();
+                    sw.Flush();
+
+                }
+            }
+            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+
+                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ((Exception)e.ExceptionObject).ToString());
+                    sw.Flush();
+
+                }
+            }
+        }
+
 
         static void ReadConsole()
         {
@@ -423,40 +457,6 @@ namespace RMSoftware.ModularBot
             }
         }
 
-
-        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            CriticalError = true;
-            RestartRequested = true;
-            crashException = (Exception)e.ExceptionObject;
-            using (FileStream fs = File.Create("CRASH.LOG"))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-                    LogMessage m = new LogMessage(LogSeverity.Critical, "Session", crashException.Message, crashException);
-                    sw.WriteLine(m.ToString());
-                    List<string> restart_args = new List<string>();
-                    restart_args.AddRange(ARGS);
-                    if (!restart_args.Contains("-crashed"))
-                    {
-                        restart_args.Add("-crashed");
-                    }
-                    ARGS = restart_args.ToArray();
-                    sw.Flush();
-
-                }
-            }
-            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-
-                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ((Exception)e.ExceptionObject).ToString());
-                    sw.Flush();
-
-                }
-            }
-        }
         static Func<bool> BotShutdown = delegate ()
         {
             return discon;
@@ -730,8 +730,6 @@ namespace RMSoftware.ModularBot
         public async Task LoadModules()
         {
             cmdsvr = new CommandService();
-            
-
 
             foreach (string item in Directory.EnumerateFiles("CMDModules","*.dll",SearchOption.TopDirectoryOnly))
             {
@@ -782,7 +780,7 @@ namespace RMSoftware.ModularBot
                 }
             }
             await cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly());//ADD CORE.
-            ccmg = new CustomCommandManager(ref cmdsvr, ref services);
+            ccmg = new CustomCommandManager(LOG_ONLY_MODE,CommandPrefix,writer,ref cmdsvr,ref services);
         }
 
         public async Task MainAsync(string token)
@@ -799,7 +797,8 @@ namespace RMSoftware.ModularBot
                 _client.Connected += _client_Connected;
                 _client.MessageReceived += _client_MessageReceived;
                 _client.Disconnected += _client_Disconnected;
-
+                _client.GuildAvailable += _client_GuildAvailable;
+                _client.GuildUnavailable += _client_GuildUnavailable;
                 await LoadModules();//ADD CORE AND EXTERNAL MODULES
                 await _client.LoginAsync(TokenType.Bot, token);
                 await _client.StartAsync();
@@ -839,6 +838,20 @@ namespace RMSoftware.ModularBot
                    
         }
 
+        private Task _client_GuildUnavailable(SocketGuild arg)
+        {
+            Console.Title = "RMSoftware.ModularBOT -> " + _client.CurrentUser.Username + " | Connected to " + _client.Guilds.Count + " guilds.";
+            LogToConsole(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{arg.Name}] "));
+            return Task.Delay(0);
+        }
+
+        private Task _client_GuildAvailable(SocketGuild arg)
+        {
+            Console.Title = "RMSoftware.ModularBOT -> " + _client.CurrentUser.Username + " | Connected to " + _client.Guilds.Count + " guilds.";
+            LogToConsole(new LogMessage(LogSeverity.Info, "Guilds", $"A guild is available. <[{arg.Name}] Total users: {arg.Users.Count}> "));
+            return Task.Delay(0);
+        }
+
         private Task _client_Connected()
         {
             StartTime = DateTime.Now;
@@ -857,7 +870,7 @@ namespace RMSoftware.ModularBot
 
         private async Task _ClientReady()
         {
-            await Log(new LogMessage(LogSeverity.Info, "TaskMgr", "Running Onstart.bcmd - task"));
+            await Log(new LogMessage(LogSeverity.Info, "TaskMgr", "Running script: OnStart.Core"));
             await Task.Run(new Action(OffloadReady));
             Console.Title = "RMSoftware.ModularBOT -> " + _client.CurrentUser.Username + " | Connected to " + _client.Guilds.Count + " guilds.";
         }
@@ -890,14 +903,14 @@ namespace RMSoftware.ModularBot
                     await _client.SetGameAsync("READY!");
                     LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
                     await _client.SetStatusAsync(UserStatus.Online);
-                    LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Running Message Queue - task"));
+                    LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Processing Message Queue."));
                     foreach (var item in messageQueue)
                     {
 
                         await _client_MessageReceived(item);
                         await Task.Delay(500);
                     }
-                    LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete"));
+                    LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
                 }
             }
             catch (Exception ex)
@@ -966,11 +979,23 @@ namespace RMSoftware.ModularBot
             {
                 if (!result.Error.Value.HasFlag(CommandError.UnknownCommand) && !result.IsSuccess)
                 {
-                    await arg.Channel.SendMessageAsync(result.ErrorReason);
+                    EmbedBuilder b = new EmbedBuilder();
+                    b.WithColor(Color.Orange);
+                    b.WithAuthor(_client.CurrentUser);
+                    b.WithTitle("Command Error.");
+                    b.WithDescription(result.ErrorReason);
+                    b.AddField("Error Code", result.Error.Value);
+                    await context.Channel.SendMessageAsync("", false, b.Build());
                 }
                 if (result.Error.Value.HasFlag(CommandError.BadArgCount))
                 {
-                    await arg.Channel.SendMessageAsync(result.ErrorReason);
+                    EmbedBuilder b = new EmbedBuilder();
+                    b.WithColor(Color.Orange);
+                    b.WithAuthor(_client.CurrentUser);
+                    b.WithTitle("Command Error.");
+                    b.WithDescription(result.ErrorReason);
+                    b.AddField("Error Code", result.Error.Value);
+                    await context.Channel.SendMessageAsync("", false, b.Build());
                 }
             }
         }
