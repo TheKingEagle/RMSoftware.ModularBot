@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Newtonsoft.Json;
 using RMSoftware.IO;
 using System;
 using System.Collections.Generic;
@@ -15,10 +16,18 @@ namespace RMSoftware.ModularBot
 {
     public class CoreScript
     {
-        public CoreScript(ref IServiceProvider _services, ref CommandService _cmdsvr, Dictionary<string, object> dict = null)
+        bool LOG_ONLY_MODE = false;
+        ConsoleLogWriter _writer;
+        CustomCommandManager ccmgr;
+        char CommandPrefix;
+        public CoreScript(bool LogOnlyMode,char CmdPrefix, ConsoleLogWriter writer, CustomCommandManager ccmgr,
+            ref IServiceProvider _services, ref CommandService _cmdsvr, Dictionary<string, object> dict = null)
         {
+            _writer = writer;
             cmdsvr = _cmdsvr;
             services = _services;
+            this.ccmgr = ccmgr;
+            CommandPrefix = CmdPrefix;
             if (dict == null)
             {
                 Variables = new Dictionary<string, object>();
@@ -75,7 +84,7 @@ namespace RMSoftware.ModularBot
 
         }
 
-        public string ProcessVariableString(string response, INIFile CmdDB, string cmd, DiscordSocketClient client, IMessage message)
+        public string ProcessVariableString(string response, INIFile CmdDB, string cmd, IDiscordClient client, IMessage message)
         {
 
             if (response.Contains("%counter%"))
@@ -122,10 +131,11 @@ namespace RMSoftware.ModularBot
             return response;
         }
 
-        public async Task EvaluateScript(string response, INIFile CmdDB, string cmd, DiscordSocketClient client, IMessage message)
+        public async Task EvaluateScript(string response, INIFile CmdDB, string cmd, IDiscordClient client, IMessage message)
         {
             int LineInScript = 0;
             bool error = false;
+           
             EmbedBuilder errorEmbed = new EmbedBuilder();
 
             errorEmbed.WithAuthor(client.CurrentUser);
@@ -153,12 +163,11 @@ namespace RMSoftware.ModularBot
                         }
                     }
                     string line = await sr.ReadLineAsync();
-
-
+            
                     if (line == ("```"))
                     {
                         terminated = true;
-                        Program.LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "End of script!"), ConsoleColor.Green);
+                        LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "End of script!"), ConsoleColor.Green);
                         break;
                     }
                     if (LineInScript == 0)
@@ -186,6 +195,11 @@ namespace RMSoftware.ModularBot
                         {
                             terminated = true;
                             break;
+                        }
+                        if (string.IsNullOrWhiteSpace(line))
+                        {
+                            LineInScript++;//ignore blank lines.
+                            continue;
                         }
                         if (line.ToUpper().StartsWith("::") || line.ToUpper().StartsWith("REM") || line.ToUpper().StartsWith("//"))
                         {
@@ -243,37 +257,40 @@ namespace RMSoftware.ModularBot
                                 break;
                             case ("CMD"):
                                 //SocketMessage m = message as SocketMessage;
-                                caseExecCmd(ProcessVariableString(line, CmdDB, cmd, client, message), ref error, ref errorEmbed, ref LineInScript, ref cmd, ref message);
+                                caseExecCmd(ProcessVariableString(line, CmdDB, cmd, client, message),ccmgr,CommandPrefix, ref error, ref errorEmbed, ref LineInScript,ref client, ref cmd, ref message);
 
                                 break;
                             case ("BOTSTATUS"):
-                                await Program._client.SetGameAsync(ProcessVariableString(line.Remove(0, 10), CmdDB, cmd, client, message));
+                                await ((DiscordSocketClient)client).SetGameAsync(ProcessVariableString(line.Remove(0, 10), CmdDB, cmd, client, message));
                                 break;
                             case ("STATUSORB"):
                                 string cond = line.Remove(0, 10).ToUpper();
                                 switch (cond)
                                 {
                                     case ("ONLINE"):
-                                        await Program._client.SetStatusAsync(UserStatus.Online);
+                                        await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Online);
                                         break;
                                     case ("AWAY"):
-                                        await Program._client.SetStatusAsync(UserStatus.Idle);
+                                        await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Idle);
                                         break;
                                     case ("AFK"):
-                                        await Program._client.SetStatusAsync(UserStatus.AFK);
+                                        await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.AFK);
                                         break;
                                     case ("BUSY"):
-                                        await Program._client.SetStatusAsync(UserStatus.DoNotDisturb);
+                                        await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.DoNotDisturb);
                                         break;
                                     case ("OFFLINE"):
-                                        await Program._client.SetStatusAsync(UserStatus.Offline);
+                                        await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Offline);
                                         break;
                                     case ("INVISIBLE"):
-                                        await Program._client.SetStatusAsync(UserStatus.Invisible);
+                                        await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Invisible);
                                         break;
                                     default:
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected Argument: {cond}. Try either ONLINE, BUSY, AWAY, AFK, INVISIBLE, OFFLINE.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error. Unexpected argument: {cond}.\r\nTry either ONLINE, BUSY, AWAY, AFK, INVISIBLE, OFFLINE.");
+                                        errorEmbed.AddInlineField("Line", LineInScript);
+                                        errorEmbed.AddInlineField("Command", cmd);
                                         break;
                                 }
 
@@ -292,7 +309,7 @@ namespace RMSoftware.ModularBot
                                 }
                                 string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
 
-                                await Program._client.SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", StreamType.Twitch);
+                                await ((DiscordSocketClient)client).SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", StreamType.Twitch);
                                 break;
                             case ("WAIT"):
                                 int v = 1;
@@ -337,7 +354,12 @@ namespace RMSoftware.ModularBot
             }
         }
 
-        public async Task EvaluateScriptFile(string filename, INIFile CmdDB, string cmd, DiscordSocketClient client, IMessage message)
+        private void caseExecCmd(string v, CustomCommandManager ccmgr, char commandPrefix, ref bool error, ref EmbedBuilder errorEmbed, ref int lineInScript, ref string cmd, ref IMessage message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task EvaluateScriptFile(string filename, INIFile CmdDB, string cmd, IDiscordClient client, IMessage message)
         {
             int LineInScript = 1;
             bool error = false;
@@ -357,7 +379,7 @@ namespace RMSoftware.ModularBot
 
                         if (sr.Peek() == -1)
                         {
-                            Program.LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "End of script!"), ConsoleColor.Green);
+                            LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "End of script!"), ConsoleColor.Green);
                             break;
                         }
                         string line = await sr.ReadLineAsync();
@@ -412,33 +434,33 @@ namespace RMSoftware.ModularBot
                                     break;
                                 case ("CMD"):
                                     //SocketMessage m = message as SocketMessage;
-                                    caseExecCmd(ProcessVariableString(line, CmdDB, cmd, client, message), ref error, ref errorEmbed, ref LineInScript, ref cmd, ref message);
+                                    caseExecCmd(ProcessVariableString(line, CmdDB, cmd, client, message),ccmgr,CommandPrefix, ref error, ref errorEmbed, ref LineInScript,ref client, ref cmd, ref message);
 
                                     break;
                                 case ("BOTSTATUS"):
-                                    await Program._client.SetGameAsync(ProcessVariableString(line.Remove(0, 10), CmdDB, cmd, client, message));
+                                    await ((DiscordSocketClient)client).SetGameAsync(ProcessVariableString(line.Remove(0, 10), CmdDB, cmd, client, message));
                                     break;
                                 case ("STATUSORB"):
                                     string cond = line.Remove(0, 10).ToUpper();
                                     switch (cond)
                                     {
                                         case ("ONLINE"):
-                                            await Program._client.SetStatusAsync(UserStatus.Online);
+                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Online);
                                             break;
                                         case ("AWAY"):
-                                            await Program._client.SetStatusAsync(UserStatus.Idle);
+                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Idle);
                                             break;
                                         case ("AFK"):
-                                            await Program._client.SetStatusAsync(UserStatus.AFK);
+                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.AFK);
                                             break;
                                         case ("BUSY"):
-                                            await Program._client.SetStatusAsync(UserStatus.DoNotDisturb);
+                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.DoNotDisturb);
                                             break;
                                         case ("OFFLINE"):
-                                            await Program._client.SetStatusAsync(UserStatus.Offline);
+                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Offline);
                                             break;
                                         case ("INVISIBLE"):
-                                            await Program._client.SetStatusAsync(UserStatus.Invisible);
+                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Invisible);
                                             break;
                                         default:
                                             error = true;
@@ -461,7 +483,7 @@ namespace RMSoftware.ModularBot
                                     }
                                     string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
 
-                                    await Program._client.SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", StreamType.Twitch);
+                                    await ((DiscordSocketClient)client).SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", StreamType.Twitch);
                                     break;
                                 case ("WAIT"):
                                     int v = 1;
@@ -546,23 +568,25 @@ namespace RMSoftware.ModularBot
 
         }
 
-        private void caseExecCmd(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref string cmd, ref IMessage ArgumentMessage)
+        private void caseExecCmd(string line, CustomCommandManager ccmg, char CommandPrefix, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript,
+            ref IDiscordClient client, ref string cmd, ref IMessage ArgumentMessage)
         {
             string ecmd = line.Remove(0, 4);
-            if (Program.ccmg.Process(new PsuedoMessage(Program.CommandPrefix.ToString() + ecmd, Program._client.CurrentUser, (ArgumentMessage.Channel as IGuildChannel), MessageSource.User)).GetAwaiter().GetResult())
+            if (ccmg.Process(new PsuedoMessage(CommandPrefix.ToString() + ecmd, ArgumentMessage.Author as SocketUser, 
+                (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot)).GetAwaiter().GetResult())
             {
-                Program.LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
-                Program.LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "CustomCMD Success..."));
+                LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
+                LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "CustomCMD Success..."));
                 return;
             }
             //Damn, I can't be sassy here... If it was a command, but not a ccmg command, then try the context for modules. If THAT didn't work
             //Then it will output the result of the context.
-            var context = new CommandContext(Program._client, new PsuedoMessage(Program.CommandPrefix.ToString() + ecmd, Program._client.CurrentUser, (ArgumentMessage.Channel as IGuildChannel), MessageSource.User));
+            var context = new CommandContext(client, new PsuedoMessage(CommandPrefix.ToString() + ecmd, ArgumentMessage.Author as SocketUser, (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot));
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
             var result = cmdsvr.ExecuteAsync(context, 1, services);
-            Program.LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
-            Program.LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", result.Result.ToString()));
+            LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
+            LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", result.Result.ToString()));
             if (!result.Result.IsSuccess)
             {
                 error = true;
@@ -570,6 +594,52 @@ namespace RMSoftware.ModularBot
                 errorEmbed.AddInlineField("Line", LineInScript);
                 errorEmbed.AddInlineField("Command", cmd);
                 return;
+            }
+        }
+
+        private void LogToConsole(LogMessage msg)
+        {
+            if (!LOG_ONLY_MODE)
+            {
+                _writer.WriteEntry(msg);
+            }
+            else
+            {
+                Console.WriteLine(JsonConvert.SerializeObject(msg));
+            }
+            if (msg.Exception != null)
+            {
+                using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + msg.ToString());
+                        sw.Flush();
+                    }
+                }
+            }
+        }
+
+        public void LogToConsole(LogMessage msg, ConsoleColor entryColor)
+        {
+            if (!LOG_ONLY_MODE)
+            {
+                _writer.WriteEntry(msg, entryColor);
+            }
+            else
+            {
+                Console.WriteLine(JsonConvert.SerializeObject(msg));
+            }
+            if (msg.Exception != null)
+            {
+                using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                {
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + msg.ToString());
+                        sw.Flush();
+                    }
+                }
             }
         }
     }
