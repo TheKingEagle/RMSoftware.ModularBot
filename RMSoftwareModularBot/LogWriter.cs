@@ -1,3 +1,8 @@
+// Pastebin #SELLOUT Links [LOL]
+//https://rms0.org?a=r1 - Rewards1 paid surveys.
+//https://twitch.tv/TheKingEagle - Twitch streaming sometimes.
+//https://rmsoftware.org - The entire reason I exist on this planet.
+
 using Discord;
 using System;
 using System.Collections.Generic;
@@ -29,7 +34,11 @@ namespace RMSoftware.ModularBot
             {
                 lines.Add(paragraph.Substring(0, Math.Min(Console.WindowWidth-1, paragraph.Length)));
                 var length = lines[i].LastIndexOf(" ");
-                if (length > 0 && paragraph.Length > Console.WindowWidth-1) lines[i] = lines[i].Remove(length);
+                if (length > 0 && paragraph.Length > Console.WindowWidth - 1)
+                {
+                    lines[i] = lines[i].Remove(length);
+                }
+
                 paragraph = paragraph.Substring(Math.Min(lines[i].Length + 1, paragraph.Length));
                 returnstring += (lines[i].Trim())+"\n";
             }
@@ -48,9 +57,10 @@ namespace RMSoftware.ModularBot
                 SpinWait.SpinUntil(() => !Busy);//This will help prevent the console from being sent into a mess of garbled words.
             }
             Busy = true;
-            Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
 
-            string[] lines = WordWrap(message.ToString()).Split('\n');
+            Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
+            LogMessage l = new LogMessage(message.Severity, message.Source.PadRight(11, '\u2000'), message.Message, message.Exception);
+            string[] lines = WordWrap(l.ToString()).Split('\n');
             ConsoleColor bglast = Program.ConsoleBackgroundColor;
 
 
@@ -111,8 +121,15 @@ namespace RMSoftware.ModularBot
                 Console.BackgroundColor = bglast;//restore previous color.
                 Console.ForegroundColor = Program.ConsoleForegroundColor;
                 Thread.Sleep(1);//safe.
-                Console.WriteLine(lines[i]);//write current line in queue.
-                
+                if(i==0)
+                {
+                    Console.WriteLine(lines[i]);//write current line in queue.
+                }
+                if (i > 0)
+                {
+                    Console.WriteLine(lines[i].PadLeft(lines[i].Length+21,'\u2000'));//write current line in queue, padded by 21 enQuads to preserve line format.
+                }
+
             }
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
