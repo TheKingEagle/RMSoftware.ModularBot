@@ -19,11 +19,13 @@ namespace RMSoftware.ModularBot
     public class CustomCommandManager
     {
 
-        INIFile CmdDB = new INIFile("commands.ini");
+        public INIFile CmdDB = new INIFile("commands.ini");
         public CoreScript scriptService;
-        public CustomCommandManager(ref CommandService cmdsvr,ref IServiceProvider services)
+        CommandService _cmdsvc;
+        public CustomCommandManager(bool logonly,char cmdprefix,ConsoleLogWriter writer, ref CommandService cmdsvr,ref IServiceProvider services)
         {
-             scriptService = new CoreScript(ref services,ref cmdsvr);
+             scriptService = new CoreScript(logonly,cmdprefix,writer,this,ref services, ref cmdsvr);
+            _cmdsvc = cmdsvr;
         }
         
         /// <summary>
@@ -65,12 +67,55 @@ namespace RMSoftware.ModularBot
             builder.WithTitle("Command Info");
             if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
             {
+                string cmd = Command.Replace(Program.CommandPrefix.ToString(), "");
+                var c = _cmdsvc.Commands.FirstOrDefault(x => x.Name == cmd);
+                if(c == null)
+                {
+                    builder.WithColor(Color.Red);
+                    builder.WithDescription("This command does not exist.");
+                    builder.AddField("More info:", $"The command you requested was not found in the custom database, or in any loaded modules.\r\nIf you just created the command, run `{Program.CommandPrefix}save` and try again.\r\nIf you just added a new module, Restart the bot.\r\n\r\nTo check for a list of commands run `{Program.CommandPrefix.ToString()}listcmd`");
+                    return builder.Build();
+                }
+                else
+                {
+                    builder.WithColor(Color.Blue);
+                    builder.WithDescription($"This is the basic breakdown of the command: `{Program.CommandPrefix.ToString()}{cmd}`.");
+                    builder.AddField("Command Summary", c.Summary ?? "`Not specified.`");
+                    string param = $"{Program.CommandPrefix}{c.Name} ";
+                    foreach (var item in c.Parameters)
+                    {
+                        if (item.IsOptional)
+                        {
+                            param += $"[{item.Name}] ";
+                        }
+                        else
+                        {
+                            param += $"<{item.Name}> ";
+                        }
+                    }
+                    if (string.IsNullOrWhiteSpace(param)) { param = "`No parameters.`"; }
+                    builder.AddField("Command Usage", $"`{param.Trim()}`", false);
+
+                    builder.AddField("From Module", c.Module.Name ?? "`Unknown module.`");
+                    builder.AddField("Remarks", c.Remarks ?? "`Not specified.`");
+                   
+                    string preconds = "";
+                    foreach (var item in c.Preconditions)
+                    {
+                        preconds += "• " + item.ToString().Substring(item.ToString().LastIndexOf('.')+1) + "\r\n";
+                    }
+                    if (string.IsNullOrWhiteSpace(preconds)) { preconds = "`No Preconditions.`"; }
+                    builder.AddField("Preconditions", preconds,true);
+                    string aliases = "";
+                    foreach (var item in c.Aliases)
+                    {
+                        aliases += "• " +Program.CommandPrefix.ToString()+ item.ToString() + "\r\n";
+                    }
+                    if (string.IsNullOrWhiteSpace(aliases)) { aliases = "`No aliases.`"; }
+                    builder.AddField("Command Aliases", aliases,true);
+                    return builder.Build();
+                }
                 
-                
-                builder.WithColor(Color.Red);
-                builder.WithDescription("This command does not exist in the custom database.");
-                builder.AddField("More info:", $"The command you entered could exist, but it might be from a module, or it was a CORE command. `getcmd` is *only* for commands added with {Program.CommandPrefix.ToString()}addcmd.");
-                return builder.Build();
             }
             builder.WithColor(Color.Blue);
             builder.WithDescription($"This is the basic breakdown of the command: `{Program.CommandPrefix.ToString()}{Command.Replace(Program.CommandPrefix.ToString(), "")}`.");
@@ -151,7 +196,12 @@ namespace RMSoftware.ModularBot
                     }
                     else
                     {
-                        await arg.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to TTS this command.");
+                        EmbedBuilder b = new EmbedBuilder();
+                        b.WithColor(Color.Red);
+                        b.WithAuthor(Program._client.CurrentUser);
+                        b.WithTitle("Access Denied!");
+                        b.WithDescription("You don't have permission to .tts this command!");
+                        await arg.Channel.SendMessageAsync("", false, b.Build());
                     }
                 }
                 string parameters = content.Replace(Program.CommandPrefix.ToString()+""+cmd, "").Trim();
@@ -163,26 +213,31 @@ namespace RMSoftware.ModularBot
                     if (CmdDB.GetCategoryByName(cmd).CheckForEntry("guildID"))//NEW: Check for guild id. If this entry exists, continune.
                     {
                         ulong id = CmdDB.GetCategoryByName(cmd).GetEntryByName("guildID").GetAsUlong();
-                        if ((arg.Author as IGuildUser) == null)
+                        if ((arg.Author as SocketGuildUser) == null)
                         {
-                            await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey, I know you really want to see that work, but this is my dm..." +
-                                " This command will only work on a specific guild. "), TimeSpan.FromMilliseconds(140));
+                            EmbedBuilder b = new EmbedBuilder();
+                            b.WithColor(Color.Orange);
+                            b.WithAuthor(Program._client.CurrentUser);
+                            b.WithTitle("Nope.");
+                            b.WithDescription("You can't do that here. This isn't a guild channel.");
+                            await arg.Channel.SendMessageAsync("", false, b.Build());
 
                             return true;
                         }
                         if ((arg.Author as IGuildUser)?.Guild == null)
                         {
-                            await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey, I know you really want to see that work, but this is my dm..." +
-                                " This command will only work on a specific guild. "), TimeSpan.FromMilliseconds(140));
-
+                            EmbedBuilder b = new EmbedBuilder();
+                            b.WithColor(Color.Orange);
+                            b.WithAuthor(Program._client.CurrentUser);
+                            b.WithTitle("Nope.");
+                            b.WithDescription("You can't do that here. This isn't a guild channel.");
+                            await arg.Channel.SendMessageAsync("", false, b.Build());
                             return true;
                         }
 
                         if (id != (arg.Author as IGuildUser).Guild?.Id)
                         {
-                            await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", Wrong guild."), TimeSpan.FromMilliseconds(140));
-
-                            return true;
+                            return true;//The command isn't in that guild, so let's ignore it.
                         }
                     }
                     if (CmdDB.GetCategoryByName(cmd).GetEntryByName("restricted").GetAsBool())
@@ -197,8 +252,12 @@ namespace RMSoftware.ModularBot
                         }
                         if (!hasrole)
                         {
-                            await Retry.Do(async () => await arg.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
-
+                            EmbedBuilder b = new EmbedBuilder();
+                            b.WithColor(Color.Red);
+                            b.WithAuthor(Program._client.CurrentUser);
+                            b.WithTitle("Access Denied!");
+                            b.WithDescription($"Hi, {arg.Author.Mention}! You don't have access to this command...");
+                            await arg.Channel.SendMessageAsync("", false, b.Build());
                             successful = false;
                             return true;
                         }
@@ -223,7 +282,12 @@ namespace RMSoftware.ModularBot
                         string[] resplit = response.Replace("EXEC ", "").Split(' ');
                         if (resplit.Length < 3)
                         {
-                            await Retry.Do(async () => await arg.Channel.SendMessageAsync("The command failed to execute... EXEC method malformed"), TimeSpan.FromMilliseconds(140));
+                            EmbedBuilder b = new EmbedBuilder();
+                            b.WithColor(Color.DarkRed);
+                            b.WithAuthor(Program._client.CurrentUser);
+                            b.WithTitle("EXEC Malformed.");
+                            b.WithDescription("This command is not going to work. The EXEC setup was invalid.");
+                            await arg.Channel.SendMessageAsync("", false, b.Build());
 
                             successful = true;
                             return true;
@@ -248,8 +312,7 @@ namespace RMSoftware.ModularBot
                     {
                         string script = response.Replace("SCRIPT ", "");
                         //thread optimize this.
-                        Task t = new Task(new Action(StartScript));
-                        t.Start();
+                        
                         #pragma warning disable
                         scriptService.EvaluateScript(script, CmdDB, cmd, Program._client, arg);
                         successful = true;
@@ -261,8 +324,12 @@ namespace RMSoftware.ModularBot
                         string[] resplit = response.Replace("CLI_EXEC ", "").Split(' ');
                         if (resplit.Length < 3)
                         {
-                            await Retry.Do(async () => await arg.Channel.SendMessageAsync("The command failed to execute... CLI_EXEC method malformed"), TimeSpan.FromMilliseconds(140));
-
+                            EmbedBuilder b = new EmbedBuilder();
+                            b.WithColor(Color.DarkRed);
+                            b.WithAuthor(Program._client.CurrentUser);
+                            b.WithTitle("EXEC Malformed.");
+                            b.WithDescription("This command is not going to work. The CLI_EXEC setup was invalid.");
+                            await arg.Channel.SendMessageAsync("", false, b.Build());
                             successful = true;
                             return true;
                         }
@@ -311,13 +378,25 @@ namespace RMSoftware.ModularBot
             catch (Exception ex)
             {
 
-                await arg.Channel.SendMessageAsync("There was a problem performing this command. See bot console for info");
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithColor(Color.DarkRed);
+                b.WithAuthor(Program._client.CurrentUser);
+                b.WithTitle("Command Failed!");
+                b.WithDescription("The command spectacularly failed. Error details are below.");
+                b.AddField("Error Details", ex.Message);
+                b.AddField("For Developers", ex.StackTrace);
+                await arg.Channel.SendMessageAsync("", false, b.Build());
                 successful = false;
                 Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                 return false;
             }
         }
-        
+
+        private void StartScript()
+        {
+            throw new NotImplementedException();
+        }
+
         public INICategory[] GetAllCommand()
         {
             return CmdDB.Categories.ToArray();
