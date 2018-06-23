@@ -51,17 +51,42 @@ namespace RMSoftware.ModularBot
 
         }
 
-        [Command("status"), Summary("Set the bot's 'Playing' status"), Remarks("[CMDMgmt]")]
-        public async Task setStatus([Remainder]string args = null)
+        [Command("status"), Summary("Set the bot's 'Playing' status"), Remarks("[CMDMgmt]"), RequireContext(ContextType.Guild)]
+        public async Task setStatus([Remainder]string StatusText = null)
         {
-           await Client.SetGameAsync(args);
+          
+            if (await Program.rolemgt.CheckUserRole((SocketGuildUser)(Context.User), Client))
+            {
+                await Client.SetGameAsync(StatusText);
+            }
+            else
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithColor(Color.Red);
+                b.WithAuthor(Client.CurrentUser);
+                b.WithTitle("Access Denied!");
+                b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+                await Context.Channel.SendMessageAsync("", false, b.Build());
+            }
         }
 
-        [Command("streamstatus"), Summary("Set the bot's status to streaming on twitch, with twitch url and custom text."), Remarks("[CMDMgmt]")]
-        public async Task setStatus(string streamurl, [Remainder]string args)
+        [Command("streamstatus"), Summary("Set the bot's status to streaming on twitch, with twitch url and custom text."), Remarks("[CMDMgmt]"),RequireContext(ContextType.Guild)]
+        public async Task setStatus(string ChannelName, [Remainder]string StatusText)
         {
+            if(await Program.rolemgt.CheckUserRole((SocketGuildUser)(Context.User),Client))
+            {
+                await Client.SetGameAsync(StatusText,$"http://twitch.tv/{ChannelName}", StreamType.Twitch);
+            }
+            else
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithColor(Color.Red);
+                b.WithAuthor(Client.CurrentUser);
+                b.WithTitle("Access Denied!");
+                b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+                await Context.Channel.SendMessageAsync("", false, b.Build());
+            }
             
-            await Client.SetGameAsync(args, streamurl, StreamType.Twitch);
         }
 
         [Command("STOPBOT",RunMode=RunMode.Async), Summary("Shutdown the bot"), RequireOwner, Remarks("[CMDMgmt]")]
@@ -170,7 +195,7 @@ namespace RMSoftware.ModularBot
         {
             SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
             SocketMessage arg = Context.Message as SocketMessage;
-
+            bool result = await Program.rolemgt.CheckUserRole(user, Client);
             if (await Program.rolemgt.CheckUserRole(user,Client))//If user has a role that is in the database, it is good.
             {
                 try
@@ -214,7 +239,12 @@ namespace RMSoftware.ModularBot
                 }
                 return;
             }
-            await Retry.Do(async () => await Context.Channel.SendMessageAsync("HEY! You don't have permission to do that!"), TimeSpan.FromMilliseconds(140));
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(Color.Red);
+            b.WithAuthor(Client.CurrentUser);
+            b.WithTitle("Access Denied!");
+            b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+            await Context.Channel.SendMessageAsync("", false, b.Build());
             return;
         }
 
@@ -248,7 +278,12 @@ namespace RMSoftware.ModularBot
                 }
                 return;
             }
-            await Retry.Do(async () => await Context.Channel.SendMessageAsync("HEY! You don't have permission to do that!"), TimeSpan.FromMilliseconds(140));
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(Color.Red);
+            b.WithAuthor(Client.CurrentUser);
+            b.WithTitle("Access Denied!");
+            b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+            await Context.Channel.SendMessageAsync("", false, b.Build());
             return;
         }
 
@@ -300,8 +335,12 @@ namespace RMSoftware.ModularBot
                 }
                 return;
             }
-            await Retry.Do(async () => await Context.Channel.SendMessageAsync("Hey " + arg.Author.Mention + ", You don't have permission to use this command!"), TimeSpan.FromMilliseconds(140));
-            
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(Color.Red);
+            b.WithAuthor(Client.CurrentUser);
+            b.WithTitle("Access Denied!");
+            b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+            await Context.Channel.SendMessageAsync("", false, b.Build());
             return;
         }
 
@@ -334,7 +373,12 @@ namespace RMSoftware.ModularBot
                 }
                 catch (Exception ex)
                 {
-                    await arg.Channel.SendMessageAsync("Command is probably removed, but I threw some kind of error... My master will look into it...");
+                    EmbedBuilder b = new EmbedBuilder();
+                    b.WithColor(Color.Red);
+                    b.WithAuthor(Client.CurrentUser);
+                    b.WithTitle("Error?!");
+                    b.WithDescription($"Something went horrribly wrong. I can try that again, but @{(await Client.GetApplicationInfoAsync()).Owner.Username}#{(await Client.GetApplicationInfoAsync()).Owner.Discriminator} should probably look into this.");
+                    await Context.Channel.SendMessageAsync("", false, b.Build());
                     Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                     ConsoleColor Last = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Gray;
@@ -462,6 +506,15 @@ namespace RMSoftware.ModularBot
                 Program.ccmg.Save();
                 
             }
+            else
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithColor(Color.Red);
+                b.WithAuthor(Client.CurrentUser);
+                b.WithTitle("Access Denied!");
+                b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+                await Context.Channel.SendMessageAsync("", false, b.Build());
+            }
 
             return;
         }
@@ -472,9 +525,11 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} (CoreScript update part 6)",
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} The Last Beta!",
                 "• Updated CMD to always use the correct command prefix. You no longer have to specify it within the script\r\n• Better support for variables in scripting.\r\n• OnStart.bcmd is now OnStart.core. It uses the CoreScript system & syntax."+
-                "\r\n• Fixed the Auto-Restart message! It will show itself again & in a new and improved way!\r\n• CoreScript error messages now show in a fancy chat embed!\r\n• Many internal code organizations & cleanup.");
+                "\r\n• Fixed the Auto-Restart message! It will show itself again & in a new and improved way!\r\n• CoreScript error messages now show in a fancy chat embed!\r\n• Many internal code organizations & cleanup.\r\n• Fixed CMD failing to run"+
+                " due to role restrictions on bot.\r\n• Fixed Restricted Custom commands not running for bot owner.\r\n• Word Wrap now wraps the message, not the entire line*\r\n\t•Note: this can still be broken when long words or sentances without spaces are used."+
+                "\r\n• Getcmd will now also show you information about core and module commands!\r\n• Updated general error messages to use embeds!\r\n• Changed Core: StreamStatus to require twitch username rather than URL.");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
@@ -599,4 +654,5 @@ namespace RMSoftware.ModularBot
 
     }
 
+   
 }
