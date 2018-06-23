@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace RMSoftware.ModularBot
 {
-    public class PsuedoMessage : IMessage, IUserMessage         //Spelling is wrong. I know.
+    public class PsuedoMessage : IMessage, IUserMessage
     {
         string _content = "";
         SocketUser _author;
@@ -23,7 +23,7 @@ namespace RMSoftware.ModularBot
             _source = source;
             _type = MessageType.Default;
         }
-
+ 
 
         IReadOnlyCollection<IAttachment> IMessage.Attachments
         {
