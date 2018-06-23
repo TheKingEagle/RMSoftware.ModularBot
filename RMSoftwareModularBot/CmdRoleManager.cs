@@ -106,7 +106,8 @@ namespace RMSoftware.ModularBot
 
         public async Task<bool> CheckUserRole(SocketGuildUser user, DiscordSocketClient client)
         {
-            if ((await client.GetApplicationInfoAsync()).Owner == user as IUser)
+            var owner = (await client.GetApplicationInfoAsync()).Owner;
+            if (owner.Id == user.Id)
             {
                 return true;
             }
