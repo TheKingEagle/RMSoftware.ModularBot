@@ -525,11 +525,8 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} The Last Beta!",
-                "• Updated CMD to always use the correct command prefix. You no longer have to specify it within the script\r\n• Better support for variables in scripting.\r\n• OnStart.bcmd is now OnStart.core. It uses the CoreScript system & syntax."+
-                "\r\n• Fixed the Auto-Restart message! It will show itself again & in a new and improved way!\r\n• CoreScript error messages now show in a fancy chat embed!\r\n• Many internal code organizations & cleanup.\r\n• Fixed CMD failing to run"+
-                " due to role restrictions on bot.\r\n• Fixed Restricted Custom commands not running for bot owner.\r\n• Word Wrap now wraps the message, not the entire line*\r\n\t•Note: this can still be broken when long words or sentances without spaces are used."+
-                "\r\n• Getcmd will now also show you information about core and module commands!\r\n• Updated general error messages to use embeds!\r\n• Changed Core: StreamStatus to require twitch username rather than URL.");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} CoreScript Patch [Part 1]",
+                "• Fixed a critical issue with variables not being displayed correctly.");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
