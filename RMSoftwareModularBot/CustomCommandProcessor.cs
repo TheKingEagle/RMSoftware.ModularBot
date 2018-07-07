@@ -268,7 +268,7 @@ namespace RMSoftware.ModularBot
                     //replace action newlines with actual new lines.
                     response = response.Replace("\\r", "\r").Replace("\\n", "\n");
                     //VariableSupport.
-                    response = scriptService.ProcessVariableString(response, CmdDB, cmd, Program._client, arg);
+                   
                     response = response.Replace("{params}", parameters);//Uses all parameters.
                     List<string> individualParams = Regex.Matches(parameters, @"[\""].+?[\""]|[^ ]+").Cast<Match>().Select(m => m.Value).ToList();//selects individual parameters.
                     //Count through all individual parameters and replace {i} with that parameter (Without quotations)
@@ -349,8 +349,7 @@ namespace RMSoftware.ModularBot
                         successful = true;
                         return true;
                     }
-                    string version = String.Format("{0}", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
-
+                    response = scriptService.ProcessVariableString(response, CmdDB, cmd, Program._client, arg);
                     RequestOptions op = new RequestOptions();
                     op.RetryMode = RetryMode.AlwaysRetry;
                     op.Timeout = 256;
