@@ -59,12 +59,15 @@ namespace RMSoftware.ModularBot
             {
                 //add the new variable.
                 Variables.Add(var, value);
+                _writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result False. Creating variable. Name:{var}; Value: {value}"));
                 return;
             }
             else
             {
-                Variables.Remove(var);//remove the old value.
-                Variables.Add(var, value);//add the new value.
+
+                Variables[var] = value;
+                Variables = Variables;//Probably overkill.
+                _writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result true. modifying variable. Name:{var}; Value: {Variables[var]}"));
                 return;
             }
         }
@@ -86,49 +89,50 @@ namespace RMSoftware.ModularBot
 
         public string ProcessVariableString(string response, INIFile CmdDB, string cmd, IDiscordClient client, IMessage message)
         {
-
-            if (response.Contains("%counter%"))
+            string Processed = response;
+            if (Processed.Contains("%counter%"))
             {
                 int counter = CmdDB.GetCategoryByName(cmd).GetEntryByName("counter").GetAsInteger() + 1;
                 CmdDB.GetCategoryByName(cmd).GetEntryByName("counter").SetValue(counter);
                 CmdDB.SaveConfiguration();
-                response = response.Replace("%counter%", counter.ToString());
+                Processed = Processed.Replace("%counter%", counter.ToString());
             }
-            if (response.Contains("%self%"))
+            if (Processed.Contains("%self%"))
             {
 
-                response = response.Replace("%self%", client.CurrentUser.Mention);
+                Processed = Processed.Replace("%self%", client.CurrentUser.Mention);
             }
-            if (response.Contains("%prefix%"))
+            if (Processed.Contains("%prefix%"))
             {
 
-                response = response.Replace("%prefix%", Program.CommandPrefix.ToString());
+                Processed = Processed.Replace("%prefix%", Program.CommandPrefix.ToString());
             }
-            if (response.Contains("%pf%"))
+            if (Processed.Contains("%pf%"))
             {
 
-                response = response.Replace("%pf%", Program.CommandPrefix.ToString());
+                Processed = Processed.Replace("%pf%", Program.CommandPrefix.ToString());
             }
-            if (response.Contains("%invoker%"))
+            if (Processed.Contains("%invoker%"))
             {
-                response = response.Replace("%invoker%", message.Author.Mention);
+                Processed = Processed.Replace("%invoker%", message.Author.Mention);
             }
-            if (response.Contains("%version%"))
+            if (Processed.Contains("%version%"))
             {
-                response = response.Replace("%version%", Assembly.GetCallingAssembly().GetName().Version.ToString(4));
+                Processed = Processed.Replace("%version%", Assembly.GetCallingAssembly().GetName().Version.ToString(4));
             }
             //Check for use of Custom defined variables.
 
-            foreach (Match item in Regex.Matches(response, @"%[^%]*%", RegexOptions.ExplicitCapture))
+            foreach (Match item in Regex.Matches(Processed, @"%[^%]*%"))
             {
                 string vname = item.Value.Replace("%", "");
                 if (Get(vname) != null)
                 {
-                    response = response.Replace(item.Value.ToString(), Get(vname).ToString());
+                    string replacedvar = Get(vname).ToString();
+                    Processed = Processed.Replace(item.Value, replacedvar);
                 }
             }
             //Final variable.
-            return response;
+            return Processed;
         }
 
         public async Task EvaluateScript(string response, INIFile CmdDB, string cmd, IDiscordClient client, IMessage message)
