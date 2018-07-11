@@ -32,6 +32,6 @@ WAIT <time_in_milliseconds(+20ms)>
 ```
 ## Special Notes
 * Each command has a +20ms delay on it. This is to prevent out of order message processing. The WAIT command also has this delay for now. It is planned for removal soon.
-* CMD notes: This will execute a command without writing the command out to the channel (Example: `!about`). However, the executed command will output results as required. (The same way OnStart.BCMD runs.)
+* CMD notes: This will execute a command without writing the command out to the channel (Example: `!about`). However, the executed command will output results as required. (The same way OnStart.Core runs.)
 * You will not be able to execute user-restricted or guild-restricted commands with this feature.
 * All of these commands are subject to discord's API rate limits. Please be respectful of this.
