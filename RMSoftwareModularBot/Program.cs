@@ -55,7 +55,14 @@ namespace RMSoftware.ModularBot
 
         public static int Main(string[] args)
         {
-
+            if(!Directory.Exists("CMDModules"))
+            {
+                Directory.CreateDirectory("CMDModules");
+            }
+            if (!Directory.Exists("EXT"))
+            {
+                Directory.CreateDirectory("EXT");
+            }
             rolemgt = new CmdRoleManager();
             ARGS = args;
             try
