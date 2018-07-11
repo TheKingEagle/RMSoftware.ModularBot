@@ -526,7 +526,7 @@ namespace RMSoftware.ModularBot
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} CoreScript Patch [Part 1]",
-                "• Fixed a critical issue with variables not being displayed correctly.");
+                "• Fixed a critical issue with variables not being displayed correctly.\r\n• Fixed an installer issue, The program now creates CMDModules and EXT file directories if they don't exist...");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
