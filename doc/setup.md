@@ -34,7 +34,6 @@ The bot will fail to run unless the following permissions are enabled.
 2. Send messagess
 3. Embed links
 4. Attach files
-5. Mention roles & users
 
 ## Recommended permissions
 These permissions are optional, but recommended if you use any additional modules.
