@@ -1,7 +1,7 @@
 # Core Command: `addcmd`
 #### Please note: You will assign a custom prefix for your bot when you run initial setup. We will be using `!` as a command prefix for all future examples.
 * Normal usage: `!addcmd <cmdName> <bool CommandManagersOnly> <bool LockToGuild> <Response>`
-* This command is restricted to users with a DevCommand named role only.
+* This command is restricted to users with a role added to the management database. See [`CoreCommand: addmgrole`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v1.4.14.1038-PATCH/doc/Core-Commands/addmgrole.md)
 * Prefixes are One character, usually a symbol of some kind.
 
 ### Parameter breakdown
