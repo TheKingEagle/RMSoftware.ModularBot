@@ -27,6 +27,22 @@ You will be required to make a discord application.
 3. Choose the guild you want to add the bot to.
 4. Click *Authorize*
 
+## Required Permissions
+The bot will fail to run unless the following permissions are enabled.
+1. Read Messages
+2. Read Message History
+2. Send messagess
+3. Embed links
+4. Attach files
+5. Mention roles & users
+
+## Recommended permissions
+These permissions are optional, but recommended if you use any additional modules.
+1. Access to voice channels
+2. Use voice activity
+3. Move to voice channels with users.
+4. Manage Users (Kick/ban) - For administative/moderation modules
+
 ##### Screenshots
 ![Bot User](http://cdn.rms0.org/img/NewApp5.png)
 ![Bot User](http://cdn.rms0.org/img/NewApp6.png)
