@@ -300,8 +300,9 @@ namespace RMSoftware.IO
         /// </summary>
         /// <param name="category"></param>
         /// <returns></returns>
-        public bool CheckForCategory(string category)
+        public bool CheckForCategory(string c)
         {
+            string category = c.ToLower();
             if (GetCategoryByName(category) == null)
             {
                 return false;
