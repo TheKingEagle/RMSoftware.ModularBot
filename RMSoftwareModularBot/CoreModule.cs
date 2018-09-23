@@ -35,9 +35,25 @@ namespace RMSoftware.ModularBot
             builder.WithAuthor(Context.Client.CurrentUser);
             builder.Color = Color.Blue;
             builder.Description = "A Multi-purpose, multi-module bot designed for discord. Tailor it for your specific server, create your own modules and plug-ins. Includes a core module for custom text-based commands & EXEC functionality";
-            builder.AddField("Copyright", "Copyright © 2017 RMSoftware Development");
+            builder.AddField("Copyright", "Copyright © 2017-2018 RMSoftware Development");
             builder.AddField("Version", Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
-            builder.WithFooter("RMSoftware.ModularBot, created by rmsoft1");
+            builder.WithFooter("RMSoftware.ModularBot, created by TheKingEagle");
+            await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
+        }
+
+        [Command("invitebot"), Summary("Generate a basic invite link to add the bot to your guild.")]
+        public async Task ShowInvite()
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.Title = "Add this bot to your guild";
+            builder.WithAuthor(Context.Client.CurrentUser);
+            builder.Color = Color.Purple;
+            builder.Description = "Click the link above to add the bot to a guild. You may only add the bot to a guild that you manage. You may not be able to use the link unless you are the bot owner, or the bot is public.";
+            builder.AddField("Permissions", "These are the permissions your bot will require. You can manage additional permissions later. Please note: the bot will not function without these permissions enabled:\r\n• Send Messages (Required)\r\n• Attach Files (Required)\r\n• Embed Links (Required)\r\n");
+            builder.AddField("Copyright", "Copyright © 2017-2018 RMSoftware Development");
+            builder.AddField("Version", Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
+            builder.WithFooter("RMSoftware.ModularBot, created by TheKingEagle");
+            builder.WithUrl($"https://discordapp.com/api/oauth2/authorize?client_id={(await Client.GetApplicationInfoAsync()).Id}&permissions=51200&scope=bot");
             await Retry.Do(async () => await Context.Channel.SendMessageAsync("", false, builder.Build()), TimeSpan.FromMilliseconds(140));
         }
 
@@ -89,7 +105,7 @@ namespace RMSoftware.ModularBot
             
         }
 
-        [Command("STOPBOT",RunMode=RunMode.Async), Summary("Shutdown the bot"), RequireOwner, Remarks("[CMDMgmt]")]
+        [Command("stopbot",RunMode=RunMode.Async), Summary("Shutdown the bot"), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task StopBot()
         {
             if (Program.LOG_ONLY_MODE)
@@ -166,7 +182,7 @@ namespace RMSoftware.ModularBot
             throw (Program.crashException);
         }
 #endif
-        [Command("RESTARTBOT", RunMode = RunMode.Async), Summary("Restart the bot"), RequireOwner, Remarks("[CMDMgmt]")]
+        [Command("restartbot", RunMode = RunMode.Async), Summary("Restart the bot"), RequireOwner, Remarks("[CMDMgmt]")]
         public async Task RestartBot()
         {
             if(Program.LOG_ONLY_MODE)
@@ -258,7 +274,8 @@ namespace RMSoftware.ModularBot
             {
                 try
                 {
-                    await arg.Channel.SendMessageAsync("", false, Program.ccmg.ViewCmd(cmdTag));
+                    
+                    await arg.Channel.SendMessageAsync("", false, Program.ccmg.ViewCmd(Context,cmdTag));
                     return;
                 }
                 catch (System.Net.Http.HttpRequestException ex)
@@ -525,8 +542,8 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} CoreScript Patch [Part 1]",
-                "• Fixed a critical issue with variables not being displayed correctly.\r\n• Fixed an installer issue, The program now creates CMDModules and EXT file directories if they don't exist...");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} Managment Update",
+                $"• You cannot view a command's info from any guild other than the guildID set in config, for guild-specific commands for security reasons\r\n• Added core command: !invitebot.\r\n• Converted core commands to lowercase.\r\n• Added config option `initLogo=<LocalImagePath>` to allow custom start logo.\r\n• First-time Setup wizard will start before splash screen as a result.\r\n• Fixed `Unhandled exception: parameter cannot be null value` when a CoreScript error took place in `OnStart.CORE`\r\n• Renamed `Command` Parameter in CoreScript error details to `Execution Context`");
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
