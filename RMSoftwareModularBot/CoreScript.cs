@@ -66,7 +66,7 @@ namespace RMSoftware.ModularBot
             {
 
                 Variables[var] = value;
-                Variables = Variables;//Probably overkill.
+                Variables = Variables;
                 _writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result true. modifying variable. Name:{var}; Value: {Variables[var]}"));
                 return;
             }
@@ -367,6 +367,7 @@ namespace RMSoftware.ModularBot
         {
             int LineInScript = 1;
             bool error = false;
+            if (string.IsNullOrEmpty(cmd)) cmd = "No Context found?";
             EmbedBuilder errorEmbed = new EmbedBuilder();
 
             errorEmbed.WithAuthor(client.CurrentUser);
@@ -412,7 +413,7 @@ namespace RMSoftware.ModularBot
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                         errorEmbed.AddInlineField("Line", LineInScript);
-                                        errorEmbed.AddInlineField("Command", cmd);
+                                        errorEmbed.AddInlineField("Execution Context", cmd);
                                         break;
                                     }
                                     await message.Channel.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), false);
@@ -426,7 +427,7 @@ namespace RMSoftware.ModularBot
                                         error = true;
                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                         errorEmbed.AddInlineField("Line", LineInScript);
-                                        errorEmbed.AddInlineField("Command", cmd);
+                                        errorEmbed.AddInlineField("Execution Context", cmd);
                                         break;
                                     }
                                     await message.Channel.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), true);
@@ -482,7 +483,7 @@ namespace RMSoftware.ModularBot
                                         //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected format ```BOTGOLIVE <ChannelName> <status text>.```");
                                         errorEmbed.AddInlineField("Line", LineInScript);
-                                        errorEmbed.AddInlineField("Command", cmd);
+                                        errorEmbed.AddInlineField("Execution Context", cmd);
                                         break;
                                     }
                                     string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
@@ -497,7 +498,7 @@ namespace RMSoftware.ModularBot
                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                         errorEmbed.AddInlineField("Line", LineInScript);
-                                        errorEmbed.AddInlineField("Command", cmd);
+                                        errorEmbed.AddInlineField("Execution Context", cmd);
                                         break;
                                     }
                                     if (v < 1)
@@ -505,7 +506,7 @@ namespace RMSoftware.ModularBot
                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                         errorEmbed.AddInlineField("Line", LineInScript);
-                                        errorEmbed.AddInlineField("Command", cmd);
+                                        errorEmbed.AddInlineField("Execution Context", cmd);
                                         error = true;
                                         break;
                                     }
@@ -516,7 +517,7 @@ namespace RMSoftware.ModularBot
                                     //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected core function: {line.Split(' ')[0]}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                     errorEmbed.WithDescription($"Unexpected function: ```{line.Split(' ')[0]}```");
                                     errorEmbed.AddInlineField("Line", LineInScript);
-                                    errorEmbed.AddInlineField("Command", cmd);
+                                    errorEmbed.AddInlineField("Execution Context", cmd);
                                     break;
                             }
 
@@ -546,7 +547,7 @@ namespace RMSoftware.ModularBot
                 errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
                 errorEmbed.AddField("Function", line.Split(' ')[0]);
                 errorEmbed.AddInlineField("Line", LineInScript);
-                errorEmbed.AddInlineField("Command", cmd);
+                errorEmbed.AddInlineField("Execution Context", cmd);
                 return;
             }
             output = line.Remove(0, 6).Trim();
@@ -566,7 +567,7 @@ namespace RMSoftware.ModularBot
                 errorEmbed.AddField("Variable Name", "```"+varname+"```",true);
                 
                 errorEmbed.AddField("Line", LineInScript);
-                errorEmbed.AddField("Command", cmd);
+                errorEmbed.AddField("Execution Context", cmd);
                 return;
             }
 
@@ -594,9 +595,9 @@ namespace RMSoftware.ModularBot
             if (!result.Result.IsSuccess)
             {
                 error = true;
-                errorEmbed.WithDescription($"CMD Function Error: The command context returned `{result.Result.ErrorReason}`\r\n```{line}```");
+                errorEmbed.WithDescription($"CMD Function Error: The command context returned the following error:\r\n`{result.Result.ErrorReason}`\r\n```{line}```");
                 errorEmbed.AddInlineField("Line", LineInScript);
-                errorEmbed.AddInlineField("Command", cmd);
+                errorEmbed.AddInlineField("Execution Context", cmd);
                 return;
             }
         }
