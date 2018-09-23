@@ -39,10 +39,12 @@ namespace RMSoftware.ModularBot
         public static bool LOG_ONLY_MODE = false;//Set by args on start. if true, console header and resets are ignored. Should only be done if hosting the process in a UI.
         public static bool MessagesDisabled = false;
         public static ConsoleLogWriter writer = new ConsoleLogWriter();
+        
         /// <summary>
         /// Application's main configuration file
         /// </summary>
         public static INIFile MainCFG { get; private set;}
+        
         #endregion
 
         #region Instance fields & properties
@@ -82,12 +84,24 @@ namespace RMSoftware.ModularBot
                         auth = item.Split(' ')[1];
                     }
                 }
+                SetupWizard();
                 BCMDStarted = false;
                 ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome",79,45);
                 Console.Title = "RMSoftware.ModularBOT";
                 Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
                 System.Threading.Thread.Sleep(800);
-                ConsoleWriteImage(Prog.res1.Resource1.RMSoftwareICO);
+                if(!MainCFG.GetCategoryByName("application").CheckForEntry("initLogo"))
+                {
+
+                    ConsoleWriteImage(Prog.res1.Resource1.RMSoftwareICO);
+                }
+                else
+                {
+                    string filename = MainCFG.GetCategoryByName("application").GetEntryByName("initLogo").GetAsString().Replace("\"","");
+
+                    System.Drawing.Bitmap b = new System.Drawing.Bitmap(filename);
+                    ConsoleWriteImage(b);
+                }
                 System.Threading.Thread.Sleep(3000);
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Program Starting");
                 AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -95,7 +109,7 @@ namespace RMSoftware.ModularBot
 #if(DEBUG)
                 AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
 #endif
-                SetupWizard();
+                
 
                 if (auth.Length == 0)
                 {
@@ -217,13 +231,13 @@ namespace RMSoftware.ModularBot
             }
         }
 
-#if(DEBUG)
+//#if(DEBUG)
         private static void CurrentDomain_FirstChanceException(object sender, FirstChanceExceptionEventArgs e)
         {
             writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "FirstChance", e.Exception.ToString()));
         }
 
-#endif
+//#endif
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             CriticalError = true;
@@ -286,6 +300,8 @@ namespace RMSoftware.ModularBot
                 }
                 if (input.ToLower() == "stopbot")
                 {
+                    writer.WriteEntry(new LogMessage(LogSeverity.Critical, "PROGRAM", "Console session called STOPBOT."));
+                    writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session and closing program..."));
                     _client.SetGameAsync("");
                     System.Threading.Thread.Sleep(2000);
                     _client.SetStatusAsync(UserStatus.Invisible);
@@ -806,6 +822,7 @@ namespace RMSoftware.ModularBot
                 _client.Disconnected += _client_Disconnected;
                 _client.GuildAvailable += _client_GuildAvailable;
                 _client.GuildUnavailable += _client_GuildUnavailable;
+                
                 await LoadModules();//ADD CORE AND EXTERNAL MODULES
                 await _client.LoginAsync(TokenType.Bot, token);
                 await _client.StartAsync();
@@ -904,7 +921,7 @@ namespace RMSoftware.ModularBot
                     //PROCESS THE AutoEXEC file
                     
 
-                    await ccmg.scriptService.EvaluateScriptFile("OnStart.core", ccmg.CmdDB, "", _client, new PsuedoMessage("", _client.CurrentUser, (IGuildChannel)_client.GetChannel(id), MessageSource.Bot));
+                    await ccmg.scriptService.EvaluateScriptFile("OnStart.core", ccmg.CmdDB, "OnStart.CORE", _client, new PsuedoMessage("", _client.CurrentUser, (IGuildChannel)_client.GetChannel(id), MessageSource.Bot));
 
                     BCMDStarted = true;
                     await _client.SetGameAsync("READY!");
@@ -961,8 +978,12 @@ namespace RMSoftware.ModularBot
             if (message == null) return;
             // Create a number to track where the prefix ends and the command begins
             int argPos = 0;
+            //mentions
+            
             // Determine if the message is a command, based on if it starts with 'commandprefix' or a mention prefix. if not, ignore it.
             if (!(message.HasCharPrefix(CommandPrefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))) return;
+
+            
             if (!arg.Author.IsBot && !BCMDStarted)
             {
                 messageQueue.Add(arg);  //queue it up. The bcmdStarted check should 
@@ -971,13 +992,15 @@ namespace RMSoftware.ModularBot
                                         //when the bot starts and doesn't respond to a command at first
                 return;
             }
+            
+            
             // Create a Command Context for command modules
-            //Process CoreCustom commands
             if (await ccmg.Process(arg))
             {
                 return;//If the message contained a custom command from config, No need to continue.
             };
             var context = new CommandContext(_client, message);
+            
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
             var result = await cmdsvr.ExecuteAsync(context, argPos, services);
