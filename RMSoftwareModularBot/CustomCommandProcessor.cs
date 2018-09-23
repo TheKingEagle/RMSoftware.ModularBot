@@ -60,7 +60,7 @@ namespace RMSoftware.ModularBot
             CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").SetValue(Restricted);
             return "Command edited. Please remember to save.";
         }
-        public Embed ViewCmd(string Command)
+        public Embed ViewCmd(ICommandContext Context, string Command)
         {
             EmbedBuilder builder = new EmbedBuilder();
             builder.WithAuthor(Program._client.CurrentUser);
@@ -76,8 +76,10 @@ namespace RMSoftware.ModularBot
                     builder.AddField("More info:", $"The command you requested was not found in the custom database, or in any loaded modules.\r\nIf you just created the command, run `{Program.CommandPrefix}save` and try again.\r\nIf you just added a new module, Restart the bot.\r\n\r\nTo check for a list of commands run `{Program.CommandPrefix.ToString()}listcmd`");
                     return builder.Build();
                 }
+
                 else
                 {
+                    
                     builder.WithColor(Color.Blue);
                     builder.WithDescription($"This is the basic breakdown of the command: `{Program.CommandPrefix.ToString()}{cmd}`.");
                     builder.AddField("Command Summary", c.Summary ?? "`Not specified.`");
@@ -117,6 +119,13 @@ namespace RMSoftware.ModularBot
                 }
                 
             }
+            if (Program._client.GetGuild(CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("guildID").GetAsUlong()) != Context.Guild)
+            {
+                builder.WithColor(Color.Red);
+                builder.WithDescription("The command is not available.");
+                builder.AddField("More info:", $"The command you requested was created with the `LockToGuild` property. You may only view or execute the command from the guild it was created in.");
+                return builder.Build();
+            }
             builder.WithColor(Color.Blue);
             builder.WithDescription($"This is the basic breakdown of the command: `{Program.CommandPrefix.ToString()}{Command.Replace(Program.CommandPrefix.ToString(), "")}`.");
 
@@ -128,6 +137,7 @@ namespace RMSoftware.ModularBot
             if(locked)
             {
                 builder.AddField("What guild can use this command: ", Program._client.GetGuild(CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("guildID").GetAsUlong()).Name);
+                
             }
 
             builder.AddField("Has counter: ",hasCounter );
