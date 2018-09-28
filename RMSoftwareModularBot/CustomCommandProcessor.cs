@@ -119,12 +119,16 @@ namespace RMSoftware.ModularBot
                 }
                 
             }
-            if (Program._client.GetGuild(CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("guildID").GetAsUlong()) != Context.Guild)
+            if(CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).CheckForEntry("guildID"))
             {
-                builder.WithColor(Color.Red);
-                builder.WithDescription("The command is not available.");
-                builder.AddField("More info:", $"The command you requested was created with the `LockToGuild` property. You may only view or execute the command from the guild it was created in.");
-                return builder.Build();
+
+                if (Program._client.GetGuild(CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("guildID").GetAsUlong()) != Context.Guild)
+                {
+                    builder.WithColor(Color.Red);
+                    builder.WithDescription("The command is not available.");
+                    builder.AddField("More info:", $"The command you requested was created with the `LockToGuild` property. You may only view or execute the command from the guild it was created in.");
+                    return builder.Build();
+                }
             }
             builder.WithColor(Color.Blue);
             builder.WithDescription($"This is the basic breakdown of the command: `{Program.CommandPrefix.ToString()}{Command.Replace(Program.CommandPrefix.ToString(), "")}`.");
