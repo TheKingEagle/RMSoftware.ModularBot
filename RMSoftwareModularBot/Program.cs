@@ -272,7 +272,7 @@ namespace RMSoftware.ModularBot
             }
         }
 
-
+        public static int CursorPTop = 0;
         static void ReadConsole()
         {
             ulong chID = 0;
@@ -282,14 +282,22 @@ namespace RMSoftware.ModularBot
                 {
                     break;
                 }
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write(">");//set cursor: 1,top & add black color (default)
-                
-                Console.BackgroundColor = ConsoleBackgroundColor;
-                Console.ForegroundColor = ConsoleForegroundColor;
+                if(!LOG_ONLY_MODE)
+                {
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.SetCursorPosition(0, Console.CursorTop);
+                    Console.Write(">");//set cursor: 1,top & add black color (default)
+
+                    Console.BackgroundColor = ConsoleBackgroundColor;
+                    Console.ForegroundColor = ConsoleForegroundColor;
+                }
                 string input = Console.ReadLine();
-                Console.SetCursorPosition(0, Console.CursorTop-1);
+                if(!LOG_ONLY_MODE)
+                {
+                    //Set another ptop
+                    Console.SetCursorPosition(0, Console.CursorTop);
+                   
+                }
                 writer.WriteEntry(new LogMessage(LogSeverity.Info, "Console", input));
                 if (discon)
                 {
