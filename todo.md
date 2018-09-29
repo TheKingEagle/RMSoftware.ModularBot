@@ -6,9 +6,10 @@
   * Seperate Per-guild and global commands
   * Improve command management
 * Change console IO:
-  * Move ConsoleWriter to own assembly
+  * ~Move ConsoleWriter to own assembly~ Inject into command service provider
+  * Remove static references
   * Fix output errors
   * Add write events
-  * Improve -log_only mode
+  * Move JSON Logging to Console Writer
 * Improve stability
 * Optimize code (lol)
