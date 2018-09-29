@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("RMSoftwareDevelopment")]
 [assembly: AssemblyProduct("Discord Bot")]
-[assembly: AssemblyCopyright("Copyright © 2017 RMSoftware Development")]
+[assembly: AssemblyCopyright("Copyright © 2017-2018 RMSoftware Development")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.4.55.1079")]
-[assembly: AssemblyFileVersion("1.4.55.1079")]//File
+[assembly: AssemblyVersion("1.4.153.1177")]
+[assembly: AssemblyFileVersion("1.4.153.1177")]//File
