@@ -543,7 +543,15 @@ namespace RMSoftware.ModularBot
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} Managment Update",
-                $"• You cannot view a command's info from any guild other than the guildID set in config, for guild-specific commands for security reasons\r\n• Added core command: !invitebot.\r\n• Converted core commands to lowercase.\r\n• Added config option `initLogo=<LocalImagePath>` to allow custom start logo.\r\n• First-time Setup wizard will start before splash screen as a result.\r\n• Fixed `Unhandled exception: parameter cannot be null value` when a CoreScript error took place in `OnStart.CORE`\r\n• Renamed `Command` Parameter in CoreScript error details to `Execution Context`");
+                $"• CHANGED `GETCMD`. You can nolonger view a command from any guild other than the guildID set in config if that command was set to be locked to guild.\r\n   "+
+                $"\u25cb FIXED: `Null Reference exception` when trying to `GETCMD` with commands that were unlocked to ALL guilds.\r\n" +
+                $"• ADDED core command: !invitebot.\r\n• Converted core commands to lowercase.\r\n"+
+                $"• ADDED config option `initLogo=<LocalImagePath>` to allow custom start logo.\r\n   "+
+                $"\u25cb First-time Setup wizard will start before splash screen as a result.\r\n"+
+                $"• FIXED `Unhandled exception: parameter cannot be null value` when a CoreScript error took place in `OnStart.CORE`\r\n" +
+                $"• RENAMED `Command` Parameter in CoreScript error details to `Execution Context`\r\n"+
+                $"• FIXED Console log. Messages should no longer corrupt the layout.");
+                
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
