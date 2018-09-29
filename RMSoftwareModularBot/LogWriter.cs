@@ -4,6 +4,7 @@
 //https://rmsoftware.org - The entire reason I exist on this planet.
 
 using Discord;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,24 +24,52 @@ namespace RMSoftware.ModularBot
             Busy = false;
         }
 
-        //Slightly tweaked from: https://stackoverflow.com/questions/20534318/make-console-writeline-wrap-words-instead-of-letters
-        //TODO: This is not perfect. I would like to improve.
+        //Heavily tweaked from: https://stackoverflow.com/questions/20534318/make-console-writeline-wrap-words-instead-of-letters
+        //Fixed a bug where wrap would fail if no spaces & even if space, characters longer than console width would break)
         public static string WordWrap(string paragraph)
         {
             paragraph = new Regex(@" {2,}").Replace(paragraph.Trim(), @" ");
-            var left = Console.CursorLeft; var top = Console.CursorTop; var lines = new List<string>();
+            //paragraph = new Regex(@"\r\n{2,}").Replace(paragraph.Trim(), @" ");
+            //paragraph = new Regex(@"\r{2,}").Replace(paragraph.Trim(), @" ");
+            var lines = new List<string>();
             string returnstring = "";
-            for (var i = 0; paragraph.Length > 0; i++)
+            int i = 0;
+            while (paragraph.Length > 0)
             {
-                lines.Add(paragraph.Substring(0, Math.Min(Console.WindowWidth-1, paragraph.Length)));
+                lines.Add(paragraph.Substring(0, Math.Min(Console.WindowWidth-23, paragraph.Length)));
+                int NewLinePos = lines[i].LastIndexOf("\r\n");
+                if (NewLinePos > 0)
+                {
+                    lines[i] = lines[i].Remove(NewLinePos);
+                    paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
+                    returnstring += (lines[i].Trim()) + "\n";
+                    i++;
+                    continue;
+                    //lines.Add(paragraph.Substring(NewLinePos, paragraph.Length-NewLinePos));
+                    //lines[i] = lines[i].Remove(length).PadRight(Console.WindowWidth - 2, '\u2000');
+                }
                 var length = lines[i].LastIndexOf(" ");
-                if (length > 0 && paragraph.Length > Console.WindowWidth - 1)
+
+                if (length == -1 && lines[i].Length > Console.WindowWidth - 23) //23 (█00:00:00 MsgSource00)
+                {
+                    int l = Console.WindowWidth - 23;
+                    lines[i] = lines[i].Remove(l);
+                    //lines[i] = lines[i].Remove(l).PadRight(Console.WindowWidth-2,'\u2000');
+                }
+                if (length > 20 && paragraph.Length > Console.WindowWidth - 23)
                 {
                     lines[i] = lines[i].Remove(length);
-                }
 
-                paragraph = paragraph.Substring(Math.Min(lines[i].Length + 1, paragraph.Length));
+                    //lines[i] = lines[i].Remove(length).PadRight(Console.WindowWidth - 2, '\u2000');
+                }
+                paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
                 returnstring += (lines[i].Trim())+"\n";
+                i++;
+            }
+            if(lines.Count >1)
+            {
+
+                return returnstring+"\n\u2000";
             }
             return returnstring;
         }
@@ -52,6 +81,11 @@ namespace RMSoftware.ModularBot
         /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
         public void WriteEntry(LogMessage message,ConsoleColor Entrycolor=ConsoleColor.Black)
         {
+            if(Program.LOG_ONLY_MODE)
+            {
+                Console.WriteLine(JsonConvert.SerializeObject(message));
+                return;
+            }
             if (Busy)
             {
                 SpinWait.SpinUntil(() => !Busy);//This will help prevent the console from being sent into a mess of garbled words.
@@ -133,7 +167,9 @@ namespace RMSoftware.ModularBot
             }
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
+            
             Console.Write(">");//Write the input indicator.
+            //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
             Thread.Sleep(1);//safe.
             Console.BackgroundColor = Program.ConsoleBackgroundColor;
             Console.ForegroundColor = Program.ConsoleForegroundColor;
