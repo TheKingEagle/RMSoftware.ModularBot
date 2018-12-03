@@ -800,6 +800,7 @@ namespace RMSoftware.ModularBot
             serviceCollection = serviceCollection.AddSingleton(writer);
             serviceCollection = serviceCollection.AddSingleton(cmdsvr);
             services = serviceCollection.BuildServiceProvider();
+            ccmg = new CustomCommandManager(LOG_ONLY_MODE,CommandPrefix,writer,ref cmdsvr,ref services);
             //check cfg for disabled core.
             if(MainCFG.GetCategoryByName("Application").CheckForEntry("disableCore"))
             {
@@ -811,7 +812,6 @@ namespace RMSoftware.ModularBot
                 }
             }
             await cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly());//ADD CORE.
-            ccmg = new CustomCommandManager(LOG_ONLY_MODE,CommandPrefix,writer,ref cmdsvr,ref services);
         }
 
         public async Task MainAsync(string token)
