@@ -304,8 +304,65 @@ namespace RMSoftware.ModularBot
             return;
         }
 
-        [Command("editcmd"), Summary("edit an existing custom command"), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
-        public async Task editcmd(string cmdTag, bool newDevCmdOnly, [Remainder]string newaction)
+        [Command("editcmd"), Summary("edit an existing custom command with new action."), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
+        public async Task editcmd(string cmdTag, [Remainder]string newaction="(unchanged)")
+        {
+            SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
+            SocketMessage arg = Context.Message as SocketMessage;
+
+            if (await Program.rolemgt.CheckUserRole(user, Client))
+            {
+                try
+                {
+                    Program.LogToConsole(new LogMessage(LogSeverity.Info, "CmdMgmt", "User has required permission."));
+
+                    string tosend = "";
+
+                    if (newaction.StartsWith(Program.CommandPrefix.ToString()))
+                    {
+                        tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
+
+                        await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
+                        return;
+                    }
+                    tosend = Program.ccmg.EditCommand(cmdTag, newaction);
+
+                    RequestOptions op = new RequestOptions();
+                    op.Timeout = 256;
+                    op.RetryMode = RetryMode.AlwaysRetry;
+                    IUserMessage a = await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
+                    return;
+                }
+                catch (AggregateException ex)
+                {
+
+                    await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely changed anyway~)");
+
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
+                    ConsoleColor Last = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.ForegroundColor = Last;
+                }
+                catch (Exception ex)
+                {
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
+                    ConsoleColor Last = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.ForegroundColor = Last;
+                }
+                return;
+            }
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(Color.Red);
+            b.WithAuthor(Client.CurrentUser);
+            b.WithTitle("Access Denied!");
+            b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+            await Context.Channel.SendMessageAsync("", false, b.Build());
+            return;
+        }
+
+        [Command("editcmd"), Summary("edit an existing custom command with new action and role restrictions"), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
+        public async Task editcmd(string cmdTag, bool newRoleRestrictions, [Remainder]string newaction = "(unchanged)")
         {
             SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
             SocketMessage arg = Context.Message as SocketMessage;
@@ -325,7 +382,7 @@ namespace RMSoftware.ModularBot
                         await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
                         return;
                     }
-                    tosend = Program.ccmg.EditCommand(cmdTag, newaction, newDevCmdOnly);
+                    tosend = Program.ccmg.EditCommand(cmdTag, newRoleRestrictions,newaction);
 
                     RequestOptions op = new RequestOptions();
                     op.Timeout = 256;
@@ -339,6 +396,63 @@ namespace RMSoftware.ModularBot
                     await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely changed anyway~)");
 
                     Program.LogToConsole(new LogMessage(LogSeverity.Error,"CritERR",ex.Message,ex));
+                    ConsoleColor Last = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.ForegroundColor = Last;
+                }
+                catch (Exception ex)
+                {
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
+                    ConsoleColor Last = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.ForegroundColor = Last;
+                }
+                return;
+            }
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(Color.Red);
+            b.WithAuthor(Client.CurrentUser);
+            b.WithTitle("Access Denied!");
+            b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
+            await Context.Channel.SendMessageAsync("", false, b.Build());
+            return;
+        }
+
+        [Command("editcmd"), Summary("edit an existing custom command with new action, role restrictions, and guild restrictions"), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
+        public async Task editcmd(string cmdTag, bool newRoleRestrictions, bool newGuildRestriction, [Remainder]string newaction="(unchanged)")
+        {
+            SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
+            SocketMessage arg = Context.Message as SocketMessage;
+
+            if (await Program.rolemgt.CheckUserRole(user, Client))
+            {
+                try
+                {
+                    Program.LogToConsole(new LogMessage(LogSeverity.Info, "CmdMgmt", "User has required permission."));
+
+                    string tosend = "";
+
+                    if (newaction.StartsWith(Program.CommandPrefix.ToString()))
+                    {
+                        tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
+
+                        await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
+                        return;
+                    }
+                    tosend = Program.ccmg.EditCommand(Context,cmdTag, newRoleRestrictions,newGuildRestriction,newaction);
+
+                    RequestOptions op = new RequestOptions();
+                    op.Timeout = 256;
+                    op.RetryMode = RetryMode.AlwaysRetry;
+                    IUserMessage a = await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
+                    return;
+                }
+                catch (AggregateException ex)
+                {
+
+                    await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely changed anyway~)");
+
+                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
                     ConsoleColor Last = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Gray;
                     Console.ForegroundColor = Last;
@@ -412,7 +526,7 @@ namespace RMSoftware.ModularBot
             CommandList commandList = new CommandList(Client.CurrentUser.Username);
             INICategory[] cmdcats = Program.ccmg.GetAllCommand();
             
-#region CORE
+            #region CORE
             foreach (CommandInfo item in cmdsvr.Commands)
             {
                 string group = item.Module.Aliases[0] + " ";
@@ -447,7 +561,7 @@ namespace RMSoftware.ModularBot
             }
 #endregion
 
-#region Custom Commands
+            #region Custom Commands
             foreach (INICategory item in cmdcats)
             {
                 if (item.CheckForEntry("guildID"))
@@ -542,16 +656,25 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} Managment Update",
-                $"• CHANGED `GETCMD`. You can nolonger view a command from any guild other than the guildID set in config if that command was set to be locked to guild.\r\n   "+
-                $"\u25cb FIXED: `Null Reference exception` when trying to `GETCMD` with commands that were unlocked to ALL guilds.\r\n" +
-                $"• ADDED core command: !invitebot.\r\n• Converted core commands to lowercase.\r\n"+
-                $"• ADDED config option `initLogo=<LocalImagePath>` to allow custom start logo.\r\n   "+
-                $"\u25cb First-time Setup wizard will start before splash screen as a result.\r\n"+
-                $"• FIXED `Unhandled exception: parameter cannot be null value` when a CoreScript error took place in `OnStart.CORE`\r\n" +
-                $"• RENAMED `Command` Parameter in CoreScript error details to `Execution Context`\r\n"+
-                $"• FIXED Console log. Messages should no longer corrupt the layout.");
-                
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} The big ol' update (part 1)",
+                $"• CHANGED `editcmd` to work in the following scenarios.:\r\n" +
+                $"\t• `editcmd <string command_tag> <string new_action>`\r\n" +
+                $"\t• `editcmd <string command_tag> <bool useRoleRestrictions> [string new_action]`\r\n" +
+                $"\t• `editcmd <string command_tag> <bool useRoleRestrictions> <bool useGuildRestrictions> [string new_action]`\r\n" +
+                $"\tPlease note: <items> are required, while [items] are optional.\r\n"+
+                $"• ADDED Crash screen/auto-restart on connection timeouts (Discord/local network) [in theory]\r\n");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} The big ol' update (part 2)",
+                $"• ADDED Crash screen/auto-restart on DNS resolution errors [in theory]\r\n" +
+                $"• FIXED Crash screen/auto-restart on reconnect failures [in theory]\r\n" +
+                $"• ADDED Crash screen/auto-restart for authentication/token errors [in theory]\r\n" +
+                $"• ADDED Configuration entires for Starting status and status orb:\r\n " +
+                $"\t• `readyStatus=` - Status text set after bot is ready. Default: `READY!`\r\n" +
+                $"\t• `readyOrb=` - Accepts `red`, `orange`, and `green`. Default: `green`\r\n" +
+                $"• FIXED Crash and auto-restart loop if screen was too small for startup logo initalization.\r\n" +
+                $"• FIXED `getcmd` - module commands were case sensitive.\r\n"+
+                $"• FIXED `changes` - had too many characters. had to split... LOL");
+
+
             eb.WithFooter("RMSoftware.ModularBOT");
             eb.Color = Color.DarkBlue;
             RequestOptions op = new RequestOptions();
