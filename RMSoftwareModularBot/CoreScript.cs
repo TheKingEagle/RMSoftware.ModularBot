@@ -28,6 +28,7 @@ namespace RMSoftware.ModularBot
             services = _services;
             this.ccmgr = ccmgr;
             CommandPrefix = CmdPrefix;
+            LOG_ONLY_MODE = LogOnlyMode;
             if (dict == null)
             {
                 Variables = new Dictionary<string, object>();
@@ -50,6 +51,10 @@ namespace RMSoftware.ModularBot
         public void Set(string var, object value)
         {
             object v = null;
+            if (string.IsNullOrEmpty((string)value))
+            {
+                throw (new ArgumentException($"You cannot set `{var}` to a value of `null`"));
+            }
             if (SystemVars.Contains(var))
             {
                 throw (new ArgumentException("This variable cannot be modified."));
@@ -139,9 +144,18 @@ namespace RMSoftware.ModularBot
         {
             int LineInScript = 0;
             bool error = false;
-           
+            bool contextToDM = false;
             EmbedBuilder errorEmbed = new EmbedBuilder();
-
+            EmbedBuilder CSEmbed = new EmbedBuilder();
+            CSEmbed.WithAuthor(client.CurrentUser);
+            if (!response.EndsWith("```"))
+            {
+                error = true;
+                //errorMessage = $"SCRIPT ERROR:```The codeblock was not closed.\r\nCoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                errorEmbed.WithDescription("The codeblock was not closed.");
+                //errorEmbed.AddInlineField("Line", LineInScript);
+                errorEmbed.AddInlineField("Execution Context", cmd);
+            }
             errorEmbed.WithAuthor(client.CurrentUser);
             errorEmbed.WithTitle("CoreScript Error");
             errorEmbed.WithColor(Color.Red);
@@ -163,7 +177,6 @@ namespace RMSoftware.ModularBot
                             errorEmbed.WithDescription("The codeblock was not closed.");
                             errorEmbed.AddInlineField("Line", LineInScript);
                             errorEmbed.AddInlineField("Command", cmd);
-                            break;
                         }
                     }
                     string line = await sr.ReadLineAsync();
@@ -238,8 +251,286 @@ namespace RMSoftware.ModularBot
                                     errorEmbed.AddInlineField("Command", cmd);
                                     break;
                                 }
-                                await message.Channel.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), false);
+                                if(contextToDM)
+                                {
+                                    await message.Author.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), false);
+                                }
+                                else
+                                {
 
+                                    await message.Channel.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), false);
+
+                                }
+
+                                break;
+
+                            
+
+                            case ("EMBED")://embed <TITLE>
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 6);
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"Title string cannot be empty. ```{line}```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                CSEmbed = new EmbedBuilder();
+                                CSEmbed.WithTitle(ProcessVariableString(output, CmdDB, cmd, client, message));
+                                CSEmbed.WithAuthor(client.CurrentUser);
+                                break;
+
+                            case ("EMBED_DESC")://embed <TITLE>
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 10);
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+
+                                CSEmbed.WithDescription(ProcessVariableString(output, CmdDB, cmd, client, message));
+                                break;
+
+                            case ("EMBED_IMAGE")://embed <TITLE>
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 11);
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+
+                                CSEmbed.WithImageUrl(output);
+                                break;
+
+                            case ("EMBED_THIMAGE")://embed <TITLE>
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 13);
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+
+                                CSEmbed.WithThumbnailUrl(ProcessVariableString(output, CmdDB, cmd, client, message));
+                                break;
+
+                            case ("EMBED_FOOTER")://embed footer text
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 12);
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                
+                                CSEmbed.WithFooter(output);
+                                break;
+
+                            case ("EMBED_COLOR")://embed footer text
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 11);
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                string o = output.Replace("#", "").ToUpper().Trim();
+                                uint c = 9;
+                                c = (uint)Convert.ToUInt32(o,16);
+                                CSEmbed.WithColor(c);
+                                break;
+
+                            case ("SET_TARGET")://embed footer text
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 11);
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"Invalid target context. ```{line}```");
+
+                                    errorEmbed.AddField("Available targets", "• CHANNEL\r\n• DIRECT");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                if(output.ToUpper() == "CHANNEL")
+                                {
+                                    contextToDM = false;
+                                }
+                                if (output.ToUpper() == "DIRECT")
+                                {
+                                    contextToDM = true;
+                                }
+                                break;
+
+                            case ("EMBED_SEND")://embed footer text
+
+                                //Get the line removing echo.
+                                if (contextToDM)
+                                {
+                                    await message.Author.SendMessageAsync("", false, CSEmbed.Build());
+                                }
+                                else
+                                {
+
+                                    await message.Channel.SendMessageAsync("", false, CSEmbed.Build());
+
+                                }
+                                
+
+                                break;
+                            case ("EMBED_ADDFIELD")://embed_addfield <name> <contents> (Quotes required.)
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 14);
+                                output = ProcessVariableString(output, CmdDB, cmd, client, message);
+                                Regex r = new Regex("\"[^\"]*\"");
+                                #region ERRORS
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                if(r.Matches(output).Count <2)
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                #endregion
+
+                                string emtitle = r.Matches(output)[0].Value.Replace("\"", "").Replace("&q", "\"");
+                                string content = r.Matches(output)[1].Value.Replace("\"", "").Replace("&q", "\"").Replace("&nl;", "\r\n");
+
+                                #region MORE ERROR HANDLES
+                                if(string.IsNullOrWhiteSpace(emtitle))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"Title cannot be empty! ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                if (string.IsNullOrWhiteSpace(content))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"Content cannot be empty! ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                #endregion
+
+                                CSEmbed.AddField(emtitle,content);
+                                break;
+                            case ("EMBED_ADDFIELD_I")://embed_addfield <name> <contents> (Quotes required.)
+
+                                //Get the line removing echo.
+                                output = line.Remove(0, 16);
+                                output = ProcessVariableString(output, CmdDB, cmd, client, message);
+                                Regex ri = new Regex("\"[^\"]*\"");
+                                #region ERRORS
+                                if (string.IsNullOrWhiteSpace(ProcessVariableString(output, CmdDB, cmd, client, message)))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                if (ri.Matches(output).Count < 2)
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                #endregion
+
+                                string emtitlei = ri.Matches(output)[0].Value.Replace("\"", "").Replace("&q", "\"");
+                                string contenti = ri.Matches(output)[1].Value.Replace("\"", "").Replace("&q", "\"");
+
+                                #region MORE ERROR HANDLES
+                                if (string.IsNullOrWhiteSpace(emtitlei))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"Title cannot be empty! ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                if (string.IsNullOrWhiteSpace(contenti))
+                                {
+                                    error = true;
+                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                    errorEmbed.WithDescription($"Content cannot be empty! ```{line}```");
+                                    errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
+                                    errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                    errorEmbed.AddInlineField("Line", LineInScript);
+                                    errorEmbed.AddInlineField("Command", cmd);
+                                    break;
+                                }
+                                #endregion
+
+                                CSEmbed.AddField(emtitlei, contenti,true);
                                 break;
                             case ("ECHOTTS"):
                                 //Get the line removing echo.
@@ -252,7 +543,14 @@ namespace RMSoftware.ModularBot
                                     errorEmbed.AddInlineField("Command", cmd);
                                     break;
                                 }
-                                await message.Channel.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), true);
+                                if(contextToDM)
+                                {
+                                    await message.Author.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), true);
+                                }
+                                else
+                                {
+                                    await message.Channel.SendMessageAsync(ProcessVariableString(output, CmdDB, cmd, client, message), true);
+                                }
 
                                 break;
                             case ("SETVAR"):
