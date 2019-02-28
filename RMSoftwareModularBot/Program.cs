@@ -133,7 +133,7 @@ namespace RMSoftware.ModularBot
                 ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
                 if (CriticalError)
                 {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Critical, "Session", "Failed to resume previous session.",crashException));
+                    Program.LogToConsole(new LogMessage(LogSeverity.Critical, "Session", crashException.Message, crashException));
                     using (FileStream fs = File.Create("CRASH.LOG"))
                     {
                         using (StreamWriter sw = new StreamWriter(fs))
@@ -167,6 +167,7 @@ namespace RMSoftware.ModularBot
                 Program.LogToConsole(new LogMessage(LogSeverity.Critical, "Exception", ex.Message, ex));
                 CriticalError = true;
                 RestartRequested = true;
+                discon = true;
                 using (FileStream fs = File.Create("CRASH.LOG"))
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
@@ -243,6 +244,11 @@ namespace RMSoftware.ModularBot
             CriticalError = true;
             RestartRequested = true;
             crashException = (Exception)e.ExceptionObject;
+
+            if (crashException == null)
+            {
+                crashException = new Exception("The bot crashed due to an unknown error...");
+            }
             using (FileStream fs = File.Create("CRASH.LOG"))
             {
                 using (StreamWriter sw = new StreamWriter(fs))
@@ -343,7 +349,7 @@ namespace RMSoftware.ModularBot
                 }
                 if (input.ToLower().StartsWith("status"))
                 {
-                    string status = input.Remove(0, 10).Trim();
+                    string status = input.Remove(0, 7).Trim();
                     LogToConsole(new LogMessage(LogSeverity.Warning, "Client", "client status changed."));
 
                     _client.SetGameAsync(status);
@@ -430,7 +436,7 @@ namespace RMSoftware.ModularBot
                 Console.WriteLine("\t- However, in order to do this, the bot needs to know where to send these messages and commands...");
                 Console.WriteLine("\t- Not doing this now would result in a crashing bot that doesn't know what to do with its life.");
                 Console.WriteLine("\t- All I need is the ID of that channel to put into the configuration.");
-                Console.WriteLine("\t- If you need a refresher on how to find a channel ID: https://goo.gl/nqAbhw \r\n\t" +
+                Console.WriteLine("\t- If you need a refresher on how to find a channel ID: https://rms0.org/?a=channels \r\n\t" +
                     "(It goes to the discord's official docs)");
                 Console.WriteLine("copy/paste or painfully type in your Initialization Channel's id and press enter");
                 Console.Write("> ");
@@ -481,7 +487,7 @@ namespace RMSoftware.ModularBot
            
                 Console.WriteLine("Override core: ");
                 Console.WriteLine("\t  - You can create custom commands that use the same name as core commands.\r\n\t   This is useful for overriding core commands for even more customization...");
-                Console.WriteLine("\r\nPlease visit http://rmsoftware.org/rmsoftwareModularBot for more information and documentation.");
+                Console.WriteLine("\r\nPlease visit https://rms0.org/?a=mbot for more information and documentation.");
                 Console.WriteLine("\r\nPress ENTER to launch the bot!");
                 Console.ReadLine();
                 #endregion
@@ -800,9 +806,9 @@ namespace RMSoftware.ModularBot
             serviceCollection = serviceCollection.AddSingleton(writer);
             serviceCollection = serviceCollection.AddSingleton(cmdsvr);
             services = serviceCollection.BuildServiceProvider();
-            ccmg = new CustomCommandManager(LOG_ONLY_MODE,CommandPrefix,writer,ref cmdsvr,ref services);
+            ccmg = new CustomCommandManager(LOG_ONLY_MODE, CommandPrefix, writer, ref cmdsvr, ref services);
             //check cfg for disabled core.
-            if(MainCFG.GetCategoryByName("Application").CheckForEntry("disableCore"))
+            if (MainCFG.GetCategoryByName("Application").CheckForEntry("disableCore"))
             {
                 if(MainCFG.GetCategoryByName("Application").GetEntryByName("disableCore").GetAsBool())
                 {
@@ -834,11 +840,82 @@ namespace RMSoftware.ModularBot
                 await LoadModules();//ADD CORE AND EXTERNAL MODULES
                 await _client.LoginAsync(TokenType.Bot, token);
                 await _client.StartAsync();
+                timeoutStart = true;
+                if (!discon)
+                {
+                    //set timer 10 seconds
+                    await Task.Run(delegate () {
+                        while (timeoutStart)
+                        {
+
+                            Thread.Sleep(1000);
+                            timeout++;
+                            if (_client.ConnectionState == ConnectionState.Connected)
+                            {
+                                timeoutStart = false;
+                                timeout = 0;
+                                break;
+
+                            }
+                            if (timeout >= 10)
+                            {
+
+                                Log(new LogMessage(LogSeverity.Critical, "ERR_504", "The client did not connect within 10 seconds. RESTART requested."));
+                                timeoutStart = false;
+                                timeout = 0;
+                                break;
+                            }
+
+                        }
+
+                    });
+                }
             }
+            catch(Discord.Net.HttpException httex)
+            {
+                if(httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    CriticalError = true;
+                    RestartRequested = true;
+                    crashException = httex;
+                    discon = true;
+                    LogMessage m = new LogMessage(LogSeverity.Critical, "ERR_401", "The server responded with a 401. Please make sure you have specified the correct authorization token.");
+                    await Log(m);
+                    using (FileStream fs = File.Create("CRASH.LOG"))
+                    {
+                        using (StreamWriter sw = new StreamWriter(fs))
+                        {
+                            LogMessage m2 = new LogMessage(LogSeverity.Critical, "Exception", crashException.Message, crashException);
+                            await Log(m2);
+                            sw.WriteLine(m.ToString());
+                            List<string> restart_args = new List<string>();
+                            restart_args.AddRange(ARGS);
+                            if (!restart_args.Contains("-crashed"))
+                            {
+                                restart_args.Add("-crashed");
+                            }
+                            ARGS = restart_args.ToArray();
+                            sw.Flush();
+                        }
+                    }
+                    using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+                    {
+                        using (StreamWriter sw = new StreamWriter(fs))
+                        {
+
+                            sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + httex.ToString());
+                            sw.Flush();
+
+                        }
+                    }
+                }
+            }
+
             catch (Exception ex)
             {
                 CriticalError = true;
                 RestartRequested = true;
+                discon = true;
                 crashException = ex;
                 using (FileStream fs = File.Create("CRASH.LOG"))
                 {
@@ -869,6 +946,8 @@ namespace RMSoftware.ModularBot
             }
                    
         }
+        private int timeout = 0;
+        private bool timeoutStart = false;
 
         private Task _client_GuildUnavailable(SocketGuild arg)
         {
@@ -889,14 +968,48 @@ namespace RMSoftware.ModularBot
             StartTime = DateTime.Now;
             LogToConsole(new LogMessage(LogSeverity.Info,"Uptime", "Reset uptime to ALL zero."));
             Console.Title = "RMSoftware.ModularBOT -> " + _client.CurrentUser.Username + " | Connected to " + _client.Guilds.Count + " guilds.";
+            timeoutStart = false;
+            timeout = 0;
             return Task.Delay(1);
+
         }
 
+        
         private Task _client_Disconnected(Exception arg)
         {
             LogToConsole(new LogMessage(LogSeverity.Warning,"Session", "Disconnected: "+ arg.Message,arg));
             Console.Title = "RMSoftware.ModularBot - Disconnected";
             LogToConsole(new LogMessage(LogSeverity.Info,"Uptime", "The client is disconnected."));
+            timeoutStart = true;
+            if(!discon)
+            {
+                //set timer 10 seconds
+                Task.Run(delegate () {
+                    while (timeoutStart)
+                    {
+
+                        Thread.Sleep(1000);
+                        timeout++;
+                        if (_client.ConnectionState == ConnectionState.Connecting)
+                        {
+                            timeoutStart = false;
+                            timeout = 0;
+                            break;
+
+                        }
+                        if (timeout >= 10)
+                        {
+
+                            Log(new LogMessage(LogSeverity.Critical, "ERR_504", "The client disconnected and did not attempt to reconnect within 10 seconds. RESTART requested."));
+                            timeoutStart = false;
+                            timeout = 0;
+                            break;
+                        }
+                        
+                    }
+                    
+                });
+            }
             return Task.Delay(3);
         }
 
@@ -932,9 +1045,27 @@ namespace RMSoftware.ModularBot
                     await ccmg.scriptService.EvaluateScriptFile("OnStart.core", ccmg.CmdDB, "OnStart.CORE", _client, new PsuedoMessage("", _client.CurrentUser, (IGuildChannel)_client.GetChannel(id), MessageSource.Bot));
 
                     BCMDStarted = true;
-                    await _client.SetGameAsync("READY!");
+                    //SET STATUS
+                    string status = MainCFG.GetCategoryByName("application").CheckForEntry("readyStatus") ? MainCFG.GetCategoryByName("application").GetEntryByName("readyStatus").GetAsString() : "READY";
+                    string orb = MainCFG.GetCategoryByName("application").CheckForEntry("readyOrb") ? MainCFG.GetCategoryByName("application").GetEntryByName("readyOrb").GetAsString() : "green";
+                    switch (orb)
+                    {
+                        case ("red"):
+                            await _client.SetStatusAsync(UserStatus.Online);
+                            break;
+                        case ("orange"):
+                            await _client.SetStatusAsync(UserStatus.Idle);
+                            break;
+                        case ("green"):
+                            await _client.SetStatusAsync(UserStatus.Online);
+                            break;
+                        default:
+                            await _client.SetStatusAsync(UserStatus.Online);
+                            break;
+                    }
+                    await _client.SetGameAsync(status);
                     LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
-                    await _client.SetStatusAsync(UserStatus.Online);
+                    
                     LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Processing Message Queue."));
                     foreach (var item in messageQueue)
                     {
@@ -1057,7 +1188,25 @@ namespace RMSoftware.ModularBot
                 discon = true;
                 Thread.Sleep(3000);
             }
-            if(msg.Exception != null)
+            if (msg.Source == "ERR_504")
+            {
+                _client.StopAsync();
+                _client = null;
+                crashException = msg.Exception;
+                CriticalError = true;
+                discon = true;
+                Thread.Sleep(3000);
+            }
+            if (msg.Source == "ERR_401")
+            {
+                _client.StopAsync();
+                _client = null;
+                crashException = msg.Exception;
+                CriticalError = true;
+                discon = true;
+                Thread.Sleep(3000);
+            }
+            if (msg.Exception != null)
             {
                 using (FileStream fs = new FileStream("ERRORS.LOG",FileMode.Append))
                 {
