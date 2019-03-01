@@ -66,10 +66,10 @@ namespace RMSoftware.ModularBot
                 returnstring += (lines[i].Trim())+"\n";
                 i++;
             }
-            if(lines.Count >1)
+            if (lines.Count > 1)
             {
 
-                return returnstring+"\n\u2000";
+                returnstring += "\u00a0";
             }
             return returnstring;
         }
