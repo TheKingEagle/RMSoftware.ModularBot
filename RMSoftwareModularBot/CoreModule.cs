@@ -305,108 +305,36 @@ namespace RMSoftware.ModularBot
         }
 
         [Command("editcmd"), Summary("edit an existing custom command with new action."), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
-        public async Task editcmd(string cmdTag, [Remainder]string newaction="(unchanged)")
+        public async Task editcmd(string cmdTag, [Remainder]string newAction = "(unchanged)")
         {
             SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
             SocketMessage arg = Context.Message as SocketMessage;
 
             if (await Program.rolemgt.CheckUserRole(user, Client))
             {
-                try
+
+                Program.LogToConsole(new LogMessage(LogSeverity.Info, "CmdMgmt", "User has required permission."));
+
+                string tosend = "";
+
+                if (newAction.StartsWith(Program.CommandPrefix.ToString()))
                 {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Info, "CmdMgmt", "User has required permission."));
-
-                    string tosend = "";
-
-                    if (newaction.StartsWith(Program.CommandPrefix.ToString()))
-                    {
-                        tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
-
-                        await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
-                        return;
-                    }
-                    tosend = Program.ccmg.EditCommand(cmdTag, newaction);
-
-                    RequestOptions op = new RequestOptions();
-                    op.Timeout = 256;
-                    op.RetryMode = RetryMode.AlwaysRetry;
-                    IUserMessage a = await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
+                    EmbedBuilder e = new EmbedBuilder();
+                    e.WithColor(Color.Red);
+                    e.WithAuthor(Client.CurrentUser);
+                    e.WithTitle("Absolutely Not.");
+                    e.WithDescription("Hey! You're pretty funny if you think I'm going to let you put a nested command here.");
+                    await Context.Channel.SendMessageAsync("", false, e.Build());
                     return;
                 }
-                catch (AggregateException ex)
-                {
+                tosend = Program.ccmg.EditCommand(Context, cmdTag, null, null, newAction);
+                EmbedBuilder ye = new EmbedBuilder();
+                ye.WithColor(0x00000000);
+                ye.WithAuthor(Client.CurrentUser);
+                ye.WithTitle("Edit Command");
+                ye.WithDescription(tosend);
+                await Context.Channel.SendMessageAsync("", false, ye.Build());
 
-                    await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely changed anyway~)");
-
-                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.ForegroundColor = Last;
-                }
-                catch (Exception ex)
-                {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.ForegroundColor = Last;
-                }
-                return;
-            }
-            EmbedBuilder b = new EmbedBuilder();
-            b.WithColor(Color.Red);
-            b.WithAuthor(Client.CurrentUser);
-            b.WithTitle("Access Denied!");
-            b.WithDescription("Hey! You don't have permission to do this. Ask a bot manager.");
-            await Context.Channel.SendMessageAsync("", false, b.Build());
-            return;
-        }
-
-        [Command("editcmd"), Summary("edit an existing custom command with new action and role restrictions"), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
-        public async Task editcmd(string cmdTag, bool newRoleRestrictions, [Remainder]string newaction = "(unchanged)")
-        {
-            SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
-            SocketMessage arg = Context.Message as SocketMessage;
-
-            if (await Program.rolemgt.CheckUserRole(user, Client))
-            {
-                try
-                {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Info,"CmdMgmt","User has required permission."));
-
-                    string tosend = "";
-
-                    if (newaction.StartsWith(Program.CommandPrefix.ToString()))
-                    {
-                        tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
-
-                        await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
-                        return;
-                    }
-                    tosend = Program.ccmg.EditCommand(cmdTag, newRoleRestrictions,newaction);
-
-                    RequestOptions op = new RequestOptions();
-                    op.Timeout = 256;
-                    op.RetryMode = RetryMode.AlwaysRetry;
-                    IUserMessage a = await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
-                    return;
-                }
-                catch (AggregateException ex)
-                {
-
-                    await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely changed anyway~)");
-
-                    Program.LogToConsole(new LogMessage(LogSeverity.Error,"CritERR",ex.Message,ex));
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.ForegroundColor = Last;
-                }
-                catch (Exception ex)
-                {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.ForegroundColor = Last;
-                }
                 return;
             }
             EmbedBuilder b = new EmbedBuilder();
@@ -419,51 +347,36 @@ namespace RMSoftware.ModularBot
         }
 
         [Command("editcmd"), Summary("edit an existing custom command with new action, role restrictions, and guild restrictions"), RequireContext(ContextType.Guild), Remarks("[CMDMgmt]")]
-        public async Task editcmd(string cmdTag, bool newRoleRestrictions, bool newGuildRestriction, [Remainder]string newaction="(unchanged)")
+        public async Task editcmd(string cmdTag , bool roleRestricted, bool guildRestricted , [Remainder]string newAction = "(unchanged)")
         {
             SocketGuildUser user = ((SocketGuildUser)Context.Message.Author);
             SocketMessage arg = Context.Message as SocketMessage;
 
             if (await Program.rolemgt.CheckUserRole(user, Client))
             {
-                try
+
+                Program.LogToConsole(new LogMessage(LogSeverity.Info, "CmdMgmt", "User has required permission."));
+
+                string tosend = "";
+
+                if (newAction.StartsWith(Program.CommandPrefix.ToString()))
                 {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Info, "CmdMgmt", "User has required permission."));
-
-                    string tosend = "";
-
-                    if (newaction.StartsWith(Program.CommandPrefix.ToString()))
-                    {
-                        tosend = "Haha, you're funny. This bot will not run commands with nested commands. *That's dumb*.";
-
-                        await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
-                        return;
-                    }
-                    tosend = Program.ccmg.EditCommand(Context,cmdTag, newRoleRestrictions,newGuildRestriction,newaction);
-
-                    RequestOptions op = new RequestOptions();
-                    op.Timeout = 256;
-                    op.RetryMode = RetryMode.AlwaysRetry;
-                    IUserMessage a = await Retry.Do(async () => await Context.Channel.SendMessageAsync(tosend), TimeSpan.FromMilliseconds(140));
+                    EmbedBuilder e = new EmbedBuilder();
+                    e.WithColor(Color.Red);
+                    e.WithAuthor(Client.CurrentUser);
+                    e.WithTitle("Absolutely Not.");
+                    e.WithDescription("Hey! You're pretty funny if you think I'm going to let you put a nested command here.");
+                    await Context.Channel.SendMessageAsync("", false, e.Build());
                     return;
                 }
-                catch (AggregateException ex)
-                {
-
-                    await arg.Channel.SendMessageAsync("The request failed (MANY TIMES) due to an API related http error that I can't sort out right now... please forgive me... (The command was most likely changed anyway~)");
-
-                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.ForegroundColor = Last;
-                }
-                catch (Exception ex)
-                {
-                    Program.LogToConsole(new LogMessage(LogSeverity.Error, "CritERR", ex.Message, ex));
-                    ConsoleColor Last = Console.ForegroundColor;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.ForegroundColor = Last;
-                }
+                tosend = Program.ccmg.EditCommand(Context, cmdTag, roleRestricted, guildRestricted, newAction);
+                EmbedBuilder ye = new EmbedBuilder();
+                ye.WithColor(0x00000000);
+                ye.WithAuthor(Client.CurrentUser);
+                ye.WithTitle("Edit Command");
+                ye.WithDescription(tosend);
+                await Context.Channel.SendMessageAsync("", false, ye.Build());
+                
                 return;
             }
             EmbedBuilder b = new EmbedBuilder();
