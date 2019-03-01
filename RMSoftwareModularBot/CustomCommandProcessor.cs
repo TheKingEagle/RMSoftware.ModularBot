@@ -49,17 +49,51 @@ namespace RMSoftware.ModularBot
             CmdDB.CreateEntry(Command.Replace(Program.CommandPrefix.ToString(), ""), "restricted", Restricted);
             return "Command added to the DB. Please remember to save.";
         }
-        public string EditCommand(string Command, string newAction, bool Restricted)
+
+        public string EditCommand(string Command, string newAction="(unchanged)")
+        {
+            if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
+            {
+                return "That command does not exists!";
+            }
+            if (newAction != "(unchanged)")
+            {
+                CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction.Replace("\r", "\\r").Replace("\n", "\\n"));
+            }
+            else
+            {
+                return $"Nothing was changed!";
+            }
+            return $"Command edited. Please remember to save.\r\nNew action: `{newAction}`";
+        }
+        public string EditCommand(string Command, bool Restricted, string newAction="(unchanged)")
+        {
+            if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
+            {
+                return "That command does not exists!";
+            }
+           
+            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").SetValue(Restricted);
+            return $"Command edited. Please remember to save.\r\nNew action: `{newAction}`\r\n Using role restrictions: `{Restricted.ToString()}`";
+        }
+
+        public string EditCommand(ICommandContext context, string Command, bool Restricted, bool GuildRestricted, string newAction="(unchanged)")
         {
             if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
             {
                 return "That command does not exists!";
             }
 
-            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction.Replace("\r", "\\r").Replace("\n", "\\n"));
+            if (newAction != "(unchanged)")
+            {
+                CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction.Replace("\r", "\\r").Replace("\n", "\\n"));
+            }
             CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").SetValue(Restricted);
-            return "Command edited. Please remember to save.";
+            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("guildID").SetValue(context.Guild.Id);
+            string locktoguild = GuildRestricted ? $"Yes, Locked to {context.Guild.Name}" : "No, Command available on all guilds.";
+            return $"Command edited. Please remember to save.\r\nNew action: `{newAction}`\r\n Using role restrictions: `{Restricted.ToString()}`\r\nIs command locked to guild: `{locktoguild}`";
         }
+
         public Embed ViewCmd(ICommandContext Context, string Command)
         {
             EmbedBuilder builder = new EmbedBuilder();
@@ -68,7 +102,7 @@ namespace RMSoftware.ModularBot
             if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
             {
                 string cmd = Command.Replace(Program.CommandPrefix.ToString(), "");
-                var c = _cmdsvc.Commands.FirstOrDefault(x => x.Name == cmd);
+                var c = _cmdsvc.Commands.FirstOrDefault(x => x.Name.ToLower() == cmd.ToLower());
                 if(c == null)
                 {
                     builder.WithColor(Color.Red);
@@ -82,7 +116,7 @@ namespace RMSoftware.ModularBot
                     
                     builder.WithColor(Color.Blue);
                     builder.WithDescription($"This is the basic breakdown of the command: `{Program.CommandPrefix.ToString()}{cmd}`.");
-                    builder.AddField("Command Summary", c.Summary ?? "`Not specified.`");
+                    builder.AddField("Command Summary", c.Summary ?? "`No summary provided.`");
                     string param = $"{Program.CommandPrefix}{c.Name} ";
                     foreach (var item in c.Parameters)
                     {
@@ -99,6 +133,7 @@ namespace RMSoftware.ModularBot
                     builder.AddField("Command Usage", $"`{param.Trim()}`", false);
 
                     builder.AddField("From Module", c.Module.Name ?? "`Unknown module.`");
+                    builder.AddField("Module Summary", c.Module.Summary ?? "`No summary provided.`");
                     builder.AddField("Remarks", c.Remarks ?? "`Not specified.`");
                    
                     string preconds = "";
@@ -190,7 +225,19 @@ namespace RMSoftware.ModularBot
             bool hasrole = false;
             bool IsTTS = false;
             int argPos = 1;
-            if (!arg.Content.StartsWith(Program.CommandPrefix.ToString())) return false;
+            if (arg as PsuedoMessage == null)
+            {
+                SocketUserMessage SUM = arg as SocketUserMessage;
+                if (SUM == null)
+                {
+                    return false;
+                }
+                if (!SUM.Content.StartsWith(Program.CommandPrefix.ToString()) && !(SUM.HasMentionPrefix(Program._client.CurrentUser, ref argPos))) return false; 
+            }
+            else
+            {
+                if (!arg.Content.StartsWith(Program.CommandPrefix.ToString())) return false;
+            }
             //substring the text into two parts.
             try
             {
@@ -285,10 +332,24 @@ namespace RMSoftware.ModularBot
                    
                     response = response.Replace("{params}", parameters);//Uses all parameters.
                     List<string> individualParams = Regex.Matches(parameters, @"[\""].+?[\""]|[^ ]+").Cast<Match>().Select(m => m.Value).ToList();//selects individual parameters.
+                    
                     //Count through all individual parameters and replace {i} with that parameter (Without quotations)
                     for (int i = 0; i < individualParams.Count; i++)
                     {
-                        response = response.Replace("{"+i+"}", individualParams[i].Replace("\"",""));
+                        if(!string.IsNullOrWhiteSpace(individualParams[i]))
+                        {
+                            response = response.Replace("{" + i + "}", individualParams[i].Replace("\"", ""));
+                        }
+                        else
+                        {
+                            response = response.Replace("{" + i + "}", "");//replace the thing with a null space.
+                        }
+                    }
+                    //remove unused Variable placeholders.
+
+                    foreach (Match i in Regex.Matches(response, "{\\d+\\}"))
+                    {
+                        response = response.Replace(i.Value, "");
                     }
 
                     if (response.StartsWith("EXEC"))
