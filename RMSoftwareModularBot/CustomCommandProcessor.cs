@@ -50,48 +50,71 @@ namespace RMSoftware.ModularBot
             return "Command added to the DB. Please remember to save.";
         }
 
-        public string EditCommand(string Command, string newAction="(unchanged)")
+        /// <summary>
+        /// Edit command, with security!
+        /// </summary>
+        /// <param name="context">[REQUIRED] Context for guild</param>
+        /// <param name="Command">[REQUIRED] Command tag to search</param>
+        /// <param name="RoleRestricted">[OPTIONAL] Restrict to role in the CMDMGR db</param>
+        /// <param name="GuildRestricted">[OPTIONAL] Restrict to specific guild</param>
+        /// <param name="Action">[OPTIONAL] Edit the actgion</param>
+        /// <returns></returns>
+        public string EditCommand(ICommandContext context, string Command, bool? roleRestricted=null, bool? guildRestricted=null, string Action="(unchanged)")
         {
-            if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
-            {
-                return "That command does not exists!";
-            }
-            if (newAction != "(unchanged)")
-            {
-                CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction.Replace("\r", "\\r").Replace("\n", "\\n"));
-            }
-            else
-            {
-                return $"Nothing was changed!";
-            }
-            return $"Command edited. Please remember to save.\r\nNew action: `{newAction}`";
-        }
-        public string EditCommand(string Command, bool Restricted, string newAction="(unchanged)")
-        {
-            if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
-            {
-                return "That command does not exists!";
-            }
-           
-            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").SetValue(Restricted);
-            return $"Command edited. Please remember to save.\r\nNew action: `{newAction}`\r\n Using role restrictions: `{Restricted.ToString()}`";
-        }
 
-        public string EditCommand(ICommandContext context, string Command, bool Restricted, bool GuildRestricted, string newAction="(unchanged)")
-        {
-            if (!CmdDB.CheckForCategory(Command.Replace(Program.CommandPrefix.ToString(), "")))
+            string cmdTag = Command.Replace(Program.CommandPrefix.ToString(), "").ToLower();
+            string newAction = Action.Replace("\r", "\\r").Replace("\n", "\\n");
+            
+            if (!CmdDB.CheckForCategory(cmdTag))
             {
-                return "That command does not exists!";
+                return "This is not a custom command!";
             }
 
+            if (CmdDB.GetCategoryByName(cmdTag).CheckForEntry("guildID"))
+            {
+                if (CmdDB.GetCategoryByName(cmdTag).GetEntryByName("guildID").GetAsUlong() != context.Guild.Id)
+                {
+                    return "This is not a custom command!";
+                }
+            }
+
+            if (roleRestricted.HasValue)
+            {
+                CmdDB.GetCategoryByName(cmdTag).GetEntryByName("restricted").SetValue(roleRestricted.Value);
+            }
+
+            if (guildRestricted.HasValue)
+            {
+                if (guildRestricted.Value)
+                {
+                    if (!CmdDB.GetCategoryByName(cmdTag).CheckForEntry("guildID"))
+                    {
+                        CmdDB.CreateEntry(cmdTag, "guildID", context.Guild.Id);
+                    }
+                }
+
+                if (!guildRestricted.Value)
+                {
+                    if (CmdDB.GetCategoryByName(cmdTag).CheckForEntry("guildID"))
+                    {
+                        CmdDB.DeleteEntry(cmdTag, "guildID");
+                    }
+                }
+            }
+
             if (newAction != "(unchanged)")
             {
-                CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("action").SetValue(newAction.Replace("\r", "\\r").Replace("\n", "\\n"));
+                CmdDB.GetCategoryByName(cmdTag).GetEntryByName("action").SetValue(newAction);
             }
-            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("restricted").SetValue(Restricted);
-            CmdDB.GetCategoryByName(Command.Replace(Program.CommandPrefix.ToString(), "")).GetEntryByName("guildID").SetValue(context.Guild.Id);
-            string locktoguild = GuildRestricted ? $"Yes, Locked to {context.Guild.Name}" : "No, Command available on all guilds.";
-            return $"Command edited. Please remember to save.\r\nNew action: `{newAction}`\r\n Using role restrictions: `{Restricted.ToString()}`\r\nIs command locked to guild: `{locktoguild}`";
+
+
+            string hasGR = CmdDB.GetCategoryByName(cmdTag).CheckForEntry("guildID") ? $"Yes. Only accessible from {context.Guild.Name}" : "No. Open to all guilds.";
+            StringBuilder s = new StringBuilder();
+            s.AppendLine("Command edited successfully. Please remember to save.");
+            s.AppendLine($"Action: `{newAction}`");
+            s.AppendLine($"Has Role Restriction: `{CmdDB.GetCategoryByName(cmdTag).GetEntryByName("restricted").GetAsBool()}`");
+            s.AppendLine($"Has guild Restriction: `{hasGR}`");
+            return s.ToString();
         }
 
         public Embed ViewCmd(ICommandContext Context, string Command)
