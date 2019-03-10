@@ -572,7 +572,6 @@ namespace RMSoftware.ModularBot
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} The big ol' update (part 1)",
                 $"• CHANGED `editcmd` to work in the following scenarios.:\r\n" +
                 $"\t• `editcmd <string command_tag> <string new_action>`\r\n" +
-                $"\t• `editcmd <string command_tag> <bool useRoleRestrictions> [string new_action]`\r\n" +
                 $"\t• `editcmd <string command_tag> <bool useRoleRestrictions> <bool useGuildRestrictions> [string new_action]`\r\n" +
                 $"\tPlease note: <items> are required, while [items] are optional.\r\n"+
                 $"• ADDED Crash screen/auto-restart on connection timeouts (Discord/local network) [in theory]\r\n");
@@ -711,6 +710,4 @@ namespace RMSoftware.ModularBot
         }
 
     }
-
-   
 }
