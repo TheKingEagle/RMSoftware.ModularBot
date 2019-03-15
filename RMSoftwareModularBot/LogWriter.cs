@@ -79,7 +79,7 @@ namespace RMSoftware.ModularBot
         /// </summary>
         /// <param name="message">The Discord.NET Log message</param>
         /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
-        public void WriteEntry(LogMessage message,ConsoleColor Entrycolor=ConsoleColor.Black)
+        public void WriteEntry(LogMessage message,ConsoleColor Entrycolor=ConsoleColor.Black, bool showGT= true)
         {
             if(Program.LOG_ONLY_MODE)
             {
@@ -115,12 +115,12 @@ namespace RMSoftware.ModularBot
                     switch (message.Severity)
                     {
                         case LogSeverity.Critical:
-                            bg = ConsoleColor.DarkRed;
-                            fg = ConsoleColor.DarkRed;
+                            bg = ConsoleColor.Red;
+                            fg = ConsoleColor.Red;
                             break;
                         case LogSeverity.Error:
-                            fg = ConsoleColor.Red;
-                            bg = ConsoleColor.Red;
+                            fg = ConsoleColor.DarkRed;
+                            bg = ConsoleColor.DarkRed;
                             break;
                         case LogSeverity.Warning:
                             fg = ConsoleColor.Yellow;
@@ -167,13 +167,17 @@ namespace RMSoftware.ModularBot
             }
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
-            
-            Console.Write(">");//Write the input indicator.
+            if(showGT)
+            {
+                Console.Write(">");//Write the input indicator.
+            }
             //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
             Thread.Sleep(1);//safe.
             Console.BackgroundColor = Program.ConsoleBackgroundColor;
             Console.ForegroundColor = Program.ConsoleForegroundColor;
             Busy = false;
         }
+
+        
     }
 }
