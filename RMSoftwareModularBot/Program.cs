@@ -205,24 +205,12 @@ namespace RMSoftware.ModularBot
                     flattened += item + " ";
                 }
                 p.StartInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, flattened);
-                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
-                writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 3..."));//using direct writer to try and prevent blanks.
-
-                Thread.Sleep(1000);
-                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
-                writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 2..."));
-
-                Thread.Sleep(1000);
-                ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, "Disconnected");
-                writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Restarting in 1..."));
-
-                Thread.Sleep(1000);
                 p.Start();
                 return 0x00000c4;
             }
             writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Program", "Termination."));
 
-            if (!CriticalError)
+            if (CriticalError)
             {
                 return 4007;//NOT OKAY
             }
@@ -281,6 +269,10 @@ namespace RMSoftware.ModularBot
         public static int CursorPTop = 0;
         static void ReadConsole()
         {
+            while (true)
+            {
+                if (BCMDStarted) { break; }
+            }
             ulong chID = 0;
             while (true)
             {
@@ -314,7 +306,7 @@ namespace RMSoftware.ModularBot
                 }
                 if (input.ToLower() == "stopbot")
                 {
-                    writer.WriteEntry(new LogMessage(LogSeverity.Critical, "PROGRAM", "Console session called STOPBOT."));
+                    writer.WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "Console session called STOPBOT."));
                     writer.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session and closing program..."));
                     _client.SetGameAsync("");
                     System.Threading.Thread.Sleep(2000);
@@ -329,6 +321,17 @@ namespace RMSoftware.ModularBot
                 if (input.ToLower() == "cn_term")
                 {
                     Console.WriteLine("Termination");
+                    break;
+                }
+                if (input.ToLower() == "rskill")
+                {
+
+                    ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will auto restart the program.",true,5,new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN."));
+                    break;
+                }
+                if (input.ToLower() == "tskill")
+                {
+                    ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will NOT auto restart the program.", false, 5, new ApplicationException("Command tskill triggered kill screen. USER INITIATED CRASH SCREEN."));
                     break;
                 }
                 if (input.ToLower() == "disablecmd")
@@ -392,27 +395,27 @@ namespace RMSoftware.ModularBot
             {
                 #region Page 1
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Welcome");
-                Console.WriteLine("Welcome to the initial setup wizard for your new modular discord bot...\r\n Some things to note before we get started:");
-                Console.WriteLine("\t- This bot requires a token. If you don't know what that is," +
+                Console.WriteLine("\u2000Welcome to the initial setup wizard for your new modular discord bot...\r\n Some things to note before we get started:");
+                Console.WriteLine("\u2000\t- This bot requires a token. If you don't know what that is," +
                     " please visit this site first!");
-                Console.WriteLine("\t- https://discordapp.com/developers/docs/intro");
+                Console.WriteLine("\u2000\t- https://discordapp.com/developers/docs/intro");
 
-                Console.WriteLine("\t- Privacy notice: This application will output any message that mentions the bot, or messages that start with ! to the console.\r\n\t" +
+                Console.WriteLine("\u2000\t- Privacy notice: This application will output any message that mentions the bot, or messages that start with ! to the console.\r\n\t" +
                     " THEY DO NOT GET SAVED OR POSTED ANYWHERE ELSE... That would be creepy and probably illegal...");
 
-                Console.WriteLine("\r\nPress ENTER to continue...");
+                Console.WriteLine("\u2000\r\n\u2000Press ENTER to continue...");
                 Console.ReadLine();
                 #endregion
 
                 #region Page 2
                 ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Step 1: Token Configuration");
 
-                Console.WriteLine("As mentioned before, this bot requires a token. It can be added in one of two ways.");
-                Console.WriteLine("\t- METHOD 1: Program arguments. Simply launch the program from a batch file,\r\n\t- USAGE: RMSoftwareModularBot.exe <put token here>");
-                Console.WriteLine("\t- METHOD 2: Configure it. Actually, let's do that now.");
-                Console.WriteLine("Go ahead and find your token and copy/paste* it here, then press enter.");
-                Console.WriteLine("*Only if your CMD console will let you... If not, that sucks... You can painfully type it in also...");
-                Console.Write("> ");
+                Console.WriteLine("\u2000As mentioned before, this bot requires a token. It can be added in one of two ways.");
+                Console.WriteLine("\u2000\t- METHOD 1: Program arguments. Simply launch the program from a batch file,\r\n\t- USAGE: RMSoftwareModularBot.exe <put token here>");
+                Console.WriteLine("\u2000\t- METHOD 2: Configure it. Actually, let's do that now.");
+                Console.WriteLine("\u2000Go ahead and find your token and copy/paste* it here, then press enter.");
+                Console.WriteLine("\u2000*Only if your CMD console will let you... If not, that sucks... You can painfully type it in also...");
+                Console.Write("\u2000> ");
                 string conf_Token = Console.ReadLine();
                 
                 if (!WizardDebug)
@@ -421,74 +424,93 @@ namespace RMSoftware.ModularBot
                     MainCFG.CreateEntry("Application", "botToken", conf_Token);
                 }
 
-                Console.WriteLine("Okay! Please remember, You can also start the program with a token as an argument.");
-                Console.WriteLine("Be advised, the token in the configuration is ignored when using the program parameter.");
+                Console.WriteLine("\u2000Okay! Please remember, You can also start the program with a token as an argument.");
+                Console.WriteLine("\u2000Be advised, the token in the configuration is ignored when using the program parameter.");
 
-                Console.WriteLine("\r\nPress ENTER to continue...");
+                Console.WriteLine("\u2000\r\n\u2000Press ENTER to continue...");
                 Console.ReadLine();
                 #endregion
 
                 #region Page 3
                 ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Step 2: Control Channel & Command prefix");
 
-                Console.WriteLine("Ah, yes... The Control channel...");
-                Console.WriteLine("\t- Whenever you start your bot, it will execute AutoStart.bcmd, a script full of commands to prepare for that bot life...");
-                Console.WriteLine("\t- However, in order to do this, the bot needs to know where to send these messages and commands...");
-                Console.WriteLine("\t- Not doing this now would result in a crashing bot that doesn't know what to do with its life.");
-                Console.WriteLine("\t- All I need is the ID of that channel to put into the configuration.");
-                Console.WriteLine("\t- If you need a refresher on how to find a channel ID: https://rms0.org/?a=channels \r\n\t" +
+                Console.WriteLine("\u2000Ah, yes... The Control channel...");
+                Console.WriteLine("\u2000\t- Whenever you start your bot, it will execute AutoStart.bcmd, a script full of commands to prepare for that bot life...");
+                Console.WriteLine("\u2000\t- However, in order to do this, the bot needs to know where to send these messages and commands...");
+                Console.WriteLine("\u2000\t- Not doing this now would result in a crashing bot that doesn't know what to do with its life.");
+                Console.WriteLine("\u2000\t- All I need is the ID of that channel to put into the configuration.");
+                Console.WriteLine("\u2000\t- If you need a refresher on how to find a channel ID: https://rms0.org/?a=channels \r\n\t" +
                     "(It goes to the discord's official docs)");
-                Console.WriteLine("copy/paste or painfully type in your Initialization Channel's id and press enter");
-                Console.Write("> ");
+                Console.WriteLine("\u2000copy/paste or painfully type in your Initialization Channel's id and press enter");
+                Console.Write("\u2000> ");
                 string conf_BotChannel = Console.ReadLine();
                 if (!WizardDebug)
                 {
                     Program.MainCFG.CreateEntry("Application", "botChannel", conf_BotChannel);
                 }
-                Console.WriteLine("Great! Now that channel will be the bot's main log channel...");
-                Console.WriteLine();
-                Console.WriteLine("Now... The Command Prefix: Please enter a single character (Recommended: A symbol of some kind), to use as the bot's command prefix");
-                Console.Write("> ");
-                int conf_cmdPrefix = Console.Read();
-                CommandPrefix = (char)conf_cmdPrefix;
+                Console.WriteLine("\u2000Great! Now that channel will be the bot's main log channel...");
+                Console.WriteLine("\u2000");
+                Console.WriteLine("\u2000Now... The Command Prefix: Please enter a single character (Recommended: A symbol of some kind), to use as the bot's command prefix");
+                Console.Write("\u2000> ");
+                int conf_cmdPrefix = 0;
+                CommandPrefix = (char)0;
+                while (true)
+                {
+                    string r = Console.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(r))
+                    {
+                        Console.WriteLine("\u2000This command prefix was invalid. The prefix cannot be empty, whitespace character, or otherwise. TRY AGAIN.");
+                        Console.Write("\u2000> ");
+                        continue;
+                    }
+                    else
+                    {
+                        conf_cmdPrefix = r[0];
+                        CommandPrefix = (char)conf_cmdPrefix;
+                        break;
+                    }
+
+                } 
+                
                 if (!WizardDebug)
                 {
                     Program.MainCFG.CreateEntry("Application", "cmdPrefix", conf_cmdPrefix);
                     Program.MainCFG.SaveConfiguration();//save
                 }
-                Console.WriteLine("Great! Your bot will use '" + Convert.ToChar(conf_cmdPrefix) + "' [without quotes] as a prefix for it's commands!");
-                Console.WriteLine("\r\nPress ENTER to continue...");
+                Console.WriteLine("\u2000Great! Your bot will use '" + Convert.ToChar(conf_cmdPrefix) + "' [without quotes] as a prefix for it's commands!");
+                Console.WriteLine("\u2000\r\n\u2000Press ENTER to continue...");
                 Console.ReadLine();
 
                 #endregion
 
                 #region Page 4
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Step 3: Final Notes & ProTips");
-                Console.WriteLine("That is all the configuration for right now! Here are a few more things to know:");
-                Console.WriteLine("\t- If you want to re-run this configuration wizard, delete the 'rmsftModBot.ini' file in the program directory.");
-                Console.WriteLine("\t- The source code for this bot is available on http://rmsoftware.org");
-                Console.WriteLine("\r\nCORE Command usage (in discord):");
-                Console.WriteLine("\t- You will need to add command management roles to the bot, if you want other users to be able to add or remove commands\r\n\t  and interact with restricted commands.");
-                Console.WriteLine("\t- Since you own the bot account that uses the token you provided, you are considered a bot owner. \r\n\t  This means you will automatically have access to all commands, regardless of the restrictions in place.");
-                Console.WriteLine($"\t- use {CommandPrefix}addmgrole [@roles] to add roles to the command user database.");
-                Console.WriteLine($"\t- usage: {CommandPrefix}addcmd <command name> <CmdMgmtOnly[true/false]> <LockToGuild[true/false]> <action>");
-                Console.WriteLine("\t- Actions: Any text/emotes with optional formatting.");
-                Console.WriteLine($"\t- {CommandPrefix}addcmd hug false false You hug {{params}} for a long time");
-                Console.WriteLine($"\t- {CommandPrefix}addcmd grouphug false false You hug {{0}}, {{1}}, {{2}}, and {{3}} for a long time");
-                Console.WriteLine("\t- More Action parameters: EXEC and CLI_EXEC ");
-                Console.WriteLine($"\t- {CommandPrefix}addcmd exectest falase false EXEC modname.dll ModNameSpace.ModClass StaticMethod {{params}}");
-                Console.WriteLine($"\t- {CommandPrefix}addcmd exectest falase false CLI_EXEC modname.dll ModNameSpace.ModClass StaticMethod {{params}}");
-                Console.WriteLine("\t  - NOTE: splitparam is not supported for EXEC or CLI_EXEC");
-                Console.WriteLine("\t  - NOTE: EXEC: Allows you to execute a class method for a more advanced command");
-                Console.WriteLine("\t  - NOTE: CLI_EXEC is the same thing, but it gives the class access to the bot directly...");
-                Console.WriteLine("Extra Configuration Options:");
-                Console.WriteLine("\t  - Adding the line DisableCore=True to the [Application] section of the config file, will disable all core commands.");
-                Console.WriteLine("\t     - Remember this will disable the ability to manage commands. putting the bot in a sort of 'read-only' state.");
+                Console.WriteLine("\u2000That is all the configuration for right now! Here are a few more things to know:");
+                Console.WriteLine("\u2000\t- If you want to re-run this configuration wizard, delete the 'rmsftModBot.ini' file in the program directory.");
+                Console.WriteLine("\u2000\t- The source code for this bot is available on http://rmsoftware.org");
+                Console.WriteLine("\u2000\r\n\u2000CORE Command usage (in discord):");
+                Console.WriteLine("\u2000\t- You will need to add command management roles to the bot, if you want other users to be able to add or remove commands\r\n\t  and interact with restricted commands.");
+                Console.WriteLine("\u2000\t- Since you own the bot account that uses the token you provided, you are considered a bot owner. \r\n\t  This means you will automatically have access to all commands, regardless of the restrictions in place.");
+                Console.WriteLine("\u2000\t- use {0}addmgrole [@roles] to add roles to the command user database.",CommandPrefix);
+                Console.WriteLine("\u2000\t- usage: {0}addcmd <command name> <CmdMgmtOnly[true/false]> <LockToGuild[true/false]> <action>",CommandPrefix);
+                Console.WriteLine("\u2000\t- Actions: Any text/emotes with optional formatting.");
+                Console.WriteLine("\u2000\t- " + CommandPrefix + "addcmd hug false false You hug {{params}} for a long time");
+                Console.WriteLine("\u2000\t- " + CommandPrefix + "addcmd grouphug false false You hug {{0}}, {{1}}, {{2}}, and {{3}} for a long time");
+                Console.WriteLine("\u2000\t- More Action parameters: EXEC and CLI_EXEC ");
+                Console.WriteLine("\u2000\t- " + CommandPrefix + "addcmd exectest falase false EXEC modname.dll ModNameSpace.ModClass StaticMethod {{params}}");
+                Console.WriteLine("\u2000\t- " + CommandPrefix + "addcmd exectest falase false CLI_EXEC modname.dll ModNameSpace.ModClass StaticMethod {{params}}");
+                Console.WriteLine("\u2000\t  - NOTE: splitparam is not supported for EXEC or CLI_EXEC");
+                Console.WriteLine("\u2000\t  - NOTE: EXEC: Allows you to execute a class method for a more advanced command");
+                Console.WriteLine("\u2000\t  - NOTE: CLI_EXEC is the same thing, but it gives the class access to the bot directly...");
+                Console.WriteLine("\u2000Extra Configuration Options:");
+                Console.WriteLine("\u2000\t  - Adding the line DisableCore=True to the [Application] section of the config file, will disable all core commands.");
+                Console.WriteLine("\u2000\t     - Remember this will disable the ability to manage commands. putting the bot in a sort of 'read-only' state.");
            
-                Console.WriteLine("Override core: ");
-                Console.WriteLine("\t  - You can create custom commands that use the same name as core commands.\r\n\t   This is useful for overriding core commands for even more customization...");
-                Console.WriteLine("\r\nPlease visit https://rms0.org/?a=mbot for more information and documentation.");
-                Console.WriteLine("\r\nPress ENTER to launch the bot!");
+                Console.WriteLine("\u2000Override core: ");
+                Console.WriteLine("\u2000\t  - You can create custom commands that use the same name as core commands.\r\n\t   This is useful for overriding core commands for even more customization...");
+                Console.WriteLine("\u2000\r\n\u2000Please visit https://rms0.org/?a=mbot for more information and documentation.");
+                Console.WriteLine("\u2000\r\n\u2000Press ENTER to launch the bot!");
                 Console.ReadLine();
                 #endregion
             }
@@ -510,6 +532,10 @@ namespace RMSoftware.ModularBot
             if(LOG_ONLY_MODE)
             {
                 return;
+            }
+            if(title.Length > 72)
+            {
+                title = title.Remove(71) + "...";
             }
             Console.Clear();
             Console.SetWindowSize(144, 32);//Seems to be a reasonable console size.
@@ -550,6 +576,10 @@ namespace RMSoftware.ModularBot
             if (LOG_ONLY_MODE)
             {
                 return;
+            }
+            if (title.Length > 72)
+            {
+                title = title.Remove(71) + "...";
             }
             Console.Clear();
             Console.SetWindowSize(w, h);
@@ -614,11 +644,11 @@ namespace RMSoftware.ModularBot
             }
         }
 
-        public static void LogToConsole(LogMessage msg)
+        public static void LogToConsole(LogMessage msg, bool showGT=true)
         {
             if(!LOG_ONLY_MODE)
             {
-                writer.WriteEntry(msg);
+                writer.WriteEntry(msg,ConsoleColor.Black,showGT);
             }
             else
             {
@@ -637,11 +667,11 @@ namespace RMSoftware.ModularBot
             }
         }
 
-        public static void LogToConsole(LogMessage msg,ConsoleColor entryColor)
+        public static void LogToConsole(LogMessage msg,ConsoleColor entryColor, bool showGT=true)
         {
             if (!LOG_ONLY_MODE)
             {
-                writer.WriteEntry(msg,entryColor);
+                writer.WriteEntry(msg,entryColor,showGT);
             }
             else
             {
@@ -658,6 +688,78 @@ namespace RMSoftware.ModularBot
                     }
                 }
             }
+        }
+
+        public static Task ShowKillScreen(string title, string message, bool autorestart, int timeout = 5, Exception ex = null)
+        {
+
+            ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, title);
+            LogToConsole(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."));
+            LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
+            LogToConsole(m);
+            using (FileStream fs = File.Create("CRASH.LOG"))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    
+                    LogToConsole(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"));
+                    sw.WriteLine(m.ToString());
+                    sw.WriteLine("If you continue to get this error, please report it to the developer, including the stack below.");
+                    sw.WriteLine();
+                    sw.WriteLine("Developer STACK:");
+                    sw.WriteLine("=================================================================================================================================");
+                    sw.WriteLine(ex.ToString());
+                    sw.Flush();
+                }
+            }
+            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    LogToConsole(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"));
+                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
+                    sw.Flush();
+
+                }
+            }
+
+
+            if (!autorestart)
+            {
+                LogToConsole(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."),true);
+                Console.ReadKey();
+                //CriticalError = true;
+                discon = true;
+                return Task.Delay(1);
+            }
+            else
+            {
+                //prompt for autorestart.
+                for (int i = 0; i < timeout; i++)
+                {
+                    int l = Console.CursorLeft;
+                    int t = Console.CursorTop;
+                    
+                    LogToConsole(new LogMessage(LogSeverity.Critical, "MAIN", $"Restarting in {timeout - i} second(s)..."),false);
+                    
+                    Console.CursorLeft = l;
+                    Console.CursorTop = t;//reset.
+                    Thread.Sleep(1000);
+                }
+                discon = true;
+                RestartRequested = true;
+                List<string> restart_args = new List<string>();
+                restart_args.AddRange(ARGS);
+                if (!restart_args.Contains("-crashed"))
+                {
+                    restart_args.Add("-crashed");
+                }
+                ARGS = restart_args.ToArray();
+                //CriticalError = true;
+                return Task.Delay(1);
+
+            }
+
         }
 
         /// <summary>
@@ -679,8 +781,8 @@ namespace RMSoftware.ModularBot
                 {
                     if (Program.MainCFG.GetCategoryByName("Application").CheckForEntry("Dev-ShowWizard"))
                     {
-                        WizardDebug = true;
-                        return Program.MainCFG.GetCategoryByName("Application").GetEntryByName("Dev-ShowWizard").GetAsBool();
+                        WizardDebug = Program.MainCFG.GetCategoryByName("Application").GetEntryByName("Dev-ShowWizard").GetAsBool();
+                        return WizardDebug;
                     }
 
                     //REQUIRED entries.
@@ -767,7 +869,6 @@ namespace RMSoftware.ModularBot
         public async Task LoadModules()
         {
             cmdsvr = new CommandService();
-
             foreach (string item in Directory.EnumerateFiles("CMDModules","*.dll",SearchOption.TopDirectoryOnly))
             {
                 LogToConsole(new LogMessage(LogSeverity.Info,"Modules", $"Adding commands from module library: {item}"),ConsoleColor.DarkGreen);
@@ -817,6 +918,7 @@ namespace RMSoftware.ModularBot
                     return;//DO NOT LOAD CORE IF THIS IS TRUE.
                 }
             }
+            
             await cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly());//ADD CORE.
         }
 
@@ -836,7 +938,7 @@ namespace RMSoftware.ModularBot
                 _client.Disconnected += _client_Disconnected;
                 _client.GuildAvailable += _client_GuildAvailable;
                 _client.GuildUnavailable += _client_GuildUnavailable;
-                
+
                 await LoadModules();//ADD CORE AND EXTERNAL MODULES
                 await _client.LoginAsync(TokenType.Bot, token);
                 await _client.StartAsync();
@@ -844,7 +946,8 @@ namespace RMSoftware.ModularBot
                 if (!discon)
                 {
                     //set timer 10 seconds
-                    await Task.Run(delegate () {
+                    await Task.Run(delegate ()
+                    {
                         while (timeoutStart)
                         {
 
@@ -860,7 +963,8 @@ namespace RMSoftware.ModularBot
                             if (timeout >= 10)
                             {
 
-                                Log(new LogMessage(LogSeverity.Critical, "ERR_504", "The client did not connect within 10 seconds. RESTART requested."));
+                                //Log(new LogMessage(LogSeverity.Critical, "ERR_504", "The client did not connect within 10 seconds. RESTART requested."));
+                                ShowKillScreen("Connection Timeout", "The client did not connect within 10 seconds. Restarting", true, 5, new TimeoutException("The client did not connect within 10 seconds. Restarting"));
                                 timeoutStart = false;
                                 timeout = 0;
                                 break;
@@ -871,80 +975,32 @@ namespace RMSoftware.ModularBot
                     });
                 }
             }
-            catch(Discord.Net.HttpException httex)
+            catch (Discord.Net.HttpException httex)
             {
-                if(httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
+                if (httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    CriticalError = true;
-                    RestartRequested = true;
-                    crashException = httex;
-                    discon = true;
-                    LogMessage m = new LogMessage(LogSeverity.Critical, "ERR_401", "The server responded with a 401. Please make sure you have specified the correct authorization token.");
-                    await Log(m);
-                    using (FileStream fs = File.Create("CRASH.LOG"))
-                    {
-                        using (StreamWriter sw = new StreamWriter(fs))
-                        {
-                            LogMessage m2 = new LogMessage(LogSeverity.Critical, "Exception", crashException.Message, crashException);
-                            await Log(m2);
-                            sw.WriteLine(m.ToString());
-                            List<string> restart_args = new List<string>();
-                            restart_args.AddRange(ARGS);
-                            if (!restart_args.Contains("-crashed"))
-                            {
-                                restart_args.Add("-crashed");
-                            }
-                            ARGS = restart_args.ToArray();
-                            sw.Flush();
-                        }
-                    }
-                    using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
-                    {
-                        using (StreamWriter sw = new StreamWriter(fs))
-                        {
 
-                            sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + httex.ToString());
-                            sw.Flush();
+                    await ShowKillScreen("Unauthorized", "The server responded with error 401. Make sure your authorization token is correct.", false, 5, httex);
+                }
+                if(httex.DiscordCode == 4007)
+                {
+                    await ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true, 5, httex);
+                }
+                if (httex.DiscordCode == 5001)
+                {
+                    await ShowKillScreen("guild timed out", "The server responded with error 5001.", true, 5, httex);
+                }
 
-                        }
-                    }
+                else
+                {
+                    await ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.", true, 5, httex);
                 }
             }
 
             catch (Exception ex)
             {
-                CriticalError = true;
-                RestartRequested = true;
-                discon = true;
-                crashException = ex;
-                using (FileStream fs = File.Create("CRASH.LOG"))
-                {
-                    using (StreamWriter sw = new StreamWriter(fs))
-                    {
-                        LogMessage m = new LogMessage(LogSeverity.Critical, "Exception", crashException.Message, crashException);
-                        sw.WriteLine(m.ToString());
-                        List<string> restart_args = new List<string>();
-                        restart_args.AddRange(ARGS);
-                        if (!restart_args.Contains("-crashed"))
-                        {
-                            restart_args.Add("-crashed");
-                        }
-                        ARGS = restart_args.ToArray();
-                        sw.Flush();
-                    }
-                }
-                using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
-                {
-                    using (StreamWriter sw = new StreamWriter(fs))
-                    {
-
-                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
-                        sw.Flush();
-
-                    }
-                }
+                await ShowKillScreen("Unexpected Error", ex.Message, true, 5, ex);
             }
-                   
         }
         private int timeout = 0;
         private bool timeoutStart = false;
@@ -1000,7 +1056,8 @@ namespace RMSoftware.ModularBot
                         if (timeout >= 10)
                         {
 
-                            Log(new LogMessage(LogSeverity.Critical, "ERR_504", "The client disconnected and did not attempt to reconnect within 10 seconds. RESTART requested."));
+                            //Log(new LogMessage(LogSeverity.Critical, "ERR_504", "The client disconnected and did not attempt to reconnect within 10 seconds. RESTART requested."));
+                            ShowKillScreen("Connection Timeout", "The client did not reconnect within 10 seconds. Restarting", true, 5, new TimeoutException("The client did not reconnect within 10 seconds. Restarting"));
                             timeoutStart = false;
                             timeout = 0;
                             break;
@@ -1040,7 +1097,13 @@ namespace RMSoftware.ModularBot
                         LogToConsole(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
                     }
                     //PROCESS THE AutoEXEC file
-                    
+
+                    IGuildChannel i = (IGuildChannel)_client.GetChannel(id);
+                    if(i==null)
+                    {
+                        await ShowKillScreen("INVALID GUILD CHANNEL", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, 0, new ArgumentException("Guild channel was null.", "botChannel"));
+                        return;
+                    }
 
                     await ccmg.scriptService.EvaluateScriptFile("OnStart.core", ccmg.CmdDB, "OnStart.CORE", _client, new PsuedoMessage("", _client.CurrentUser, (IGuildChannel)_client.GetChannel(id), MessageSource.Bot));
 
@@ -1074,6 +1137,13 @@ namespace RMSoftware.ModularBot
                         await Task.Delay(500);
                     }
                     LogToConsole(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
+                }
+            }
+            catch (Discord.Net.HttpException httx)
+            {
+                if(httx.DiscordCode == 50001)
+                {
+                    LogToConsole(new LogMessage(LogSeverity.Critical, "CRITICAL", "The bot was unable to perform needed operations. Please make sure it has the following permissions: Read messages, Read message history, Send Messages, Embed Links, Attach Files. (Calculated: 117760)", httx));
                 }
             }
             catch (Exception ex)
