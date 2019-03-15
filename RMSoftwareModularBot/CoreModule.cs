@@ -569,22 +569,11 @@ namespace RMSoftware.ModularBot
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} The big ol' update (part 1)",
-                $"• CHANGED `editcmd` to work in the following scenarios.:\r\n" +
-                $"\t• `editcmd <string command_tag> <string new_action>`\r\n" +
-                $"\t• `editcmd <string command_tag> <bool useRoleRestrictions> <bool useGuildRestrictions> [string new_action]`\r\n" +
-                $"\tPlease note: <items> are required, while [items] are optional.\r\n"+
-                $"• ADDED Crash screen/auto-restart on connection timeouts (Discord/local network) [in theory]\r\n");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} The big ol' update (part 2)",
-                $"• ADDED Crash screen/auto-restart on DNS resolution errors [in theory]\r\n" +
-                $"• FIXED Crash screen/auto-restart on reconnect failures [in theory]\r\n" +
-                $"• ADDED Crash screen/auto-restart for authentication/token errors [in theory]\r\n" +
-                $"• ADDED Configuration entires for Starting status and status orb:\r\n " +
-                $"\t• `readyStatus=` - Status text set after bot is ready. Default: `READY!`\r\n" +
-                $"\t• `readyOrb=` - Accepts `red`, `orange`, and `green`. Default: `green`\r\n" +
-                $"• FIXED Crash and auto-restart loop if screen was too small for startup logo initalization.\r\n" +
-                $"• FIXED `getcmd` - module commands were case sensitive.\r\n"+
-                $"• FIXED `changes` - had too many characters. had to split... LOL");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(3)} CRASH SCREENS update (part 1)",
+                $"• TOTALLY re-written internal error handler:\r\n" +
+                $"\t• Invalid authorization tokens, will halt the program without restarting.\r\n" +
+                $"\t• Killscreens will auto-restart after 5 seconds.\r\n" +
+                $"\t• Fixed generic NullReference exception when invalid guild channel is specified." + "");
 
 
             eb.WithFooter("RMSoftware.ModularBOT");
