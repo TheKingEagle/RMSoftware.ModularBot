@@ -52,6 +52,7 @@ These permissions are optional, but recommended if you use any additional module
 ##### Screenshots
 ![Bot user](https://cdn.rms0.org/img/docs/mb/008.png)
 ![Bot user](https://cdn.rms0.org/img/docs/mb/009.png)
+![Bot user](https://cdn.rms0.org/img/docs/mb/010.png)
 
 ## Starting the ModularBot
 When you first start the bot, you will be prompted with a first time setup.
