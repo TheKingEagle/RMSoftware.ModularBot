@@ -4,9 +4,9 @@ You will be required to make a discord application.
 ## Discord Applications
 
 1. Head over to https://discordapp.com/developers/applications/
-2. Click *New App application*
+2. Click **New App application**
 3. Choose an app name
-4. Click *Create*
+4. Click **Create**
 5. Fill out any other information, then continue below.
 ##### Screenshots
 ![Create App](https://cdn.rms0.org/img/docs/mb/001.png)
@@ -14,9 +14,9 @@ You will be required to make a discord application.
 ![Create App](https://cdn.rms0.org/img/docs/mb/003.png)
 
 ## Getting your bot's token
-1. Scroll through your app page until you see "Bot". Once there, click *Add Bot*
+1. Scroll through your app page until you see **Bot**. Once there, click **Add Bot**
 2. Follow any on screen prompts. then choose whether or not to make your app's bot public, but leave OAuth grant unchecked.
-3. Click Copy Token
+3. Click **Copy Token**
 
 ##### Screenshots
 
@@ -27,10 +27,10 @@ You will be required to make a discord application.
 ## Adding bot to your guild
 1. Navigate over to the **Oauth2** section from left navigation.
 2. Scroll down to the **OAUTH2 URL GENERATOR**
-3. Select **BOT** under **SCOPES**
+3. Select **Bot** under **SCOPES**
 4. Scroll down to **BOT PERMISSIONS** and select all of the required permissions (SEE BELOW)
 5. Click **Copy** on the newly generated link
-6. Open that url in browser, and select the guild to add the bot
+6. Open that url in browser, and select the guild you want the bot to join. *you will only see guilds you have permission to add a bot*
 7. Click **Authorize**
 
 ## Required Permissions
