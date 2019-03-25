@@ -59,6 +59,3 @@ When you first start the bot, you will be prompted with a first time setup.
 This setup will require a main Channel ID, an Authorization token, and a command prefix. [Typically a single symbol]
 Follow the wizard for further instructions.
 
-## Getting your channel ID
-
-Please visit http://rms0.org?a=GuildIDs101 for additional instruction.
