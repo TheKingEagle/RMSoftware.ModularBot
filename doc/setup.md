@@ -50,7 +50,7 @@ These permissions are optional, but recommended if you use any additional module
 4. Manage Users (Kick/ban) - For administative/moderation modules
 
 ##### Screenshots
-![Bot user](https://cdn.rms0.org/img/docs/mb/008.png)
+![Bot user](https://cdn.rms0.org/img/docs/mb/008_.png)
 ![Bot user](https://cdn.rms0.org/img/docs/mb/009.png)
 ![Bot user](https://cdn.rms0.org/img/docs/mb/010.png)
 
