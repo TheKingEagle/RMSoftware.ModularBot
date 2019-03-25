@@ -4,7 +4,7 @@ You will be required to make a discord application.
 ## Discord Applications
 
 1. Head over to https://discordapp.com/developers/applications/
-2. Click **New App application**
+2. Click **New Application**
 3. Choose an app name
 4. Click **Create**
 5. Fill out any other information, then continue below.
