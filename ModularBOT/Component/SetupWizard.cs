@@ -327,7 +327,6 @@ namespace ModularBOT.Component
                         Thread.Sleep(800);
                         try
                         {
-
                             ConsoleIOHelper.ConsoleWriteImage(new System.Drawing.Bitmap(path));
                         }
                         catch (Exception ex)
@@ -394,10 +393,15 @@ namespace ModularBOT.Component
                     }
                 }
             }
-            
-            #endregion
 
-            if(appConfig.DebugWizard)
+            #endregion
+            ConsoleIOHelper.WriteEntry("\u2502\u2005");
+            ConsoleIOHelper.WriteEntry("\u2502\u2005");
+            ConsoleIOHelper.WriteEntry("\u2502\u2005");
+            ConsoleIOHelper.WriteEntry("\u2502 The setup wizard is complete! Press any key to start the bot.", ConsoleColor.Green);
+            Console.Write("\u2502 > ");
+            Console.ReadKey();
+            if (appConfig.DebugWizard)
             {
                 ConsoleIOHelper.WriteEntry("\u2502 Wizard debug complete. Restoring settings to previous value", ConsoleColor.Yellow);
                 appConfig.DebugWizard = false;
