@@ -26,7 +26,7 @@ namespace ModularBOT.Component
             
             if(!appConfig.DebugWizard)
             {
-                if (appConfig.LogChannel != 0 && !appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) 
+                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) 
                     && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
                 {
                     return false;//if every critical thing is set... continue.
