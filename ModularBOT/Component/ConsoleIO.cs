@@ -452,36 +452,15 @@ namespace ModularBOT.Component
             WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."));
             LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
             WriteEntry(m);
-            using (FileStream fs = File.Create("CRASH.LOG"))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
 
-                    WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"));
-                    sw.WriteLine(m.ToString());
-                    sw.WriteLine("If you continue to get this error, please report it to the developer, including the stack below.");
-                    sw.WriteLine();
-                    sw.WriteLine("Developer STACK:");
-                    sw.WriteLine("=================================================================================================================================");
-                    sw.WriteLine(ex.ToString());
-                    sw.Flush();
-                }
-            }
-            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-                    WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"));
-                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
-                    sw.Flush();
-
-                }
-            }
-
+            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"));
+            CreateCrashLog(ex, m);
+            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"));
+            WriteErrorsLog(ex);
 
             if (!autorestart)
             {
-                WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."),ConsoleColor.Black, true);
+                WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."), ConsoleColor.Black, true);
                 Console.ReadKey();
             }
             else
@@ -492,7 +471,7 @@ namespace ModularBOT.Component
                     int l = Console.CursorLeft;
                     int t = Console.CursorTop;
 
-                    WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", $"Restarting in {timeout - i} second(s)..."),ConsoleColor.Black,false);
+                    WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", $"Restarting in {timeout - i} second(s)..."), ConsoleColor.Black, false);
 
                     Console.CursorLeft = l;
                     Console.CursorTop = t;//reset.
@@ -510,6 +489,59 @@ namespace ModularBOT.Component
             ShutdownCalled = true;
             return Task.FromResult(autorestart);
 
+        }
+        /// <summary>
+        /// Create a new Crash.LOG file
+        /// </summary>
+        /// <param name="ex">Exception data</param>
+        /// <param name="m">Log message data</param>
+        public void CreateCrashLog(Exception ex, LogMessage m)
+        {
+            using (FileStream fs = File.Create("CRASH.LOG"))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.WriteLine(m.ToString());
+                    sw.WriteLine("If you continue to get this error, please report it to the developer, including the stack below.");
+                    sw.WriteLine();
+                    sw.WriteLine("Developer STACK:");
+                    sw.WriteLine("=================================================================================================================================");
+                    sw.WriteLine(ex.ToString());
+                    sw.Flush();
+                }
+            }
+        }
+
+        public void WriteErrorsLog(Exception ex)
+        {
+            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
+                    sw.Flush();
+
+                }
+            }
+        }
+
+        public void WriteErrorsLog(string message, Exception ex=null)
+        {
+            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + " - " + message);
+
+                    if (ex != null)
+                    {
+                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + " - " + ex.ToString());
+                    }
+
+                    sw.Flush();
+
+                }
+            }
         }
 
         /// <summary>
