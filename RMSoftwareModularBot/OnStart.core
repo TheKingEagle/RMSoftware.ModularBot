@@ -1,6 +1,0 @@
-REM Welcome to the new OnStart.core file. This is a more advanced OnStart.bcmd. It utilizes the CoreScript system.
-REM Blank lines are not yet supported.
-ECHO ModularBOT is online! Things are happening!
-WAIT 300
-CMD about
-ECHO Command Prefix is %prefix%
