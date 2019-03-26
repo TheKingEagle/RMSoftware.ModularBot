@@ -9,27 +9,35 @@ namespace ModularBOT.Component
     public class SetupWizard
     {
         ConsoleIO ConsoleIOHelper;
+        Configuration backup;
         public SetupWizard(ref ConsoleIO ioHelper)
         {
             ConsoleIOHelper = ioHelper;
         }
 
-        public void StartSetupWizard(Configuration appConfig)
+        public bool StartSetupWizard(ref Configuration appConfig)
         {
+            
             bool firstrun = appConfig == null;
             if (firstrun)
             {
                 appConfig = new Configuration();
             }
+            
             if(!appConfig.DebugWizard)
             {
                 if (appConfig.LogChannel != 0 && !appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) 
                     && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
                 {
-                    return;//if every critical thing is set... continue.
+                    return false;//if every critical thing is set... continue.
                 }
             }
-            
+            if (appConfig.DebugWizard)
+            {
+                backup = appConfig;//just to be safe
+                appConfig = new Configuration();
+                appConfig.DebugWizard = true;
+            }
             #region PAGE 1 - Introduction
             ConsoleIOHelper.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Welcome", 1, 6, ConsoleColor.Green);
 
@@ -63,24 +71,24 @@ namespace ModularBOT.Component
             Console.ReadKey();
             #endregion
 
-            #region PAGE 2 - Auth token
+            #region PAGE 2 - Authorization token
             if(string.IsNullOrWhiteSpace(appConfig.AuthToken))
             {
                 ConsoleIOHelper.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Authorization Token", 2, 6, ConsoleColor.Green);
 
 
                 
-                ConsoleIOHelper.WriteEntry("\u2502 This bot requires a way to authenticate with the Discord API. You will need an Authorization Token (Auth Token) in order to use this bot.");
+                ConsoleIOHelper.WriteEntry("\u2502 This bot requires a way to authenticate with the Discord API. You will need an Authorization Token in order to use this bot.");
                 ConsoleIOHelper.WriteEntry("\u2502 For more information on how to get started, see https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/setup.md");
                 ConsoleIOHelper.WriteEntry("\u2502\u2005");
                 ConsoleIOHelper.WriteEntry("\u2502\u2005\u2005 NOTE:", ConsoleColor.Red);
                 ConsoleIOHelper.WriteEntry("\u2502\u2005\u2005\u2005- This is a required configuration step!", ConsoleColor.Red);
                 ConsoleIOHelper.WriteEntry("\u2502\u2005\u2005\u2005- If your token is invalid, the program will not function.", ConsoleColor.Red);
                 ConsoleIOHelper.WriteEntry("\u2502\u2005\u2005\u2005- This token should be treated as a very secure password.", ConsoleColor.Red);
-                ConsoleIOHelper.WriteEntry("\u2502\u2005\u2005\u2005- DO NOT share it with anyone, since they'll be able authenticate as your app's bot user!", ConsoleColor.Red);
+                ConsoleIOHelper.WriteEntry("\u2502\u2005\u2005\u2005- DO NOT share it with anyone, since they'll be able authenticate as your bot user!", ConsoleColor.Red);
                 ConsoleIOHelper.WriteEntry("\u2502\u2005\u2005\u2005- If your token is leaked, you should IMEDIATELY have it reset.", ConsoleColor.Red);
                 ConsoleIOHelper.WriteEntry("\u2502\u2005");
-                ConsoleIOHelper.WriteEntry("\u2502 Please paste (or painfully type in) your auth token below.", ConsoleColor.DarkBlue, true);
+                ConsoleIOHelper.WriteEntry("\u2502 Please paste (or painfully type in) your token below.", ConsoleColor.DarkBlue, true);
                 
                 if (appConfig.DebugWizard)
                 {
@@ -388,6 +396,15 @@ namespace ModularBOT.Component
             }
             
             #endregion
+
+            if(appConfig.DebugWizard)
+            {
+                ConsoleIOHelper.WriteEntry("\u2502 Wizard debug complete. Restoring settings to previous value", ConsoleColor.Yellow);
+                appConfig.DebugWizard = false;
+                appConfig = backup;//revert running config, and proceed.
+                return false;
+            }
+            return true;
         }
 
         private void WritePage5BODY()
