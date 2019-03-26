@@ -29,10 +29,14 @@ namespace ModularBOT
             }
 
             ConsoleIOHelper = new Component.ConsoleIO(AppArguments);
+            configMGR = new ConfigurationManager("modbot-config.cnf", ref ConsoleIOHelper);
+
+            RunStartlogo();
+
             ConsoleIOHelper.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Initializing");
-            
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Info, "Main", "Application started"));
-#if (DEBUG)
+
+            #region DEBUG
+            #if (DEBUG)
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Discord.NET integration"));
@@ -41,11 +45,14 @@ namespace ModularBOT
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE ONStart for Task manager"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Permissions system"));
-#endif
+            #endif
+            #endregion
+
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Info, "Main", "Application started"));
-            configMGR = new ConfigurationManager("modbot-config.cnf", ref ConsoleIOHelper);
-            Task.Run(() => ConsoleIOHelper.GetConsoleInput(ref ShutdownCalled, ref RestartRequested));
-            SpinWait.SpinUntil(BotShutdown);
+            
+            Task.Run(() => ConsoleIOHelper.GetConsoleInput(ref ShutdownCalled, ref RestartRequested));//Console reader
+
+            SpinWait.SpinUntil(BotShutdown);//HOLD THREAD
 
             if (RestartRequested)
             {
@@ -63,9 +70,40 @@ namespace ModularBOT
             return 0x000;//ok;
         }
 
-        private static Func<bool> BotShutdown = delegate ()
+        private static readonly Func<bool> BotShutdown = delegate ()
         {
             return ShutdownCalled;
         };
+
+        private static void RunStartlogo()
+        {
+
+            if (configMGR.CurrentConfig.LogoPath != "NONE")
+            {
+                ConsoleIOHelper.ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
+                Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
+                Thread.Sleep(800);
+                try
+                {
+                    if(configMGR.CurrentConfig.LogoPath == "INTERNAL")
+                    {
+                        ConsoleIOHelper.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
+                        return;
+                    }
+                    ConsoleIOHelper.ConsoleWriteImage(new System.Drawing.Bitmap(configMGR.CurrentConfig.LogoPath));
+                }
+                catch (Exception ex)
+                {
+                    ConsoleIOHelper.WriteErrorsLog("WARNING: Error rendering startup logo. Default logo used instead... Exception details below.", ex);
+                    ConsoleIOHelper.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
+
+                }
+                Thread.Sleep(3000);
+            }
+            else
+            {
+                return;
+            }
+        }
     }
 }
