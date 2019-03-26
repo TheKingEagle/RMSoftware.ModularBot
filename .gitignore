@@ -3,3 +3,6 @@
 ################################################################################
 
 /.vs
+/ModularBOT/bin/Debug
+/ModularBOT/obj/Debug
+/packages
