@@ -36,12 +36,11 @@ namespace ModularBOT
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Discord.NET integration"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Setup Wizard"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Configuration"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Command System"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Task manager"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE ONStart for Task manager"));
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
+            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Permissions system"));
 #endif
             ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Info, "Main", "Application started"));
             configMGR = new ConfigurationManager("modbot-config.cnf", ref ConsoleIOHelper);
