@@ -55,9 +55,8 @@ namespace ModularBOT
     /// </summary>
     public class ConfigurationManager
     {
-        public Configuration CurrentConfig;
+        public Configuration CurrentConfig { get; private set; }
         public SetupWizard setup;
-
         public ConfigurationManager(string jsonFilename, ref ConsoleIO IOHelper )
         {
             setup = new SetupWizard(ref IOHelper);
@@ -80,15 +79,7 @@ namespace ModularBOT
                     }
                 }
             }
-            if(setup.StartSetupWizard(ref CurrentConfig))
-            {
-
-                using (StreamWriter sw = new StreamWriter(jsonFilename))
-                {
-                    string toJson = JsonConvert.SerializeObject(CurrentConfig);
-                    sw.WriteLine(toJson);
-                }
-            }
+            setup.StartSetupWizard(CurrentConfig);
         }
     }
 }

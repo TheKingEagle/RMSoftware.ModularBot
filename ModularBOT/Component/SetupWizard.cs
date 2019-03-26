@@ -14,7 +14,7 @@ namespace ModularBOT.Component
             ConsoleIOHelper = ioHelper;
         }
 
-        public bool StartSetupWizard(ref Configuration appConfig)
+        public void StartSetupWizard(Configuration appConfig)
         {
             bool firstrun = appConfig == null;
             if (firstrun)
@@ -23,10 +23,10 @@ namespace ModularBOT.Component
             }
             if(!appConfig.DebugWizard)
             {
-                if ((appConfig.LogChannel != 0) && (appConfig.CheckForUpdates.HasValue) && (!string.IsNullOrWhiteSpace(appConfig.CommandPrefix)) 
-                    && (!string.IsNullOrWhiteSpace(appConfig.AuthToken)) && (!string.IsNullOrWhiteSpace(appConfig.LogoPath)))
+                if (appConfig.LogChannel != 0 && !appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) 
+                    && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
                 {
-                    return false;//false indicates no changes made.
+                    return;//if every critical thing is set... continue.
                 }
             }
             
@@ -386,14 +386,8 @@ namespace ModularBOT.Component
                     }
                 }
             }
-
+            
             #endregion
-
-            if(appConfig.DebugWizard)
-            {
-                return false;//if debug don't save anything.
-            }
-            return true;//indicates some changes were made.
         }
 
         private void WritePage5BODY()
