@@ -194,6 +194,7 @@
     <Compile Include="Component\ConsoleIO.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Component\DiscordNET.cs" />
     <Compile Include="Component\SetupWizard.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Program.cs" />
