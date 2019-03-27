@@ -57,9 +57,9 @@ namespace ModularBOT
     {
         public Configuration CurrentConfig;
         public SetupWizard setup;
-        public ConfigurationManager(string jsonFilename, ref ConsoleIO IOHelper )
+        public ConfigurationManager(string jsonFilename, ref ConsoleIO consoleIO)
         {
-            setup = new SetupWizard(ref IOHelper);
+            setup = new SetupWizard();
             if(File.Exists(jsonFilename))
             {
                 using (StreamReader sr = new StreamReader(jsonFilename))
@@ -75,11 +75,11 @@ namespace ModularBOT
                     }
                     catch (Exception ex)
                     {
-                        IOHelper.WriteEntry(new LogMessage(LogSeverity.Critical, "Config", ex.Message, ex));
+                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Config", ex.Message, ex));
                     }
                 }
             }
-            if (setup.StartSetupWizard(ref CurrentConfig))
+            if (setup.StartSetupWizard(ref consoleIO, ref CurrentConfig))
             {
                 using (StreamWriter sw = new StreamWriter(jsonFilename))
                 {
