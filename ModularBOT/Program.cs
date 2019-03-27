@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ModularBOT.Component;
 using System.Threading;
 using System.Diagnostics;
+using Discord;
 
 namespace ModularBOT
 {
@@ -14,10 +15,10 @@ namespace ModularBOT
         public static ConfigurationManager configMGR;
 
         private static List<string> AppArguments = new List<string>();
-        private static ConsoleIO ConsoleIOHelper;
-        
+        private static DiscordNET discord = new DiscordNET();
         private static bool ShutdownCalled = false;
         private static bool RestartRequested = false;
+        private static ConsoleIO consoleIO;
         /// <summary>
         /// Application Entry Point.
         /// </summary>
@@ -27,30 +28,29 @@ namespace ModularBOT
             {
                 AppArguments.AddRange(ARGS);
             }
-
-            ConsoleIOHelper = new Component.ConsoleIO(AppArguments);
-            configMGR = new ConfigurationManager("modbot-config.cnf", ref ConsoleIOHelper);
+            consoleIO = new ConsoleIO(AppArguments);
+            configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
 
             RunStartlogo();
 
-            ConsoleIOHelper.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Initializing");
+            consoleIO.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Application Running");
 
             #region DEBUG
-            #if (DEBUG)
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Discord.NET integration"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Command System"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Task manager"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE ONStart for Task manager"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Debug, "TODO:", "WRITE Permissions system"));
-            #endif
+#if (DEBUG)
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Discord.NET integration"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Command System"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE ONStart for Task manager"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Permissions system"));
+#endif
             #endregion
 
-            ConsoleIOHelper.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Info, "Main", "Application started"));
-            
-            Task.Run(() => ConsoleIOHelper.GetConsoleInput(ref ShutdownCalled, ref RestartRequested));//Console reader
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "Main", "Application started"));
+            Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled));
+            Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord));//Console reader
 
             SpinWait.SpinUntil(BotShutdown);//HOLD THREAD
 
@@ -66,7 +66,17 @@ namespace ModularBOT
                 p.Start();
                 return 0x5BB;//code for RESTART NEEDED
             }
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 3..."), ConsoleColor.Black, false);
+            Console.CursorTop = consoleIO.PrvTop;
 
+            Thread.Sleep(1000);
+
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 2..."), ConsoleColor.Black, false);
+            Console.CursorTop = consoleIO.PrvTop;
+            Thread.Sleep(1000);
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 1..."), ConsoleColor.Black, false);
+            Console.CursorTop = consoleIO.PrvTop;
+            Thread.Sleep(1000);
             return 0x000;//ok;
         }
 
@@ -80,22 +90,22 @@ namespace ModularBOT
 
             if (configMGR.CurrentConfig.LogoPath != "NONE")
             {
-                ConsoleIOHelper.ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
+                consoleIO.ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
                 Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
                 Thread.Sleep(800);
                 try
                 {
                     if(configMGR.CurrentConfig.LogoPath == "INTERNAL")
                     {
-                        ConsoleIOHelper.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
+                        consoleIO.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
                         return;
                     }
-                    ConsoleIOHelper.ConsoleWriteImage(new System.Drawing.Bitmap(configMGR.CurrentConfig.LogoPath));
+                    consoleIO.ConsoleWriteImage(new System.Drawing.Bitmap(configMGR.CurrentConfig.LogoPath));
                 }
                 catch (Exception ex)
                 {
-                    ConsoleIOHelper.WriteErrorsLog("WARNING: Error rendering startup logo. Default logo used instead... Exception details below.", ex);
-                    ConsoleIOHelper.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
+                    consoleIO.WriteErrorsLog("WARNING: Error rendering startup logo. Default logo used instead... Exception details below.", ex);
+                    consoleIO.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
 
                 }
                 Thread.Sleep(3000);
