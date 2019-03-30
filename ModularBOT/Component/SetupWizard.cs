@@ -6,22 +6,22 @@ using System.Threading.Tasks;
 using System.Threading;
 namespace ModularBOT.Component
 {
-    public class SetupWizard
+    internal class SetupWizard
     {
         Configuration backup;
 
-        public bool StartSetupWizard(ref ConsoleIO consoleIO, ref Configuration appConfig)
+        internal bool StartSetupWizard(ref ConsoleIO consoleIO, ref Configuration appConfig)
         {
-            
+
             bool firstrun = appConfig == null;
             if (firstrun)
             {
                 appConfig = new Configuration();
             }
-            
-            if(!appConfig.DebugWizard)
+
+            if (!appConfig.DebugWizard)
             {
-                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) 
+                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
                     && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
                 {
                     return false;//if every critical thing is set... continue.
@@ -39,11 +39,11 @@ namespace ModularBOT.Component
             #region Welcome Check - Additional messages
             if (appConfig.DebugWizard)
             {
-                consoleIO.WriteEntry("\u2502 NOTICE: This wizard was started in debug mode.",ConsoleColor.Yellow);
+                consoleIO.WriteEntry("\u2502 NOTICE: This wizard was started in debug mode.", ConsoleColor.Yellow);
             }
             else
             {
-                if (!firstrun && (appConfig.LogChannel != 0 || !appConfig.CheckForUpdates.HasValue || !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) || 
+                if (!firstrun && (appConfig.LogChannel != 0 || !appConfig.CheckForUpdates.HasValue || !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) ||
                     !string.IsNullOrWhiteSpace(appConfig.AuthToken) || !string.IsNullOrWhiteSpace(appConfig.LogoPath)))
                 {
                     consoleIO.WriteEntry("\u2502 One or more items were not configured correctly.", ConsoleColor.Yellow);
@@ -61,18 +61,18 @@ namespace ModularBOT.Component
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Any data written to the console will ONLY appear in the console.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Otherwise, that would be extremely creepy. This isn't what we want.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005");
-            consoleIO.WriteEntry("\u2502 Press any key to continue.", ConsoleColor.DarkBlue,true);
+            consoleIO.WriteEntry("\u2502 Press any key to continue.", ConsoleColor.DarkBlue, true);
             Console.Write("\u2502 > ");
             Console.ReadKey();
             #endregion
 
             #region PAGE 2 - Authorization token
-            if(string.IsNullOrWhiteSpace(appConfig.AuthToken))
+            if (string.IsNullOrWhiteSpace(appConfig.AuthToken))
             {
                 consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Authorization Token", 2, 6, ConsoleColor.Green);
 
 
-                
+
                 consoleIO.WriteEntry("\u2502 This bot requires a way to authenticate with the Discord API. You will need an Authorization Token in order to use this bot.");
                 consoleIO.WriteEntry("\u2502 For more information on how to get started, see https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/setup.md");
                 consoleIO.WriteEntry("\u2502\u2005");
@@ -84,7 +84,7 @@ namespace ModularBOT.Component
                 consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- If your token is leaked, you should IMEDIATELY have it reset.", ConsoleColor.Red);
                 consoleIO.WriteEntry("\u2502\u2005");
                 consoleIO.WriteEntry("\u2502 Please paste (or painfully type in) your token below.", ConsoleColor.DarkBlue, true);
-                
+
                 if (appConfig.DebugWizard)
                 {
                     consoleIO.WriteEntry("\u2502 DEBUG MODE: (This value WILL NOT BE SAVED)", ConsoleColor.Yellow, true);
@@ -124,9 +124,9 @@ namespace ModularBOT.Component
                         }
                     } while (true);
                     auth = pass;
-                   // Console.BackgroundColor = b;
+                    // Console.BackgroundColor = b;
                     //Console.ForegroundColor = f;
-                    
+
                     if (string.IsNullOrWhiteSpace(auth))
                     {
                         consoleIO.WriteEntry("\u2502 You cannot leave this blank. Try again.", ConsoleColor.DarkRed);
@@ -136,7 +136,7 @@ namespace ModularBOT.Component
                     {
                         break;
                     }
-                    
+
                 }
                 if (!appConfig.DebugWizard) appConfig.AuthToken = auth;
                 Console.CursorTop = Console.CursorTop + 1;
@@ -167,8 +167,8 @@ namespace ModularBOT.Component
                 consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- If you cannot paste it below, you can paste elsewhere, and painfully type it in manually.");
                 consoleIO.WriteEntry("\u2502\u2005");
                 consoleIO.WriteEntry("\u2502\u2005\u2005 NOTE:", ConsoleColor.Red);
-                consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- This is a required configuration step!",ConsoleColor.Red);
-                consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- If an invalid channel id is used, the program will not function.",ConsoleColor.Red);
+                consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- This is a required configuration step!", ConsoleColor.Red);
+                consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- If an invalid channel id is used, the program will not function.", ConsoleColor.Red);
                 consoleIO.WriteEntry("\u2502\u2005");
                 consoleIO.WriteEntry("\u2502 Please paste (or painfully type in) your channel id below.", ConsoleColor.DarkBlue, true);
 
@@ -189,11 +189,11 @@ namespace ModularBOT.Component
 
                     id = Console.ReadLine().Replace("\r\n", "");
                     //string pass = "";
-                   
+
                     // Console.BackgroundColor = b;
                     //Console.ForegroundColor = f;
 
-                    if (!ulong.TryParse(id,out uid) && uid <=0)
+                    if (!ulong.TryParse(id, out uid) && uid <= 0)
                     {
                         consoleIO.WriteEntry("\u2502 Invalid format. Any number greater than 0 expected. Try again.", ConsoleColor.DarkRed);
                         Console.Write("\u2502 > ");
@@ -223,7 +223,7 @@ namespace ModularBOT.Component
                 consoleIO.WriteEntry("\u2502 Now we need to set a desired global command prefix. This prefix will be used when one has not been defined in a guild.");
                 consoleIO.WriteEntry("\u2502 A Typical command prefix is usually a symbol or group of symbols you type before the name of the command.");
                 consoleIO.WriteEntry("\u2502\u2005");
-                consoleIO.WriteEntry("\u2502\u2005\u2005 Examples:",ConsoleColor.DarkGreen);
+                consoleIO.WriteEntry("\u2502\u2005\u2005 Examples:", ConsoleColor.DarkGreen);
                 consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- !help", ConsoleColor.DarkGreen);
                 consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- /help", ConsoleColor.DarkGreen);
                 consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- ->help", ConsoleColor.DarkGreen);
@@ -263,7 +263,7 @@ namespace ModularBOT.Component
                     {
                         break;
                     }
-                    
+
                 }
                 if (!appConfig.DebugWizard) appConfig.CommandPrefix = prefix;
                 consoleIO.WriteEntry("\u2502 Command Prefix has been set! Excellent. Press any key to continue...");
@@ -312,7 +312,7 @@ namespace ModularBOT.Component
                     }
                     if (k.KeyChar == '3')
                     {
-                        consoleIO.WriteEntry("\u2502 Please the path to a valid image file...",ConsoleColor.DarkBlue);
+                        consoleIO.WriteEntry("\u2502 Please the path to a valid image file...", ConsoleColor.DarkBlue);
                         Console.Write("\u2502 > ");
                         path = Console.ReadLine();
                         consoleIO.WriteEntry("\u2502 Previewing action... One second please...");
@@ -328,7 +328,7 @@ namespace ModularBOT.Component
                         {
                             WritePage5BODY(ref consoleIO);
                             consoleIO.WriteEntry("\u2502 Something went wrong. Make sure you specified a valid image.", ConsoleColor.Red);
-                            consoleIO.WriteEntry("\u2502 " + ex.Message,ConsoleColor.Red);
+                            consoleIO.WriteEntry("\u2502 " + ex.Message, ConsoleColor.Red);
                             consoleIO.WriteEntry("\u2502");
                             continue;
                         }
@@ -349,7 +349,7 @@ namespace ModularBOT.Component
             #endregion
 
             #region PAGE 6 - Updates
-            if(!appConfig.CheckForUpdates.HasValue)
+            if (!appConfig.CheckForUpdates.HasValue)
             {
                 consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Check for updates", 6, 6, ConsoleColor.Green);
 
@@ -358,8 +358,8 @@ namespace ModularBOT.Component
                 consoleIO.WriteEntry("\u2502 RMSoftware Development may occasionally push live updates, with feature improvements and important bug fixes.");
                 consoleIO.WriteEntry("\u2502 While enabling update notifications is purely optional, it is highly recommended.");
                 consoleIO.WriteEntry("\u2502\u2005");
-                consoleIO.WriteEntry("\u2502 Notice:",ConsoleColor.Yellow);
-                consoleIO.WriteEntry("\u2502\u2005",ConsoleColor.Yellow);
+                consoleIO.WriteEntry("\u2502 Notice:", ConsoleColor.Yellow);
+                consoleIO.WriteEntry("\u2502\u2005", ConsoleColor.Yellow);
                 consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 - This will prompt you to open a browser URL to manually download and install updates", ConsoleColor.Yellow);
                 consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 - If you elect to install the updates, you must close any running instance of this program.", ConsoleColor.Yellow);
                 consoleIO.WriteEntry("\u2502\u2005");
