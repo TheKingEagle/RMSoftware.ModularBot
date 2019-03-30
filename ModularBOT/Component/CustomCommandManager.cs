@@ -49,6 +49,8 @@ namespace ModularBOT.Component
             }
         }
 
+        #region Processing
+
         public string ProcessMessage(IMessage socketmsg)
         {
             ulong gid = 0;//global by default
@@ -268,6 +270,11 @@ namespace ModularBOT.Component
             #endregion
             return response;
         }
+        #endregion
+
+        #region Command Management
+        //TODO: Add/delete commands
+        #endregion
     }
 
     public class GuildCommand
