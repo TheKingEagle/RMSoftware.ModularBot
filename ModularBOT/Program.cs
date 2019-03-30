@@ -39,10 +39,9 @@ namespace ModularBOT
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Discord.NET integration  - almost done"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Command System"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "EXPAND Discord.NET integration"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "FINISH Command System"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE ONStart for Task manager"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Permissions system"));
 #endif
