@@ -39,7 +39,7 @@ namespace ModularBOT
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Discord.NET integration"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Discord.NET integration  - almost done"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Command System"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE ONStart for Task manager"));
@@ -49,8 +49,9 @@ namespace ModularBOT
             #endregion
 
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "Main", "Application started"));
-            Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled));
-            Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord));//Console reader
+
+            Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested));//Discord.NET thread
+            Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord));//Console reader thread;
 
             SpinWait.SpinUntil(BotShutdown);//HOLD THREAD
 
