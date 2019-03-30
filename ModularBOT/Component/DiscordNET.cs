@@ -46,7 +46,7 @@ namespace ModularBOT.Component
                 {
                     MessageCacheSize = 20,
                     AlwaysDownloadUsers = true,
-                    LogLevel = LogSeverity.Debug,
+                    LogLevel = LogSeverity.Verbose,
 
                     // TODO: Figure out a way to automatically set this later.
                     TotalShards = AppConfig.ShardCount
