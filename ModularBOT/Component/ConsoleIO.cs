@@ -181,7 +181,7 @@ namespace ModularBOT.Component
 
         //Heavily tweaked from: https://stackoverflow.com/questions/20534318/make-console-writeline-wrap-words-instead-of-letters
         //Fixed a bug where wrap would fail if no spaces & even if space, characters longer than console width would break)
-        public string WordWrap(string paragraph, int consoleoffset = 23)
+        public string WordWrap(string paragraph, int consoleoffset = 24)
         {
             paragraph = new Regex(@" {2,}").Replace(paragraph.Trim(), @" ");
             //paragraph = new Regex(@"\r\n{2,}").Replace(paragraph.Trim(), @" ");
@@ -282,12 +282,12 @@ namespace ModularBOT.Component
                             bg = ConsoleColor.Black;
                             break;
                         case LogSeverity.Verbose:
-                            fg = ConsoleColor.DarkGray;
-                            bg = ConsoleColor.DarkGray;
+                            fg = ConsoleColor.Magenta;
+                            bg = ConsoleColor.Cyan;
                             break;
                         case LogSeverity.Debug:
-                            fg = ConsoleColor.DarkMagenta;
-                            bg = ConsoleColor.DarkMagenta;
+                            fg = ConsoleColor.DarkGray;
+                            bg = ConsoleColor.DarkGray;
                             break;
                         default:
                             break;
@@ -305,6 +305,7 @@ namespace ModularBOT.Component
                 Console.Write((char)9617);//Write the colored space.
                 Console.BackgroundColor = bglast;//restore previous color.
                 Console.ForegroundColor = ConsoleForegroundColor;
+                Console.Write("\u2551");//uileft
                 Thread.Sleep(1);//safe.
                 if (i == 0)
                 {
@@ -328,6 +329,11 @@ namespace ModularBOT.Component
             Console.BackgroundColor = ConsoleBackgroundColor;
             Console.ForegroundColor = ConsoleForegroundColor;
             Console.CursorVisible = showCursor;
+            if (showCursor)
+            {
+                Console.Write("\u2551");
+            }
+
             Busy = false;
             CurTop = Console.CursorTop;
         }
@@ -553,7 +559,7 @@ namespace ModularBOT.Component
         /// <summary>
         /// Process console commands
         /// </summary>
-        public void GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested, ref DiscordNET discordNET)
+        internal void GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested, ref DiscordNET discordNET)
         {
             ulong chID = 0;
 
