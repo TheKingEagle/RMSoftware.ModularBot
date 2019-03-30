@@ -25,6 +25,7 @@ namespace ModularBOT.Component
         private int timeout = 0; //Operation timeout value
         private bool timeoutStart = false; //Did the Operation timeout started?
         private List<SocketMessage> messageQueue = new List<SocketMessage>();
+        CustomCommandManager ccmgr;
         public DiscordShardedClient Client { get; private set; }
         
         public void Start(ref ConsoleIO consoleIO, ref Configuration AppConfig, ref bool ShutdownRequest)
@@ -53,6 +54,8 @@ namespace ModularBOT.Component
                 services.AddSingleton(Client);
                 
                 serviceProvider = services.BuildServiceProvider();
+                ccmgr = new CustomCommandManager(serviceProvider);
+
                 Client.Log += Client_Log;
                 
 
@@ -131,8 +134,14 @@ namespace ModularBOT.Component
 
         private async Task Client_MessageReceived(SocketMessage arg)
         {
-
+            string result = "";
             //TODO: Add prefix system to process messages accordingly.
+            #pragma warning disable
+            Task.Run(() =>  result = ccmgr.ProcessMessage(arg));
+            if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC")
+            {
+                await arg.Channel.SendMessageAsync(result);
+            }
             await Task.Delay(1);
         }
 
