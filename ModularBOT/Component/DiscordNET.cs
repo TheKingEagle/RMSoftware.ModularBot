@@ -135,9 +135,9 @@ namespace ModularBOT.Component
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             string result = "";
-            //TODO: Add prefix system to process messages accordingly.
+            
             #pragma warning disable
-            Task.Run(() =>  result = ccmgr.ProcessMessage(arg));
+            Task.Run(() =>  result = ccmgr.ProcessMessage(arg));//Threading ignored to prevent blocking via processing!
             if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC")
             {
                 await arg.Channel.SendMessageAsync(result);
