@@ -36,6 +36,7 @@ namespace ModularBOT.Component
                 services = new ServiceCollection();
                 services.AddSingleton(AppConfig);
                 services.AddSingleton(consoleIO);
+                services.AddSingleton(cmdsvr);
                 //+-+-+-+-BEGIN LOAD MODULES-+-+-+-+
                 //TODO: LOAD MODULES
                 //+-+-+-+-CEASE LOAD MODULES-+-+-+-+
@@ -113,7 +114,6 @@ namespace ModularBOT.Component
         }
         private Task Client_GuildUnavailable(SocketGuild arg)
         {
-            //Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{arg.Name}] "));
             return Task.Delay(0);
         }
@@ -127,7 +127,6 @@ namespace ModularBOT.Component
 
         private Task Client_ShardDisconnected(Exception arg1, DiscordSocketClient arg2)
         {
-            //Console.Title = "RMSoftware.ModularBOT -> " + arg2.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Error, "Shards", $"A shard was disconnected! {arg2.Guilds.Count} guild(s) lost contact. "));
             return Task.Delay(0);
         }
@@ -136,8 +135,8 @@ namespace ModularBOT.Component
         {
             string result = "";
             
-            #pragma warning disable
-            Task.Run(() =>  result = ccmgr.ProcessMessage(arg));//Threading ignored to prevent blocking via processing!
+            
+            await Task.Run(() =>  result = ccmgr.ProcessMessage(arg));
             if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC")
             {
                 await arg.Channel.SendMessageAsync(result);
