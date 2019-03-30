@@ -16,6 +16,8 @@ namespace ModularBOT
     {
         public string AuthToken { get; set; }
 
+        public int ShardCount { get; set; }
+
         public string CommandPrefix { get; set; }
 
         public ulong LogChannel { get; set; }
@@ -34,6 +36,7 @@ namespace ModularBOT
 
         public bool? CheckForUpdates { get; set; }
 
+
         public Configuration()
         {
             //welcome                              //step 1
@@ -47,6 +50,7 @@ namespace ModularBOT
             CheckForUpdates = null;                //step 6
             DebugWizard = false;
             ReadyText = "Ready!";
+            ShardCount = 1;                        //TODO: Figure out proper implementation to automatically set this as bot is added to more guilds.
         }
     }
 
@@ -56,7 +60,7 @@ namespace ModularBOT
     public class ConfigurationManager
     {
         public Configuration CurrentConfig;
-        public SetupWizard setup;
+        internal SetupWizard setup;
         public ConfigurationManager(string jsonFilename, ref ConsoleIO consoleIO)
         {
             setup = new SetupWizard();
