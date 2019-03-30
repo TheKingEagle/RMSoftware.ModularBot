@@ -40,15 +40,15 @@ namespace ModularBOT.Component
                 //TODO: LOAD MODULES
                 //+-+-+-+-CEASE LOAD MODULES-+-+-+-+
 
-                
+
                 Client = new DiscordShardedClient(new DiscordSocketConfig
                 {
                     MessageCacheSize = 20,
                     AlwaysDownloadUsers = true,
                     LogLevel = LogSeverity.Debug,
 
-                    // Please change increase this as your server count grows beyond 2000 guilds. ie. < 2000 = 1, 2000 = 2, 4000 = 2 ...
-                    TotalShards = 1
+                    // TODO: Figure out a way to automatically set this later.
+                    TotalShards = AppConfig.ShardCount
                 });
 
                 services.AddSingleton(Client);
