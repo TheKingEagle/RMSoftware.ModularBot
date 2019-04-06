@@ -596,17 +596,18 @@ namespace ModularBOT.Component
                 {
                     WriteEntry(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
 
-                    //_client.SetStatusAsync(UserStatus.DoNotDisturb);
-                    //_client.SetGameAsync("");
-                    //MessagesDisabled = true;
+                   
+                    discordNET.Client.SetStatusAsync(UserStatus.DoNotDisturb);
+                    discordNET.Client.SetGameAsync("");
+                    discordNET.DisableMessages = true;
                 }
                 if (input.ToLower() == "enablecmd")
                 {
                     WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
 
-                    //_client.SetStatusAsync(UserStatus.Online);
-                    //_client.SetGameAsync("READY!");
-                    //MessagesDisabled = false;
+                    discordNET.Client.SetStatusAsync(UserStatus.Online);
+                    discordNET.Client.SetGameAsync("for commands!",null,ActivityType.Watching);
+                    discordNET.DisableMessages = false;
                 }
                 if (input.ToLower().StartsWith("status"))
                 {
@@ -639,11 +640,11 @@ namespace ModularBOT.Component
                 }
                 if (input.StartsWith("setvar"))
                 {
-                    //input = input.Remove(0, 6).Trim();
-                    //string varname = input.Split(' ')[0];
-                    //input = input.Remove(0, varname.Length);
-                    //input = input.Trim();
-                    //ccmg.scriptService.Set(varname, input);
+                    input = input.Remove(0, 6).Trim();
+                    string varname = input.Split(' ')[0];
+                    input = input.Remove(0, varname.Length);
+                    input = input.Trim();
+                    discordNET.ccmgr.coreScript.Set(varname, input);
                 }
 
             }
