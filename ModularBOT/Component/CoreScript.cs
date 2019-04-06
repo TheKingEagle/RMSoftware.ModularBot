@@ -44,7 +44,6 @@ namespace ModularBOT.Component
         #region Public Methods
         public void Set(string var, object value)
         {
-            object v = null;
             if (string.IsNullOrEmpty((string)value))
             {
                 throw (new ArgumentException($"You cannot set `{var}` to a value of `null`"));
@@ -53,7 +52,7 @@ namespace ModularBOT.Component
             {
                 throw (new ArgumentException("This variable cannot be modified."));
             }
-            bool result = Variables.TryGetValue(var, out v);
+            bool result = Variables.TryGetValue(var, out object v);
             if (!result)
             {
                 //add the new variable.
@@ -73,8 +72,7 @@ namespace ModularBOT.Component
 
         public object Get(string var)
         {
-            object v = null;
-            bool result = Variables.TryGetValue(var, out v);
+            bool result = Variables.TryGetValue(var, out object v);
             if (!result)
             {
                 return null;
@@ -556,12 +554,12 @@ namespace ModularBOT.Component
 
                                 break;
                             case ("SETVAR"):
-                                caseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd);
+                                CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd);
 
                                 break;
                             case ("CMD"):
                                 //SocketMessage m = message as SocketMessage;
-                                caseExecCmd(ProcessVariableString(gobj, line, cmd, client, message), ccmgr, gobj, ref error, ref errorEmbed, ref LineInScript, ref client, ref cmd, ref message);
+                                CaseExecCmd(ProcessVariableString(gobj, line, cmd, client, message), ccmgr, gobj, ref error, ref errorEmbed, ref LineInScript, ref client, ref cmd, ref message);
 
                                 break;
                             case ("BOTSTATUS"):
@@ -733,12 +731,12 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("SETVAR"):
-                                    caseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd);
+                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd);
 
                                     break;
                                 case ("CMD"):
                                     //SocketMessage m = message as SocketMessage;
-                                    caseExecCmd(ProcessVariableString(gobj, line, cmd, client, message), ccmgr, gobj, ref error, ref errorEmbed, ref LineInScript, ref client, ref cmd, ref message);
+                                    CaseExecCmd(ProcessVariableString(gobj, line, cmd, client, message), ccmgr, gobj, ref error, ref errorEmbed, ref LineInScript, ref client, ref cmd, ref message);
 
                                     break;
                                 case ("BOTSTATUS"):
@@ -834,7 +832,7 @@ namespace ModularBOT.Component
         }
         #endregion
 
-        private void caseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd)
+        private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd)
         {
             string output = line;
             if (output.Split(' ').Length < 3)
@@ -872,7 +870,7 @@ namespace ModularBOT.Component
 
         }
 
-        private void caseExecCmd(string line, CustomCommandManager ccmg, GuildObject guildObject, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript,
+        private void CaseExecCmd(string line, CustomCommandManager ccmg, GuildObject guildObject, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript,
             ref IDiscordClient client, ref GuildCommand cmd, ref IMessage ArgumentMessage)
         {
             string ecmd = line.Remove(0, 4);
