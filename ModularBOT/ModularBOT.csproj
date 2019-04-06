@@ -192,6 +192,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Component\ConsoleIO.cs" />
+    <Compile Include="Component\CoreModule.cs" />
+    <Compile Include="Component\PermissionManagement.cs" />
     <Compile Include="Component\PseudoMessage.cs" />
   </ItemGroup>
   <ItemGroup>
