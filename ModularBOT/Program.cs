@@ -32,18 +32,17 @@ namespace ModularBOT
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
 
             RunStartlogo();
-
+            Thread.Sleep(2000);
             consoleIO.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Application Running");
 
             #region DEBUG
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "EXPAND Discord.NET integration"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "EXPAND Message receive handler"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "FINISH Command System"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Permissions system"));
 #endif
             #endregion
 
@@ -87,7 +86,7 @@ namespace ModularBOT
 
         private static void RunStartlogo()
         {
-
+            Console.CursorVisible = false;
             if (configMGR.CurrentConfig.LogoPath != "NONE")
             {
                 consoleIO.ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
@@ -108,7 +107,6 @@ namespace ModularBOT
                     consoleIO.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
 
                 }
-                Thread.Sleep(3000);
             }
             else
             {
