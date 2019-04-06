@@ -99,6 +99,7 @@ namespace ModularBOT.Component
             if (socketmsg.Content.StartsWith(prefix))
             {
                 string cmdLine = socketmsg.Content.Remove(0, prefix.Length);//remove prefix length.
+                
                 return ProcessCmdLine(cmdLine, ref socketmsg);
             }
 
@@ -118,6 +119,7 @@ namespace ModularBOT.Component
             string[] cmdlineArr = cmdline.Split(' ');
             string command = cmdlineArr[0].ToLower() ?? "";
             string args = "";
+            var permissionManager = serviceProvider.GetRequiredService<PermissionManager>();
             if (cmdline.ToLower().StartsWith(command))
             {
                 args = cmdline.Remove(0, command.Length).Trim();
@@ -129,6 +131,26 @@ namespace ModularBOT.Component
             {
 
                 string res = global.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command)?.action;
+                gobj = global;
+                cmd = gobj.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command);
+                if(cmd != null)
+                {
+                    if (cmd.RequirePermission)
+                    {
+                        if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                        {
+                            EmbedBuilder b = new EmbedBuilder();
+                            b.WithTitle("Access Denied");
+                            b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                            b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
+                            b.WithColor(Color.Red);
+                            b.WithFooter("ModularBOT • Core");
+                            msg.Channel.SendMessageAsync("", false, b.Build());
+                            return null;
+                        }
+                    }
+                }
+                
                 if (string.IsNullOrWhiteSpace(res))
                 {
                     //check guild context since global had nothing.
@@ -160,6 +182,8 @@ namespace ModularBOT.Component
                 }
                 else
                 {
+                    
+                    
                     return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
                 }
             }
@@ -178,6 +202,23 @@ namespace ModularBOT.Component
                 {
                     cmd = gobj.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command);
                     res = cmd?.action;
+                    if (cmd != null)
+                    {
+                        if (cmd.RequirePermission)
+                        {
+                            if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                            {
+                                EmbedBuilder b = new EmbedBuilder();
+                                b.WithTitle("Access Denied");
+                                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
+                                b.WithColor(Color.Red);
+                                b.WithFooter("ModularBOT • Core");
+                                msg.Channel.SendMessageAsync("", false, b.Build());
+                                return null;
+                            }
+                        }
+                    }
                     if (!string.IsNullOrWhiteSpace(res))
                     {
                         return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
@@ -261,8 +302,8 @@ namespace ModularBOT.Component
                 string script = response.Replace("SCRIPT ", "");
                 //thread optimize this.
 
-                #pragma warning disable
-                coreScript.EvaluateScript(gobj, script, cmd, serviceProvider.GetRequiredService<DiscordShardedClient>(), msg);
+                
+                coreScript.EvaluateScript(gobj, script, cmd, serviceProvider.GetRequiredService<DiscordShardedClient>(), msg).GetAwaiter().GetResult();
                 return "SCRIPT";
 
             }
