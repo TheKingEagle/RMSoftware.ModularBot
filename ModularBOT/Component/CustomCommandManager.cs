@@ -14,10 +14,12 @@ using System.Reflection;
 
 namespace ModularBOT.Component
 {
-    internal class CustomCommandManager
+    public class CustomCommandManager
     {
         List<GuildObject> guilds = new List<GuildObject>();
-        CoreScript coreScript;
+
+        internal IReadOnlyCollection<GuildObject> GuildObjects { get { return guilds.AsReadOnly(); } }
+        internal CoreScript coreScript;
         IServiceProvider serviceProvider;
         internal CustomCommandManager(IServiceProvider serviceProvider)
         {
@@ -31,6 +33,7 @@ namespace ModularBOT.Component
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
                             new LogMessage(LogSeverity.Verbose, "CmdMgr", $"Found Guild Object {Path.GetFileName(guildFile)}. Parsing."));
                     string json = sr.ReadToEnd();
+                    sr.Close();
                     GuildObject ob = JsonConvert.DeserializeObject<GuildObject>(json);
                     if (ob == null)
                     {
@@ -41,12 +44,40 @@ namespace ModularBOT.Component
                     if (string.IsNullOrWhiteSpace(ob.CommandPrefix))
                     {
                         ob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it)
+                        ob.SaveJson();
+                    }
+                    if(ob.CommandPrefix.Contains('`'))
+                    {
+                        ob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it)
+                        ob.SaveJson();
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
+                            new LogMessage(LogSeverity.Warning, "CmdMgr", $"Warning: Command prefix had invalid character! reset to configured default."), ConsoleColor.DarkGreen);
                     }
                     guilds.Add(ob);
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
                             new LogMessage(LogSeverity.Debug, "CmdMgr", $"SUCCESS: Added new GuildObject to list!"), ConsoleColor.DarkGreen);
                 }
             }
+            GuildObject globalob = guilds.FirstOrDefault(x => x.ID == 0);
+            
+            if(globalob == null)
+            {
+                globalob = new GuildObject
+                {
+                    ID = 0,
+                    CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                    GuildCommands = new List<GuildCommand>(),
+                    
+                };
+                globalob.SaveJson();
+                guilds.Add(globalob);
+            }
+            else
+            {
+                globalob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+                globalob.SaveJson();
+            }
+            
         }
 
         #region Processing
@@ -64,7 +95,6 @@ namespace ModularBOT.Component
             {
                 prefix = guilds.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
             }
-
 
             if (socketmsg.Content.StartsWith(prefix))
             {
@@ -102,7 +132,7 @@ namespace ModularBOT.Component
                 if (string.IsNullOrWhiteSpace(res))
                 {
                     //check guild context since global had nothing.
-                    if ((msg as SocketGuildChannel) != null)
+                    if ((msg.Channel as SocketGuildChannel) != null)
                     {
                         SocketGuildChannel s = msg.Channel as SocketGuildChannel;
                         gobj = guilds.FirstOrDefault(z => z.ID == s.Guild.Id);
@@ -116,11 +146,14 @@ namespace ModularBOT.Component
                         {
                             return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
                         }
-                        else { serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Conext guild didn't know what that command was!")); return null; }
+                        else
+                        {
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Conext guild didn't know what that command was!")); return null;
+                        }
                     }
                     else
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild's command list not found! Do you have any guild commands defined?"));
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Global command list not found! Do you have any guild commands defined?"));
                         return null;
                     }
 
@@ -274,6 +307,68 @@ namespace ModularBOT.Component
 
         #region Command Management
         //TODO: Add/delete commands
+
+        public async Task AddCmd(IUserMessage message, string name, string action, bool restricted, ulong gid = 0)
+        {
+            SocketGuildChannel c = message.Channel as SocketGuildChannel;
+            
+            if(c != null)
+            {
+                gid = c.Guild.Id;
+            }
+            GuildObject go = guilds.FirstOrDefault(x => x.ID == gid);
+            if(go == null)
+            {
+                //create the new guildObject
+                go = new GuildObject
+                {
+                    CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                    ID = gid,
+                    GuildCommands = new List<GuildCommand>()
+                };
+                go.SaveJson();
+                guilds.Add(go);
+            }
+            GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.name.ToLower() == name.ToLower());
+                
+            if(gc != null)
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithTitle("This command already exists!");
+                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                b.WithDescription($"If you would like to edit this command, please use `{go.CommandPrefix}editcmd` instead.");
+                b.WithColor(Color.Red);
+                b.WithFooter("ModularBOT • Core");
+                await message.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+            else
+            {
+                gc = new GuildCommand
+                {
+                    name = name.ToLower(),
+                    action = action,
+                    RequirePermission = restricted
+                };
+                go.GuildCommands.Add(gc);
+                go.SaveJson();
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                b.WithTitle("Custom Command Added!");
+                b.AddField("Command", $"`{go.CommandPrefix}{name}`");
+                b.AddField("Requires permission", restricted ? "`Yes`" : "`No`",true);
+                string guild = (gid > 0) ? serviceProvider.GetRequiredService<DiscordShardedClient>().Guilds.FirstOrDefault(g => g.Id == gid).Name : "All Guilds";
+                b.AddField("Availability", $"`{guild}`",true);
+                b.AddField("Action", action);
+                
+
+                b.WithColor(Color.Green);
+                b.WithFooter("ModularBOT • Core");
+                await message.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+            
+        }
         #endregion
     }
 
@@ -290,5 +385,16 @@ namespace ModularBOT.Component
         public string CommandPrefix { get; set; }
         public ulong ID { get; set; }
         public List<GuildCommand> GuildCommands { get; set; }
+
+        public void SaveJson()
+        {
+            using (StreamWriter sw = new StreamWriter($"guilds/{ID}.guild"))
+            {
+               
+                sw.WriteLine(JsonConvert.SerializeObject(this));
+                sw.Flush();
+                sw.Close();
+            }
+        }
     }
 }
