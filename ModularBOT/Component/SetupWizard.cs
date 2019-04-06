@@ -22,7 +22,7 @@ namespace ModularBOT.Component
             if (!appConfig.DebugWizard)
             {
                 if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
-                    && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
+                    && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
                 {
                     return false;//if every critical thing is set... continue.
                 }
@@ -30,8 +30,10 @@ namespace ModularBOT.Component
             if (appConfig.DebugWizard)
             {
                 backup = appConfig;//just to be safe
-                appConfig = new Configuration();
-                appConfig.DebugWizard = true;
+                appConfig = new Configuration
+                {
+                    DebugWizard = true
+                };
             }
             #region PAGE 1 - Introduction
             consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Welcome", 1, 6, ConsoleColor.Green);
@@ -43,7 +45,7 @@ namespace ModularBOT.Component
             }
             else
             {
-                if (!firstrun && (appConfig.LogChannel != 0 || !appConfig.CheckForUpdates.HasValue || !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) ||
+                if (!firstrun && (appConfig.LogChannel != 0 || !appConfig.CheckForUpdates.HasValue || !string.IsNullOrWhiteSpace(appConfig.CommandPrefix) || appConfig.CommandPrefix.Contains('`') ||
                     !string.IsNullOrWhiteSpace(appConfig.AuthToken) || !string.IsNullOrWhiteSpace(appConfig.LogoPath)))
                 {
                     consoleIO.WriteEntry("\u2502 One or more items were not configured correctly.", ConsoleColor.Yellow);
@@ -214,7 +216,7 @@ namespace ModularBOT.Component
             #endregion
 
             #region PAGE 4 - Prefix
-            if (string.IsNullOrWhiteSpace(appConfig.CommandPrefix))
+            if (string.IsNullOrWhiteSpace(appConfig.CommandPrefix) || appConfig.CommandPrefix.Contains('`'))
             {
                 consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Command Prefix", 4, 6, ConsoleColor.Green);
 
@@ -254,9 +256,9 @@ namespace ModularBOT.Component
                     // Console.BackgroundColor = b;
                     //Console.ForegroundColor = f;
 
-                    if (string.IsNullOrWhiteSpace(prefix))
+                    if (string.IsNullOrWhiteSpace(prefix) || prefix.Contains('`'))
                     {
-                        consoleIO.WriteEntry("\u2502 Invalid prefix. Must be letters, numbers, or symbols. Try again.", ConsoleColor.DarkRed);
+                        consoleIO.WriteEntry("\u2502 Invalid prefix. Must be letters, numbers, or most symbols. Try again.", ConsoleColor.DarkRed);
                         Console.Write("\u2502 > ");
                     }
                     else
@@ -390,7 +392,23 @@ namespace ModularBOT.Component
             }
 
             #endregion
+            #region Final page
+            consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Complete", 6, 6, ConsoleColor.Green);
+            consoleIO.WriteEntry("\u2502\u2005That is all the configuration for right now! Here are a few more things to know:");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- If you want to run this configuration wizard again, delete the 'modbot.-config.cnf' file in the program's directory.");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- The documentation, and links to the source code are available at https://rmsoftware.org/modularbot");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- The documentation, Version history can be found here https://rmsoftware.org/modularbot/history");
             consoleIO.WriteEntry("\u2502\u2005");
+            consoleIO.WriteEntry("\u2502\u2005Available Console Commands");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- cls or clear: clear the console output");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- conmsg <message>: sends a message to the guild channel you set with setgch first");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- disablecmd: disables message and command processing");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- enablecmd: enables message and command processing");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- rskill: Cause the program to crash (and restart)");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- setgch <id>: sets conmsg guild channel");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- setvar <var name> <value>: sets a temporary variable.");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- stopbot: stops the bot");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- tskill: Cause the program to crash (and prompt for termination)");
             consoleIO.WriteEntry("\u2502\u2005");
             consoleIO.WriteEntry("\u2502\u2005");
             consoleIO.WriteEntry("\u2502 The setup wizard is complete! Press any key to start the bot.", ConsoleColor.Green);
@@ -404,6 +422,7 @@ namespace ModularBOT.Component
                 return false;
             }
             return true;
+            #endregion
         }
 
         private void WritePage5BODY(ref ConsoleIO consoleIO)
