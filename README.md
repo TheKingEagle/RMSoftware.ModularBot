@@ -9,4 +9,4 @@ This branch is a Work-in-progress "Start from scratch" type of branch. It is bei
 * [Core Commands](https://github.com/rmsoftware-development/RMSoftware.ModularBot/tree/master/doc/Core-Commands)
 
 # Changes
-[See the official change log](https://rmsoftware.org/rmsoftwaremodularbot/version-history.php)
+[See the official change log](https://rmsoftware.org/modularbot/version-history.php)
