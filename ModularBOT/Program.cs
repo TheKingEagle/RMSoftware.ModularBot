@@ -39,8 +39,8 @@ namespace ModularBOT
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "EXPAND Message receive handler"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "FINISH Command System"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE delcmd & editcmd"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE permission management commands"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
 #endif
