@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,24 +23,30 @@ namespace ModularBOT.Component
         public IServiceProvider serviceProvider; //Application Service provider.
         public DateTime StartTime; //Uptime origin
 
-        private int timeout = 0; //Operation timeout value
-        private bool timeoutStart = false; //Did the Operation timeout started?
+        //private int timeout = 0; //Operation timeout value
+        //private bool timeoutStart = false; //Did the Operation timeout started?
         private List<SocketMessage> messageQueue = new List<SocketMessage>();
-        CustomCommandManager ccmgr;
+        public CustomCommandManager ccmgr;
+        public PermissionManager pmgr;
+
+        public bool DisableMessages { get; set; } = false;
         public DiscordShardedClient Client { get; private set; }
         
         public void Start(ref ConsoleIO consoleIO, ref Configuration AppConfig, ref bool ShutdownRequest, ref bool RestartRequested)
         {
             try
             {
+                
                 string token = AppConfig.AuthToken;
+
                 services = new ServiceCollection();
+                //+-+-+-+-BEGIN LOAD MODULE SERVICES-+-+-+-+
+                //TODO: LOAD MODULE SERVICES
+                //+-+-+-+-CEASE LOAD MODULE SERVICES-+-+-+-+
                 services.AddSingleton(AppConfig);
                 services.AddSingleton(consoleIO);
                 services.AddSingleton(cmdsvr);
-                //+-+-+-+-BEGIN LOAD MODULES-+-+-+-+
-                //TODO: LOAD MODULES
-                //+-+-+-+-CEASE LOAD MODULES-+-+-+-+
+                services.AddSingleton(this);
 
 
                 Client = new DiscordShardedClient(new DiscordSocketConfig
@@ -55,8 +62,12 @@ namespace ModularBOT.Component
                 services.AddSingleton(Client);
                 
                 serviceProvider = services.BuildServiceProvider();
+                pmgr = new PermissionManager(serviceProvider);
+                services.AddSingleton(pmgr);
+                serviceProvider = services.BuildServiceProvider();
                 ccmgr = new CustomCommandManager(serviceProvider);
-
+                services.AddSingleton(ccmgr);
+                serviceProvider = services.BuildServiceProvider();
                 Client.Log += Client_Log;
                 
 
@@ -66,9 +77,12 @@ namespace ModularBOT.Component
                 Client.ShardDisconnected += Client_ShardDisconnected;
                 Client.GuildAvailable += Client_GuildAvailable;
                 Client.GuildUnavailable += Client_GuildUnavailable;
-                
+
 
                 //await LoadModules();//ADD CORE AND EXTERNAL MODULES
+
+                //TODO: Load External modules
+                cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 Task.Run(async () => await Client.StartAsync());
                 
@@ -133,13 +147,72 @@ namespace ModularBOT.Component
 
         private async Task Client_MessageReceived(SocketMessage arg)
         {
+            if (DisableMessages) return;
+            SocketUserMessage message = arg as SocketUserMessage;
+            if (message == null) return;
+            ulong gid = 0;//global by default
+            string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it);
+            if ((arg.Channel as SocketGuildChannel) != null)
+            {
+                SocketGuildChannel sc = arg.Channel as SocketGuildChannel;
+                gid = sc.Guild.Id;
+            }
+            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
+            {
+                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
+            }
+            if (!message.Content.StartsWith(prefix))
+            {
+                return;
+            }
+            if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
+            {
+                if (pmgr.GetWarnOnBlacklist(arg.Author))
+                {
+                    EmbedBuilder donttalktome = new EmbedBuilder();
+                    donttalktome.WithAuthor(Client.CurrentUser);
+                    donttalktome.WithColor(Color.DarkRed);
+                    donttalktome.WithTitle("Access Denied");
+                    donttalktome.WithDescription("You are currently unable to communicate with this bot. You will only see this warning once.");
+                    await arg.Channel.SendMessageAsync("",false,donttalktome.Build());
+                }
+            }
             string result = "";
-            
-            
+           
             await Task.Run(() =>  result = ccmgr.ProcessMessage(arg));
-            if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC")
+            if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC" && result != null)
             {
                 await arg.Channel.SendMessageAsync(result);
+                return;
+            }
+            var context = new CommandContext(Client, message);
+            
+            // Execute the command. (result does not indicate a return value, 
+            // rather an object stating if the command executed successfully)
+            var cmdres = await cmdsvr.ExecuteAsync(context,prefix.Length, serviceProvider);
+            //If the result is unsuccessful AND not unknown command, send the error details.
+            if (cmdres.Error.HasValue)
+            {
+                if (!cmdres.Error.Value.HasFlag(CommandError.UnknownCommand) && !cmdres.IsSuccess)
+                {
+                    EmbedBuilder b = new EmbedBuilder();
+                    b.WithColor(Color.Orange);
+                    b.WithAuthor(Client.CurrentUser);
+                    b.WithTitle("Command Error.");
+                    b.WithDescription(cmdres.ErrorReason);
+                    b.AddField("Error Code", cmdres.Error.Value);
+                    await context.Channel.SendMessageAsync("", false, b.Build());
+                }
+                if (cmdres.Error.Value.HasFlag(CommandError.BadArgCount))
+                {
+                    EmbedBuilder b = new EmbedBuilder();
+                    b.WithColor(Color.Orange);
+                    b.WithAuthor(Client.CurrentUser);
+                    b.WithTitle("Command Error.");
+                    b.WithDescription(cmdres.ErrorReason);
+                    b.AddField("Error Code", cmdres.Error.Value);
+                    await context.Channel.SendMessageAsync("", false, b.Build());
+                }
             }
             await Task.Delay(1);
         }
