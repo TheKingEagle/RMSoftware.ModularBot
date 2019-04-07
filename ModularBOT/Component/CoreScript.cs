@@ -926,10 +926,20 @@ namespace ModularBOT.Component
         private void CaseExecCmd(string line, CustomCommandManager ccmg, GuildObject guildObject, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript,
             ref IDiscordClient client, ref GuildCommand cmd, ref IMessage ArgumentMessage)
         {
-            string ecmd = line.Remove(0, 4);
-            if (!string.IsNullOrWhiteSpace(ccmg.ProcessMessage(new PseudoMessage(guildObject.CommandPrefix + ecmd, ArgumentMessage.Author as SocketUser,
-                (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot))))
+            ulong gid = 0;
+            SocketGuildChannel channel = ArgumentMessage.Channel as SocketGuildChannel;
+            if (channel != null)
             {
+                gid = channel.Guild.Id;
+            }
+            guildObject = ccmg.GuildObjects.FirstOrDefault(x => x.ID == gid);
+            
+            string ecmd = line.Remove(0, 4);
+            string resp = ccmg.ProcessMessage(new PseudoMessage(guildObject.CommandPrefix + ecmd, ArgumentMessage.Author as SocketUser,
+                (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot));
+            if (!string.IsNullOrWhiteSpace(resp))
+            {
+                ArgumentMessage.Channel.SendMessageAsync(resp);
                 LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
                 LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "CustomCMD Success..."));
                 return;
