@@ -1,3 +1,4 @@
+*DISCLAIMER: This command is not yet implemented in v2.*
 # Core Command: `getcmd`
 #### Please note: We will always use `!` as a command prefix for usage examples.
 * Usage: `!getcmd <commandTag>`
