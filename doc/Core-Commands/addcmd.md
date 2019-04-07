@@ -5,7 +5,7 @@
 * This command is restricted to users with a role added to the management database. See [`CoreCommand: addmgrole`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v1.4.14.1038-PATCH/doc/Core-Commands/addmgrole.md)
 * Prefixes are One character, usually a symbol of some kind.
 * the new command will only be available in the guild where you ran `addcmd`.
-   * If you send the `addcmd` to the bot via DM, it will be treated like `addgcmd` and create a global command instead.
+   * If you send the `addcmd` to the bot via DM, it will be treated like `addgcmd` and be available to ALL guilds instead.
 
 ### Parameter breakdown
 * **\<cmdName>**
