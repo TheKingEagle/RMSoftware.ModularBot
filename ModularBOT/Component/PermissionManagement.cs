@@ -208,7 +208,7 @@ namespace ModularBOT.Component
                 using (StreamWriter sw = new StreamWriter("Permissions.json"))
                 {
                     _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Saving entities. Permissions.json"));
-                    sw.WriteLine(JsonConvert.SerializeObject(RegisteredEntities));
+                    sw.WriteLine(JsonConvert.SerializeObject(RegisteredEntities,Formatting.Indented));
                     sw.Flush();
                     sw.Close();
                     _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Write success!"),ConsoleColor.Green);
