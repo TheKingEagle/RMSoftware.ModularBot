@@ -300,10 +300,10 @@ namespace ModularBOT.Component
             if (response.StartsWith("SCRIPT"))
             {
                 string script = response.Replace("SCRIPT ", "");
-                //thread optimize this.
-
-                
-                coreScript.EvaluateScript(gobj, script, cmd, serviceProvider.GetRequiredService<DiscordShardedClient>(), msg).GetAwaiter().GetResult();
+                GuildObject cg = gobj;
+                GuildCommand ccmd = cmd;
+                IMessage msgg = msg;
+                Task.Run(()=> coreScript.EvaluateScript(cg, script, ccmd, serviceProvider.GetRequiredService<DiscordShardedClient>(), msgg).GetAwaiter().GetResult());
                 return "SCRIPT";
 
             }
@@ -349,14 +349,23 @@ namespace ModularBOT.Component
         #region Command Management
         //TODO: Add/delete commands
 
+        /// <summary>
+        /// Add command to DB. by default to global.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="name"></param>
+        /// <param name="action"></param>
+        /// <param name="restricted"></param>
+        /// <param name="gid"></param>
+        /// <returns></returns>
         public async Task AddCmd(IUserMessage message, string name, string action, bool restricted, ulong gid = 0)
         {
-            SocketGuildChannel c = message.Channel as SocketGuildChannel;
+            //SocketGuildChannel c = message.Channel as SocketGuildChannel;
             
-            if(c != null)
-            {
-                gid = c.Guild.Id;
-            }
+            //if(c != null)
+            //{
+            //    gid = c.Guild.Id;
+            //}
             GuildObject go = guilds.FirstOrDefault(x => x.ID == gid);
             if(go == null)
             {
@@ -432,7 +441,7 @@ namespace ModularBOT.Component
             using (StreamWriter sw = new StreamWriter($"guilds/{ID}.guild"))
             {
                
-                sw.WriteLine(JsonConvert.SerializeObject(this));
+                sw.WriteLine(JsonConvert.SerializeObject(this,Formatting.Indented));
                 sw.Flush();
                 sw.Close();
             }
