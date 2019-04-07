@@ -42,7 +42,7 @@ namespace ModularBOT
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE delcmd & editcmd"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE permission management commands"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Module Loader"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE External Module Loader"));
 #endif
             #endregion
 
