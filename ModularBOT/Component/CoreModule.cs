@@ -45,6 +45,7 @@ namespace ModularBOT.Component
             builder.WithFooter("ModularBOT | created by TheKingEagle");
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
+
         [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
         public async Task AddCmd(string cmdname, bool restricted, [Remainder]string action)
         {
@@ -84,5 +85,50 @@ namespace ModularBOT.Component
             }
             await net.ccmgr.AddCmd(Context.Message, cmdname, action, restricted);
         }
+
+        [Command("delcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
+        public async Task DelCmd(string cmdname)
+        {
+            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithTitle("Access Denied");
+                b.WithAuthor(Context.Client.CurrentUser);
+                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
+                b.WithColor(Color.Red);
+                b.WithFooter("ModularBOT • Core");
+                await Context.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+            ulong gid = 0;
+            if (Context.Guild != null)
+            {
+                gid = Context.Guild.Id;
+            }
+
+            await net.ccmgr.DelCmd(Context.Message, cmdname, gid);
+        }
+
+        [Command("delgcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
+        public async Task DelgCmd(string cmdname)
+        {
+            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithTitle("Access Denied");
+                b.WithAuthor(Context.Client.CurrentUser);
+                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
+                b.WithColor(Color.Red);
+                b.WithFooter("ModularBOT • Core");
+                await Context.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+
+
+            await net.ccmgr.DelCmd(Context.Message, cmdname);
+        }
+
+
+
     }
 }
