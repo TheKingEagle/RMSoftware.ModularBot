@@ -419,6 +419,51 @@ namespace ModularBOT.Component
             }
             
         }
+
+        public async Task DelCmd(IUserMessage message, string name, ulong gid=0)
+        {
+            GuildObject go = guilds.FirstOrDefault(x => x.ID == gid);
+            if (go == null)
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithTitle("No Commands defined!");
+                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                b.WithDescription("This guild does not have a valid configuration! That means there are no commands to delete. "+
+                    $"If you are trying to delete a global command, please use `{go?.CommandPrefix ?? serviceProvider.GetRequiredService<Configuration>().CommandPrefix}delgcmd` instead.");
+                b.WithColor(Color.Red);
+                b.WithFooter("ModularBOT • Core");
+                await message.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+            GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.name.ToLower() == name.ToLower());
+
+            if (gc == null)
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithTitle("This command does not exists!");
+                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                b.WithDescription($"Check your spelling. If this is a global command please use `{go.CommandPrefix}delgcmd` instead.");
+                b.WithColor(Color.Red);
+                b.WithFooter("ModularBOT • Core");
+                await message.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+            else
+            {
+
+                go.GuildCommands.Remove(gc);
+                go.SaveJson();
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                b.WithTitle("Custom Command Removed!");
+                b.AddField("Command", $"`{go.CommandPrefix}{name}`");
+                b.AddField("Availability", $"`Nowhere!`", true);
+                b.WithColor(Color.Green);
+                b.WithFooter("ModularBOT • Core");
+                await message.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+        }
         #endregion
     }
 
