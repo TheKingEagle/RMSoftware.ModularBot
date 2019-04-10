@@ -32,7 +32,7 @@ namespace ModularBOT
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
 
             RunStartlogo();
-            Thread.Sleep(2000);
+            
             consoleIO.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Application Running");
 
             #region DEBUG
@@ -97,15 +97,17 @@ namespace ModularBOT
                     if(configMGR.CurrentConfig.LogoPath == "INTERNAL")
                     {
                         consoleIO.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
+                        Thread.Sleep(2000);
                         return;
                     }
                     consoleIO.ConsoleWriteImage(new System.Drawing.Bitmap(configMGR.CurrentConfig.LogoPath));
+                    Thread.Sleep(2000);
                 }
                 catch (Exception ex)
                 {
                     consoleIO.WriteErrorsLog("WARNING: Error rendering startup logo. Default logo used instead... Exception details below.", ex);
                     consoleIO.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
-
+                    Thread.Sleep(2000);
                 }
             }
             else
