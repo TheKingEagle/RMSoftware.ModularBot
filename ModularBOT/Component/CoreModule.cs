@@ -16,17 +16,17 @@ namespace ModularBOT.Component
 
         CommandService Cmdsvr { get; set; }
 
-        ConsoleIO consoleIO { get; set; }
+        ConsoleIO ConsoleIO { get; set; }
 
-        DiscordNET net { get; set; }
+        DiscordNET Net { get; set; }
         
         public CoreModule(DiscordShardedClient client, CommandService cmdservice, ConsoleIO consoleIO, DiscordNET dnet)
         {
             Client = client;
             Cmdsvr = cmdservice;
-            this.consoleIO = consoleIO;
-            net = dnet;
-            this.consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "CoreMOD", "Constructor called! This debug message proved it."));
+            this.ConsoleIO = consoleIO;
+            Net = dnet;
+            this.ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "CoreMOD", "Constructor called! This debug message proved it."));
 
         }
 
@@ -49,15 +49,9 @@ namespace ModularBOT.Component
         [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
         public async Task AddCmd(string cmdname, bool restricted, [Remainder]string action)
         {
-            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                EmbedBuilder b = new EmbedBuilder();
-                b.WithTitle("Access Denied");
-                b.WithAuthor(Context.Client.CurrentUser);
-                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                b.WithColor(Color.Red);
-                b.WithFooter("ModularBOT • Core");
-                await Context.Channel.SendMessageAsync("", false, b.Build());
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
             ulong gid = 0;
@@ -66,38 +60,26 @@ namespace ModularBOT.Component
                 gid = Context.Guild.Id;
             }
 
-            await net.ccmgr.AddCmd(Context.Message, cmdname, action, restricted,gid);
+            await Net.ccmgr.AddCmd(Context.Message, cmdname, action, restricted,gid);
         }
 
         [Command("addgcmd"), Summary("Add a global command to your bot")]
         public async Task AddgCmd(string cmdname, bool restricted, [Remainder]string action)
         {
-            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                EmbedBuilder b = new EmbedBuilder();
-                b.WithTitle("Access Denied");
-                b.WithAuthor(Context.Client.CurrentUser);
-                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                b.WithColor(Color.Red);
-                b.WithFooter("ModularBOT • Core");
-                await Context.Channel.SendMessageAsync("", false, b.Build());
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context,AccessLevels.CommandManager));
                 return;
             }
-            await net.ccmgr.AddCmd(Context.Message, cmdname, action, restricted);
+            await Net.ccmgr.AddCmd(Context.Message, cmdname, action, restricted);
         }
 
         [Command("delcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
         public async Task DelCmd(string cmdname)
         {
-            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                EmbedBuilder b = new EmbedBuilder();
-                b.WithTitle("Access Denied");
-                b.WithAuthor(Context.Client.CurrentUser);
-                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                b.WithColor(Color.Red);
-                b.WithFooter("ModularBOT • Core");
-                await Context.Channel.SendMessageAsync("", false, b.Build());
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
             ulong gid = 0;
@@ -106,35 +88,34 @@ namespace ModularBOT.Component
                 gid = Context.Guild.Id;
             }
 
-            await net.ccmgr.DelCmd(Context.Message, cmdname, gid);
+            await Net.ccmgr.DelCmd(Context.Message, cmdname, gid);
         }
 
         [Command("delgcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
         public async Task DelgCmd(string cmdname)
         {
-            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                EmbedBuilder b = new EmbedBuilder();
-                b.WithTitle("Access Denied");
-                b.WithAuthor(Context.Client.CurrentUser);
-                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                b.WithColor(Color.Red);
-                b.WithFooter("ModularBOT • Core");
-                await Context.Channel.SendMessageAsync("", false, b.Build());
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
 
-
-            await net.ccmgr.DelCmd(Context.Message, cmdname);
+            await Net.ccmgr.DelCmd(Context.Message, cmdname);
         }
 
         [Command("permissions set user"),Alias("psu")]
-        public async Task perm_set_user(IUser user, AccessLevels accessLevel)
+        public async Task Perm_set_user(IUser user, AccessLevels accessLevel)
         {
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                int result = net.pmgr.RegisterEntity(user, accessLevel);
+                int result = Net.pmgr.RegisterEntity(user, accessLevel);
                 switch (result)
                 {
                     case (1):
@@ -195,12 +176,18 @@ namespace ModularBOT.Component
         }
 
         [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr")]
-        public async Task perm_set_role(IRole role, AccessLevels accessLevel)
+        public async Task Perm_set_role(IRole role, AccessLevels accessLevel)
         {
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                int result = net.pmgr.RegisterEntity(role, accessLevel);
+                int result = Net.pmgr.RegisterEntity(role, accessLevel);
                 switch (result)
                 {
                     case (1):
@@ -247,12 +234,18 @@ namespace ModularBOT.Component
         }
 
         [Command("permissions del user"), Alias("pdu","pru")]
-        public async Task perm_del_user(IUser user)
+        public async Task Perm_del_user(IUser user)
         {
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                bool result = net.pmgr.DeleteEntity(user);
+                bool result = Net.pmgr.DeleteEntity(user);
                 switch (result)
                 {
                     case (true):
@@ -288,12 +281,18 @@ namespace ModularBOT.Component
         }
 
         [Command("permissions del role"), Alias("pdr", "prr")]
-        public async Task perm_del_role(IRole role)
+        public async Task Perm_del_role(IRole role)
         {
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                bool result = net.pmgr.DeleteEntity(role);
+                bool result = Net.pmgr.DeleteEntity(role);
                 if (result)
                 {
                     b.WithAuthor(Client.CurrentUser);
@@ -325,10 +324,16 @@ namespace ModularBOT.Component
         }
 
         [Command("stopbot",RunMode= RunMode.Async), Alias("stop")]
-        public async Task stopbot()
+        public async Task Stopbot()
         {
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+
             EmbedBuilder b = new EmbedBuilder();
-            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 
                 b.WithTitle("Access Denied");
@@ -345,14 +350,20 @@ namespace ModularBOT.Component
             b.WithColor(Color.Red);
             b.WithFooter("ModularBOT • Core");
             await Context.Channel.SendMessageAsync("", false, b.Build());
-            net.Stop(ref Program.ShutdownCalled);
+            Net.Stop(ref Program.ShutdownCalled);
         }
 
         [Command("restartbot", RunMode = RunMode.Async),Alias("restart")]
-        public async Task restartbot()
+        public async Task Restartbot()
         {
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+
             EmbedBuilder b = new EmbedBuilder();
-            if (net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 
                 b.WithTitle("Access Denied");
@@ -369,7 +380,7 @@ namespace ModularBOT.Component
             b.WithColor(Color.Red);
             b.WithFooter("ModularBOT • Core");
             await Context.Channel.SendMessageAsync("", false, b.Build());
-            net.Stop(ref Program.ShutdownCalled);
+            Net.Stop(ref Program.ShutdownCalled);
         }
     }
 }
