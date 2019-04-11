@@ -148,8 +148,7 @@ namespace ModularBOT.Component
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             if (DisableMessages) return;
-            SocketUserMessage message = arg as SocketUserMessage;
-            if (message == null) return;
+            if (!(arg is SocketUserMessage message)) return;
             ulong gid = 0;//global by default
             string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it);
             if ((arg.Channel as SocketGuildChannel) != null)
