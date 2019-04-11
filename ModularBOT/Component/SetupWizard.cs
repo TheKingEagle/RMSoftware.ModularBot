@@ -404,6 +404,7 @@ namespace ModularBOT.Component
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- conmsg <message>: sends a message to the guild channel you set with setgch first");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- disablecmd: disables message and command processing");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- enablecmd: enables message and command processing");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- mbotdata: Opens modularBOT's installation directory.");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- rskill: Cause the program to crash (and restart)");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- setgch <id>: sets conmsg guild channel");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- setvar <var name> <value>: sets a temporary variable.");
