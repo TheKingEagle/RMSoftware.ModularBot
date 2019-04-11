@@ -630,8 +630,7 @@ namespace ModularBOT.Component
                 if (input.StartsWith("conmsg"))
                 {
                     input = input.Remove(0, 6).Trim();
-                    SocketTextChannel Channel = discordNET.Client.GetChannel(chID) as SocketTextChannel;
-                    if (Channel == null)
+                    if (!(discordNET.Client.GetChannel(chID) is SocketTextChannel Channel))
                     {
                         WriteEntry(new LogMessage(LogSeverity.Error, "Console", "Invalid channel."));
                         continue;
