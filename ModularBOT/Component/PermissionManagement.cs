@@ -75,10 +75,21 @@ namespace ModularBOT.Component
 
             if (df!= null)
             {
-                _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Specified entity is on the list."));
                 return df.AccessLevel;
             }
-
+            if(df == null)
+            {
+                
+                if (item is SocketGuildUser sgu)
+                {
+                    ulong r = sgu.Roles.FirstOrDefault(zr => _entities.Any(x => x.EntityID == zr.Id))?.Id ?? 0;
+                    df = _entities.FirstOrDefault(xx => xx.EntityID == r);
+                    if(df!= null)
+                    {
+                        return df.AccessLevel;
+                    }
+                }
+            }
             _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Specified entity isn't on the list. Assume NORMAL."));
             return AccessLevels.Normal;
         }
@@ -116,7 +127,10 @@ namespace ModularBOT.Component
         /// <returns>0: if nothing changed. 1: if new user created; 2: if user edited; </returns>
         internal int RegisterEntity(IUser user, AccessLevels level)
         {
-            
+            if(user.Id == DefaultAdmin.EntityID)
+            {
+                throw new InvalidOperationException("You can't add or modify the bot owner's user permissions!");
+            }
             RegisteredEntity r = new RegisteredEntity
             {
                 EntityID = user.Id,
@@ -150,11 +164,15 @@ namespace ModularBOT.Component
         /// <param name="user"></param>
         /// <param name="level"></param>
         /// <returns>0: if nothing changed. 1: if new user created; 2: if user edited; </returns>
+        /// <exception cref="InvalidOperationException"></exception>
         internal int RegisterEntity(IRole role, AccessLevels level)
         {
             if(level == AccessLevels.Blacklisted)
             {
-                throw new ArgumentException("You cannot blacklist a role!!! (for now)");
+                throw new InvalidOperationException("You can't blacklist an entire role.");
+                //Unfortunately this would cause the warning system to work incorrectly.
+                //Example: One user with BL role interacts with bot, gets the warning -> Warning flag resets.
+                //         Another user with same BL role (who never got warned before) would NOT get warning.
             }
             RegisteredEntity r = new RegisteredEntity
             {
@@ -191,6 +209,10 @@ namespace ModularBOT.Component
         /// <returns></returns>
         internal bool DeleteEntity(ISnowflakeEntity entity)
         {
+            if(entity.Id == DefaultAdmin.EntityID)
+            {
+                throw new InvalidOperationException("You can't remove the bot owner's user permissions!");
+            }
             RegisteredEntity r = _entities.FirstOrDefault(x => x.EntityID == entity.Id);
             if(r!=null)
             {

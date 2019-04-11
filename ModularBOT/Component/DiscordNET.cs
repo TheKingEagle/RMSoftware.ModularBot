@@ -176,6 +176,7 @@ namespace ModularBOT.Component
                     donttalktome.WithDescription("You are currently unable to communicate with this bot. You will only see this warning once.");
                     await arg.Channel.SendMessageAsync("",false,donttalktome.Build());
                 }
+                return;
             }
             string result = "";
            

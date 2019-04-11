@@ -164,8 +164,26 @@ namespace ModularBOT.Component
                     {
                         cmd = gobj.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command);
                         res = cmd?.action;
+                        if (cmd != null)
+                        {
+                            if (cmd.RequirePermission)
+                            {
+                                if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                                {
+                                    EmbedBuilder b = new EmbedBuilder();
+                                    b.WithTitle("Access Denied");
+                                    b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                                    b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
+                                    b.WithColor(Color.Red);
+                                    b.WithFooter("ModularBOT • Core");
+                                    msg.Channel.SendMessageAsync("", false, b.Build());
+                                    return null;
+                                }
+                            }
+                        }
                         if (!string.IsNullOrWhiteSpace(res))
                         {
+
                             return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
                         }
                         else
@@ -182,8 +200,24 @@ namespace ModularBOT.Component
                 }
                 else
                 {
-                    
-                    
+
+                    if (cmd != null)
+                    {
+                        if (cmd.RequirePermission)
+                        {
+                            if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                            {
+                                EmbedBuilder b = new EmbedBuilder();
+                                b.WithTitle("Access Denied");
+                                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
+                                b.WithColor(Color.Red);
+                                b.WithFooter("ModularBOT • Core");
+                                msg.Channel.SendMessageAsync("", false, b.Build());
+                                return null;
+                            }
+                        }
+                    }
                     return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
                 }
             }
