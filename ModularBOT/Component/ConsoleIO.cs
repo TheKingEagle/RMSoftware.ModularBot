@@ -10,6 +10,7 @@ using Discord;
 using Discord.Net;
 using System.IO;
 using Discord.WebSocket;
+using System.Diagnostics;
 namespace ModularBOT.Component
 {
     public class ConsoleIO
@@ -608,6 +609,11 @@ namespace ModularBOT.Component
                     discordNET.Client.SetStatusAsync(UserStatus.Online);
                     discordNET.Client.SetGameAsync("for commands!",null,ActivityType.Watching);
                     discordNET.DisableMessages = false;
+                }
+                if (input.ToLower() == "mbotdata")
+                {
+                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Opening ModularBOT's installation directory."));
+                    Process.Start(Path.GetDirectoryName(Assembly.GetCallingAssembly().Location));
                 }
                 if (input.ToLower().StartsWith("status"))
                 {
