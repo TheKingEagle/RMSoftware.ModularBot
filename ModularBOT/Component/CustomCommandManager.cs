@@ -130,9 +130,9 @@ namespace ModularBOT.Component
             if (global != null)
             {
 
-                string res = global.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command)?.action;
+                string res = global.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == command)?.Action;
                 gobj = global;
-                cmd = gobj.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command);
+                cmd = gobj.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == command);
                 if(cmd != null)
                 {
                     if (cmd.RequirePermission)
@@ -162,8 +162,8 @@ namespace ModularBOT.Component
                     }
                     if (gobj != null)
                     {
-                        cmd = gobj.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command);
-                        res = cmd?.action;
+                        cmd = gobj.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == command);
+                        res = cmd?.Action;
                         if (cmd != null)
                         {
                             if (cmd.RequirePermission)
@@ -234,8 +234,8 @@ namespace ModularBOT.Component
                 }
                 if (gobj != null)
                 {
-                    cmd = gobj.GuildCommands.FirstOrDefault(c => c.name.ToLower() == command);
-                    res = cmd?.action;
+                    cmd = gobj.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == command);
+                    res = cmd?.Action;
                     if (cmd != null)
                     {
                         if (cmd.RequirePermission)
@@ -413,7 +413,7 @@ namespace ModularBOT.Component
                 go.SaveJson();
                 guilds.Add(go);
             }
-            GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.name.ToLower() == name.ToLower());
+            GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.Name.ToLower() == name.ToLower());
                 
             if(gc != null)
             {
@@ -430,8 +430,8 @@ namespace ModularBOT.Component
             {
                 gc = new GuildCommand
                 {
-                    name = name.ToLower(),
-                    action = action,
+                    Name = name.ToLower(),
+                    Action = action,
                     RequirePermission = restricted
                 };
                 go.GuildCommands.Add(gc);
@@ -469,7 +469,7 @@ namespace ModularBOT.Component
                 await message.Channel.SendMessageAsync("", false, b.Build());
                 return;
             }
-            GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.name.ToLower() == name.ToLower());
+            GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.Name.ToLower() == name.ToLower());
 
             if (gc == null)
             {
@@ -503,8 +503,8 @@ namespace ModularBOT.Component
 
     public class GuildCommand
     {
-        public string name { get; set; }
-        public string action { get; set; }
+        public string Name { get; set; }
+        public string Action { get; set; }
         public bool RequirePermission { get; set; }
         public int? Counter { get; set; }
     }
