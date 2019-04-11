@@ -9,6 +9,8 @@ using Newtonsoft.Json;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using Discord;
+using Discord.Commands;
+
 namespace ModularBOT.Component
 {
     /// <summary>
@@ -242,6 +244,27 @@ namespace ModularBOT.Component
             }
         }
 
+        public Embed GetAccessDeniedMessage(ICommandContext Context,AccessLevels requestedAccessLevel)
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithTitle("Access Denied");
+            b.WithAuthor(Context.Client.CurrentUser);
+            b.WithDescription($"You do not have permission to use this command. Requires AccessLevels.{requestedAccessLevel.ToString()} or higher.");
+            b.WithColor(Color.Red);
+            b.WithFooter("ModularBOT • Core");
+            return b.Build();
+        }
+
+        public Embed GetAccessDeniedMessage(IUser AuthorUser, AccessLevels requestedAccessLevel)
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithTitle("Access Denied");
+            b.WithAuthor(AuthorUser);
+            b.WithDescription($"You do not have permission to use this command. Requires AccessLevels.{requestedAccessLevel.ToString()} or higher.");
+            b.WithColor(Color.Red);
+            b.WithFooter("ModularBOT • Core");
+            return b.Build();
+        }
     }
 
     public enum AccessLevels
