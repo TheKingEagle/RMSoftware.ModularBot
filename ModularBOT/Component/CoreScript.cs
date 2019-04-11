@@ -155,7 +155,7 @@ namespace ModularBOT.Component
                 //errorMessage = $"SCRIPT ERROR:```The codeblock was not closed.\r\nCoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                 errorEmbed.WithDescription("The codeblock was not closed.");
                 //errorEmbed.AddInlineField("Line", LineInScript);
-                errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
             }
             errorEmbed.WithAuthor(client.CurrentUser);
             errorEmbed.WithTitle("CoreScript Error");
@@ -179,7 +179,7 @@ namespace ModularBOT.Component
                                                 //errorMessage = $"SCRIPT ERROR:```The codeblock was not closed.\r\nCoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                 errorEmbed.WithDescription("The codeblock was not closed.");
                                                 errorEmbed.AddField("Line", LineInScript, true);
-                                                errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
 
                                             }
                                         }
@@ -205,7 +205,7 @@ namespace ModularBOT.Component
                                                 errorEmbed.WithDescription($"Unexpected Header: ```{line}```");
                                                 errorEmbed.AddField("Additional Information", "You must type your script in multiple lines. Header should look like ```\r\n```DOS\r\n```");
                                                 errorEmbed.AddField("Line", LineInScript, true);
-                                                errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
 
                                                 break;
                                             }
@@ -236,7 +236,7 @@ namespace ModularBOT.Component
                                                 //errorMessage = $"SCRIPT ERROR:```\r\nDuplicate header:``` ```{line.Split(' ')[0]}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                 errorEmbed.WithDescription($"Duplicate Header: ```{line.Split(' ')[0]}```");
                                                 errorEmbed.AddField("Line", LineInScript, true);
-                                                errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
 
                                                 break;
                                             }
@@ -254,7 +254,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
 
                                                         break;
                                                     }
@@ -283,7 +283,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"Title string cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
 
                                                         break;
                                                     }
@@ -302,7 +302,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
 
@@ -319,7 +319,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
 
@@ -336,7 +336,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
 
@@ -353,7 +353,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
 
@@ -370,7 +370,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     string o = output.Replace("#", "").ToUpper().Trim();
@@ -391,7 +391,7 @@ namespace ModularBOT.Component
 
                                                         errorEmbed.AddField("Available targets", "• CHANNEL\r\n• DIRECT");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     if (output.ToUpper() == "CHANNEL")
@@ -422,7 +422,7 @@ namespace ModularBOT.Component
 
                                                             errorEmbed.AddField("details", $"```{ex.Message}```");
                                                             errorEmbed.AddField("Line", LineInScript, true);
-                                                            errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                             break;
                                                         }
                                     
@@ -450,7 +450,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     if (r.Matches(output).Count < 2)
@@ -461,7 +461,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     #endregion
@@ -478,7 +478,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     if (string.IsNullOrWhiteSpace(content))
@@ -489,7 +489,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     #endregion
@@ -510,7 +510,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     if (ri.Matches(output).Count < 2)
@@ -521,7 +521,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     #endregion
@@ -538,7 +538,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     if (string.IsNullOrWhiteSpace(contenti))
@@ -549,7 +549,7 @@ namespace ModularBOT.Component
                                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
                                                         errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     #endregion
@@ -564,7 +564,7 @@ namespace ModularBOT.Component
                                                         error = true;
                                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     if (contextToDM)
@@ -582,7 +582,7 @@ namespace ModularBOT.Component
 
                                                             errorEmbed.AddField("details", $"```{ex.Message}```");
                                                             errorEmbed.AddField("Line", LineInScript, true);
-                                                            errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                             break;
                                                         }
                                     
@@ -632,7 +632,7 @@ namespace ModularBOT.Component
                                                             //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected Argument: {cond}. Try either ONLINE, BUSY, AWAY, AFK, INVISIBLE, OFFLINE.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                                             errorEmbed.WithDescription($"Function error. Unexpected argument: {cond}.\r\nTry either ONLINE, BUSY, AWAY, AFK, INVISIBLE, OFFLINE.");
                                                             errorEmbed.AddField("Line", LineInScript, true);
-                                                            errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                             break;
                                                     }
 
@@ -646,7 +646,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"Function error: Expected format ```BOTGOLIVE <ChannelName> <status text>.```");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
@@ -661,7 +661,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         break;
                                                     }
                                                     if (v < 1)
@@ -669,7 +669,7 @@ namespace ModularBOT.Component
                                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                                         errorEmbed.AddField("Line", LineInScript, true);
-                                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                         error = true;
                                                         break;
                                                     }
@@ -680,7 +680,7 @@ namespace ModularBOT.Component
                                                     //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected core function: {line.Split(' ')[0]}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                                     errorEmbed.WithDescription($"Unexpected function: ```{line.Split(' ')[0]}```");
                                                     errorEmbed.AddField("Line", LineInScript, true);
-                                                    errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                                     break;
                                             }
 
@@ -698,7 +698,7 @@ namespace ModularBOT.Component
 
                     errorEmbed.AddField("details", $"```{ex.Message}```");
                     errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 }
                 
             }
@@ -763,7 +763,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
                                     await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
@@ -777,7 +777,7 @@ namespace ModularBOT.Component
                                         error = true;
                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
                                     await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), true);
@@ -833,7 +833,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected format ```BOTGOLIVE <ChannelName> <status text>.```");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No Context", true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
                                         break;
                                     }
                                     string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
@@ -848,7 +848,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No Context", true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
                                         break;
                                     }
                                     if (v < 1)
@@ -856,7 +856,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.name ?? "No Context", true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
                                         error = true;
                                         break;
                                     }
@@ -867,7 +867,7 @@ namespace ModularBOT.Component
                                     //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected core function: {line.Split(' ')[0]}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                     errorEmbed.WithDescription($"Unexpected function: ```{line.Split(' ')[0]}```");
                                     errorEmbed.AddField("Line", LineInScript, true);
-                                    errorEmbed.AddField("Execution Context", cmd?.name ?? "No Context", true);
+                                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
                                     break;
                             }
 
@@ -897,7 +897,7 @@ namespace ModularBOT.Component
                 errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
                 errorEmbed.AddField("Function", line.Split(' ')[0]);
                 errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 return;
             }
             output = line.Remove(0, 6).Trim();
@@ -917,7 +917,7 @@ namespace ModularBOT.Component
                 errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
 
                 errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.name ?? "No context", true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 return;
             }
 
@@ -927,8 +927,7 @@ namespace ModularBOT.Component
             ref IDiscordClient client, ref GuildCommand cmd, ref IMessage ArgumentMessage)
         {
             ulong gid = 0;
-            SocketGuildChannel channel = ArgumentMessage.Channel as SocketGuildChannel;
-            if (channel != null)
+            if (ArgumentMessage.Channel is SocketGuildChannel channel)
             {
                 gid = channel.Guild.Id;
             }
