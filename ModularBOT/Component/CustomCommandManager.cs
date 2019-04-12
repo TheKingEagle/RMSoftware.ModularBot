@@ -139,13 +139,7 @@ namespace ModularBOT.Component
                     {
                         if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
                         {
-                            EmbedBuilder b = new EmbedBuilder();
-                            b.WithTitle("Access Denied");
-                            b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
-                            b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                            b.WithColor(Color.Red);
-                            b.WithFooter("ModularBOT • Core");
-                            msg.Channel.SendMessageAsync("", false, b.Build());
+                            msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
                             return null;
                         }
                     }
@@ -170,13 +164,7 @@ namespace ModularBOT.Component
                             {
                                 if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
                                 {
-                                    EmbedBuilder b = new EmbedBuilder();
-                                    b.WithTitle("Access Denied");
-                                    b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
-                                    b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                                    b.WithColor(Color.Red);
-                                    b.WithFooter("ModularBOT • Core");
-                                    msg.Channel.SendMessageAsync("", false, b.Build());
+                                    msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
                                     return null;
                                 }
                             }
@@ -207,13 +195,7 @@ namespace ModularBOT.Component
                         {
                             if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
                             {
-                                EmbedBuilder b = new EmbedBuilder();
-                                b.WithTitle("Access Denied");
-                                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
-                                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                                b.WithColor(Color.Red);
-                                b.WithFooter("ModularBOT • Core");
-                                msg.Channel.SendMessageAsync("", false, b.Build());
+                                msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
                                 return null;
                             }
                         }
@@ -242,13 +224,7 @@ namespace ModularBOT.Component
                         {
                             if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
                             {
-                                EmbedBuilder b = new EmbedBuilder();
-                                b.WithTitle("Access Denied");
-                                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
-                                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 1` or higher.");
-                                b.WithColor(Color.Red);
-                                b.WithFooter("ModularBOT • Core");
-                                msg.Channel.SendMessageAsync("", false, b.Build());
+                                msg.Channel.SendMessageAsync("",false,permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
                                 return null;
                             }
                         }
