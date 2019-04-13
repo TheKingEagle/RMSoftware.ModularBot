@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ModularBOT.Component
 {
@@ -16,21 +18,21 @@ namespace ModularBOT.Component
         DiscordShardedClient Client { get; set; }
         CommandService Cmdsvr { get; set; }
         ConsoleIO ConsoleIO { get; set; }
-        DiscordNET Net { get; set; }
+        DiscordNET _DiscordNet { get; set; }
 
         public CoreModule(DiscordShardedClient client, CommandService cmdservice, ConsoleIO consoleIO, DiscordNET dnet)
         {
             Client = client;
             Cmdsvr = cmdservice;
             this.ConsoleIO = consoleIO;
-            Net = dnet;
+            _DiscordNet = dnet;
             this.ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "CoreMOD", "Constructor called! This debug message proved it."));
 
         }
 
         #endregion
 
-        [Command("about"), Summary("Display information about the bot")]
+        [Command("about"), Summary("Display information about the bot"), Remarks("AccessLevels.Blacklisted")]//for testing. FOR SCIENCE...
         public async Task CORE_ShowAbout()
         {
             EmbedBuilder builder = new EmbedBuilder
@@ -47,12 +49,12 @@ namespace ModularBOT.Component
         }
 
         #region Command Management
-        [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
+        [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command."), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_Add(string cmdname, bool restricted, [Remainder]string action)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
             ulong gid = 0;
@@ -61,26 +63,26 @@ namespace ModularBOT.Component
                 gid = Context.Guild.Id;
             }
 
-            await Net.ccmgr.AddCmd(Context.Message, cmdname, action, restricted,gid);
+            await _DiscordNet.ccmgr.AddCmd(Context.Message, cmdname, action, restricted,gid);
         }
 
-        [Command("addgcmd"), Summary("Add a global command to your bot")]
+        [Command("addgcmd"), Summary("Add a global command to your bot"),Remarks("AccessLevels.CommandManager")]
         public async Task CMD_AddGlobal(string cmdname, bool restricted, [Remainder]string action)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context,AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context,AccessLevels.CommandManager));
                 return;
             }
-            await Net.ccmgr.AddCmd(Context.Message, cmdname, action, restricted);
+            await _DiscordNet.ccmgr.AddCmd(Context.Message, cmdname, action, restricted);
         }
 
-        [Command("delcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
+        [Command("delcmd"), Summary("delete a command from your bot. If you run this via DM, it will delete a global command."), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_Delete(string cmdname)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
             ulong gid = 0;
@@ -89,37 +91,137 @@ namespace ModularBOT.Component
                 gid = Context.Guild.Id;
             }
 
-            await Net.ccmgr.DelCmd(Context.Message, cmdname, gid);
+            await _DiscordNet.ccmgr.DelCmd(Context.Message, cmdname, gid);
         }
 
-        [Command("delgcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
+        [Command("delgcmd"), Summary("delete a global command from your bot."), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_DeleteGlobal(string cmdname)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
 
-            await Net.ccmgr.DelCmd(Context.Message, cmdname);
+            await _DiscordNet.ccmgr.DelCmd(Context.Message, cmdname);
         }
 
+        [Command("listcmd"), Summary("Lists all available commands for current context.")]
+        public async Task CMD_ListCommands()
+        {
+
+            CommandList commandList = new CommandList(Client.CurrentUser.Username,Context.Guild?.Name ?? "Direct Messages");
+            string prefix = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            if (Context.Guild != null)
+            {
+                GuildObject obj = _DiscordNet.ccmgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                if (obj != null) prefix = obj.CommandPrefix;
+            }
+
+            #region CORE
+            foreach (CommandInfo item in Cmdsvr.Commands)
+            {
+                string group = item.Module.Aliases[0] + " ";
+                string sum = item.Summary;
+                if (string.IsNullOrWhiteSpace(group))
+                {
+                    group = "";//Command's groupAttribute?
+                }
+
+                string usage = prefix + group + item.Name + " ";
+                foreach (var param in item.Parameters)
+                {
+                    if (param.IsOptional)
+                    {
+                        usage += $"[{param.Type.Name} {param.Name}] ";
+                    }
+                    if (!param.IsOptional)
+                    {
+                        usage += $"<{param.Type.Name} {param.Name}> ";
+                    }
+                }
+                AccessLevels? lv = null;
+                if (item.Remarks != null)
+                {
+                    lv = (AccessLevels)Enum.Parse(typeof(AccessLevels), item.Remarks.Replace("AccessLevels.", ""));
+                }
+                commandList.AddCommand(prefix + group + item.Name, lv, item.Module.Name == "CoreModule" ? CommandTypes.Core : CommandTypes.Module, sum, usage);
+            }
+
+            #endregion
+
+            #region Global & guild commands
+            GuildObject globalGO = _DiscordNet.ccmgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
+            if (globalGO != null)
+            {
+                foreach (GuildCommand item in globalGO.GuildCommands)
+                {
+                    commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.GCustom);
+                }
+            }
+
+            if (Context.Guild != null)
+            {
+                GuildObject currentGuild = _DiscordNet.ccmgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                if (currentGuild != null)
+                {
+                    foreach (GuildCommand item in currentGuild.GuildCommands)
+                    {
+                        commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.Custom);
+                    }
+                }
+            }
+
+            #endregion
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (StreamWriter sw = new StreamWriter(ms))
+                    {
+                        sw.WriteLine(commandList.GetFullHTML());
+                        sw.Flush();
+                        ms.Position = 0;
+                        await Context.Channel.SendMessageAsync("**See the attached web document for a full list of commands.**", false);
+                        if (Context.Guild != null)
+                        {
+                            await Context.Channel.SendFileAsync(ms, $"{Context.Client.CurrentUser.Username}_{Context.Guild.Name}_CommandList_{DateTime.Now.ToFileTimeUtc()}.html");
+                        }
+                        else
+                        {
+                            await Context.Channel.SendFileAsync(ms, $"{Context.Client.CurrentUser.Username}_GLOBAL_CommandList_{DateTime.Now.ToFileTimeUtc()}.html");
+                        }
+                    }
+                }
+            }
+            catch (IOException ex)
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithAuthor(Client.CurrentUser);
+                b.WithTitle("Something Went Wrong!");
+                b.WithDescription(ex.Message);
+                b.WithFooter("ModularBOT • CORE");
+                b.WithColor(Color.Red);
+                await Context.Channel.SendMessageAsync("", false, b.Build());
+            }
+        }
         #endregion
 
         #region Permission Management
-        [Command("permissions set user"),Alias("psu")]
+        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.Administrator")]
         public async Task PERM_SetUser(IUser user, AccessLevels accessLevel)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
 
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                int result = Net.pmgr.RegisterEntity(user, accessLevel);
+                int result = _DiscordNet.pmgr.RegisterEntity(user, accessLevel);
                 switch (result)
                 {
                     case (1):
@@ -179,19 +281,19 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr")]
+        [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr"), Remarks("AccessLevels.Administrator")]
         public async Task PERM_SetRole(IRole role, AccessLevels accessLevel)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
 
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                int result = Net.pmgr.RegisterEntity(role, accessLevel);
+                int result = _DiscordNet.pmgr.RegisterEntity(role, accessLevel);
                 switch (result)
                 {
                     case (1):
@@ -237,19 +339,19 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions del user"), Alias("pdu","pru")]
+        [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.Administrator")]
         public async Task PERM_DeleteUser(IUser user)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
 
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                bool result = Net.pmgr.DeleteEntity(user);
+                bool result = _DiscordNet.pmgr.DeleteEntity(user);
                 switch (result)
                 {
                     case (true):
@@ -284,19 +386,19 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions del role"), Alias("pdr", "prr")]
+        [Command("permissions del role"), Alias("pdr", "prr"), Remarks("AccessLevels.Administrator")]
         public async Task PERM_DeleteRole(IRole role)
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
 
             EmbedBuilder b = new EmbedBuilder();
             try
             {
-                bool result = Net.pmgr.DeleteEntity(role);
+                bool result = _DiscordNet.pmgr.DeleteEntity(role);
                 if (result)
                 {
                     b.WithAuthor(Client.CurrentUser);
@@ -330,17 +432,17 @@ namespace ModularBOT.Component
         #endregion
 
         #region Bot management
-        [Command("stopbot",RunMode= RunMode.Async), Alias("stop")]
+        [Command("stopbot",RunMode= RunMode.Async), Alias("stop"), Remarks("AccessLevels.Administrator")]
         public async Task BOT_StopBot()
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
 
             EmbedBuilder b = new EmbedBuilder();
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 
                 b.WithTitle("Access Denied");
@@ -357,20 +459,20 @@ namespace ModularBOT.Component
             b.WithColor(Color.Red);
             b.WithFooter("ModularBOT • Core");
             await Context.Channel.SendMessageAsync("", false, b.Build());
-            Net.Stop(ref Program.ShutdownCalled);
+            _DiscordNet.Stop(ref Program.ShutdownCalled);
         }
 
-        [Command("restartbot", RunMode = RunMode.Async),Alias("restart")]
+        [Command("restartbot", RunMode = RunMode.Async),Alias("restart"), Remarks("AccessLevels.Administrator")]
         public async Task BOT_RestartBot()
         {
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
 
             EmbedBuilder b = new EmbedBuilder();
-            if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 
                 b.WithTitle("Access Denied");
@@ -387,33 +489,33 @@ namespace ModularBOT.Component
             b.WithColor(Color.Red);
             b.WithFooter("ModularBOT • Core");
             await Context.Channel.SendMessageAsync("", false, b.Build());
-            Net.Stop(ref Program.ShutdownCalled);
+            _DiscordNet.Stop(ref Program.ShutdownCalled);
         }
 
-        [Command("status")]
+        [Command("status"), Remarks("AccessLevels.Administrator")]
         public async Task BOT_SetStatus(string text, string StreamURL="")
         {
             
-            if(Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if(_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
             if(text.ToLower().StartsWith("playing "))
             {
-                await Net.Client.SetGameAsync(text.Remove(0,8),null);
+                await _DiscordNet.Client.SetGameAsync(text.Remove(0,8),null);
             }
             if (text.ToLower().StartsWith("watching "))
             {
-                await Net.Client.SetGameAsync(text.Remove(0, 9), null,ActivityType.Watching);
+                await _DiscordNet.Client.SetGameAsync(text.Remove(0, 9), null,ActivityType.Watching);
             }
             if (text.ToLower().StartsWith("streaming "))
             {
-                await Net.Client.SetGameAsync(text.Remove(0, 10), StreamURL, ActivityType.Streaming);
+                await _DiscordNet.Client.SetGameAsync(text.Remove(0, 10), StreamURL, ActivityType.Streaming);
             }
             if (text.ToLower().StartsWith("listening to "))
             {
-                await Net.Client.SetGameAsync(text.Remove(0, 13), null, ActivityType.Listening);
+                await _DiscordNet.Client.SetGameAsync(text.Remove(0, 13), null, ActivityType.Listening);
             }
         }
         #endregion
