@@ -12,14 +12,12 @@ namespace ModularBOT.Component
 {
     public class CoreModule:ModuleBase
     {
+        #region Property/Construct
         DiscordShardedClient Client { get; set; }
-
         CommandService Cmdsvr { get; set; }
-
         ConsoleIO ConsoleIO { get; set; }
-
         DiscordNET Net { get; set; }
-        
+
         public CoreModule(DiscordShardedClient client, CommandService cmdservice, ConsoleIO consoleIO, DiscordNET dnet)
         {
             Client = client;
@@ -30,8 +28,10 @@ namespace ModularBOT.Component
 
         }
 
+        #endregion
+
         [Command("about"), Summary("Display information about the bot")]
-        public async Task ShowAbout()
+        public async Task CORE_ShowAbout()
         {
             EmbedBuilder builder = new EmbedBuilder
             {
@@ -46,8 +46,9 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
+        #region Command Management
         [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
-        public async Task AddCmd(string cmdname, bool restricted, [Remainder]string action)
+        public async Task CMD_Add(string cmdname, bool restricted, [Remainder]string action)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
@@ -64,7 +65,7 @@ namespace ModularBOT.Component
         }
 
         [Command("addgcmd"), Summary("Add a global command to your bot")]
-        public async Task AddgCmd(string cmdname, bool restricted, [Remainder]string action)
+        public async Task CMD_AddGlobal(string cmdname, bool restricted, [Remainder]string action)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
@@ -75,7 +76,7 @@ namespace ModularBOT.Component
         }
 
         [Command("delcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
-        public async Task DelCmd(string cmdname)
+        public async Task CMD_Delete(string cmdname)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
@@ -92,7 +93,7 @@ namespace ModularBOT.Component
         }
 
         [Command("delgcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command.")]
-        public async Task DelgCmd(string cmdname)
+        public async Task CMD_DeleteGlobal(string cmdname)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
@@ -103,8 +104,11 @@ namespace ModularBOT.Component
             await Net.ccmgr.DelCmd(Context.Message, cmdname);
         }
 
+        #endregion
+
+        #region Permission Management
         [Command("permissions set user"),Alias("psu")]
-        public async Task Perm_set_user(IUser user, AccessLevels accessLevel)
+        public async Task PERM_SetUser(IUser user, AccessLevels accessLevel)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
@@ -176,7 +180,7 @@ namespace ModularBOT.Component
         }
 
         [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr")]
-        public async Task Perm_set_role(IRole role, AccessLevels accessLevel)
+        public async Task PERM_SetRole(IRole role, AccessLevels accessLevel)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
@@ -234,7 +238,7 @@ namespace ModularBOT.Component
         }
 
         [Command("permissions del user"), Alias("pdu","pru")]
-        public async Task Perm_del_user(IUser user)
+        public async Task PERM_DeleteUser(IUser user)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
@@ -281,7 +285,7 @@ namespace ModularBOT.Component
         }
 
         [Command("permissions del role"), Alias("pdr", "prr")]
-        public async Task Perm_del_role(IRole role)
+        public async Task PERM_DeleteRole(IRole role)
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
@@ -323,8 +327,11 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
+        #endregion
+
+        #region Bot management
         [Command("stopbot",RunMode= RunMode.Async), Alias("stop")]
-        public async Task Stopbot()
+        public async Task BOT_StopBot()
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
@@ -354,7 +361,7 @@ namespace ModularBOT.Component
         }
 
         [Command("restartbot", RunMode = RunMode.Async),Alias("restart")]
-        public async Task Restartbot()
+        public async Task BOT_RestartBot()
         {
             if (Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
@@ -382,5 +389,33 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
             Net.Stop(ref Program.ShutdownCalled);
         }
+
+        [Command("status")]
+        public async Task BOT_SetStatus(string text, string StreamURL="")
+        {
+            
+            if(Net.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, Net.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            if(text.ToLower().StartsWith("playing "))
+            {
+                await Net.Client.SetGameAsync(text.Remove(0,8),null);
+            }
+            if (text.ToLower().StartsWith("watching "))
+            {
+                await Net.Client.SetGameAsync(text.Remove(0, 9), null,ActivityType.Watching);
+            }
+            if (text.ToLower().StartsWith("streaming "))
+            {
+                await Net.Client.SetGameAsync(text.Remove(0, 10), StreamURL, ActivityType.Streaming);
+            }
+            if (text.ToLower().StartsWith("listening to "))
+            {
+                await Net.Client.SetGameAsync(text.Remove(0, 13), null, ActivityType.Listening);
+            }
+        }
+        #endregion
     }
 }
