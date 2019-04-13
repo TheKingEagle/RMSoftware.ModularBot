@@ -198,7 +198,7 @@ namespace ModularBOT.Component
                     EmbedBuilder b = new EmbedBuilder();
                     b.WithColor(Color.Orange);
                     b.WithAuthor(Client.CurrentUser);
-                    b.WithTitle("Command Error.");
+                    b.WithTitle("Command Error!");
                     b.WithDescription(cmdres.ErrorReason);
                     b.AddField("Error Code", cmdres.Error.Value);
                     await context.Channel.SendMessageAsync("", false, b.Build());
