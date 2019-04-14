@@ -85,7 +85,11 @@ namespace ModularBOT.Component
                 if (item is SocketGuildUser sgu)
                 {
                     List<ulong> Common = sgu.Roles.Select(s1 => s1.Id).ToList().Intersect(_entities.Select(s2 => s2.EntityID).ToList()).ToList();
-                    ulong r = Common.Max();
+                    ulong r = 0;
+                    if (Common.Count > 0)
+                    {
+                        r = Common.Max();
+                    }
                     df = _entities.FirstOrDefault(xx => xx.EntityID == r);
                     if(df!= null)
                     {
@@ -134,7 +138,12 @@ namespace ModularBOT.Component
                 if (item is SocketGuildUser sgu)
                 {
                     List<ulong> Common = sgu.Roles.Select(s1 => s1.Id).ToList().Intersect(_entities.Select(s2 => s2.EntityID).ToList()).ToList();
-                    ulong r = Common.Max();
+                    ulong r = 0;
+                    if (Common.Count >0)
+                    {
+                        r = Common.Max();
+                    }
+                    
                     df = _entities.FirstOrDefault(xx => xx.EntityID == r);
                     if (df != null)
                     {
