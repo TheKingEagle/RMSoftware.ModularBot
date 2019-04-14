@@ -132,10 +132,14 @@ namespace ModularBOT.Component
             return Task.Delay(0);
         }
 
-        private Task Client_GuildAvailable(SocketGuild arg)
+        private Task Client_GuildAvailable(SocketGuild guild)
         {
-            Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just appeared. [{arg.Name}] "));
+            Console.Title = "RMSoftware.ModularBOT -> " + guild.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"A guild just appeared. [{guild.Name}] "),ConsoleColor.Green);
+            if(guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel)!= null)
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "INIT", $"Requested initialization channel found. {guild.Name} has it!"));
+            }
             return Task.Delay(0);
         }
 
@@ -280,6 +284,15 @@ namespace ModularBOT.Component
         {
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", $"Shard ready! {arg.Guilds.Count} guilds are fully loaded. "),ConsoleColor.Green);
+            if (arg.GetChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel) is SocketTextChannel ch)
+            {
+                StartTime = DateTime.Now;
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"Initialization Shard READY! Uptime set to {StartTime}"));
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", $"Executing OnStart.CORE"));
+                //TODO: Run OnStart.CORE.
+                
+               
+            }
             return Task.Delay(0);
         }
 
