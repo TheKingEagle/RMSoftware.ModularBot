@@ -581,6 +581,30 @@ namespace ModularBOT.Component
 
             }
         }
+
+        [Command("uptime"),Remarks("AccessLevels.Normal"), Summary("show how long bot has been connected.")]
+        public async Task BOT_ShowUptime([Remainder] string args=null)
+        {
+            var delta = DateTime.Now - _DiscordNet.StartTime;
+            string format = string.Format("I've been alive and well for **{0}** hours, **{1}** minutes, and **{2}** seconds!", Math.Floor(delta.TotalHours).ToString("n0"), delta.Minutes, delta.Seconds);
+            await Context.Channel.SendMessageAsync(format + " " + args);
+        }
+
+        [Command("invitebot"), Summary("Generate a basic invite link to add the bot to your guild.")]
+        public async Task ShowInvite()
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.Title = "Add this bot to your guild";
+            builder.WithAuthor(Context.Client.CurrentUser);
+            builder.Color = Color.Purple;
+            builder.Description = "Click the link above to add the bot to a guild. You may only add the bot to a guild that you manage. You may not be able to use the link unless you are the bot owner, or the bot is public.";
+            builder.AddField("Permissions", "These are the permissions your bot will require. You can manage additional permissions later. Please note: the bot will not function without these permissions enabled:\r\n• Send Messages (Required)\r\n• Attach Files (Required)\r\n• Embed Links (Required)\r\n");
+            builder.AddField("Copyright", $"Copyright © 2017-{DateTime.Now.Year} RMSoftware Development");
+            builder.AddField("Version", Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
+            builder.WithFooter("ModularBOT • Created by TheKingEagle");
+            builder.WithUrl($"https://discordapp.com/api/oauth2/authorize?client_id={(await Client.GetApplicationInfoAsync()).Id}&permissions=51200&scope=bot");
+            await Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
         #endregion
 
         #region Messages
