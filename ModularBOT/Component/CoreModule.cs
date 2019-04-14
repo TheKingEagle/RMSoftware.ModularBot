@@ -32,7 +32,7 @@ namespace ModularBOT.Component
 
         #endregion
 
-        [Command("about"), Summary("Display information about the bot"), Remarks("AccessLevels.Blacklisted")]//for testing. FOR SCIENCE...
+        [Command("about"), Summary("Display information about the bot"), Remarks("AccessLevels.Normal")]
         public async Task CORE_ShowAbout()
         {
             EmbedBuilder builder = new EmbedBuilder
@@ -42,9 +42,9 @@ namespace ModularBOT.Component
             builder.WithAuthor(Context.Client.CurrentUser);
             builder.Color = Color.Blue;
             builder.Description = "A Multi-purpose, multi-module bot designed for discord. Tailor it for your specific server, create your own modules and plug-ins. Includes a core module for custom text-based commands & EXEC functionality";
-            builder.AddField("Copyright", "Copyright © 2017-2019 RMSoftware Development");
+            builder.AddField("Copyright", $"Copyright © 2017-{DateTime.Now.Year} RMSoftware Development");
             builder.AddField("Version", Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
-            builder.WithFooter("ModularBOT | created by TheKingEagle");
+            builder.WithFooter("ModularBOT • Created by TheKingEagle");
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
 
@@ -106,7 +106,7 @@ namespace ModularBOT.Component
             await _DiscordNet.ccmgr.DelCmd(Context.Message, cmdname);
         }
 
-        [Command("listcmd"), Summary("Lists all available commands for current context.")]
+        [Command("listcmd"), Summary("Lists all available commands for current context."), Remarks("AccessLevels.Normal")]
         public async Task CMD_ListCommands()
         {
 
@@ -209,7 +209,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region Permission Management
-        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.Administrator")]
+        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.Administrator"),Summary("Set permissions for a user")]
         public async Task PERM_SetUser(IUser user, AccessLevels accessLevel)
         {
             if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -281,7 +281,7 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr"), Remarks("AccessLevels.Administrator")]
+        [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr"), Remarks("AccessLevels.Administrator"), Summary("Set permissions for a role")]
         public async Task PERM_SetRole(IRole role, AccessLevels accessLevel)
         {
             if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -339,7 +339,7 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.Administrator")]
+        [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.Administrator"), Summary("Remove permission entry for user. (Assumes default: AccessLevels.Normal)")]
         public async Task PERM_DeleteUser(IUser user)
         {
             if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -386,7 +386,7 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions del role"), Alias("pdr", "prr"), Remarks("AccessLevels.Administrator")]
+        [Command("permissions del role"), Alias("pdr", "prr"), Remarks("AccessLevels.Administrator"), Summary("Remove permission entry for role. (Assumes default: AccessLevels.Normal)")]
         public async Task PERM_DeleteRole(IRole role)
         {
             if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -432,7 +432,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region Bot management
-        [Command("stopbot",RunMode= RunMode.Async), Alias("stop"), Remarks("AccessLevels.Administrator")]
+        [Command("stopbot",RunMode= RunMode.Async), Alias("stop"), Remarks("AccessLevels.Administrator"), Summary("Calls for termination of session, and closes program.")]
         public async Task BOT_StopBot()
         {
             if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -441,28 +441,11 @@ namespace ModularBOT.Component
                 return;
             }
 
-            EmbedBuilder b = new EmbedBuilder();
-            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
-            {
-                
-                b.WithTitle("Access Denied");
-                b.WithAuthor(Context.Client.CurrentUser);
-                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 2 (Administrator)` or higher.");
-                b.WithColor(Color.Red);
-                b.WithFooter("ModularBOT • Core");
-                await Context.Channel.SendMessageAsync("", false, b.Build());
-                return;
-            }
-            b.WithTitle("Shutting Down...");
-            b.WithAuthor(Context.Client.CurrentUser);
-            b.WithDescription("Administrator called for termination! Ending session & disconnecting...");
-            b.WithColor(Color.Red);
-            b.WithFooter("ModularBOT • Core");
-            await Context.Channel.SendMessageAsync("", false, b.Build());
+            await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Shutting Down...", "Administrator called for application termination. Ending session...", Color.DarkBlue));
             _DiscordNet.Stop(ref Program.ShutdownCalled);
         }
 
-        [Command("restartbot", RunMode = RunMode.Async),Alias("restart"), Remarks("AccessLevels.Administrator")]
+        [Command("restartbot", RunMode = RunMode.Async),Alias("restart"), Remarks("AccessLevels.Administrator"), Summary("Calls for termination of session, and restarts program.")]
         public async Task BOT_RestartBot()
         {
             if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -471,28 +454,12 @@ namespace ModularBOT.Component
                 return;
             }
 
-            EmbedBuilder b = new EmbedBuilder();
-            if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
-            {
-                
-                b.WithTitle("Access Denied");
-                b.WithAuthor(Context.Client.CurrentUser);
-                b.WithDescription("You do not have permission to use this command. Requires `AccessLevel 2 (Administrator)` or higher.");
-                b.WithColor(Color.Red);
-                b.WithFooter("ModularBOT • Core");
-                await Context.Channel.SendMessageAsync("", false, b.Build());
-                return;
-            }
-            b.WithTitle("Restarting...");
-            b.WithAuthor(Context.Client.CurrentUser);
-            b.WithDescription("Administrator called for restart! Ending session & restarting the application");
-            b.WithColor(Color.Red);
-            b.WithFooter("ModularBOT • Core");
-            await Context.Channel.SendMessageAsync("", false, b.Build());
+            await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Restarting...", "Administrator called for application restart. Ending session...", Color.DarkBlue));
+
             _DiscordNet.Stop(ref Program.ShutdownCalled);
         }
 
-        [Command("status"), Remarks("AccessLevels.Administrator")]
+        [Command("status"), Remarks("AccessLevels.Administrator"), Summary("Sets status text for bot user. Start with playing, watching, listening to, or streaming.")]
         public async Task BOT_SetStatus(string text, string StreamURL="")
         {
             
@@ -517,6 +484,96 @@ namespace ModularBOT.Component
             {
                 await _DiscordNet.Client.SetGameAsync(text.Remove(0, 13), null, ActivityType.Listening);
             }
+        }
+
+        [Command("prefix"), Remarks("AccessLevels.CommandManager"), Summary("Set the prefix for current guild, or if called from Direct message, set global prefix.")]
+        public async Task BOT_SetPrefix(string newPrefix="")
+        {
+            if(_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                await Context.Channel.SendMessageAsync("",false,_DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                return;
+            }
+            if(newPrefix == "")
+            {
+                ulong pgid = 0;
+
+                if (Context.Guild != null)
+                {
+                    pgid = Context.Guild.Id;
+                }
+                var pg = await Context.Client.GetGuildAsync(pgid);
+                GuildObject pobj = _DiscordNet.ccmgr.GuildObjects.FirstOrDefault(x => x.ID == pgid);
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Current Prefix", $"The current prefix for `{pg?.Name ?? "Direct Messages"}` is `{pobj?.CommandPrefix ?? _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix}`", new Color(0,255,0)));
+                return;
+            }
+            if(string.IsNullOrWhiteSpace(newPrefix) || newPrefix.Contains('`'))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Invalid prefix","Your prefix must not start with whitespace, or contain invalid characters!",Color.Red));
+                return;
+            }
+            ulong gid = 0;
+            
+            if(Context.Guild != null)
+            {
+                gid = Context.Guild.Id;
+            }
+
+            if(gid == 0)
+            {
+                _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix = newPrefix;
+                Program.configMGR.Save();
+                
+            }
+            GuildObject obj = _DiscordNet.ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid);
+            if(obj!=null)
+            {
+                obj.CommandPrefix = newPrefix;
+                obj.SaveJson();
+                var g = await Context.Client.GetGuildAsync(gid);
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Success!", $"The prefix for `{g?.Name ?? "Direct Messages"}` has been set to `{newPrefix}`", Color.Green));
+                return;
+            }
+            else
+            {
+                obj = new GuildObject
+                {
+                    CommandPrefix = newPrefix,
+                    GuildCommands = new List<GuildCommand>(),
+                    ID = gid
+
+                };
+                try
+                {
+                    _DiscordNet.ccmgr.AddGuildObject(obj);//safely inject the new object.
+                    var g = await Context.Client.GetGuildAsync(gid);
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Success!", $"The prefix for `{g.Name}` has been set to `{newPrefix}`", Color.Green));
+
+                }
+                catch (Exception ex)
+                {
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Something Went Wrong.", "A new guild object was needed here, but couldn't be created.", Color.DarkRed, ex));
+                }
+
+            }
+        }
+        #endregion
+
+        #region Messages
+        public Embed GetEmbeddedMessage(string title, string message, Color color,Exception e=null)
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(color);
+            b.WithAuthor(Context.Client.CurrentUser);
+            b.WithTitle(title);
+            b.WithDescription(message);
+            b.WithFooter("ModularBOT • Core");
+            if (e != null)
+            {
+                b.AddField("Extended Details", e.Message);
+                b.AddField("For developers", e.StackTrace);
+            }
+            return b.Build();
         }
         #endregion
     }
