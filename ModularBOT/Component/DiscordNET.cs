@@ -156,14 +156,6 @@ namespace ModularBOT.Component
                 SocketGuildChannel sc = arg.Channel as SocketGuildChannel;
                 gid = sc.Guild.Id;
             }
-            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
-            {
-                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
-            }
-            if (!message.Content.StartsWith(prefix))
-            {
-                return;
-            }
             if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
             {
                 if (pmgr.GetWarnOnBlacklist(arg.Author))
@@ -173,10 +165,53 @@ namespace ModularBOT.Component
                     donttalktome.WithColor(Color.DarkRed);
                     donttalktome.WithTitle("Access Denied");
                     donttalktome.WithDescription("You are currently unable to communicate with this bot. You will only see this warning once.");
-                    await arg.Channel.SendMessageAsync("",false,donttalktome.Build());
+                    await arg.Channel.SendMessageAsync("", false, donttalktome.Build());
                 }
                 return;
             }
+
+            #region Deep-rooted prefix command
+            if (message.Content.StartsWith("!prefix") || message.Content.StartsWith(".prefix") || message.Content.StartsWith("/prefix")) //This command will ALWAYS be a thing. it cannot be overridden.
+            {
+                var contextpre = new CommandContext(Client, message);
+
+                var cmdrespre = await cmdsvr.ExecuteAsync(contextpre, 1, serviceProvider);
+                if (cmdrespre.Error.HasValue)
+                {
+                    if (!cmdrespre.Error.Value.HasFlag(CommandError.UnknownCommand) && !cmdrespre.IsSuccess)
+                    {
+                        EmbedBuilder b = new EmbedBuilder();
+                        b.WithColor(Color.Orange);
+                        b.WithAuthor(Client.CurrentUser);
+                        b.WithTitle("Command Error!");
+                        b.WithDescription(cmdrespre.ErrorReason);
+                        b.AddField("Error Code", cmdrespre.Error.Value);
+                        await contextpre.Channel.SendMessageAsync("", false, b.Build());
+                    }
+                    if (cmdrespre.Error.Value.HasFlag(CommandError.BadArgCount))
+                    {
+                        EmbedBuilder b = new EmbedBuilder();
+                        b.WithColor(Color.Orange);
+                        b.WithAuthor(Client.CurrentUser);
+                        b.WithTitle("Command Error.");
+                        b.WithDescription(cmdrespre.ErrorReason);
+                        b.AddField("Error Code", cmdrespre.Error.Value);
+                        await contextpre.Channel.SendMessageAsync("", false, b.Build());
+                    }
+                }
+                return;
+            }
+            #endregion
+
+            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
+            {
+                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
+            }
+            if (!message.Content.StartsWith(prefix))
+            {
+                return;
+            }
+            
             string result = "";
            
             await Task.Run(() =>  result = ccmgr.ProcessMessage(arg));
