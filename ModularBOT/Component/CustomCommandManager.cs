@@ -475,6 +475,18 @@ namespace ModularBOT.Component
             }
         }
         #endregion
+
+        #region GuildObject manipulation
+        public void AddGuildObject(GuildObject obj)
+        {
+            if(guilds.FirstOrDefault(x=>x.ID == obj.ID) != null)
+            {
+                throw new InvalidOperationException("A guild object with this ID is already in the loaded list!");
+            }
+            guilds.Add(obj);
+            obj.SaveJson();
+        }
+        #endregion
     }
 
     public class GuildCommand
