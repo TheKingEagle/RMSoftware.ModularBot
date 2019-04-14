@@ -84,7 +84,8 @@ namespace ModularBOT.Component
                 
                 if (item is SocketGuildUser sgu)
                 {
-                    ulong r = sgu.Roles.FirstOrDefault(zr => _entities.Any(x => x.EntityID == zr.Id))?.Id ?? 0;
+                    List<ulong> Common = sgu.Roles.Select(s1 => s1.Id).ToList().Intersect(_entities.Select(s2 => s2.EntityID).ToList()).ToList();
+                    ulong r = Common.Max();
                     df = _entities.FirstOrDefault(xx => xx.EntityID == r);
                     if(df!= null)
                     {
@@ -93,6 +94,59 @@ namespace ModularBOT.Component
                 }
             }
             _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Specified entity isn't on the list. Assume NORMAL."));
+            return AccessLevels.Normal;
+        }
+
+        /// <summary>
+        /// Check permission of an entity if registered, output inherited role.
+        /// </summary>
+        /// <param name="item">Item that interfaces with ISnowflakeEntity. Preferably IUser or IRole.</param>
+        /// <returns>Item's accessLevel, or AccessLevels.Normal if nothing is found.</returns>
+        /// <param name="inheritedRole">Returns an IRole if one is found, otherwise null.</param>
+        public AccessLevels GetAccessLevel(ISnowflakeEntity item, out IRole inheritedRole, out bool BotOwner)
+        {
+            DefaultAdmin = new RegisteredEntity
+            {
+                AccessLevel = AccessLevels.Administrator,
+                EntityID = _services.GetRequiredService<DiscordShardedClient>()
+                .GetApplicationInfoAsync().GetAwaiter().GetResult().Owner.Id,
+                WarnIfBlacklisted = true//though this should never happen.
+            };//This will not be added to list, as it doesn't count.
+            if (item.Id == DefaultAdmin.EntityID)
+            {
+                _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Detected entity as bot owner."));
+                inheritedRole = null;
+                BotOwner = true;
+                return DefaultAdmin.AccessLevel;
+            }
+
+            RegisteredEntity df = _entities.FirstOrDefault(z => z.EntityID == item.Id);
+
+            if (df != null)
+            {
+                inheritedRole = null;
+                BotOwner = false;
+                return df.AccessLevel;
+            }
+            if (df == null)
+            {
+
+                if (item is SocketGuildUser sgu)
+                {
+                    List<ulong> Common = sgu.Roles.Select(s1 => s1.Id).ToList().Intersect(_entities.Select(s2 => s2.EntityID).ToList()).ToList();
+                    ulong r = Common.Max();
+                    df = _entities.FirstOrDefault(xx => xx.EntityID == r);
+                    if (df != null)
+                    {
+                        inheritedRole = sgu.Roles.FirstOrDefault(x=> x.Id==r) ?? null;
+                        BotOwner = false;
+                        return df.AccessLevel;
+                    }
+                }
+            }
+            _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Specified entity isn't on the list. Assume NORMAL."));
+            inheritedRole = null;
+            BotOwner = false;
             return AccessLevels.Normal;
         }
 
