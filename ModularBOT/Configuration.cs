@@ -52,6 +52,15 @@ namespace ModularBOT
             ReadyText = "Ready!";
             ShardCount = 1;                        //TODO: Figure out proper implementation to automatically set this as bot is added to more guilds.
         }
+
+        public void SaveConfig(string jsonFilename)
+        {
+            using (StreamWriter sw = new StreamWriter(jsonFilename))
+            {
+                string json = JsonConvert.SerializeObject(this, Formatting.Indented);
+                sw.WriteLine(json);
+            }
+        }
     }
 
     /// <summary>
@@ -61,8 +70,10 @@ namespace ModularBOT
     {
         public Configuration CurrentConfig;
         internal SetupWizard setup;
+        string FileName = "";
         public ConfigurationManager(string jsonFilename, ref ConsoleIO consoleIO)
         {
+            FileName = jsonFilename;
             setup = new SetupWizard();
             if(File.Exists(jsonFilename))
             {
@@ -85,12 +96,13 @@ namespace ModularBOT
             }
             if (setup.StartSetupWizard(ref consoleIO, ref CurrentConfig))
             {
-                using (StreamWriter sw = new StreamWriter(jsonFilename))
-                {
-                    string json = JsonConvert.SerializeObject(CurrentConfig, Formatting.Indented);
-                    sw.WriteLine(json);
-                }
+                CurrentConfig.SaveConfig(jsonFilename);
             }
         }
+        public void Save()
+        {
+            CurrentConfig.SaveConfig(FileName);
+        }
+        
     }
 }
