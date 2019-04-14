@@ -206,6 +206,7 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, b.Build());
             }
         }
+
         #endregion
 
         #region Permission Management
@@ -426,6 +427,29 @@ namespace ModularBOT.Component
                 b.WithColor(Color.Red);
             }
 
+            await Context.Channel.SendMessageAsync("", false, b.Build());
+        }
+
+        [Command("permissions get"),Alias("plist"),Remarks("AccessLevels.Administrator"), Summary("List permissions file."),RequireContext(ContextType.Guild)]
+        public async Task PERM_ListPermissions(IUser user)
+        {
+            
+            AccessLevels l = _DiscordNet.pmgr.GetAccessLevel(user, out IRole inheritedRole, out bool BotOwner);
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(Color.Blue);
+            b.WithAuthor(Client.CurrentUser);
+            b.WithTitle($"User permissions for {user.Username}#{user.Discriminator}");
+            string inheritedPerms = inheritedRole == null ? "does not inherit an access level from a role." : "inherits an access level from a role.";
+            string ownerstring = BotOwner ? "This user is bot owner." : "This user isn't bot owner.";
+            b.WithDescription($"This user {inheritedPerms}\r\n\r\n{ownerstring}");
+
+            b.AddField("Access Level", $"`{l}`",true);
+            b.WithThumbnailUrl(user.GetAvatarUrl(ImageFormat.Auto));
+            b.WithFooter("ModularBOT • Core");
+            if(inheritedRole != null)
+            {
+                b.AddField("Inherited from", $"{inheritedRole.Name} (`{inheritedRole.Guild}`)", true);
+            }
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
