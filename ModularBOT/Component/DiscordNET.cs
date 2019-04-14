@@ -151,28 +151,48 @@ namespace ModularBOT.Component
             if (!(arg is SocketUserMessage message)) return;
             ulong gid = 0;//global by default
             string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it);
+            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
+            {
+                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
+            }
             if ((arg.Channel as SocketGuildChannel) != null)
             {
                 SocketGuildChannel sc = arg.Channel as SocketGuildChannel;
                 gid = sc.Guild.Id;
             }
-            if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
+            if (message.Content.StartsWith(prefix))
             {
-                if (pmgr.GetWarnOnBlacklist(arg.Author))
+                if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
                 {
-                    EmbedBuilder donttalktome = new EmbedBuilder();
-                    donttalktome.WithAuthor(Client.CurrentUser);
-                    donttalktome.WithColor(Color.DarkRed);
-                    donttalktome.WithTitle("Access Denied");
-                    donttalktome.WithDescription("You are currently unable to communicate with this bot. You will only see this warning once.");
-                    await arg.Channel.SendMessageAsync("", false, donttalktome.Build());
+                    if (pmgr.GetWarnOnBlacklist(arg.Author))
+                    {
+                        EmbedBuilder donttalktome = new EmbedBuilder();
+                        donttalktome.WithAuthor(Client.CurrentUser);
+                        donttalktome.WithColor(Color.DarkRed);
+                        donttalktome.WithTitle("Access Denied");
+                        donttalktome.WithDescription("You are currently unable to communicate with this bot. You will only see this warning once.");
+                        await arg.Channel.SendMessageAsync("", false, donttalktome.Build());
+                    }
+                    return;
                 }
-                return;
             }
-
+            
             #region Deep-rooted prefix command
             if (message.Content.StartsWith("!prefix") || message.Content.StartsWith(".prefix") || message.Content.StartsWith("/prefix")) //This command will ALWAYS be a thing. it cannot be overridden.
             {
+                if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
+                {
+                    if (pmgr.GetWarnOnBlacklist(arg.Author))
+                    {
+                        EmbedBuilder donttalktome = new EmbedBuilder();
+                        donttalktome.WithAuthor(Client.CurrentUser);
+                        donttalktome.WithColor(Color.DarkRed);
+                        donttalktome.WithTitle("Access Denied");
+                        donttalktome.WithDescription("You are currently unable to communicate with this bot. You will only see this warning once.");
+                        await arg.Channel.SendMessageAsync("", false, donttalktome.Build());
+                    }
+                    return;
+                }
                 var contextpre = new CommandContext(Client, message);
 
                 var cmdrespre = await cmdsvr.ExecuteAsync(contextpre, 1, serviceProvider);
@@ -203,10 +223,7 @@ namespace ModularBOT.Component
             }
             #endregion
 
-            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
-            {
-                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
-            }
+            
             if (!message.Content.StartsWith(prefix))
             {
                 return;
