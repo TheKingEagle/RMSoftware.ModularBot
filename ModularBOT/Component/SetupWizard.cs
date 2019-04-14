@@ -58,7 +58,7 @@ namespace ModularBOT.Component
             consoleIO.WriteEntry("\u2502\u2005");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- This wizard will automatically determine what needs to be set up, and will prompt you when needed.");
             consoleIO.WriteEntry("\u2502\u2005");
-            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- PRIVACY Notice: This application will output any message that mentions the bot, or messages that start with ! to the console.", ConsoleColor.Red);
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- PRIVACY Notice: This application will output any message that mentions the bot, or messages that start with the command prefix, to the console.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Messages between other users in any given channel WILL NOT show up in the console.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Any data written to the console will ONLY appear in the console.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Otherwise, that would be extremely creepy. This isn't what we want.", ConsoleColor.Red);
