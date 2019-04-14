@@ -33,14 +33,13 @@ namespace ModularBOT
 
             RunStartlogo();
             
-            consoleIO.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Application Running");
+            consoleIO.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Active Session");
 
             #region DEBUG
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE delcmd & editcmd"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE permission management commands"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE editcmd & getcmd"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE External Module Loader"));
 #endif
