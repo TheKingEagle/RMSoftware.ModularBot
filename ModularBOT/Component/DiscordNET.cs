@@ -154,16 +154,17 @@ namespace ModularBOT.Component
             if (DisableMessages) return;
             if (!(arg is SocketUserMessage message)) return;
             ulong gid = 0;//global by default
-            string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it);
-            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
-            {
-                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
-            }
+            string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             if ((arg.Channel as SocketGuildChannel) != null)
             {
                 SocketGuildChannel sc = arg.Channel as SocketGuildChannel;
                 gid = sc.Guild.Id;
             }
+            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
+            {
+                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
+            }
+            
             if (message.Content.StartsWith(prefix))
             {
                 if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
