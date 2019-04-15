@@ -433,7 +433,11 @@ namespace ModularBOT.Component
         [Command("permissions get"),Alias("plist"),Remarks("AccessLevels.Administrator"), Summary("List permissions file."),RequireContext(ContextType.Guild)]
         public async Task PERM_ListPermissions(IUser user)
         {
-            
+            if(_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
             AccessLevels l = _DiscordNet.pmgr.GetAccessLevel(user, out IRole inheritedRole, out bool BotOwner);
             EmbedBuilder b = new EmbedBuilder();
             b.WithColor(Color.Blue);
