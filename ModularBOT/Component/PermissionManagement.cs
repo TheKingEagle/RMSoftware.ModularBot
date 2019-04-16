@@ -312,7 +312,7 @@ namespace ModularBOT.Component
             EmbedBuilder b = new EmbedBuilder();
             b.WithTitle("Access Denied");
             b.WithAuthor(Context.Client.CurrentUser);
-            b.WithDescription($"You do not have permission to use this command. Requires AccessLevels.{requestedAccessLevel.ToString()} or higher.");
+            b.WithDescription($"You do not have permission to use this command. Requires `AccessLevels.{requestedAccessLevel.ToString()}` or higher.");
             b.WithColor(Color.Red);
             b.WithFooter("ModularBOT • Core");
             return b.Build();
@@ -323,7 +323,7 @@ namespace ModularBOT.Component
             EmbedBuilder b = new EmbedBuilder();
             b.WithTitle("Access Denied");
             b.WithAuthor(AuthorUser);
-            b.WithDescription($"You do not have permission to use this command. Requires AccessLevels.{requestedAccessLevel.ToString()} or higher.");
+            b.WithDescription($"You do not have permission to use this command. Requires `AccessLevels.{requestedAccessLevel.ToString()}` or higher.");
             b.WithColor(Color.Red);
             b.WithFooter("ModularBOT • Core");
             return b.Build();
