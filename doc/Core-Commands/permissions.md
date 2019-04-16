@@ -1,9 +1,7 @@
 # Permissions System
 
-## Summary
-The new permission system is designed to be a bit more robust, and organized.
-
 ### Table of Contents
+> * [Summary](#summary)
 > * [Access Level](#access-level)
 > * Core Commands
 >    * [Permissions set user](#core-command-permissions-set-user)
@@ -11,6 +9,9 @@ The new permission system is designed to be a bit more robust, and organized.
 >    * [Permissions get](#core-command-permissions-get)
 >    * [Permissions del user](#core-command-permissions-del-user)
 >    * [Permissions del user](#core-command-permissions-del-user)
+
+## Summary
+The new permission system is designed to be a bit more robust, and organized.
 
 ### Access Level:
 Users who are not listed in the permission system will be granted normal access. The following access levels are available.
