@@ -3,7 +3,16 @@
 ## Summary
 The new permission system is designed to be a bit more robust, and organized.
 
-## Access Level:
+### Table of Contents
+> * [Access Level](#access-level)
+> * Core Commands
+>    * [Permissions set user](#core-command-permissions-set-user)
+>    * [Permissions set role](#core-command-permissions-set-role)
+>    * [Permissions get](#core-command-permissions-get)
+>    * [Permissions del user](#core-command-permissions-del-user)
+>    * [Permissions del user](#core-command-permissions-del-user)
+
+### Access Level:
 Users who are not listed in the permission system will be granted normal access. The following access levels are available.
 **NB**: Command modules, and command list will remark Access level as `AccessLevels.<AccessLevelName>`.
 
