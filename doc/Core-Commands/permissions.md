@@ -64,7 +64,7 @@ Usage: `!permissions set role <@RoleMention> <AccessLevelString>` **OR** `!psr <
 * You must be able to mention the role.
 * `AccessLevelString` does not include `AccessLevels.` Please only use `Normal`, `CommandManager`, or `Administrator`
 * You cannot blacklist a role. Doing so will result in a thrown exception.
->**InvalidOperationException: You can't blacklist an entire role.** As notated in source code:
+>**InvalidOperationException: You can't blacklist an entire role.** Comment in source code:
 >```
 >//Unfortunately this would cause the warning system to work incorrectly.
 >//Example: One user with BL role interacts with bot, gets the warning -> Warning flag resets.
