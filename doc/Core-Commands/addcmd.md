@@ -1,7 +1,8 @@
 *Disclaimer: This documentation is a WORK IN PROGRESS for the v2 update!*
 # Core Command: `addcmd & addgcmd`
 #### Please note: You will assign a custom prefix for your bot when you run initial setup. We will be using `!` as a command prefix for all future examples.
-> * reminder: Prefixes can be one or more characters, typically symbols.
+*Reminder:*
+> * Prefixes can be one or more characters, typically symbols.
 >   * *Note: The command prefix cannot consist of only whitespace. \` symbol is not supported.*
 
 Usage: `!addcmd <string cmdName> <boolean restricted> <string action>`
