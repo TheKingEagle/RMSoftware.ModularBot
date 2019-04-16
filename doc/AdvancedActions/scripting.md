@@ -9,7 +9,7 @@ The syntax of this scripting language is similar to batch. The code formatting r
 #### Usage
 
 ```
-!addcmd advancedscream false false SCRIPT ```DOS
+!addcmd advancedscream false SCRIPT ```DOS
 ECHO SCREAMING HARD CORE! AHHHHHHHHHHHHHHHHHHHH!
 SETVAR var1 I can do variables too!
 ECHO %var1% -- Isn't that amazing?
