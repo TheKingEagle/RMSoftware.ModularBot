@@ -8,7 +8,7 @@
 
 Usage: `!addcmd <string cmdName> <boolean restricted> <string action>`
 
-* This command is restricted to users who have been registered as `AccessLevels.CommandManager` or higher. See [`CoreCommands: permissions`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/addmgrole.md) for more information.
+* This command is restricted to users who have been registered as `AccessLevels.CommandManager` or higher. See [Permissions System](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/permissions.md) for more information.
 
 
 ### `addgcmd` vs. `addcmd`
