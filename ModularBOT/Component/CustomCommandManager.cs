@@ -439,7 +439,7 @@ namespace ModularBOT.Component
                 b.WithTitle("No Commands defined!");
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithDescription("This guild does not have a valid configuration! That means there are no commands to delete. "+
-                    $"If you are trying to delete a global command, please use `{go?.CommandPrefix ?? serviceProvider.GetRequiredService<Configuration>().CommandPrefix}delgcmd` instead.");
+                    $"Please make sure you are calling the command from the correct context. If you are trying to delete a global command, please call `delgcmd` instead.");
                 b.WithColor(Color.Red);
                 b.WithFooter("ModularBOT • Core");
                 await message.Channel.SendMessageAsync("", false, b.Build());
