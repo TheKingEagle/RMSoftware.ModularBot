@@ -1,29 +1,37 @@
 *Disclaimer: This documentation is a WORK IN PROGRESS for the v2 update!*
-# Core Command: `addcmd`
+# Core Command: `addcmd & addgcmd`
 #### Please note: You will assign a custom prefix for your bot when you run initial setup. We will be using `!` as a command prefix for all future examples.
-* Normal usage: `!addcmd <cmdName> <bool restricted> <action>`
-* This command is restricted to users with a role added to the management database. See [`CoreCommand: addmgrole`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v1.4.14.1038-PATCH/doc/Core-Commands/addmgrole.md)
-* Prefixes are One character, usually a symbol of some kind.
-* the new command will only be available in the guild where you ran `addcmd`.
-   * If you send the `addcmd` to the bot via DM, it will be treated like `addgcmd` and be available to ALL guilds instead.
+> * reminder: Prefixes can be one or more characters, typically symbols.
+>   * *Note: The command prefix cannot consist of only whitespace. \` symbol is not supported.*
+
+Usage: `!addcmd <string cmdName> <boolean restricted> <string action>`
+
+* This command is restricted to users who have been registered as `AccessLevels.CommandManager` or higher. See [`CoreCommands: permissions`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/addmgrole.md) for more information.
+
+
+### `addgcmd` vs. `addcmd`
+addgcmd will create a global command (as in, available to all guilds & dm) regardless of context. whilst addcmd will depend on said context.
+
+The syntax for both commands will be the same.
+
+Usage: `!addgcmd <string cmdName> <boolean restricted> <string action>`
+
+*Context:*
+* **Guild** - If `addcmd` is called here, the command will be added for that specific guild only.
+* **DM** - if `addcmd` is called here, the command will be added for ALL guilds and DM.
 
 ### Parameter breakdown
-* **\<cmdName>**
+* **\<string cmdName>**
   * A small command name. You do not specify the prefix to the name when adding commands. 
 
-* **\<bool restricted>**
+* **\<boolean restricted>**
   * True/false. If true, Only users with one or more roles added to the bot's permission system, may access the command.
 
-* **\<action>**
-  * The action can be several things, Most of the time, it can be a combination of text and emotes. More advanced things are covered later.
-  
-# Advanced Response Actions
-Addcmd allows for one ACTION such as:
-* [`EXEC` and `CLI_EXEC`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/ExternalLibs.md)
-* [`SCRIPT`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/master/doc/AdvancedActions/scripting.md)
-
-##### Example Usage: `!addcmd MyCommand false <ACTION with parameters>`
-These will not output a message directly, but they perform tasks that once executed, the tasks may output messages instead.
+* **\<string action>**
+   * Multiple supported types.
+      * Plain text/emotes
+      * [`EXEC` and `CLI_EXEC`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/AdvancedActions/ExternalLibs.md)
+      * [`SCRIPT`](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/AdvancedActions/scripting.md)
 
 ## Variables, Flags & More.
 For the \<ACTION> segment of the command, you can specify variables and flags that will output a specific value.
