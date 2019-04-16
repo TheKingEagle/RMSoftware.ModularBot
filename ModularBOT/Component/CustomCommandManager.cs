@@ -452,7 +452,15 @@ namespace ModularBOT.Component
                 EmbedBuilder b = new EmbedBuilder();
                 b.WithTitle("This command does not exists!");
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
-                b.WithDescription($"Check your spelling. If this is a global command please use `{go.CommandPrefix}delgcmd` instead.");
+                if(gid >0)
+                {
+                    b.WithDescription($"Check your spelling. The guild command was not found.");
+                }
+                if (gid == 0)
+                {
+                    b.WithDescription($"Check your spelling. The global command was not found.");
+                }
+
                 b.WithColor(Color.Red);
                 b.WithFooter("ModularBOT • Core");
                 await message.Channel.SendMessageAsync("", false, b.Build());
