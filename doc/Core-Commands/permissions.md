@@ -35,7 +35,7 @@ Users who are not listed in the permission system will be granted normal access.
      >* Edit custom commands
 
 * `Administrator` - Elevated permissions set #2. 
-   * **NB:** This will grant users most of the same permissions as bot owner. (barring module commands marked with `RequireBotOwner`) Use with caution
+   * **WARNING:** This will grant users most of the same permissions as bot owner. (barring module commands marked with `RequireBotOwner`) Use with caution
 
    * >They can
      >* Manage commands (Inherited from `CommandManger`)
@@ -52,7 +52,7 @@ Adds a new user (or updates existing user) to the permission system file.
 **This command requires `AccessLevels.Administrator`**
 
 Usage: `!permissions set user <@User#1234> <AccessLevelString>` **OR** `!psu <@User#1234> <AccessLevelString>`
-* **NB:** You can either mention the user, or type out their `username#tag`.
+* You can either mention the user, or type out their `username#tag`.
 * `AccessLevelString` does not include `AccessLevels.` Please only use `Blacklisted`, `Normal`, `CommandManager`, or `Administrator`
 
 ## Core Command: `permissions set role`
