@@ -1,3 +1,4 @@
+> ***REMINDER:*** This documentation is being re-written for V2!
 # Advanced Features: `EXEC` and `CLI_EXEC` Actions
 #### Please note, for all these examples, we will use `!` as a prefix.
 Basic info: These sub commands allow you to execute a static C# method from a dll file.
