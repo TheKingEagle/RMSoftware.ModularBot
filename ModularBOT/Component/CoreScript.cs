@@ -124,7 +124,7 @@ namespace ModularBOT.Component
             }
             if (Processed.Contains("%version%"))
             {
-                Processed = Processed.Replace("%version%", Assembly.GetCallingAssembly().GetName().Version.ToString(4));
+                Processed = Processed.Replace("%version%", Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
             }
             //Check for use of Custom defined variables.
 
