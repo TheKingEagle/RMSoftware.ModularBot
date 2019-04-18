@@ -41,11 +41,48 @@ namespace ModularBOT.Component
             };
             builder.WithAuthor(Context.Client.CurrentUser);
             builder.Color = Color.Blue;
-            builder.Description = "A Multi-purpose, multi-module bot designed for discord. Tailor it for your specific server, create your own modules and plug-ins. Includes a core module for custom text-based commands & EXEC functionality";
+            builder.Description = "A Multi-purpose, multi-module bot designed for discord. Tailor it for your specific server, create your own modules and plug-ins. Includes a core module for custom text-based commands & other advanced functionality";
             builder.AddField("Copyright", $"Copyright © 2017-{DateTime.Now.Year} RMSoftware Development");
-            builder.AddField("Version", Assembly.GetExecutingAssembly().GetName().Version.ToString(3));
+            builder.AddField("Version", "v"+Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion.ToString());
             builder.WithFooter("ModularBOT • Created by TheKingEagle");
             await Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
+
+        [Command("changes"), Summary("Shows what changed in this version")]
+        public async Task CORE_ShowChanges()
+        {
+            EmbedBuilder eb = new EmbedBuilder();
+
+            eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
+            eb.WithDescription("NOTE: This application is not finished. Some features are not currently implemented.");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion.ToString()} ModularBOT Remastered™ - System Updates",
+                $"• MOVED to Discord.NET v2.0.1\r\n" +
+                $"• Supports more guilds! - Shard connections\r\n" +
+                $"• RE-WROTE ConsoleIO & REDESINED Console UI\r\n" +
+                $"• RE-WROTE Command manager to use a cleaner, more-modular format\r\n" +
+                $"• RE-WROTE Setup Wizard\r\n" +
+                $"• RE-WROTE Configuration system\r\n" +
+                $"• RE-WROTE Permission system\r\n" +
+                $"• ORGANIZED Source code looks pretty\r\n" +
+                $"• ADDED Update system\r\n" +
+                $"• REMOVED Json log mode\r\n" +
+                $"• Cleaned up install directory\r\n" +
+                $"• IMPROVED KillScreens & Stability" + "");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion.ToString()} ModularBOT Remastered™ - Command Updates",
+                $"• ADDED commands: `addgcmd`, `delgcmd`, `permissions set/del user/role`, `permissions get/list`, `setavatar`, `setusername`, `setnick`, `prefix`, and `variables get/set/list`\r\n" +
+                $"• CHANGED `status` command syntax\r\n" +
+                $"• CHANGED `addcmd` command syntax\r\n" +
+                $"• ADDED per-guild prefix support\r\n" +
+                $"• ADDED multi-character prefix support\r\n" +
+                $"• IMPROVED command list annotations\r\n" +
+                $"• ADDED per-guild module support");
+
+
+            eb.WithFooter("ModularBOT • CORE");
+            eb.Color = Color.DarkBlue;
+            RequestOptions op = new RequestOptions();
+            op.RetryMode = RetryMode.AlwaysRetry;
+            await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build(), op);
         }
 
         #region Command Management
@@ -517,11 +554,7 @@ namespace ModularBOT.Component
         [Command("prefix"), Remarks("AccessLevels.CommandManager"), Summary("Set the prefix for current guild, or if called from Direct message, set global prefix.")]
         public async Task BOT_SetPrefix(string newPrefix="")
         {
-            if(_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
-            {
-                await Context.Channel.SendMessageAsync("",false,_DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
-                return;
-            }
+            
             if(newPrefix == "")
             {
                 ulong pgid = 0;
@@ -546,7 +579,14 @@ namespace ModularBOT.Component
             {
                 gid = Context.Guild.Id;
             }
-
+            if(!string.IsNullOrWhiteSpace(newPrefix))
+            {
+                if (_DiscordNet.pmgr.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+                {
+                    await Context.Channel.SendMessageAsync("", false, _DiscordNet.pmgr.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                    return;
+                }
+            }
             if(gid == 0)
             {
                 _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix = newPrefix;
