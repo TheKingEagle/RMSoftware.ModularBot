@@ -649,7 +649,7 @@ namespace ModularBOT.Component
                     string varname = input.Split(' ')[0];
                     input = input.Remove(0, varname.Length);
                     input = input.Trim();
-                    discordNET.ccmgr.coreScript.Set(varname, input);
+                    discordNET.customCMDMgr.coreScript.Set(varname, input);
                 }
 
             }
