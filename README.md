@@ -1,6 +1,10 @@
 # RMSoftware.ModularBot
 A Multi-purpose, multi-module bot designed for discord customizable for your each of your servers.
 
+### Application Requirements
+* .NET Framework 4.6.1
+* Internet connection
+
 ### Features
 * Multiple core commands allowing you to manage the bot.
 * Custom command system, for text based commands
