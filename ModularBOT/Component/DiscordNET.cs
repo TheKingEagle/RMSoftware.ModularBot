@@ -26,9 +26,10 @@ namespace ModularBOT.Component
         //private int timeout = 0; //Operation timeout value
         //private bool timeoutStart = false; //Did the Operation timeout started?
         private List<SocketMessage> messageQueue = new List<SocketMessage>();
-        public CustomCommandManager ccmgr;
-        public PermissionManager pmgr;
+        public CustomCommandManager customCMDMgr;
+        public PermissionManager permissionManager;
 
+        bool initialized = false;
         public bool DisableMessages { get; set; } = false;
         public DiscordShardedClient Client { get; private set; }
         
@@ -36,7 +37,7 @@ namespace ModularBOT.Component
         {
             try
             {
-                
+                initialized = false;
                 string token = AppConfig.AuthToken;
 
                 services = new ServiceCollection();
@@ -62,11 +63,11 @@ namespace ModularBOT.Component
                 services.AddSingleton(Client);
                 
                 serviceProvider = services.BuildServiceProvider();
-                pmgr = new PermissionManager(serviceProvider);
-                services.AddSingleton(pmgr);
+                permissionManager = new PermissionManager(serviceProvider);
+                services.AddSingleton(permissionManager);
                 serviceProvider = services.BuildServiceProvider();
-                ccmgr = new CustomCommandManager(serviceProvider);
-                services.AddSingleton(ccmgr);
+                customCMDMgr = new CustomCommandManager(serviceProvider);
+                services.AddSingleton(customCMDMgr);
                 serviceProvider = services.BuildServiceProvider();
                 Client.Log += Client_Log;
                 
@@ -136,9 +137,12 @@ namespace ModularBOT.Component
         {
             Console.Title = "RMSoftware.ModularBOT -> " + guild.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"A guild just appeared. [{guild.Name}] "),ConsoleColor.Green);
-            if(guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel)!= null)
+            SocketTextChannel c = guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel);
+            if ( c != null)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "INIT", $"Requested initialization channel found. {guild.Name} has it!"));
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Requested initialization channel ({c.Name}) has been found. {guild.Name} currently has it!"));
+                StartTime = DateTime.Now;
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"System uptime set to {StartTime}"));
             }
             return Task.Delay(0);
         }
@@ -160,16 +164,16 @@ namespace ModularBOT.Component
                 SocketGuildChannel sc = arg.Channel as SocketGuildChannel;
                 gid = sc.Guild.Id;
             }
-            if (!string.IsNullOrWhiteSpace(ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
+            if (!string.IsNullOrWhiteSpace(customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
             {
-                prefix = ccmgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
+                prefix = customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
             }
             
             if (message.Content.StartsWith(prefix))
             {
-                if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
+                if (permissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
                 {
-                    if (pmgr.GetWarnOnBlacklist(arg.Author))
+                    if (permissionManager.GetWarnOnBlacklist(arg.Author))
                     {
                         EmbedBuilder donttalktome = new EmbedBuilder();
                         donttalktome.WithAuthor(Client.CurrentUser);
@@ -185,9 +189,9 @@ namespace ModularBOT.Component
             #region Deep-rooted prefix command
             if (message.Content.StartsWith("!prefix") || message.Content.StartsWith(".prefix") || message.Content.StartsWith("/prefix")) //This command will ALWAYS be a thing. it cannot be overridden.
             {
-                if (pmgr.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
+                if (permissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
                 {
-                    if (pmgr.GetWarnOnBlacklist(arg.Author))
+                    if (permissionManager.GetWarnOnBlacklist(arg.Author))
                     {
                         EmbedBuilder donttalktome = new EmbedBuilder();
                         donttalktome.WithAuthor(Client.CurrentUser);
@@ -236,7 +240,7 @@ namespace ModularBOT.Component
             
             string result = "";
            
-            await Task.Run(() =>  result = ccmgr.ProcessMessage(arg));
+            await Task.Run(() =>  result = customCMDMgr.ProcessMessage(arg));
             if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC" && result != null)
             {
                 await arg.Channel.SendMessageAsync(result);
@@ -285,13 +289,11 @@ namespace ModularBOT.Component
         {
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", $"Shard ready! {arg.Guilds.Count} guilds are fully loaded. "),ConsoleColor.Green);
-            if (arg.GetChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel) is SocketTextChannel ch)
+            if (arg.GetChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel) is SocketTextChannel ch && !initialized)
             {
-                StartTime = DateTime.Now;
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"Initialization Shard READY! Uptime set to {StartTime}"));
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", $"Executing OnStart.CORE"));
                 //TODO: Run OnStart.CORE.
-                
+                initialized = true;
                
             }
             return Task.Delay(0);
