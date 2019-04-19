@@ -370,12 +370,22 @@ namespace ModularBOT.Component
         /// <returns></returns>
         public async Task AddCmd(IUserMessage message, string name, string action, bool restricted, ulong gid = 0)
         {
-            //SocketGuildChannel c = message.Channel as SocketGuildChannel;
             
-            //if(c != null)
-            //{
-            //    gid = c.Guild.Id;
-            //}
+            string g_prefix = "";
+
+            if (message.Channel is SocketGuildChannel c)
+            {
+                GuildObject pgo = guilds.FirstOrDefault(a => a.ID == c.Guild.Id);
+
+                if (pgo != null)
+                {
+                    g_prefix = pgo.CommandPrefix;
+                }
+                else
+                {
+                    g_prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+                }
+            }
             GuildObject go = guilds.FirstOrDefault(x => x.ID == gid);
             if(go == null)
             {
@@ -396,7 +406,7 @@ namespace ModularBOT.Component
                 EmbedBuilder b = new EmbedBuilder();
                 b.WithTitle("This command already exists!");
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
-                b.WithDescription($"If you would like to edit this command, please use `{go.CommandPrefix}editcmd` instead.");
+                b.WithDescription($"If you would like to edit this command, please use `{g_prefix}editcmd` instead.");
                 b.WithColor(Color.Red);
                 b.WithFooter("ModularBOT • Core");
                 await message.Channel.SendMessageAsync("", false, b.Build());
@@ -415,7 +425,7 @@ namespace ModularBOT.Component
                 EmbedBuilder b = new EmbedBuilder();
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithTitle("Custom Command Added!");
-                b.AddField("Command", $"`{go.CommandPrefix}{name}`");
+                b.AddField("Command", $"`{g_prefix}{name}`");
                 b.AddField("Requires permission", restricted ? "`Yes`" : "`No`",true);
                 string guild = (gid > 0) ? serviceProvider.GetRequiredService<DiscordShardedClient>().Guilds.FirstOrDefault(g => g.Id == gid).Name : "All Guilds";
                 b.AddField("Availability", $"`{guild}`",true);
@@ -432,6 +442,21 @@ namespace ModularBOT.Component
 
         public async Task DelCmd(IUserMessage message, string name, ulong gid=0)
         {
+            string g_prefix = "";
+
+            if (message.Channel is SocketGuildChannel c)
+            {
+                GuildObject pgo = guilds.FirstOrDefault(a => a.ID == c.Guild.Id);
+
+                if (pgo != null)
+                {
+                    g_prefix = pgo.CommandPrefix;
+                }
+                else
+                {
+                    g_prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+                }
+            }
             GuildObject go = guilds.FirstOrDefault(x => x.ID == gid);
             if (go == null)
             {
@@ -439,7 +464,7 @@ namespace ModularBOT.Component
                 b.WithTitle("No Commands defined!");
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithDescription("This guild does not have a valid configuration! That means there are no commands to delete. "+
-                    $"Please make sure you are calling the command from the correct context. If you are trying to delete a global command, please call `delgcmd` instead.");
+                    $"Please make sure you are calling the command from the correct context. If you are trying to delete a global command, please call `{g_prefix}delgcmd` instead.");
                 b.WithColor(Color.Red);
                 b.WithFooter("ModularBOT • Core");
                 await message.Channel.SendMessageAsync("", false, b.Build());
@@ -474,13 +499,106 @@ namespace ModularBOT.Component
                 EmbedBuilder b = new EmbedBuilder();
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithTitle("Custom Command Removed!");
-                b.AddField("Command", $"`{go.CommandPrefix}{name}`");
-                b.AddField("Availability", $"`Nowhere!`", true);
+                b.AddField("Command", $"`{g_prefix}{name}`");
+                b.AddField("Availability", $"`Command deleted...`", true);
                 b.WithColor(Color.Green);
                 b.WithFooter("ModularBOT • Core");
                 await message.Channel.SendMessageAsync("", false, b.Build());
                 return;
             }
+        }
+
+        public Embed ViewCmd(ICommandContext Context, string Command)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithAuthor(Context.Client.CurrentUser);
+            builder.WithTitle("Command Info");
+            ulong gid = Context.Guild?.Id ?? 0;
+
+            GuildObject pgo = guilds.FirstOrDefault(a => a.ID == gid);
+            GuildObject ggo = guilds.FirstOrDefault(a => a.ID == 0);
+            string g_prefix = pgo?.CommandPrefix ?? serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            GuildCommand GCMD = ggo?.GuildCommands?.FirstOrDefault(g => g.Name.ToLower() == Command.ToLower()) ?? pgo?.GuildCommands?.FirstOrDefault(p=>p.Name.ToLower() == Command.ToLower());//for checking if global is null.
+            var Glob = ggo?.GuildCommands?.FirstOrDefault(g => g.Name.ToLower() == Command.ToLower());
+            bool isglobal = Glob != null;
+            if (GCMD == null)
+            {
+                
+                var c = serviceProvider.GetRequiredService<CommandService>().Commands.FirstOrDefault(x => x.Name.ToLower() == Command.ToLower());
+                if (c == null)
+                {
+                    builder.WithColor(Color.Red);
+                    builder.WithDescription("This command does not exist.");
+                    builder.AddField("More info:", $"The command you requested was not found.\r\nPlease note: if a new module was just added, the bot will need to restart.\r\n\r\nTo check for a list of commands run `{g_prefix}listcmd`");
+                    builder.WithFooter("ModularBOT • CORE");
+                    return builder.Build();
+                }
+
+                else
+                {
+
+                    builder.WithColor(Color.Blue);
+                    builder.WithDescription($"This is the basic breakdown of the command: `{g_prefix}{Command}`.");
+                    builder.AddField("Command Summary",$" `{c.Summary ?? "No command summary provided."}`");
+                    string param = $"{g_prefix}{c.Name} ";
+                    foreach (var item in c.Parameters)
+                    {
+                        if (item.IsOptional)
+                        {
+                            param += $"[{item.Name}] ";
+                        }
+                        else
+                        {
+                            param += $"<{item.Name}> ";
+                        }
+                    }
+                    if (string.IsNullOrWhiteSpace(param)) { param = "`No parameters.`"; }
+                    builder.AddField("Command Usage", $"`{param.Trim()}`", false);
+
+                    builder.AddField("From Module", c.Module.Name ?? "`Unknown module.`");
+                    builder.AddField("Module Summary", c.Module.Summary ?? "`No summary provided.`");
+                    builder.AddField("Remarks", c.Remarks ?? "`Not specified.`");
+
+                    string preconds = "";
+                    foreach (var item in c.Preconditions)
+                    {
+                        preconds += "• " + item.ToString().Substring(item.ToString().LastIndexOf('.') + 1) + "\r\n";
+                    }
+                    if (string.IsNullOrWhiteSpace(preconds)) { preconds = "`No Preconditions.`"; }
+                    builder.AddField("Preconditions", preconds, true);
+                    string aliases = "";
+                    foreach (var item in c.Aliases)
+                    {
+                        aliases += "• " + g_prefix + item.ToString() + "\r\n";
+                    }
+                    if (string.IsNullOrWhiteSpace(aliases)) { aliases = "`No aliases.`"; }
+                    builder.AddField("Command Aliases", aliases, true);
+                    return builder.Build();
+                }
+
+            }
+           
+            builder.WithColor(Color.Blue);
+            builder.WithDescription($"This is the basic breakdown of the command: `{g_prefix}{GCMD.Name}`.");
+
+
+            bool hasCounter = GCMD.Counter.HasValue;
+            builder.AddField("Requires Access level: ", GCMD.RequirePermission ? "`AccessLevels.CommandManager`" : "`AccessLevels.Normal`");
+            builder.AddField("Is Global Command:", isglobal ? "Yes": "No");
+            
+
+            builder.AddField("Has counter: ", hasCounter);
+            if (hasCounter)
+            {
+                builder.AddField("usage count: ", GCMD.Counter);
+            }
+            string action = "";
+            if(GCMD.Action.ToUpper().StartsWith("SCRIPT ") || GCMD.Action.Contains('`')) { action = GCMD.Action; }
+            else { action = $"```\r\n{GCMD.Action}\r\n```"; }
+            
+            builder.AddField("Response/Action: ",action);
+            return builder.Build();
+            
         }
         #endregion
 
