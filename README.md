@@ -1,5 +1,5 @@
 # RMSoftware.ModularBot
-A Multi-purpose, multi-module bot designed for discord customizable for your each of your servers.
+A Multi-purpose, multi-module bot designed for discord customizable for your each of your guilds (discord servers)
 
 ### Application Requirements
 * .NET Framework 4.6.1
