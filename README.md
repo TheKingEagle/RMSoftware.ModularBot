@@ -8,10 +8,10 @@ A Multi-purpose, multi-module bot designed for discord customizable for your eac
 ### Features
 * Multiple core commands allowing you to manage the bot.
 * Custom command system, for text based commands
-* Expandability - Allowing you to install c# based command modules
+* Expandability - Allowing you to install .NET compatible command modules.
 * Advanced command creation
-   * CoreScript, a Batch based script syntax allowing you to combine multiple functions
-   * EXEC: A Static C# method execution engine, allowing you to perform advanced functionality
+   * CoreScript, a scripting language closely resembling DOS/Batch. This allows you to combine multiple functions. See [Scripting](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/AdvancedActions/scripting.md) for details.
+   * EXEC: Perform a static function from a compatible .NET library. See [ExternalLibs](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/AdvancedActions/ExternalLibs.md) for details.
 * Per-guild prefix configuration
 * Per-guild command support
 * Easy to use permission system for allowing other users access to managing bot or commands.
