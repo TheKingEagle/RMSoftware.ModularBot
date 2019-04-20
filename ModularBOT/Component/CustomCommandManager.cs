@@ -81,7 +81,6 @@ namespace ModularBOT.Component
         }
 
         #region Processing
-
         public string ProcessMessage(IMessage socketmsg)
         {
             ulong gid = 0;//global by default
@@ -106,12 +105,6 @@ namespace ModularBOT.Component
             return "";
         }
 
-        /// <summary>
-        /// Process command string.
-        /// </summary>
-        /// <param name="cmdline">cmd string</param>
-        /// <param name="guildID">context guild. ZERO for global/DM</param>
-        /// <returns>returns action if found, otherwise returns empty string.</returns>
         private string ProcessCmdLine(string cmdline, ref IMessage msg)
         {
             GuildObject gobj = null;
@@ -354,20 +347,10 @@ namespace ModularBOT.Component
             #endregion
             return response;
         }
+        
         #endregion
 
         #region Command Management
-        //TODO: Add/delete commands
-
-        /// <summary>
-        /// Add command to DB. by default to global.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="name"></param>
-        /// <param name="action"></param>
-        /// <param name="restricted"></param>
-        /// <param name="gid"></param>
-        /// <returns></returns>
         public async Task AddCmd(IUserMessage message, string name, string action, bool restricted, ulong gid = 0)
         {
             
@@ -539,7 +522,7 @@ namespace ModularBOT.Component
 
                     builder.WithColor(Color.Blue);
                     builder.WithDescription($"This is the basic breakdown of the command: `{g_prefix}{Command}`.");
-                    builder.AddField("Command Summary",$" `{c.Summary ?? "No command summary provided."}`");
+                    builder.AddField("Summary", $" `{c.Summary ?? "No command summary provided."}`", true);
                     string param = $"{g_prefix}{c.Name} ";
                     foreach (var item in c.Parameters)
                     {
@@ -553,11 +536,17 @@ namespace ModularBOT.Component
                         }
                     }
                     if (string.IsNullOrWhiteSpace(param)) { param = "`No parameters.`"; }
-                    builder.AddField("Command Usage", $"`{param.Trim()}`", false);
-
-                    builder.AddField("From Module", c.Module.Name ?? "`Unknown module.`");
-                    builder.AddField("Module Summary", c.Module.Summary ?? "`No summary provided.`");
-                    builder.AddField("Remarks", c.Remarks ?? "`Not specified.`");
+                    builder.AddField("Usage", $"`{param.Trim()}`", true);
+                    string aliases = "";
+                    foreach (var item in c.Aliases)
+                    {
+                        aliases += "• " + g_prefix + item.ToString() + "\r\n";
+                    }
+                    if (string.IsNullOrWhiteSpace(aliases)) { aliases = "`No aliases.`"; }
+                    builder.AddField("Aliases", aliases, true);
+                    builder.AddField("Remarks", $"`{c.Remarks ?? "Not specified"}`", true);
+                    builder.AddField("From Module", $"`{c.Module.Name ?? "Unknown module"}`");
+                    builder.AddField("Module Summary", c.Module.Summary ?? "`No summary provided.`",true);
 
                     string preconds = "";
                     foreach (var item in c.Preconditions)
@@ -566,13 +555,9 @@ namespace ModularBOT.Component
                     }
                     if (string.IsNullOrWhiteSpace(preconds)) { preconds = "`No Preconditions.`"; }
                     builder.AddField("Preconditions", preconds, true);
-                    string aliases = "";
-                    foreach (var item in c.Aliases)
-                    {
-                        aliases += "• " + g_prefix + item.ToString() + "\r\n";
-                    }
-                    if (string.IsNullOrWhiteSpace(aliases)) { aliases = "`No aliases.`"; }
-                    builder.AddField("Command Aliases", aliases, true);
+                    
+                    
+                    
                     return builder.Build();
                 }
 
@@ -600,6 +585,48 @@ namespace ModularBOT.Component
             return builder.Build();
             
         }
+
+        public async Task EditCMD(ICommandContext context, string cmdName, bool? asRestricted, string newAction="(unchanged)", ulong gid=0)
+        {
+            GuildObject ggo = guilds.FirstOrDefault(x => x.ID == 0);//global guild object.
+            GuildObject cgo = guilds.FirstOrDefault(x => x.ID == gid);//context guild object.
+            //first check for global.
+            GuildCommand gco = ggo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;
+            if(gco != null)
+            {
+                if(asRestricted.HasValue) { gco.RequirePermission = asRestricted.Value; }
+                if(newAction != "(unchanged)") { gco.Action = newAction; }
+                ggo.SaveJson();
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Global command modified!"));
+                await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, newAction));
+                return;
+            }
+            else
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "WARNING: global command not found. Trying for context guild."));
+                GuildCommand cco = cgo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;
+                if(cco != null)
+                {
+                    if (asRestricted.HasValue) { cco.RequirePermission = asRestricted.Value; }
+                    if (newAction != "(unchanged)") { cco.Action = newAction; }
+                    ggo.SaveJson();
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Context-guild command modified!"));
+                    await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, newAction));
+                    return;
+                }
+                else
+                {
+                    EmbedBuilder b = new EmbedBuilder();
+                    b.WithAuthor(context.Client.CurrentUser);
+                    b.WithColor(Color.DarkRed);
+                    b.WithDescription("The command did not exist. You can only edit custom commands.");
+                    b.WithTitle("Command Not Found");
+                    await context.Channel.SendMessageAsync("", false, b.Build());
+                    return;
+                }
+            }
+        }
+        
         #endregion
 
         #region GuildObject manipulation
@@ -611,6 +638,37 @@ namespace ModularBOT.Component
             }
             guilds.Add(obj);
             obj.SaveJson();
+        }
+        #endregion
+
+        #region Reusable embeds
+        Embed GetCMDModified(ICommandContext Context,string cmdName, bool? asRestricted, string newAction="(unchanged)")
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithAuthor(Context.Client.CurrentUser);
+            b.WithTitle("Command Modified");
+            b.WithFooter("ModularBOT • CORE");
+            if (!asRestricted.HasValue && newAction == "(unchanged)")
+            {
+                b.WithTitle("Nothing Changed!");
+                b.WithDescription("You didn't make any changes to the command.");
+                b.WithColor(Color.Red);
+                return b.Build();
+            }
+            b.WithDescription("Congrats! The command has been edited.");
+            b.WithColor(Color.Green);
+            string displayAction = "";
+            if(newAction.Contains('`'))
+            {
+                displayAction = newAction;
+            }
+            else { displayAction = $"`{newAction}`"; }
+            b.AddField("New Action", displayAction);
+            if(asRestricted.HasValue)
+            {
+                b.AddField("Requires Permission", asRestricted.Value ? "`Yes`" : "`No`");
+            }
+            return b.Build();
         }
         #endregion
     }
