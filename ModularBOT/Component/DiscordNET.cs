@@ -54,7 +54,7 @@ namespace ModularBOT.Component
                 {
                     MessageCacheSize = 20,
                     AlwaysDownloadUsers = true,
-                    LogLevel = LogSeverity.Verbose,
+                    LogLevel = AppConfig.DiscordEventLogLevel,
 
                     // TODO: Figure out a way to automatically set this later.
                     TotalShards = AppConfig.ShardCount
