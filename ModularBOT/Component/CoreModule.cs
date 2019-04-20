@@ -253,6 +253,18 @@ namespace ModularBOT.Component
             }
         }
 
+        [Command("editcmd"), Summary("Edit a command"), Remarks("AccessLevels.CommandManager")]
+        public async Task CMD_EditCommand(string cmdName, bool? requirePermission=null, [Remainder]string newAction = "(unchanged)")
+        {
+            if (_DiscordNet.permissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.permissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                return;
+            }
+            await _DiscordNet.customCMDMgr.EditCMD(Context, cmdName, requirePermission, newAction, Context.Guild?.Id ?? 0);
+
+        }
+
         #endregion
 
         #region Permission Management
