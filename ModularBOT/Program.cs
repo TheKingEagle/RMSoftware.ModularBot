@@ -60,15 +60,22 @@ namespace ModularBOT
                 {
                     flattened += item + " ";
                 }
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and restarting program in 3..."), ConsoleColor.Black, false);
+                Console.CursorTop = consoleIO.PrvTop;
+                Thread.Sleep(1000);
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and restarting program in 2..."), ConsoleColor.Black, false);
+                Console.CursorTop = consoleIO.PrvTop;
+                Thread.Sleep(1000);
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and restarting program in 1..."), ConsoleColor.Black, false);
+                Console.CursorTop = consoleIO.PrvTop;
+                Thread.Sleep(1000);
                 p.StartInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, flattened);
                 p.Start();
                 return 0x5BB;//code for RESTART NEEDED
             }
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 3..."), ConsoleColor.Black, false);
             Console.CursorTop = consoleIO.PrvTop;
-
             Thread.Sleep(1000);
-
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 2..."), ConsoleColor.Black, false);
             Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
