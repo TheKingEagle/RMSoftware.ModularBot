@@ -36,6 +36,8 @@ namespace ModularBOT
 
         public bool? CheckForUpdates { get; set; }
 
+        public LogSeverity DiscordEventLogLevel { get; set; }
+
 
         public Configuration()
         {
@@ -51,6 +53,7 @@ namespace ModularBOT
             DebugWizard = false;
             ReadyText = "Ready!";
             ShardCount = 1;                        //TODO: Figure out proper implementation to automatically set this as bot is added to more guilds.
+            DiscordEventLogLevel = LogSeverity.Verbose;
         }
 
         public void SaveConfig(string jsonFilename)
