@@ -622,7 +622,7 @@ namespace ModularBOT.Component
                     discordNET.Client.SetGameAsync(status);
                     //_client.SetGameAsync(status);
                 }
-                if (input.StartsWith("setgch"))
+                if (input.ToLower().StartsWith("setgch"))
                 {
                     input = input.Remove(0, 6).Trim();
                     if (!ulong.TryParse(input, out chID))
@@ -633,7 +633,7 @@ namespace ModularBOT.Component
                     WriteEntry(new LogMessage(LogSeverity.Error, "Console", "Set guild channel id."));
 
                 }
-                if (input.StartsWith("conmsg"))
+                if (input.ToLower().StartsWith("conmsg"))
                 {
                     input = input.Remove(0, 6).Trim();
                     if (!(discordNET.Client.GetChannel(chID) is SocketTextChannel Channel))
@@ -643,13 +643,52 @@ namespace ModularBOT.Component
                     }
                     Channel.SendMessageAsync(input);
                 }
-                if (input.StartsWith("setvar"))
+                if (input.ToLower().StartsWith("setvar"))
                 {
                     input = input.Remove(0, 6).Trim();
                     string varname = input.Split(' ')[0];
                     input = input.Remove(0, varname.Length);
                     input = input.Trim();
                     discordNET.customCMDMgr.coreScript.Set(varname, input);
+                }
+
+                if (input.ToLower().StartsWith("config.loglevel"))
+                {
+                    if(input.Split(' ').Length >2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        return;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        return;
+                    }
+                    input = input.Remove(0, 16).Trim();
+                    if (Enum.TryParse(input,true, out LogSeverity result))
+                    {
+                        Program.configMGR.CurrentConfig.DiscordEventLogLevel = result;
+                        Program.configMGR.Save();
+                        while (true)
+                        {
+                            WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Saved logging level. Changes will take place when bot is restarted. Do you want to restart now? [Y/N]"));
+                            ConsoleKeyInfo k = Console.ReadKey();
+                            if(k.Key == ConsoleKey.Y)
+                            {
+                                discordNET.Stop(ref ShutdownCalled);
+                                RestartRequested = true;
+                                return;
+                            }
+                            if (k.Key == ConsoleKey.N)
+                            {
+                                break;
+                            }
+                        }
+                        
+                    }
+                        
+                    else
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", $"Invalid parameter. Try a log severity level: {string.Join(", ", Enum.GetNames(typeof(LogSeverity)))}"));
                 }
 
             }
