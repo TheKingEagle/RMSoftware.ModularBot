@@ -48,10 +48,11 @@ namespace ModularBOT.Component
                                 serviceCollection = serviceCollection.AddSingleton(asmb.GetType(propertyItem.ServiceClass));
                                 serviceProvider = serviceCollection.BuildServiceProvider();
                             }
+
                             if(string.IsNullOrWhiteSpace(propertyItem.ModuleName))
                             {
                                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", $"Type name is required! Unable to add module from {asmb.GetName().Name}"));
-
+                                continue;
                             }
                             cmdsvr.AddModuleAsync(asmb.GetType(propertyItem.ModuleName), serviceProvider);
                             _modules.Add(propertyItem);
@@ -59,7 +60,8 @@ namespace ModularBOT.Component
                     }
                     else
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", $"CRITICAL: No MPI found for the module {asmb.GetName().Name}"));
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", $"CRITICAL: No MPI found for the module. Cannot load module {asmb.GetName().Name}"));
+                        continue;
                     }
                     
                 }
