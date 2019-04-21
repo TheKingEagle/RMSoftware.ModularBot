@@ -197,6 +197,7 @@
     <Compile Include="Component\CommandList.cs" />
     <Compile Include="Component\ConsoleIO.cs" />
     <Compile Include="Component\CoreModule.cs" />
+    <Compile Include="Component\ModuleProperties.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
     <Compile Include="Component\PseudoMessage.cs" />
   </ItemGroup>
