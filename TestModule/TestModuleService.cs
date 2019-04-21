@@ -15,14 +15,26 @@ namespace TestModule
         public DiscordShardedClient _client { get; set; }
         public ConsoleIO _writer { get; set; }
         public TestModuleService _jservice { get; set; }
-        public TestModule(DiscordShardedClient discord, TestModuleService joinservice, ConsoleIO writer)
+
+        public PermissionManager PermissionsManager { get; set; }
+        public TestModule(DiscordShardedClient discord, TestModuleService joinservice, ConsoleIO writer, PermissionManager manager)
         {
             _client = discord;
             _jservice = joinservice;
             _writer = writer;
+            PermissionsManager = manager;
             _writer.WriteEntry(new LogMessage(LogSeverity.Critical, "TestMOD", "Constructor called!!!!!!!!!"));
         }
-
+        [Command("tpmgr"),Remarks("AccessLevels.Administrator")]
+        public async Task Showtest()
+        {
+            if(PermissionsManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await ReplyAsync("", false, PermissionsManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            await ReplyAsync("You have the correct access level!");
+        }
         [Command("Kick", RunMode = RunMode.Async), RequireUserPermission(GuildPermission.KickMembers), RequireBotPermission(GuildPermission.KickMembers), RequireContext(ContextType.Guild)]
         public async Task Kick(IGuildUser user, [Remainder]string reason = "being an ass")
         {
