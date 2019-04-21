@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.489
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModularBOT", "ModularBOT\ModularBOT.csproj", "{291BABD5-417C-43B7-B67F-39FC10B7249D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestModule", "TestModule\TestModule.csproj", "{059337A8-C075-43D0-BB66-659729E9A50D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{291BABD5-417C-43B7-B67F-39FC10B7249D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{291BABD5-417C-43B7-B67F-39FC10B7249D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{291BABD5-417C-43B7-B67F-39FC10B7249D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{059337A8-C075-43D0-BB66-659729E9A50D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{059337A8-C075-43D0-BB66-659729E9A50D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{059337A8-C075-43D0-BB66-659729E9A50D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{059337A8-C075-43D0-BB66-659729E9A50D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7666F7D2-6396-4EA6-A9BE-BD6F919EE1AA}
 	EndGlobalSection
 EndGlobal
