@@ -106,13 +106,13 @@ namespace TestModule
             };
             if (!string.IsNullOrWhiteSpace(WelcomeMessage))
             {
-                LogMessage ERR = new LogMessage(LogSeverity.Info, "StaffCORE", "Initial Welcome Message: " + WelcomeMessage);
+                LogMessage ERR = new LogMessage(LogSeverity.Info, "Greetings", "Initial Welcome Message: " + WelcomeMessage);
                 _writer.WriteEntry(ERR);
                 item.WelcomeMessage = WelcomeMessage;
             }
             else
             {
-                LogMessage ERR = new LogMessage(LogSeverity.Info, "StaffCORE", "Using Default Welcome Message.");
+                LogMessage ERR = new LogMessage(LogSeverity.Info, "Greetings", "Using Default Welcome Message.");
                 _writer.WriteEntry(ERR);
                 item.WelcomeMessage = "Please Enjoy Your Stay.";
             }
@@ -126,7 +126,7 @@ namespace TestModule
     {
         DiscordShardedClient ShardedClient { get; set; }
         ConsoleIO Writer { get; set; }
-
+        
         [DontInject]
         public Dictionary<ulong, GuildQueryItem> BoundItems { get; set; }//This contains <guildID,role> value pairs to check user's join event.
 
@@ -135,7 +135,8 @@ namespace TestModule
         {
             ShardedClient = _client;
             Writer = _consoleIO;
-
+            LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "Greetings", "TestModuleService constructor called.");
+            Writer.WriteEntry(constructorLOG);
             if (ShardedClient == null)
             {
                 LogMessage ERR = new LogMessage(LogSeverity.Critical, "Greetings", "Client is null! You should be ashamed.");
@@ -147,6 +148,8 @@ namespace TestModule
             ShardedClient.UserJoined += ShardedClient_UserJoined;
             LogMessage Log = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
             _consoleIO.WriteEntry(Log);
+
+
         }
 
         private async Task ShardedClient_UserJoined(SocketGuildUser arg)
