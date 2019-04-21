@@ -54,7 +54,7 @@ namespace ModularBOT.Component
                                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", $"Type name is required! Unable to add module from {asmb.GetName().Name}"));
                                 continue;
                             }
-                            cmdsvr.AddModuleAsync(asmb.GetType(propertyItem.ModuleName), serviceProvider);
+                            cmdsvr.AddModuleAsync(asmb?.GetType(propertyItem.ModuleName), serviceProvider);
                             _modules.Add(propertyItem);
                         }
                     }
@@ -67,6 +67,7 @@ namespace ModularBOT.Component
                 }
                 catch (Exception ex)
                 {
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", $"A Critical error occurred. could not load module {Path.GetFileName(item)}"));
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", ex.Message, ex));
 
                     using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
