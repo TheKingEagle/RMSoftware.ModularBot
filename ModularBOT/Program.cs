@@ -38,14 +38,14 @@ namespace ModularBOT
             #region DEBUG
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Warning:", "This program may not be in a finished state!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE editcmd & getcmd"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE Task manager"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "TODO:", "WRITE External Module Loader"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Warning:", "This program may not be in a finished state!"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE editcmd & getcmd"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE Task manager"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE External Module Loader"));
 #endif
             #endregion
 
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "Main", "Application started"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Main", "Application started"));
 
             Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested));//Discord.NET thread
             Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord));//Console reader thread;
@@ -60,26 +60,26 @@ namespace ModularBOT
                 {
                     flattened += item + " ";
                 }
-                consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and restarting program in 3..."), ConsoleColor.Black, false);
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and restarting program in 3..."), ConsoleColor.Black, false);
                 Console.CursorTop = consoleIO.PrvTop;
                 Thread.Sleep(1000);
-                consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and restarting program in 2..."), ConsoleColor.Black, false);
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and restarting program in 2..."), ConsoleColor.Black, false);
                 Console.CursorTop = consoleIO.PrvTop;
                 Thread.Sleep(1000);
-                consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and restarting program in 1..."), ConsoleColor.Black, false);
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and restarting program in 1..."), ConsoleColor.Black, false);
                 Console.CursorTop = consoleIO.PrvTop;
                 Thread.Sleep(1000);
                 p.StartInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName, flattened);
                 p.Start();
                 return 0x5BB;//code for RESTART NEEDED
             }
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 3..."), ConsoleColor.Black, false);
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 3..."), ConsoleColor.Black, false);
             Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 2..."), ConsoleColor.Black, false);
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 2..."), ConsoleColor.Black, false);
             Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Session", "Ending session. and closing program in 1..."), ConsoleColor.Black, false);
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 1..."), ConsoleColor.Black, false);
             Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
             return 0x000;//ok;
