@@ -144,7 +144,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>; Move module &amp; property item to startup project
-MOVE "$(TargetPath) " "$(SolutionDir)\ModularBOT\Bin\Debug\modules\$(TargetFileName)"
-MOVE "$(TargetDir)\$(TargetName).mpi" "$(SolutionDir)\ModularBOT\Bin\Debug\Modules\$(TargetName).mpi"</PostBuildEvent>
+MOVE "$(TargetPath) " "$(SolutionDir)\ModularBOT\$(OutDir)modules\$(TargetFileName)"
+MOVE "$(TargetDir)\$(TargetName).mpi" "$(SolutionDir)\ModularBOT\$(OutDir)modules\$(TargetName).mpi"</PostBuildEvent>
   </PropertyGroup>
 </Project>
