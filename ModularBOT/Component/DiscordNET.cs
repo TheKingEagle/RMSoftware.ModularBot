@@ -28,6 +28,7 @@ namespace ModularBOT.Component
         private List<SocketMessage> messageQueue = new List<SocketMessage>();
         public CustomCommandManager customCMDMgr;
         public PermissionManager permissionManager;
+        public ModuleManager moduleMgr;
 
         bool initialized = false;
         public bool DisableMessages { get; set; } = false;
@@ -41,9 +42,6 @@ namespace ModularBOT.Component
                 string token = AppConfig.AuthToken;
 
                 services = new ServiceCollection();
-                //+-+-+-+-BEGIN LOAD MODULE SERVICES-+-+-+-+
-                //TODO: LOAD MODULE SERVICES
-                //+-+-+-+-CEASE LOAD MODULE SERVICES-+-+-+-+
                 services.AddSingleton(AppConfig);
                 services.AddSingleton(consoleIO);
                 services.AddSingleton(cmdsvr);
@@ -78,10 +76,7 @@ namespace ModularBOT.Component
                 Client.ShardDisconnected += Client_ShardDisconnected;
                 Client.GuildAvailable += Client_GuildAvailable;
                 Client.GuildUnavailable += Client_GuildUnavailable;
-
-
-                //await LoadModules();//ADD CORE AND EXTERNAL MODULES
-
+                moduleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, ref AppConfig);
                 //TODO: Load External modules
                 cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
