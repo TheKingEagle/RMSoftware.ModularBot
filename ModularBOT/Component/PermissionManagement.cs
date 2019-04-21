@@ -36,12 +36,12 @@ namespace ModularBOT.Component
 
           
             //load json.
-            if (File.Exists("Permissions.json"))
+            if (File.Exists("Permissions.cnf"))
             {
-                using (StreamReader sr = new StreamReader("Permissions.json"))
+                using (StreamReader sr = new StreamReader("Permissions.cnf"))
                 {
                     string json = sr.ReadToEnd();
-                    _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Permissions", "JSON file found! Attempting to populate RegisteredEntities"));
+                    _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Permissions", "permissions.cnf file found! Attempting to populate RegisteredEntities"));
                     _entities = JsonConvert.DeserializeObject<List<RegisteredEntity>>(json);
                 }
             }
@@ -292,9 +292,9 @@ namespace ModularBOT.Component
         {
             try
             {
-                using (StreamWriter sw = new StreamWriter("Permissions.json"))
+                using (StreamWriter sw = new StreamWriter("Permissions.cnf"))
                 {
-                    _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Saving entities. Permissions.json"));
+                    _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Saving entities. Permissions.cnf"));
                     sw.WriteLine(JsonConvert.SerializeObject(RegisteredEntities,Formatting.Indented));
                     sw.Flush();
                     sw.Close();
