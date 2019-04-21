@@ -235,9 +235,12 @@ namespace ModularBOT.Component
         /// </summary>
         /// <param name="message">The Discord.NET Log message</param>
         /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
-        public void WriteEntry(LogMessage message, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true)
+        public void WriteEntry(LogMessage message, ConsoleColor? Entrycolor = null, bool showCursor = true)
         {
-
+            if(message.Severity > Program.configMGR.CurrentConfig.DiscordEventLogLevel)
+            {
+                return;
+            }
             if (Busy)
             {
                 SpinWait.SpinUntil(() => !Busy);//This will help prevent the console from being sent into a mess of garbled words.
@@ -262,7 +265,7 @@ namespace ModularBOT.Component
                 ConsoleColor bg = ConsoleColor.Black;
                 ConsoleColor fg = ConsoleColor.Black;
                 #region setup entry color.
-                if (Entrycolor == ConsoleColor.Black)
+                if (!Entrycolor.HasValue)
                 {
                     switch (message.Severity)
                     {
@@ -296,8 +299,8 @@ namespace ModularBOT.Component
                 }
                 else
                 {
-                    bg = Entrycolor;
-                    fg = Entrycolor;
+                    bg = Entrycolor.Value;
+                    fg = Entrycolor.Value;
                 }
                 #endregion
 
@@ -568,7 +571,7 @@ namespace ModularBOT.Component
             {
                 string input = Console.ReadLine();
                 Console.CursorTop = CurTop;
-                WriteEntry(new LogMessage(LogSeverity.Info, "Console", input));
+                WriteEntry(new LogMessage(LogSeverity.Critical, "Console", input),ConsoleColor.Black);//Bypass filter (Critical), show as non-error.
                 if (input.ToLower() == "stopbot")
                 {
                     WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "Console session called STOPBOT."));
