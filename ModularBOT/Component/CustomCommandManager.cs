@@ -169,7 +169,7 @@ namespace ModularBOT.Component
                         }
                         else
                         {
-                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Conext guild didn't know what that command was!")); return null;
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Conext guild didn't know what that custom command was!")); return null;
                         }
                     }
                     else
