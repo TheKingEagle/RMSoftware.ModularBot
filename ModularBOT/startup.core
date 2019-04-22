@@ -1,0 +1,3 @@
+﻿CMD About
+WAIT 1000
+CMD prefix
