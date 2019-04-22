@@ -86,24 +86,24 @@ namespace ModularBOT.Component
 
         public string ProcessVariableString(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message)
         {
-            if(cmd == null)
-            {
-                return "";
-            }
+            
             string Processed = response;
-            if (Processed.Contains("%counter%"))
+            if(cmd != null)
             {
-                if (cmd.Counter.HasValue)
+                if (Processed.Contains("%counter%"))
                 {
-                    cmd.Counter++;
-                    gobj.SaveJson();
-                    Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
-                }
-                else
-                {
-                    cmd.Counter = 1;
-                    gobj.SaveJson();
-                    Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
+                    if (cmd.Counter.HasValue)
+                    {
+                        cmd.Counter++;
+                        gobj.SaveJson();
+                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
+                    }
+                    else
+                    {
+                        cmd.Counter = 1;
+                        gobj.SaveJson();
+                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
+                    }
                 }
             }
             if (Processed.Contains("%self%"))
@@ -714,7 +714,7 @@ namespace ModularBOT.Component
         //    throw new NotImplementedException();
         //}
 
-        public async Task EvaluateScriptFile(GuildObject gobj, string filename, GuildCommand cmd, IDiscordClient client, IMessage message)
+        public async Task EvaluateScriptFile(GuildObject gobj, string filename, IDiscordClient client, IMessage message, GuildCommand cmd = null)
         {
             int LineInScript = 1;
             bool error = false;
@@ -757,30 +757,30 @@ namespace ModularBOT.Component
 
                                     //Get the line removing echo.
                                     output = line.Remove(0, 5);
-                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
+                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, null, client, message)))
                                     {
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
                                         break;
                                     }
-                                    await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+                                    await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, null, client, message), false);
 
                                     break;
                                 case ("ECHOTTS"):
                                     //Get the line removing echo.
                                     output = line.Remove(0, 8);
-                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
+                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, null, client, message)))
                                     {
                                         error = true;
                                         errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
                                         break;
                                     }
-                                    await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), true);
+                                    await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, null, client, message), true);
 
                                     break;
                                 case ("SETVAR"):
@@ -789,7 +789,7 @@ namespace ModularBOT.Component
                                     break;
                                 case ("CMD"):
                                     //SocketMessage m = message as SocketMessage;
-                                    CaseExecCmd(ProcessVariableString(gobj, line, cmd, client, message), ccmgr, gobj, ref error, ref errorEmbed, ref LineInScript, ref client, ref cmd, ref message);
+                                    CaseExecCmd(ProcessVariableString(gobj, line, null, client, message), ccmgr, gobj, ref error, ref errorEmbed, ref LineInScript, ref client, ref cmd, ref message);
 
                                     break;
                                 case ("BOTSTATUS"):
@@ -833,7 +833,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected format ```BOTGOLIVE <ChannelName> <status text>.```");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
+                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
                                         break;
                                     }
                                     string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
@@ -848,7 +848,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
+                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
                                         break;
                                     }
                                     if (v < 1)
@@ -856,7 +856,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
                                         errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
+                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
                                         error = true;
                                         break;
                                     }
@@ -867,7 +867,7 @@ namespace ModularBOT.Component
                                     //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected core function: {line.Split(' ')[0]}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
                                     errorEmbed.WithDescription($"Unexpected function: ```{line.Split(' ')[0]}```");
                                     errorEmbed.AddField("Line", LineInScript, true);
-                                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No Context", true);
+                                    errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
                                     break;
                             }
 
