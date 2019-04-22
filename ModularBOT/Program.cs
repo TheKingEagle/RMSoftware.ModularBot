@@ -19,6 +19,8 @@ namespace ModularBOT
         internal static bool ShutdownCalled = false;
         private static bool RestartRequested = false;
         private static ConsoleIO consoleIO;
+        private static bool recoveredFromCrash = false;
+        
         /// <summary>
         /// Application Entry Point.
         /// </summary>
@@ -28,6 +30,7 @@ namespace ModularBOT
             {
                 AppArguments.AddRange(ARGS);
             }
+            recoveredFromCrash = AppArguments.Contains("-crashed");
             consoleIO = new ConsoleIO(AppArguments);
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
 
@@ -47,11 +50,10 @@ namespace ModularBOT
 
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Main", "Application started"));
 
-            Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested));//Discord.NET thread
-            Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord));//Console reader thread;
-
+            Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested,ref recoveredFromCrash));//Discord.NET thread
+            Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord.InputCanceled,ref discord));//Console reader thread;
+           
             SpinWait.SpinUntil(BotShutdown);//HOLD THREAD
-
             if (RestartRequested)
             {
                 Process p = new Process();
