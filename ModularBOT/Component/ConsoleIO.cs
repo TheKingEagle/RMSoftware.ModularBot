@@ -11,6 +11,8 @@ using Discord.Net;
 using System.IO;
 using Discord.WebSocket;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+
 namespace ModularBOT.Component
 {
     public class ConsoleIO
@@ -464,6 +466,7 @@ namespace ModularBOT.Component
         /// <returns></returns>
         public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ShutdownCalled, int timeout = 5, Exception ex = null)
         {
+            
             ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, title);
             WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."));
             LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
@@ -559,17 +562,28 @@ namespace ModularBOT.Component
                 }
             }
         }
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetConsoleWindow();
+        [DllImport("User32.Dll", EntryPoint = "PostMessageA")]
+        public static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
 
+        public const int VK_RETURN = 0x0D;
+        public const int WM_KEYDOWN = 0x100;
         /// <summary>
         /// Process console commands
         /// </summary>
-        internal void GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested, ref DiscordNET discordNET)
+        internal Task GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested,ref bool InputCanceled, ref DiscordNET discordNET)
         {
             ulong chID = 0;
-
+            
             while (true)
             {
+                
                 string input = Console.ReadLine();
+                if (InputCanceled)
+                {
+                    return Task.Delay(0);
+                }
                 Console.CursorTop = CurTop;
                 WriteEntry(new LogMessage(LogSeverity.Critical, "Console", input),ConsoleColor.Black);//Bypass filter (Critical), show as non-error.
                 if (input.ToLower() == "stopbot")
@@ -660,12 +674,12 @@ namespace ModularBOT.Component
                     if(input.Split(' ').Length >2)
                     {
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        return;
+                        continue;
                     }
                     if (input.Split(' ').Length < 2)
                     {
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        return;
+                        continue;
                     }
                     input = input.Remove(0, 16).Trim();
                     if (Enum.TryParse(input,true, out LogSeverity result))
@@ -680,7 +694,7 @@ namespace ModularBOT.Component
                             {
                                 discordNET.Stop(ref ShutdownCalled);
                                 RestartRequested = true;
-                                return;
+                                return Task.Delay(1);
                             }
                             if (k.Key == ConsoleKey.N)
                             {
@@ -695,7 +709,7 @@ namespace ModularBOT.Component
                 }
 
             }
-
+            return Task.Delay(1);
         }
 
         #region Console pixel art - Slight modification of https://stackoverflow.com/a/33715138/4655190
