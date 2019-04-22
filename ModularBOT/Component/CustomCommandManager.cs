@@ -107,6 +107,11 @@ namespace ModularBOT.Component
 
         private string ProcessCmdLine(string cmdline, ref IMessage msg)
         {
+            GuildObject ContextGO = guilds.FirstOrDefault(x => x.ID == 0);
+            if (msg.Channel is SocketGuildChannel sc)
+            {
+                ContextGO = guilds.FirstOrDefault(x => x.ID == sc.Guild.Id) ?? guilds.FirstOrDefault(x => x.ID == 0);//if guild doesnt exist, use global.
+            }
             GuildObject gobj = null;
             GuildCommand cmd = null;
             string[] cmdlineArr = cmdline.Split(' ');
@@ -165,7 +170,7 @@ namespace ModularBOT.Component
                         if (!string.IsNullOrWhiteSpace(res))
                         {
 
-                            return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
+                            return ProcessAction(res, args, ref ContextGO, ref cmd, ref msg);
                         }
                         else
                         {
@@ -193,7 +198,7 @@ namespace ModularBOT.Component
                             }
                         }
                     }
-                    return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
+                    return ProcessAction(res, args, ref ContextGO, ref cmd, ref msg);
                 }
             }
             else
@@ -224,7 +229,7 @@ namespace ModularBOT.Component
                     }
                     if (!string.IsNullOrWhiteSpace(res))
                     {
-                        return ProcessAction(res, args, ref gobj, ref cmd, ref msg);
+                        return ProcessAction(res, args, ref ContextGO, ref cmd, ref msg);
                     }
                     else { serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild didn't know what that command was!")); return null; }
                 }
