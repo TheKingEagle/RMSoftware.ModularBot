@@ -602,6 +602,7 @@ namespace ModularBOT.Component
                 if(asRestricted.HasValue) { gco.RequirePermission = asRestricted.Value; }
                 if(newAction != "(unchanged)") { gco.Action = newAction; }
                 ggo.SaveJson();
+                cgo.SaveJson();
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Global command modified!"));
                 await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, newAction));
                 return;
@@ -615,6 +616,7 @@ namespace ModularBOT.Component
                     if (asRestricted.HasValue) { cco.RequirePermission = asRestricted.Value; }
                     if (newAction != "(unchanged)") { cco.Action = newAction; }
                     ggo.SaveJson();
+                    cgo.SaveJson();
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Context-guild command modified!"));
                     await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, newAction));
                     return;
