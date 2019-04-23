@@ -13,7 +13,6 @@ The syntax of this scripting language is similar to batch. The code formatting r
 ECHO SCREAMING HARD CORE! AHHHHHHHHHHHHHHHHHHHH!
 SETVAR var1 I can do variables too!
 ECHO %var1% -- Isn't that amazing?
-­```
 ```
 #### Result:
 
@@ -27,11 +26,24 @@ SETVAR <VariableName> <Value>
 STATUSORB <Status Type>
 BOTSTATUS <text>
 BOTGOLIVE <twitch_ChannelName> <text>
+ROLE_ADD <ulong roleID> <string successMessage>
+ROLE_DEL <ulong roleID> <string successMessage>
 CMD <CommandName> [command parameters]
-WAIT <time_in_milliseconds(+20ms)>
+WAIT <time_in_milliseconds+20>
 ```
-## Special Notes
-* Each command has a +20ms delay on it. This is to prevent out of order message processing. The WAIT command also has this delay for now. It is planned for removal soon.
-* CMD notes: This will execute a command without writing the command out to the channel (Example: `!about`). However, the executed command will output results as required. (The same way OnStart.Core runs.)
-* You will not be able to execute user-restricted or guild-restricted commands with this feature.
-* All of these commands are subject to discord's API rate limits. Please be respectful of this.
+  
+# Usage Notes
+* Execution time of most functions will be 20ms. This will account for typical latency, preventing messages from being sent out of order.
+### `ROLE_ADD` & `ROLE_DEL`
+* Require the `Manage roles` permission in order to work.
+* Will only add or delete roles that are BELOW bot's highest ranked role.
+* Have an execution time of 120ms to account for API latency.
+* ***ARE NOT SUPPORTED for `startup.core`***
+### Emotes & Mentions
+* You can output emotes, channel mentions, role mentions, and user mentions by using the proper `<>` code representations.
+   * *User Mention:* `<@422031199444271124>`
+   * *Role Mention:* `<@&374723463073497088>`
+   * *Channel Mention:* `<#438476050650103818>`
+   * *Guild emote:* `<:falcoPls:429652140714098698>`
+   * To get these code representations, simply start typing the item out, then place a backslash `\` at the beginning of said item, then send the message. `\:falcoPls:`
+   
