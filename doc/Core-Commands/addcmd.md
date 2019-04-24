@@ -43,7 +43,7 @@ For the \<ACTION> segment of the command, you can specify variables and flags th
 * `%invoker%` will output the command sender's mention.
 * `%version%` will output the program's version number.
 * `%counter%` will output the number of command uses.
-
+* `%prefix%` or `%pf%` will output context command prefix.
 At this time, you can set temporary `%flags%` by using the console command `setvar <variableName-NoPercents> <value>`. Please note, these are case sensitive.
 
 ##### Example usage: `!addcmd hug false %invoker% hugs {params} for a long time!`
