@@ -21,7 +21,7 @@ namespace ModularBOT.Component
 
             if (!appConfig.DebugWizard)
             {
-                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
+                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.usePreReleaseChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
                     && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
                 {
                     return false;//if every critical thing is set... continue.
@@ -314,7 +314,7 @@ namespace ModularBOT.Component
                     }
                     if (k.KeyChar == '3')
                     {
-                        consoleIO.WriteEntry("\u2502 Please the path to a valid image file...", ConsoleColor.DarkBlue);
+                        consoleIO.WriteEntry("\u2502 Please enter the path to a valid image file...", ConsoleColor.DarkBlue);
                         Console.Write("\u2502 > ");
                         path = Console.ReadLine();
                         consoleIO.WriteEntry("\u2502 Previewing action... One second please...");
@@ -351,7 +351,7 @@ namespace ModularBOT.Component
             #endregion
 
             #region PAGE 6 - Updates
-            if (!appConfig.CheckForUpdates.HasValue)
+            if (!appConfig.CheckForUpdates.HasValue || !appConfig.usePreReleaseChannel.HasValue)
             {
                 consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Check for updates", 6, 6, ConsoleColor.Green);
 
@@ -368,27 +368,65 @@ namespace ModularBOT.Component
                 consoleIO.WriteEntry("\u2502\u2005");
 
 
-                while (true)
+                if(!appConfig.CheckForUpdates.HasValue)
                 {
-                    consoleIO.WriteEntry("\u2502 Do you wish to enable update checks on start up? [Y/N]", ConsoleColor.DarkGreen);
-                    Console.Write("\u2502 > ");
-                    var k = Console.ReadKey();
-                    if (k.KeyChar == 'n')
+                    while (true)
                     {
-                        appConfig.CheckForUpdates = false;
-                        consoleIO.WriteEntry("\u2502 OK. You will not receive application update notifications.");
-                        consoleIO.WriteEntry("\u2502 You can change this later via command: `config.setupdates true`");
-
-                        break;
-                    }
-                    if (k.KeyChar == 'y')
-                    {
-                        appConfig.CheckForUpdates = true;
-                        consoleIO.WriteEntry("\u2502 OK. You will receive application update notifications.");
-                        consoleIO.WriteEntry("\u2502 You can change this later via command: `config.setupdates false`");
-                        break;
+                        consoleIO.WriteEntry("\u2502 Do you wish to enable update checks on start up? [Y/N]", ConsoleColor.DarkGreen);
+                        Console.Write("\u2502 > ");
+                        var k = Console.ReadKey();
+                        if (k.KeyChar == 'n')
+                        {
+                            appConfig.CheckForUpdates = false;
+                            consoleIO.WriteEntry("\u2502 OK. You will not receive application update notifications.");
+                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.setupdates true`");
+                            
+                            break;
+                        }
+                        if (k.KeyChar == 'y')
+                        {
+                            appConfig.CheckForUpdates = true;
+                            consoleIO.WriteEntry("\u2502 OK. You will receive application update notifications.");
+                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.setupdates false`");
+                            consoleIO.WriteEntry("\u2502\u2005");
+                            
+                            break;
+                        }
                     }
                 }
+                if (!appConfig.CheckForUpdates.Value)
+                {
+                    appConfig.usePreReleaseChannel = false;//set to use stable by default so wizard will stop bothering us.
+                }
+                if (!appConfig.usePreReleaseChannel.HasValue && appConfig.CheckForUpdates.Value)
+                {
+                    while (true)
+                    {
+                        consoleIO.WriteEntry("\u2502 Please choose which update channel you'd like to use.",ConsoleColor.DarkGreen);
+                        consoleIO.WriteEntry("\u2502\u2005");
+                        consoleIO.WriteEntry("\u2502\u2005");
+                        consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 1. STABLE");
+                        consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 2. PRE-RELEASE");
+                        Console.Write("\u2502 > ");
+                        var k = Console.ReadKey();
+                        if (k.KeyChar == '1')
+                        {
+                            appConfig.usePreReleaseChannel = false;
+                            consoleIO.WriteEntry("\u2502 You've subscribed to the STABLE updates channel.");
+                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease true`");
+
+                            break;
+                        }
+                        if (k.KeyChar == '2')
+                        {
+                            appConfig.usePreReleaseChannel = true;
+                            consoleIO.WriteEntry("\u2502  You've subscribed to the PRE-RELEASE updates channel.");
+                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease false`");
+                            break;
+                        }
+                    }
+                }
+
             }
 
             #endregion
@@ -426,11 +464,9 @@ namespace ModularBOT.Component
             #endregion
         }
 
-        private void WritePage5BODY(ref ConsoleIO consoleIO)
+        internal void WritePage5BODY(ref ConsoleIO consoleIO)
         {
             consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
-
-
 
             consoleIO.WriteEntry("\u2502 Have you ever seen those old DOS programs that have the fancy ASCII art @ startup?");
             consoleIO.WriteEntry("\u2502 Yea? Well great! This bot can do that! Why? (You may be asking) WHY NOT?!");
