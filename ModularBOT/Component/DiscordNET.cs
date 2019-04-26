@@ -164,7 +164,7 @@ namespace ModularBOT.Component
                         Stop(ref shutdownRequested);
                         return;
                     }
-                    GuildObject obj = customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == i.Guild.Id);
+                    GuildObject obj = customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == i.Guild.Id) ?? customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
                     try
                     {
                         customCMDMgr.coreScript.EvaluateScriptFile(obj, "startup.core", Client, new PseudoMessage("", Client.CurrentUser, (IGuildChannel)Client.GetChannel(id), MessageSource.Bot)).GetAwaiter().GetResult();
