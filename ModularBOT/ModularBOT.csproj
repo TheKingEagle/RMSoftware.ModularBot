@@ -77,8 +77,9 @@
     <UpdateAssemblyInfoVersion>True</UpdateAssemblyInfoVersion>
     <UpdatePackageVersion>False</UpdatePackageVersion>
     <AssemblyInfoVersionSemVerSettings>AssemblyVersion.NoneWithAutoReset.ReleaseCandidate</AssemblyInfoVersionSemVerSettings>
-    <AssemblyInfoVersionType>SemVer1</AssemblyInfoVersionType>
+    <AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
     <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
+    <AssemblyInfoVersionSettings>None.IncrementOnDemand.IncrementWithResetOnIncrease.Increment</AssemblyInfoVersionSettings>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>ModularBOT.Program</StartupObject>
