@@ -76,7 +76,7 @@
     <UpdateAssemblyFileVersion>False</UpdateAssemblyFileVersion>
     <UpdateAssemblyInfoVersion>True</UpdateAssemblyInfoVersion>
     <UpdatePackageVersion>False</UpdatePackageVersion>
-    <AssemblyInfoVersionSemVerSettings>AssemblyVersion.IncrementOnce.ReleaseCandidate</AssemblyInfoVersionSemVerSettings>
+    <AssemblyInfoVersionSemVerSettings>AssemblyVersion.NoneWithAutoReset.ReleaseCandidate</AssemblyInfoVersionSemVerSettings>
     <AssemblyInfoVersionType>SemVer1</AssemblyInfoVersionType>
     <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
   </PropertyGroup>
