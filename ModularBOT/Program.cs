@@ -7,7 +7,7 @@ using ModularBOT.Component;
 using System.Threading;
 using System.Diagnostics;
 using Discord;
-
+using System.IO;
 namespace ModularBOT
 {
     class Program
@@ -33,7 +33,9 @@ namespace ModularBOT
             recoveredFromCrash = AppArguments.Contains("-crashed");
             consoleIO = new ConsoleIO(AppArguments);
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
-
+            if (!Directory.Exists("guilds")) { Directory.CreateDirectory("guilds"); }
+            if (!Directory.Exists("modules")) { Directory.CreateDirectory("modules"); }
+            if (!Directory.Exists("ext")) { Directory.CreateDirectory("ext"); }
             RunStartlogo();
             
             consoleIO.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Active Session");

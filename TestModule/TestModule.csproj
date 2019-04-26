@@ -30,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AssemblyInfoVersionSemVerSettings>AssemblyVersion.NoneWithAutoReset.ReleaseCandidate</AssemblyInfoVersionSemVerSettings>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Discord.Net.Commands, Version=2.0.1.0, Culture=neutral, processorArchitecture=MSIL">
@@ -144,7 +145,7 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM Move module &amp; property item to startup project
-MOVE "$(TargetPath) " "$(SolutionDir)\ModularBOT\$(OutDir)modules\$(TargetFileName)"
-MOVE "$(TargetDir)\$(TargetName).mpi" "$(SolutionDir)\ModularBOT\$(OutDir)modules\$(TargetName).mpi"</PostBuildEvent>
+MOVE "$(TargetPath)" "$(SolutionDir)ModularBOT\$(OutDir)modules\$(TargetFileName)"
+MOVE "$(TargetDir)$(TargetName).mpi" "$(SolutionDir)\ModularBOT\$(OutDir)modules\$(TargetName).mpi"</PostBuildEvent>
   </PropertyGroup>
 </Project>
