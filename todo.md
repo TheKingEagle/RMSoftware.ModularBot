@@ -20,28 +20,11 @@
 * Write OnStart/task manager (OnStart.CORE scripting) **DONE**
 * Write Modules loader **DONE**
 * **FINISH CoreModule commands IN PROGRESS**
-   * about **DONE**
-   * addcmd **DONE**
-   * addgcmd **DONE**
-   * **changes IN PROGRESS**
-   * delcmd **DONE**
-   * delgcmd **DONE**
-   * **getcmd IN PROGRESS**
-   * invitebot **DONE**
-   * listcmd **DONE**
-   * permissions get **DONE**
-   * **permissions list IN PROGRESS**
-   * permissions set role **DONE**
-   * permissions set user **DONE**
-   * prefix **DONE**
-   * restartbot **DONE**
    * setavatar
    * setnick
    * setusername
-   * status **DONE**
-   * stopbot **DONE**
-   * uptime **DONE**
    * variables get
    * variables list
    * variables set
-* Server-side update push.
+   
+* **Server-side update push. IN PROGRESS**
