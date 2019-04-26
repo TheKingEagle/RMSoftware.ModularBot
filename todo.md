@@ -5,11 +5,7 @@
 * Change custom commands system:
   * Seperate Per-guild and global commands **DONE**
   * Improve command management **DONE**
-* Change console IO:
-  * ~~Move ConsoleWriter to own assembly~~ New public ConsoleIO class. **DONE**
-  * Remove static references **DONE?**
-  * ~~Fix output errors~~ New public ConsoleIO class. **DONE**
-  * ~~Move JSON Logging to Console Writer~~ Removed json logging from feature list...
+* NEW ConsoleIO class **DONE**
 * **Improve stability (killscreen/autorestart Uncaught crashes) IN PROGRESS**
 * Optimize code (lol) **RE-WRITING from scratch.**
 * Use Discord.NET 2.0.1 **DONE**
@@ -18,13 +14,11 @@
 * Move to JSON Configuration manager **DONE**
 * Per-guild command modules
 * New Permission system **DONE**
+* **Update Checking - Implemented bot-side. Server-side: IN PROGRESS**
 
 # Current TODOs
-* ~~WRITE per-change save system into Configuration~~ Auto save configuration on exit
-* EXPAND command system
-   * **Add command management (~~Add/remove~~/edit/view/~~list~~ commands) IN PROGRESS**
-* **Write OnStart/task manager (OnStart.CORE scripting) IN PROGRESS**
-* **Write Modules loader IN PROGRESS**
+* Write OnStart/task manager (OnStart.CORE scripting) **DONE**
+* Write Modules loader **DONE**
 * **FINISH CoreModule commands IN PROGRESS**
    * about **DONE**
    * addcmd **DONE**
@@ -50,3 +44,4 @@
    * variables get
    * variables list
    * variables set
+* Server-side update push.
