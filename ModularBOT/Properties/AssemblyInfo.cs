@@ -29,6 +29,3 @@ using System.Windows;
 [assembly: AssemblyVersion("2.0.468.1657")]
 [assembly: AssemblyFileVersion("2.0.468.1657")]
 [assembly: ComVisible(false)]
-
-
-[assembly: AssemblyInformationalVersion("2.0.1-rc")]

@@ -43,7 +43,7 @@ namespace ModularBOT.Component
             builder.Color = Color.Blue;
             builder.Description = "A Multi-purpose, multi-module bot designed for discord. Tailor it for your specific server, create your own modules and plug-ins. Includes a core module for custom text-based commands & other advanced functionality";
             builder.AddField("Copyright", $"Copyright © 2017-{DateTime.Now.Year} RMSoftware Development");
-            builder.AddField("Version", "v"+Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion.ToString());
+            builder.AddField("Version", "v"+ Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
             builder.WithFooter("ModularBOT • Created by TheKingEagle");
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
@@ -55,7 +55,7 @@ namespace ModularBOT.Component
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
             eb.WithDescription("NOTE: This application is not finished. Some features are not currently implemented.");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion.ToString()} ModularBOT Remastered™ - System Updates",
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT Remastered™ - System Updates",
                 $"• MOVED to Discord.NET v2.0.1\r\n" +
                 $"• Supports more guilds! - Shard connections\r\n" +
                 $"• RE-WROTE ConsoleIO & REDESINED Console UI\r\n" +
@@ -68,14 +68,13 @@ namespace ModularBOT.Component
                 $"• REMOVED Json log mode\r\n" +
                 $"• Cleaned up install directory\r\n" +
                 $"• IMPROVED KillScreens & Stability" + "");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion.ToString()} ModularBOT Remastered™ - Command Updates",
-                $"• ADDED commands: `addgcmd`, `delgcmd`, `permissions set/del user/role`, `permissions get/list`, `setavatar`, `setusername`, `setnick`, `prefix`, and `variables get/set/list`\r\n" +
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT Remastered™ - Command Updates",
+                $"• ADDED commands: `addgcmd`, `delgcmd`, `permissions set/del user/role`, `permissions get`, `prefix`\r\n" +
                 $"• CHANGED `status` command syntax\r\n" +
                 $"• CHANGED `addcmd` command syntax\r\n" +
                 $"• ADDED per-guild prefix support\r\n" +
                 $"• ADDED multi-character prefix support\r\n" +
-                $"• IMPROVED command list annotations\r\n" +
-                $"• ADDED per-guild module support");
+                $"• IMPROVED command list annotations\r\n");
 
 
             eb.WithFooter("ModularBOT • CORE");
