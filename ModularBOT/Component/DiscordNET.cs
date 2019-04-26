@@ -27,6 +27,7 @@ namespace ModularBOT.Component
         public CustomCommandManager customCMDMgr;
         public PermissionManager permissionManager;
         public ModuleManager moduleMgr;
+        public UpdateManager updater;
         public bool InputCanceled = false;
         static bool init_start = false;
         bool Initialized = false;
@@ -84,7 +85,7 @@ namespace ModularBOT.Component
                 Client.GuildUnavailable += Client_GuildUnavailable;
 
                 moduleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, ref AppConfig);
-                
+                updater = new UpdateManager(serviceProvider);
                 cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 Task.Run(async () => await Client.StartAsync());
@@ -151,8 +152,8 @@ namespace ModularBOT.Component
                         ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
                     }
-                    //PROCESS THE AutoEXEC file
 
+                    #region Startup.CORE
                     IGuildChannel i = (IGuildChannel)Client.GetChannel(id);
                     if (i == null)
                     {
@@ -179,9 +180,42 @@ namespace ModularBOT.Component
                         return;
                     }
 
-                    
-                    //SET STATUS
+                    #endregion
 
+                    #region Update Check
+                    if (serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value)
+                    {
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
+                        bool pre = serviceProvider.GetRequiredService<Configuration>().usePreReleaseChannel.Value;
+                        bool availableUpdates = updater.CheckUpdate(pre).GetAwaiter().GetResult();
+                        if (availableUpdates)
+                        {
+                            string verdata = pre ? updater.UpdateInfo.PREVERS : updater.UpdateInfo.VERSION;
+                            string package = pre ? updater.UpdateInfo.PREPAKG : updater.UpdateInfo.PACKAGE;
+                            EmbedBuilder builder = new EmbedBuilder();
+                            builder.WithAuthor(Client.CurrentUser);
+                            builder.WithTitle("UPDATE AVAILABLE");
+                            builder.WithUrl(package);
+                            builder.WithThumbnailUrl(Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto, 256));
+                            builder.WithDescription("A new version of ModularBOT is available for download!");
+                            builder.AddField("Version", $"v{verdata}");
+                            builder.AddField("Download Link", package);
+                            builder.WithColor(new Color(0, 255, 60));
+                            builder.WithFooter("RMSoftware.ModularBOT Core");
+                            ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"A new version is available! v{verdata}"),ConsoleColor.Green);
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"Download: {package}"),ConsoleColor.Green);
+                        }
+                        else
+                        {
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"You are running the most recent version."),ConsoleColor.Black);
+                        }
+                    }
+                    
+
+                    #endregion
+
+                    //Finished task manager.
                     Client.SetStatusAsync(serviceProvider.GetRequiredService<Configuration>().ReadyStatus);
                     Client.SetGameAsync(serviceProvider.GetRequiredService<Configuration>().ReadyText,null,serviceProvider.GetRequiredService<Configuration>().ReadyActivity);
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
