@@ -17,9 +17,15 @@ namespace ModularBOT.Component
 {
     public class ConsoleIO
     {
-        public bool Busy { get; private set; }
+        public bool Writing { get; private set; }
+
+        /// <summary>
+        /// TRUE if a console command resets the screen temporarily.
+        /// </summary>
+        public bool ScreenBusy { get; private set; }
         public List<string> ARGS { get; private set; }
 
+        List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
         public int CurTop { get; private set; }
         public int PrvTop { get; private set; }
 
@@ -29,7 +35,7 @@ namespace ModularBOT.Component
 
         public ConsoleIO(List<string> ProgramArgs)
         {
-            Busy = false;
+            Writing = false;
             ARGS = ProgramArgs;
         }
 
@@ -237,17 +243,26 @@ namespace ModularBOT.Component
         /// </summary>
         /// <param name="message">The Discord.NET Log message</param>
         /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
-        public void WriteEntry(LogMessage message, ConsoleColor? Entrycolor = null, bool showCursor = true)
+        public void WriteEntry(LogMessage message, ConsoleColor? Entrycolor = null, bool showCursor = true, bool bypassScreenLock = false, bool bypassFilter = false)
         {
-            if(message.Severity > Program.configMGR.CurrentConfig.DiscordEventLogLevel)
+            
+            if(message.Severity > Program.configMGR.CurrentConfig.DiscordEventLogLevel && !bypassFilter)
             {
                 return;
             }
-            if (Busy)
+
+            LogEntries.Add(new LogEntry(message, Entrycolor));//add to buffer. regardless of screen-lock.
+
+            if(ScreenBusy && !bypassScreenLock)
             {
-                SpinWait.SpinUntil(() => !Busy);//This will help prevent the console from being sent into a mess of garbled words.
+                return;
             }
-            Busy = true;
+            if (Writing)
+            {
+                SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
+            }
+            
+            Writing = true;
             PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
             LogMessage l = new LogMessage(message.Severity, message.Source.PadRight(11, '\u2000'), message.Message, message.Exception);
@@ -340,7 +355,7 @@ namespace ModularBOT.Component
                 Console.Write("\u2551");
             }
 
-            Busy = false;
+            Writing = false;
             CurTop = Console.CursorTop;
         }
 
@@ -352,12 +367,12 @@ namespace ModularBOT.Component
         public void WriteEntry(string message, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true)
         {
 
-            if (Busy)
+            if (Writing)
             {
-                SpinWait.SpinUntil(() => !Busy);//This will help prevent the console from being sent into a mess of garbled words.
+                SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             }
             PrvTop = Console.CursorTop;
-            Busy = true;
+            Writing = true;
 
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
 
@@ -406,7 +421,7 @@ namespace ModularBOT.Component
             Console.BackgroundColor = ConsoleBackgroundColor;
             Console.ForegroundColor = ConsoleForegroundColor;
             Console.CursorVisible = showCursor;
-            Busy = false;
+            Writing = false;
             CurTop = Console.CursorTop;
         }
 
@@ -575,17 +590,17 @@ namespace ModularBOT.Component
         internal Task GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested,ref bool InputCanceled, ref DiscordNET discordNET)
         {
             ulong chID = 0;
-            
+
             while (true)
             {
-                
+
                 string input = Console.ReadLine();
                 if (InputCanceled)
                 {
                     return Task.Delay(0);
                 }
                 Console.CursorTop = CurTop;
-                WriteEntry(new LogMessage(LogSeverity.Critical, "Console", input),ConsoleColor.Black);//Bypass filter (Critical), show as non-error.
+                WriteEntry(new LogMessage(LogSeverity.Info, "Console", input), null, true, false, true);
                 if (input.ToLower() == "stopbot")
                 {
                     WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "Console session called STOPBOT."));
@@ -603,7 +618,8 @@ namespace ModularBOT.Component
                 if (input.ToLower() == "cls" || input.ToLower() == "clear")
                 {
                     ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, currentTitle);//default
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Console cleared!!"));
+                    LogEntries.Clear();//clear buffer
+                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Console cleared!!"), null, true, false, true);
                 }
                 if (input.ToLower() == "tskill")
                 {
@@ -614,7 +630,7 @@ namespace ModularBOT.Component
                 {
                     WriteEntry(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
 
-                   
+
                     discordNET.Client.SetStatusAsync(UserStatus.DoNotDisturb);
                     discordNET.Client.SetGameAsync("");
                     discordNET.DisableMessages = true;
@@ -624,7 +640,7 @@ namespace ModularBOT.Component
                     WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
 
                     discordNET.Client.SetStatusAsync(UserStatus.Online);
-                    discordNET.Client.SetGameAsync("for commands!",null,ActivityType.Watching);
+                    discordNET.Client.SetGameAsync("for commands!", null, ActivityType.Watching);
                     discordNET.DisableMessages = false;
                 }
                 if (input.ToLower() == "mbotdata")
@@ -671,7 +687,7 @@ namespace ModularBOT.Component
 
                 if (input.ToLower().StartsWith("config.loglevel"))
                 {
-                    if(input.Split(' ').Length >2)
+                    if (input.Split(' ').Length > 2)
                     {
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
                         continue;
@@ -682,18 +698,21 @@ namespace ModularBOT.Component
                         continue;
                     }
                     input = input.Remove(0, 16).Trim();
-                    if (Enum.TryParse(input,true, out LogSeverity result))
+                    if (Enum.TryParse(input, true, out LogSeverity result))
                     {
                         Program.configMGR.CurrentConfig.DiscordEventLogLevel = result;
                         Program.configMGR.Save();
+                        ScreenBusy = true;
                         while (true)
                         {
-                            WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Saved logging level. Changes will take place when bot is restarted. Do you want to restart now? [Y/N]"));
+                            WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Saved logging level. Changes will take place when bot is restarted. Do you want to restart now? [Y/N]"),null,true,true,true);
                             ConsoleKeyInfo k = Console.ReadKey();
-                            if(k.Key == ConsoleKey.Y)
+                            if (k.Key == ConsoleKey.Y)
                             {
+
                                 discordNET.Stop(ref ShutdownCalled);
                                 RestartRequested = true;
+                                Thread.Sleep(1000);
                                 return Task.Delay(1);
                             }
                             if (k.Key == ConsoleKey.N)
@@ -701,15 +720,153 @@ namespace ModularBOT.Component
                                 break;
                             }
                         }
-                        
+                        ScreenBusy = false;
+
                     }
-                        
+
                     else
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", $"Invalid parameter. Try a log severity level: {string.Join(", ", Enum.GetNames(typeof(LogSeverity)))}"));
                 }
 
+                if (input.ToLower().StartsWith("config.setupdates"))
+                {
+                    if (input.Split(' ').Length > 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    input = input.Remove(0, 18).Trim();
+                    if (bool.TryParse(input, out bool result))
+                    {
+                        Program.configMGR.CurrentConfig.CheckForUpdates = result;
+                        Program.configMGR.Save();
+                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Program will check updates on startup."),null, true, false, true);
+                    }
+                    else
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Unexpected argument."));
+                        continue;
+                    }
+                }
+                if (input.ToLower().StartsWith("config.update.prerelease"))
+                {
+                    if (input.Split(' ').Length > 1)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 1)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    input = input.Remove(0, 25).Trim();
+                    if (bool.TryParse(input, out bool result))
+                    {
+                        Program.configMGR.CurrentConfig.usePreReleaseChannel = result;
+                        Program.configMGR.Save();
+                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", "You've switched update channels."), null, true, false, true);
+                    }
+                    else
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Unexpected argument."));
+                        continue;
+                    }
+                }
+                if(input.ToLower().StartsWith("config.setlogo"))
+                {
+                    string PRV_TITLE = currentTitle;
+                    List<LogEntry> v = new List<LogEntry>();
+
+                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
+                    SetLogo_Choices();
+                    ConsoleKeyInfo k;
+                    string path = "";
+                    ScreenBusy = true;
+                    while (true)
+                    {
+                        WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
+                        Console.Write("\u2502 > ");
+                        k = Console.ReadKey();
+                        if (k.KeyChar == '1')
+                        {
+                            path = "NONE";
+                            break;
+                        }
+                        if (k.KeyChar == '2')
+                        {
+                            path = "INTERNAL";
+                            WriteEntry("\u2502 Previewing action... One second please...");
+                            Thread.Sleep(600);
+                            ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
+                            Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
+                            Thread.Sleep(800);
+                            ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
+                            Thread.Sleep(3000);
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
+                            break;
+                        }
+                        if (k.KeyChar == '3')
+                        {
+                            WriteEntry("\u2502 Please enter the path to a valid image file...", ConsoleColor.DarkBlue);
+                            Console.Write("\u2502 > ");
+                            path = Console.ReadLine();
+                            WriteEntry("\u2502 Previewing action... One second please...");
+                            Thread.Sleep(600);
+                            ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
+                            Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
+                            Thread.Sleep(800);
+                            try
+                            {
+                                ConsoleWriteImage(new System.Drawing.Bitmap(path.Replace("\"","")));
+                            }
+                            catch (Exception ex)
+                            {
+
+                                WriteEntry("\u2502 Something went wrong. Make sure you specified a valid image.", ConsoleColor.Red);
+                                WriteEntry("\u2502 " + ex.Message, ConsoleColor.Red);
+                                WriteEntry("\u2502");
+                                SetLogo_Choices();
+                                continue;
+                            }
+                            Thread.Sleep(3000);
+                            break;
+                        }
+                    }
+
+                    Program.configMGR.CurrentConfig.LogoPath = path.Replace("\"", "");
+                    Program.configMGR.Save();
+                    ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, PRV_TITLE);
+                    ScreenBusy = false;
+                    v.AddRange(LogEntries);
+                    LogEntries.Clear();//clear buffer.
+                    //output previous logEntry.
+                    foreach (var item in v)
+                    {
+                        WriteEntry(item.LogMessage, item.EntryColor);
+                    }
+                    WriteEntry(new LogMessage(LogSeverity.Info, "Config", "Startup logo saved successfully!"), null, true, false, true);
+                    v = null;
+                }
             }
             return Task.Delay(1);
+        }
+
+        private void SetLogo_Choices()
+        {
+            WriteEntry("\u2502 Have you ever seen those old DOS programs that have the fancy ASCII art @ startup?");
+            WriteEntry("\u2502 Yea? Well great! This bot can do that! Why? (You may be asking) WHY NOT?!");
+            WriteEntry("\u2502\u2005");
+            WriteEntry("\u2502\u2005\u2005 Options:", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005\u2005\u2005 1. No logo", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005\u2005\u2005 2. Default logo", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005\u2005\u2005 3. Custom logo", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005");
         }
 
         #region Console pixel art - Slight modification of https://stackoverflow.com/a/33715138/4655190
@@ -766,6 +923,21 @@ namespace ModularBOT.Component
                 System.Console.WriteLine();
             }
             Console.ResetColor();
+        }
+        #endregion
+
+        #region Screen buffer
+        public class LogEntry
+        {
+            public LogMessage LogMessage { get; set; }
+
+            public ConsoleColor? EntryColor { get; set; }
+
+            public LogEntry(LogMessage msg, ConsoleColor? color)
+            {
+                LogMessage = msg;
+                EntryColor = color;
+            }
         }
         #endregion
     }
