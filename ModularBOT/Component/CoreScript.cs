@@ -837,7 +837,6 @@ namespace ModularBOT.Component
             int LineInScript = 1;
             bool error = false;
             EmbedBuilder errorEmbed = new EmbedBuilder();
-
             errorEmbed.WithAuthor(client.CurrentUser);
             errorEmbed.WithTitle("CoreScript Error");
             errorEmbed.WithColor(Color.Red);
@@ -1050,7 +1049,7 @@ namespace ModularBOT.Component
             {
                 gid = channel.Guild.Id;
             }
-            guildObject = ccmg.GuildObjects.FirstOrDefault(x => x.ID == gid);
+            guildObject = ccmg.GuildObjects.FirstOrDefault(x => x.ID == gid) ?? ccmg.GuildObjects.FirstOrDefault(x => x.ID == 0);
             
             string ecmd = line.Remove(0, 4);
             string resp = ccmg.ProcessMessage(new PseudoMessage(guildObject.CommandPrefix + ecmd, ArgumentMessage.Author as SocketUser,
