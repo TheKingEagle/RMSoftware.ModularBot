@@ -36,6 +36,8 @@ namespace ModularBOT
 
         public bool? CheckForUpdates { get; set; }
 
+        public bool? usePreReleaseChannel { get; set; }
+
         public LogSeverity DiscordEventLogLevel { get; set; }
 
 
@@ -49,7 +51,8 @@ namespace ModularBOT
             ReadyActivity = ActivityType.Playing;
             ReadyStatus = UserStatus.Online;
             LoadCoreModule = true;
-            CheckForUpdates = null;                //step 6
+            CheckForUpdates = null;                //step 6 - 1
+            usePreReleaseChannel = null;           //step 6 - 2
             DebugWizard = false;
             ReadyText = "Ready!";
             ShardCount = 1;                        //TODO: Figure out proper implementation to automatically set this as bot is added to more guilds.
