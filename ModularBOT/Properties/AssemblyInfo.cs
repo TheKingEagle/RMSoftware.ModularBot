@@ -7,7 +7,7 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("RMSoftware ModularBOT")]
+[assembly: AssemblyTitle("ModularBOT")]
 [assembly: AssemblyDescription("RMSoftware Modular Bot implementing Discord.NET v2.0.1")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("RMSoftware Development")]
