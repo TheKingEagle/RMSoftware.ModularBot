@@ -540,8 +540,9 @@ namespace ModularBOT.Component
             }
 
             await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Restarting...", "Administrator called for application restart. Ending session...", Color.DarkBlue));
-
+            Program.RestartRequested = true;
             _DiscordNet.Stop(ref Program.ShutdownCalled);
+            
         }
 
         [Command("status"), Remarks("AccessLevels.Administrator"), Summary("Sets status text for bot user. Start with playing, watching, listening to, or streaming.")]
