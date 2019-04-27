@@ -17,7 +17,7 @@ namespace ModularBOT
         private static List<string> AppArguments = new List<string>();
         private static DiscordNET discord = new DiscordNET();
         internal static bool ShutdownCalled = false;
-        private static bool RestartRequested = false;
+        internal static bool RestartRequested = false;
         private static ConsoleIO consoleIO;
         private static bool recoveredFromCrash = false;
         
