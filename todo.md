@@ -28,3 +28,7 @@
    * variables set
    
 * **Server-side update push. IN PROGRESS**
+   * Real time update push
+* Per-guild modules
+* Updates Downloader
+* Module Installer
