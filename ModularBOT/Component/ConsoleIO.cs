@@ -12,6 +12,7 @@ using System.IO;
 using Discord.WebSocket;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Globalization;
 
 namespace ModularBOT.Component
 {
@@ -768,7 +769,7 @@ namespace ModularBOT.Component
                     input = input.Remove(0, 25).Trim();
                     if (bool.TryParse(input, out bool result))
                     {
-                        Program.configMGR.CurrentConfig.usePreReleaseChannel = result;
+                        Program.configMGR.CurrentConfig.UsePreReleaseChannel = result;
                         Program.configMGR.Save();
                         WriteEntry(new LogMessage(LogSeverity.Info, "Console", "You've switched update channels."), null, true, false, true);
                     }
@@ -851,6 +852,72 @@ namespace ModularBOT.Component
                         WriteEntry(item.LogMessage, item.EntryColor);
                     }
                     WriteEntry(new LogMessage(LogSeverity.Info, "Config", "Startup logo saved successfully!"), null, true, false, true);
+                    v = null;
+                }
+
+                if(input.ToLower().StartsWith("config.setcolors"))
+                {
+                    string PRV_TITLE = currentTitle;
+                    List<LogEntry> v = new List<LogEntry>();
+
+                    #region Background Color
+                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 1, 2, ConsoleColor.Green);
+                    WriteEntry("\u2502 Please select a background color.");
+                    for (int i = 0; i < 16; i++)
+                    {
+                        WriteEntry($"{i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
+                    }
+                    ConsoleKeyInfo k;
+                    ScreenBusy = true;
+                    while (true)
+                    {
+                        WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
+                        Console.Write("\u2502 > ");
+                        k = Console.ReadKey();
+                        char c = k.KeyChar;
+                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out int i))
+                        {
+                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor = (ConsoleColor)i;
+                            break;
+                        }
+                    }
+                    #endregion
+
+                    #region Foreground Color
+                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 2, 2, ConsoleColor.Green);
+                    WriteEntry("\u2502 Please select a foreground color.");
+                    for (int i = 0; i < 16; i++)
+                    {
+                        WriteEntry($"{i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
+                    }
+                    ConsoleKeyInfo k1;
+                    ScreenBusy = true;
+                    while (true)
+                    {
+                        WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
+                        Console.Write("\u2502 > ");
+                        k1 = Console.ReadKey();
+                        char c = k.KeyChar;
+                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out int i))
+                        {
+                            Program.configMGR.CurrentConfig.ConsoleForegroundColor = (ConsoleColor)i;
+                            break;
+                        }
+                    }
+                    #endregion
+
+                    Program.configMGR.Save();
+                    ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor, 
+                        Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+                    ScreenBusy = false;
+                    v.AddRange(LogEntries);
+                    LogEntries.Clear();//clear buffer.
+                    //output previous logEntry.
+                    foreach (var item in v)
+                    {
+                        WriteEntry(item.LogMessage, item.EntryColor);
+                    }
+                    WriteEntry(new LogMessage(LogSeverity.Info, "Config", "Console colors were changed successfully."), null, true, false, true);
                     v = null;
                 }
             }
