@@ -67,7 +67,8 @@ namespace ModularBOT.Component
                 $"• ADDED Update system\r\n" +
                 $"• REMOVED Json log mode\r\n" +
                 $"• Cleaned up install directory\r\n" +
-                $"• IMPROVED KillScreens & Stability" + "");
+                $"• IMPROVED KillScreens & Stability\r\n" + 
+                $"• ADDED Customizable console colors.");
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT Remastered™ - Command Updates",
                 $"• ADDED commands: `addgcmd`, `delgcmd`, `permissions set/del user/role`, `permissions get`, `prefix`\r\n" +
                 $"• CHANGED `status` command syntax\r\n" +
@@ -540,8 +541,9 @@ namespace ModularBOT.Component
             }
 
             await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Restarting...", "Administrator called for application restart. Ending session...", Color.DarkBlue));
+
             Program.RestartRequested = true;
-            _DiscordNet.Stop(ref Program.ShutdownCalled);
+            await Task.Run(() =>_DiscordNet.Stop(ref Program.ShutdownCalled));
             
         }
 
