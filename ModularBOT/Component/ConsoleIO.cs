@@ -876,6 +876,7 @@ namespace ModularBOT.Component
                         WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
                         Console.Write("\u2502 > ");
                         k = Console.ReadKey();
+                        Thread.Sleep(100);
                         char c = k.KeyChar;
                         if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int i))
                         {
@@ -887,7 +888,7 @@ namespace ModularBOT.Component
 
                     #region Foreground Color
                     ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 2, 2, ConsoleColor.Green);
-                    WriteEntry("\u2502 Please select a background color.");
+                    WriteEntry("\u2502 Please select a foreground color.");
                     WriteEntry("\u2502");
                     for (int i = 0; i < 16; i++)
                     {
@@ -901,6 +902,7 @@ namespace ModularBOT.Component
                         WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
                         Console.Write("\u2502 > ");
                         k1 = Console.ReadKey();
+                        Thread.Sleep(100);
                         char c = k1.KeyChar;
                         if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int ie))
                         {
