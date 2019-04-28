@@ -865,7 +865,7 @@ namespace ModularBOT.Component
                     WriteEntry("\u2502 Please select a background color.");
                     for (int i = 0; i < 16; i++)
                     {
-                        WriteEntry($"{i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
+                        WriteEntry($"\u2502\u2005\u2005\u2005 {i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
                     }
                     ConsoleKeyInfo k;
                     ScreenBusy = true;
@@ -875,7 +875,7 @@ namespace ModularBOT.Component
                         Console.Write("\u2502 > ");
                         k = Console.ReadKey();
                         char c = k.KeyChar;
-                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out int i))
+                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int i))
                         {
                             Program.configMGR.CurrentConfig.ConsoleBackgroundColor = (ConsoleColor)i;
                             break;
@@ -897,10 +897,10 @@ namespace ModularBOT.Component
                         WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
                         Console.Write("\u2502 > ");
                         k1 = Console.ReadKey();
-                        char c = k.KeyChar;
-                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out int i))
+                        char c = k1.KeyChar;
+                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int ie))
                         {
-                            Program.configMGR.CurrentConfig.ConsoleForegroundColor = (ConsoleColor)i;
+                            Program.configMGR.CurrentConfig.ConsoleForegroundColor = (ConsoleColor)ie;
                             break;
                         }
                     }
