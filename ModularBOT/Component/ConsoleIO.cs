@@ -863,10 +863,12 @@ namespace ModularBOT.Component
                     #region Background Color
                     ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 1, 2, ConsoleColor.Green);
                     WriteEntry("\u2502 Please select a background color.");
+                    WriteEntry("\u2502");
                     for (int i = 0; i < 16; i++)
                     {
                         WriteEntry($"\u2502\u2005\u2005\u2005 {i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
                     }
+                    WriteEntry("\u2502");
                     ConsoleKeyInfo k;
                     ScreenBusy = true;
                     while (true)
@@ -885,11 +887,13 @@ namespace ModularBOT.Component
 
                     #region Foreground Color
                     ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 2, 2, ConsoleColor.Green);
-                    WriteEntry("\u2502 Please select a foreground color.");
+                    WriteEntry("\u2502 Please select a background color.");
+                    WriteEntry("\u2502");
                     for (int i = 0; i < 16; i++)
                     {
-                        WriteEntry($"{i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
+                        WriteEntry($"\u2502\u2005\u2005\u2005 {i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
                     }
+                    WriteEntry("\u2502");
                     ConsoleKeyInfo k1;
                     ScreenBusy = true;
                     while (true)
