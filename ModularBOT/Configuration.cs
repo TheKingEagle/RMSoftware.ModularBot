@@ -36,9 +36,13 @@ namespace ModularBOT
 
         public bool? CheckForUpdates { get; set; }
 
-        public bool? usePreReleaseChannel { get; set; }
+        public bool? UsePreReleaseChannel { get; set; }
 
         public LogSeverity DiscordEventLogLevel { get; set; }
+
+        public ConsoleColor ConsoleBackgroundColor { get; set; }
+
+        public ConsoleColor ConsoleForegroundColor { get; set; }
 
 
         public Configuration()
@@ -52,11 +56,13 @@ namespace ModularBOT
             ReadyStatus = UserStatus.Online;
             LoadCoreModule = true;
             CheckForUpdates = null;                //step 6 - 1
-            usePreReleaseChannel = null;           //step 6 - 2
+            UsePreReleaseChannel = null;           //step 6 - 2
             DebugWizard = false;
             ReadyText = "Ready!";
             ShardCount = 1;                        //TODO: Figure out proper implementation to automatically set this as bot is added to more guilds.
             DiscordEventLogLevel = LogSeverity.Verbose;
+            ConsoleForegroundColor = ConsoleColor.White;
+            ConsoleBackgroundColor = ConsoleColor.DarkBlue;
         }
 
         public void SaveConfig(string jsonFilename)
