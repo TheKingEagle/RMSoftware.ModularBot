@@ -186,7 +186,7 @@ namespace ModularBOT.Component
                     if (serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value)
                     {
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
-                        bool pre = serviceProvider.GetRequiredService<Configuration>().usePreReleaseChannel.Value;
+                        bool pre = serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value;
                         bool availableUpdates = updater.CheckUpdate(pre).GetAwaiter().GetResult();
                         if (availableUpdates)
                         {
