@@ -38,7 +38,8 @@ namespace ModularBOT
             if (!Directory.Exists("ext")) { Directory.CreateDirectory("ext"); }
             RunStartlogo();
             
-            consoleIO.ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, "Active Session");
+            consoleIO.ConsoleGUIReset(configMGR.CurrentConfig.ConsoleForegroundColor,
+                configMGR.CurrentConfig.ConsoleBackgroundColor, "Active Session");
 
             #region DEBUG
 #if (DEBUG)
