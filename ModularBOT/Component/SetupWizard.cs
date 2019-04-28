@@ -21,7 +21,7 @@ namespace ModularBOT.Component
 
             if (!appConfig.DebugWizard)
             {
-                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.usePreReleaseChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
+                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.UsePreReleaseChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
                     && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
                 {
                     return false;//if every critical thing is set... continue.
@@ -351,7 +351,7 @@ namespace ModularBOT.Component
             #endregion
 
             #region PAGE 6 - Updates
-            if (!appConfig.CheckForUpdates.HasValue || !appConfig.usePreReleaseChannel.HasValue)
+            if (!appConfig.CheckForUpdates.HasValue || !appConfig.UsePreReleaseChannel.HasValue)
             {
                 consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Check for updates", 6, 6, ConsoleColor.Green);
 
@@ -396,9 +396,9 @@ namespace ModularBOT.Component
                 }
                 if (!appConfig.CheckForUpdates.Value)
                 {
-                    appConfig.usePreReleaseChannel = false;//set to use stable by default so wizard will stop bothering us.
+                    appConfig.UsePreReleaseChannel = false;//set to use stable by default so wizard will stop bothering us.
                 }
-                if (!appConfig.usePreReleaseChannel.HasValue && appConfig.CheckForUpdates.Value)
+                if (!appConfig.UsePreReleaseChannel.HasValue && appConfig.CheckForUpdates.Value)
                 {
                     while (true)
                     {
@@ -411,7 +411,7 @@ namespace ModularBOT.Component
                         var k = Console.ReadKey();
                         if (k.KeyChar == '1')
                         {
-                            appConfig.usePreReleaseChannel = false;
+                            appConfig.UsePreReleaseChannel = false;
                             consoleIO.WriteEntry("\u2502 You've subscribed to the STABLE updates channel.");
                             consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease true`");
 
@@ -419,7 +419,7 @@ namespace ModularBOT.Component
                         }
                         if (k.KeyChar == '2')
                         {
-                            appConfig.usePreReleaseChannel = true;
+                            appConfig.UsePreReleaseChannel = true;
                             consoleIO.WriteEntry("\u2502  You've subscribed to the PRE-RELEASE updates channel.");
                             consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease false`");
                             break;
