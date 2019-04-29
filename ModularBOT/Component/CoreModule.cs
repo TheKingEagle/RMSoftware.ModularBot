@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -674,6 +675,96 @@ namespace ModularBOT.Component
             builder.WithUrl($"https://discordapp.com/api/oauth2/authorize?client_id={(await Client.GetApplicationInfoAsync()).Id}&permissions=51200&scope=bot");
             await Context.Channel.SendMessageAsync("", false, builder.Build());
         }
+
+        [Command("setavatar"),Summary("Set the bot's avatar."),Remarks("AccessLevels.Administrator")]
+        public async Task SetAvatar([Remainder]string url=null)
+        {
+            if(_DiscordNet.permissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await ReplyAsync("", false, _DiscordNet.permissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            if(Context.Message.Attachments.Count == 0)
+            {
+                if(url == null)
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Error", "You must either specify an image URL, upload an attachment.", Color.Red));
+                    return;
+                }
+                try
+                {
+                    string fn = url.Split('/').Last();
+                    string lf = await DownloadFile(fn, url);
+                    await Client.CurrentUser.ModifyAsync(x => x.Avatar = new Image(lf));
+                    await ReplyAsync("", false, GetEmbeddedMessage("Success!", "The avatar was successfully changed! Note: It may take a minute for updates to appear.", Color.Green));
+                    return;
+                }
+                catch (Exception ex)
+                {
+
+                    await ReplyAsync("", false, GetEmbeddedMessage("Error", "There was a problem downloading the attachment.", Color.Red, ex));
+                    return;
+                }
+                
+            }
+            IAttachment a = Context.Message.Attachments.First();
+            if(!a.Width.HasValue)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Invalid Operation", "Attachment must be an image.", Color.Red));
+                return;
+            }
+
+            try
+            {
+                string lf = await DownloadFile(a.Filename, a.Url);
+                await Client.CurrentUser.ModifyAsync(x => x.Avatar = new Image(lf));
+                await ReplyAsync("", false, GetEmbeddedMessage("Success!", "My avatar was successfully changed! Note: It may take a minute for updates to appear.", Color.Green));
+                return;
+            }
+            catch (Exception ex)
+            {
+
+                await ReplyAsync("", false, GetEmbeddedMessage("Error", "There was a problem downloading the attachment.", Color.Red,ex));
+                return;
+            }
+            
+        }
+
+        [Command("setnickname"),Summary("Set the bot's nickname."),Remarks("AccessLevels.Administrator"),RequireContext(ContextType.Guild,ErrorMessage ="You can only use this in a guild.")]
+        public async Task SetNickname([Remainder]string nick=null)
+        {
+            try
+            {
+                var user = await Context.Guild.GetUserAsync(Client.CurrentUser.Id);
+                await user.ModifyAsync(x => {
+                    x.Nickname = nick;
+                });
+                await ReplyAsync("", false, GetEmbeddedMessage("Success!", "My nickname was successfully changed! Note: It may take a minute for updates to appear.", Color.Green));
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Error", "There was a problem setting my nickname.", Color.Red, ex));
+                return;
+            }
+        }
+
+        [Command("setusername"), Summary("Set the bot's username."), Remarks("AccessLevels.Administrator")]
+        public async Task SetUserName([Remainder]string username)
+        {
+            try
+            {
+                await Client.CurrentUser.ModifyAsync(x => {
+                    x.Username = username;
+                });
+                await ReplyAsync("", false, GetEmbeddedMessage("Success!", "My username was successfully changed! Note: It may take a minute for updates to appear.", Color.Green));
+            }
+            catch (Exception ex)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Error", "There was a problem setting my username.", Color.Red, ex));
+                return;
+            }
+        }
+
         #endregion
 
         #region Messages
@@ -692,6 +783,34 @@ namespace ModularBOT.Component
             }
             return b.Build();
         }
+        #endregion
+
+        #region internal tasks.
+
+        internal async Task<string> DownloadFile(string filename,string attachmentURL)
+        {
+            try
+            {
+                WebRequest wrq = WebRequest.Create(attachmentURL);
+                WebResponse wrs = await wrq.GetResponseAsync();
+                string localfile = $"downloads/{filename}";
+                if (!Directory.Exists("downloads"))
+                {
+                    Directory.CreateDirectory("downloads");
+                }
+                using (FileStream fs = File.Create(localfile))
+                {
+                    await wrs.GetResponseStream().CopyToAsync(fs);
+                    await fs.FlushAsync();
+                }
+                return localfile;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         #endregion
     }
 }
