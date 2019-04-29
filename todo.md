@@ -20,9 +20,6 @@
 * Write OnStart/task manager (OnStart.CORE scripting) **DONE**
 * Write Modules loader **DONE**
 * **FINISH CoreModule commands IN PROGRESS**
-   * setavatar
-   * setnickname
-   * setusername
    * variables get
    * variables list
    * variables set
