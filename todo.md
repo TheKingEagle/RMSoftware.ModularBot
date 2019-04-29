@@ -21,7 +21,7 @@
 * Write Modules loader **DONE**
 * **FINISH CoreModule commands IN PROGRESS**
    * setavatar
-   * setnick
+   * setnickname
    * setusername
    * variables get
    * variables list
