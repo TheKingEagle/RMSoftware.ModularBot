@@ -110,6 +110,8 @@ namespace TestModule
         [Command("pollJoin", RunMode = RunMode.Async)]
         public async Task DoJoinCheck(ulong GuildID, ulong ChannelID, ulong RoleID = 0,[Remainder]string WelcomeMessage=null)
         {
+            LogMessage ER3R = new LogMessage(LogSeverity.Info, "Greetings", "COMMAND CALLED");
+            _writer.WriteEntry(ER3R);
             //_jservice.WelcomeMessage = WelcomeMessage;
             GuildQueryItem item = new GuildQueryItem
             {
