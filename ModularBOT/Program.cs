@@ -48,6 +48,7 @@ namespace ModularBOT
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE editcmd & getcmd"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE Task manager"));
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE External Module Loader"));
+            AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
 #endif
             #endregion
 
@@ -79,6 +80,15 @@ namespace ModularBOT
             Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
             return 0x000;//ok;
+        }
+
+        private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
+        {
+            Thread.Sleep(300);
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", e.Exception.Message), ConsoleColor.DarkRed, false, false, true);
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", "DETAILS in Errors.log"), ConsoleColor.DarkRed, false, false, true);
+            Thread.Sleep(300);
+            consoleIO.WriteErrorsLog(e.Exception);
         }
 
         private static readonly Func<bool> BotShutdown = delegate ()
