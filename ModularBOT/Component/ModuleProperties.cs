@@ -46,7 +46,7 @@ namespace ModularBOT.Component
                             {
                                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Modules", $"Service type specified! Injecting service: {propertyItem.ServiceClass} from {asmb.GetName().Name}"));
                                 serviceCollection = serviceCollection.AddSingleton(asmb.GetType(propertyItem.ServiceClass));
-                                serviceProvider = serviceCollection.BuildServiceProvider();
+                                
                             }
 
                             if(string.IsNullOrWhiteSpace(propertyItem.ModuleName))
@@ -54,6 +54,7 @@ namespace ModularBOT.Component
                                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", $"Type name is required! Unable to add module from {asmb.GetName().Name}"));
                                 continue;
                             }
+                            serviceProvider = serviceCollection.BuildServiceProvider();
                             cmdsvr.AddModuleAsync(asmb?.GetType(propertyItem.ModuleName), serviceProvider);
                             _modules.Add(propertyItem);
                         }
