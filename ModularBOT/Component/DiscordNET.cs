@@ -53,8 +53,8 @@ namespace ModularBOT.Component
                 services.AddSingleton(consoleIO);
                 services.AddSingleton(cmdsvr);
                 services.AddSingleton(this);
-
-
+                serviceProvider = services.BuildServiceProvider();
+                
                 Client = new DiscordShardedClient(new DiscordSocketConfig
                 {
                     MessageCacheSize = 20,
@@ -66,11 +66,11 @@ namespace ModularBOT.Component
                 });
 
                 services.AddSingleton(Client);
-                
                 serviceProvider = services.BuildServiceProvider();
                 permissionManager = new PermissionManager(serviceProvider);
                 services.AddSingleton(permissionManager);
                 serviceProvider = services.BuildServiceProvider();
+                moduleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, ref AppConfig);
                 customCMDMgr = new CustomCommandManager(serviceProvider);
                 services.AddSingleton(customCMDMgr);
                 serviceProvider = services.BuildServiceProvider();
@@ -84,7 +84,7 @@ namespace ModularBOT.Component
                 Client.GuildAvailable += Client_GuildAvailable;
                 Client.GuildUnavailable += Client_GuildUnavailable;
 
-                moduleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, ref AppConfig);
+                
                 updater = new UpdateManager(serviceProvider);
                 cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
