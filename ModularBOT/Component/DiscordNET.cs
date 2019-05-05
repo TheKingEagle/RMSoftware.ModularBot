@@ -17,22 +17,27 @@ namespace ModularBOT.Component
 {
     public class DiscordNET
     {
+        #region Fields
+        public CommandService cmdsvr = new Discord.Commands.CommandService();  //Discord Command Service
+        public IServiceCollection services;                                    //Discord Service collection
+        public IServiceProvider serviceProvider;                               //Discord Service provider
+        public bool InputCanceled = false;                                     //ModularBOT Console Read Operation
+        private static bool init_start = false;                                //DiscordNET Conditional Initialization
+        private bool Initialized = false;                                      //Conditional Completed Initialization
+        private List<SocketMessage> messageQueue = new List<SocketMessage>();  //DiscordNET Message Queue
 
-        public CommandService cmdsvr = new Discord.Commands.CommandService(); //Application Command Service.
+        #endregion
 
-        public IServiceCollection services; //Application Service collection
-        public IServiceProvider serviceProvider; //Application Service provider.
-        public DateTime StartTime; //Uptime origin
-        private List<SocketMessage> messageQueue = new List<SocketMessage>();
-        public CustomCommandManager customCMDMgr;
-        public PermissionManager permissionManager;
-        public ModuleManager moduleMgr;
-        public UpdateManager updater;
-        public bool InputCanceled = false;
-        static bool init_start = false;
-        bool Initialized = false;
-        public bool DisableMessages { get; set; } = false;
-        public DiscordShardedClient Client { get; private set; }
+        #region Properties
+        public bool DisableMessages { get; set; } = false;                     //DiscordNET Message Processing Flag
+        public DateTime StartTime { get; private set; }                        //DiscordNET Operation Start Date
+        public CustomCommandManager CustomCMDMgr { get; private set; }         //ModularBOT Custom Commands Manager
+        public PermissionManager PermissionManager { get; private set; }       //ModularBOT Permission Manager
+        public ModuleManager ModuleMgr { get; private set; }                   //ModularBOT Module Manager
+        public UpdateManager Updater { get; private set; }                     //ModularBOT Update Manager
+        public DiscordShardedClient Client { get; private set; }               //Discord Sharded Client
+
+        #endregion
 
         #region Methods
 
@@ -67,12 +72,12 @@ namespace ModularBOT.Component
 
                 services.AddSingleton(Client);
                 serviceProvider = services.BuildServiceProvider();
-                permissionManager = new PermissionManager(serviceProvider);
-                services.AddSingleton(permissionManager);
+                PermissionManager = new PermissionManager(serviceProvider);
+                services.AddSingleton(PermissionManager);
                 serviceProvider = services.BuildServiceProvider();
-                moduleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, ref AppConfig);
-                customCMDMgr = new CustomCommandManager(serviceProvider);
-                services.AddSingleton(customCMDMgr);
+                ModuleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, ref AppConfig);
+                CustomCMDMgr = new CustomCommandManager(serviceProvider);
+                services.AddSingleton(CustomCMDMgr);
                 serviceProvider = services.BuildServiceProvider();
                 Client.Log += Client_Log;
                 
@@ -85,7 +90,7 @@ namespace ModularBOT.Component
                 Client.GuildUnavailable += Client_GuildUnavailable;
 
                 
-                updater = new UpdateManager(serviceProvider);
+                Updater = new UpdateManager(serviceProvider);
                 cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 Task.Run(async () => await Client.StartAsync());
@@ -164,10 +169,10 @@ namespace ModularBOT.Component
                         Stop(ref shutdownRequested);
                         return;
                     }
-                    GuildObject obj = customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == i.Guild.Id) ?? customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
+                    GuildObject obj = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == i.Guild.Id) ?? CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
                     try
                     {
-                        customCMDMgr.coreScript.EvaluateScriptFile(obj, "startup.core", Client, new PseudoMessage("", Client.CurrentUser, (IGuildChannel)Client.GetChannel(id), MessageSource.Bot)).GetAwaiter().GetResult();
+                        CustomCMDMgr.coreScript.EvaluateScriptFile(obj, "startup.core", Client, new PseudoMessage("", Client.CurrentUser, (IGuildChannel)Client.GetChannel(id), MessageSource.Bot)).GetAwaiter().GetResult();
                         Initialized = true;
                     }
                     catch (FileNotFoundException ex)
@@ -187,11 +192,11 @@ namespace ModularBOT.Component
                     {
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
                         bool pre = serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value;
-                        bool availableUpdates = updater.CheckUpdate(pre).GetAwaiter().GetResult();
+                        bool availableUpdates = Updater.CheckUpdate(pre).GetAwaiter().GetResult();
                         if (availableUpdates)
                         {
-                            string verdata = pre ? updater.UpdateInfo.PREVERS : updater.UpdateInfo.VERSION;
-                            string package = pre ? updater.UpdateInfo.PREPAKG : updater.UpdateInfo.PACKAGE;
+                            string verdata = pre ? Updater.UpdateInfo.PREVERS : Updater.UpdateInfo.VERSION;
+                            string package = pre ? Updater.UpdateInfo.PREPAKG : Updater.UpdateInfo.PACKAGE;
                             EmbedBuilder builder = new EmbedBuilder();
                             builder.WithAuthor(Client.CurrentUser);
                             builder.WithTitle("UPDATE AVAILABLE");
@@ -285,16 +290,16 @@ namespace ModularBOT.Component
                 SocketGuildChannel sc = arg.Channel as SocketGuildChannel;
                 gid = sc.Guild.Id;
             }
-            if (!string.IsNullOrWhiteSpace(customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
+            if (!string.IsNullOrWhiteSpace(CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix))
             {
-                prefix = customCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
+                prefix = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
             }
             
             if (message.Content.StartsWith(prefix))
             {
-                if (permissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
+                if (PermissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
                 {
-                    if (permissionManager.GetWarnOnBlacklist(arg.Author))
+                    if (PermissionManager.GetWarnOnBlacklist(arg.Author))
                     {
                         EmbedBuilder donttalktome = new EmbedBuilder();
                         donttalktome.WithAuthor(Client.CurrentUser);
@@ -310,9 +315,9 @@ namespace ModularBOT.Component
             #region Deep-rooted prefix command
             if (message.Content.StartsWith("!prefix") || message.Content.StartsWith(".prefix") || message.Content.StartsWith("/prefix")) //This command will ALWAYS be a thing. it cannot be overridden.
             {
-                if (permissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
+                if (PermissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
                 {
-                    if (permissionManager.GetWarnOnBlacklist(arg.Author))
+                    if (PermissionManager.GetWarnOnBlacklist(arg.Author))
                     {
                         EmbedBuilder donttalktome = new EmbedBuilder();
                         donttalktome.WithAuthor(Client.CurrentUser);
@@ -361,7 +366,7 @@ namespace ModularBOT.Component
             
             string result = "";
            
-            await Task.Run(() =>  result = customCMDMgr.ProcessMessage(arg));
+            await Task.Run(() =>  result = CustomCMDMgr.ProcessMessage(arg));
             if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC" && result != null)
             {
                 await arg.Channel.SendMessageAsync(result);

@@ -683,7 +683,7 @@ namespace ModularBOT.Component
                     string varname = input.Split(' ')[0];
                     input = input.Remove(0, varname.Length);
                     input = input.Trim();
-                    discordNET.customCMDMgr.coreScript.Set(varname, input);
+                    discordNET.CustomCMDMgr.coreScript.Set(varname, input);
                 }
 
                 if (input.ToLower().StartsWith("config.loglevel"))
