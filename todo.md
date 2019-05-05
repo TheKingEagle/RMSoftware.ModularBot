@@ -1,31 +1,44 @@
+>### Legend
+>* **Indicates a WORK IN PROGRESS** 🔜
+>* *Indicates HELP WANTED* ⚠
+>* Indicates fully implemented ✅
+>* ~~Indicates SCRAPPED feature~~ ⛔
+>* Indicates TODO with no immediate action
 # Planned changes
-* Add to allow for some changes, on the fly (avatar, nickname, username, prefix, etc.)
-* Add support for per-guild prefixes **DONE**
-* Add support for multi-character prefixes **DONE**
-* Change custom commands system:
-  * Seperate Per-guild and global commands **DONE**
-  * Improve command management **DONE**
-* NEW ConsoleIO class **DONE**
-* **Improve stability (killscreen/autorestart Uncaught crashes) IN PROGRESS**
-* Optimize code (lol) **RE-WRITING from scratch.**
-* Use Discord.NET 2.0.1 **DONE**
-* Use Shards **DONE**
-* Write new setup wizard **DONE**
-* Move to JSON Configuration manager **DONE**
+* Add to allow for some changes, on the fly (avatar, nickname, username, prefix, etc.) ✅
+* Add support for per-guild prefixes ✅
+* Add support for multi-character prefixes ✅
+* Change custom commands system ✅ 
+  * Seperate Per-guild and global commands ✅
+  * Improve command management ✅
+* NEW ConsoleIO class ✅
+   * ~~JSon Log mode (for GUI Wrapper)~~ ⛔
+   * Improved Console Layout ✅
+   
+* **Improve stability (killscreen/autorestart Uncaught crashes)** 🔜
+* **Optimize code (lol)** 🔜
+* Use Discord.NET 2.0.1 ✅
+* Use Shards ✅
+* Write new setup wizard ✅
+* Move to JSON Configuration manager ✅
 * Per-guild command modules
-* New Permission system **DONE**
-* **Update Checking - Implemented bot-side. Server-side: IN PROGRESS**
+* New Permission system ✅
+* **Update Checking** 🔜
 
 # Current TODOs
-* Write OnStart/task manager (OnStart.CORE scripting) **DONE**
-* Write Modules loader **DONE**
-* **FINISH CoreModule commands IN PROGRESS**
+* Write Modules loader ✅
+* **FINISH CoreModule commands** 🔜
    * variables get
    * variables list
    * variables set
    
-* **Server-side update push. IN PROGRESS**
-   * Real time update push
+* **Automatic Updates** 🔜
+   * Real time update push (Api.rms0.org)
+   * **Client-side download and run (TASK MANAGER)** 🔜
+   * **Download Progress screen (CONSOLE)** 🔜
+   
 * Per-guild modules
-* Updates Downloader
-* Module Installer
+   * Module Management Screen (CONSOLE)
+   * Module Installer
+   
+* *Auto-configure Shard count based on number of guilds.* ⚠
