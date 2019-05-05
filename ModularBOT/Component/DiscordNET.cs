@@ -88,6 +88,7 @@ namespace ModularBOT.Component
                 Client.ShardDisconnected += Client_ShardDisconnected;
                 Client.GuildAvailable += Client_GuildAvailable;
                 Client.GuildUnavailable += Client_GuildUnavailable;
+                Client.JoinedGuild += Client_JoinedGuild;
 
                 
                 Updater = new UpdateManager(serviceProvider);
@@ -124,6 +125,21 @@ namespace ModularBOT.Component
             {
                 RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, 5, ex).GetAwaiter().GetResult();
             }
+        }
+
+        private Task Client_JoinedGuild(SocketGuild arg)
+        {
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
+                $"Creating {arg.Name}'s {arg.Id}.guild file!"));
+            GuildObject g = new GuildObject
+            {
+                ID = arg.Id,
+                CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                GuildCommands = new List<GuildCommand>(),
+            };
+            CustomCMDMgr.AddGuildObject(g);
+            return Task.Delay(0);
+
         }
 
         public void Stop(ref bool ShutdownRequest)
