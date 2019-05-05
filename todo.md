@@ -14,7 +14,7 @@
 * ***NEW ConsoleIO class*** 🔜⚠
    * ~~JSon Log mode (for GUI Wrapper)~~ ⛔
    * Improved Console Layout ✅
-   * ***FIX Random output glitches See Issue #9*** 🔜⚠
+   * ***FIX Random output glitches See Issue [#9](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/9)*** 🔜⚠
    
 * **Improve stability (killscreen/autorestart Uncaught crashes)** 🔜
 * **Optimize code (lol)** 🔜
@@ -42,4 +42,4 @@
    * Module Management Screen (CONSOLE)
    * Module Installer
    
-* *Auto-configure Shard count based on number of guilds. See #8 * ⚠
+* *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
