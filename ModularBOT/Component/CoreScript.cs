@@ -769,7 +769,7 @@ namespace ModularBOT.Component
                                     }
                                     string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
 
-                                    await ((DiscordSocketClient)client).SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", ActivityType.Streaming);
+                                    await ((DiscordShardedClient)client).SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", ActivityType.Streaming);
                                     break;
                                 case ("WAIT"):
                                     int v = 1;
@@ -911,29 +911,29 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("BOTSTATUS"):
-                                    await ((DiscordSocketClient)client).SetGameAsync(ProcessVariableString(gobj, line.Remove(0, 10), cmd, client, message));
+                                    await ((DiscordShardedClient)client).SetGameAsync(ProcessVariableString(gobj, line.Remove(0, 10), cmd, client, message));
                                     break;
                                 case ("STATUSORB"):
                                     string cond = line.Remove(0, 10).ToUpper();
                                     switch (cond)
                                     {
                                         case ("ONLINE"):
-                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Online);
+                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Online);
                                             break;
                                         case ("AWAY"):
-                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Idle);
+                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Idle);
                                             break;
                                         case ("AFK"):
-                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.AFK);
+                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.AFK);
                                             break;
                                         case ("BUSY"):
-                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.DoNotDisturb);
+                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.DoNotDisturb);
                                             break;
                                         case ("OFFLINE"):
-                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Offline);
+                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Offline);
                                             break;
                                         case ("INVISIBLE"):
-                                            await ((DiscordSocketClient)client).SetStatusAsync(UserStatus.Invisible);
+                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Invisible);
                                             break;
                                         default:
                                             error = true;
@@ -956,7 +956,7 @@ namespace ModularBOT.Component
                                     }
                                     string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
 
-                                    await ((DiscordSocketClient)client).SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", ActivityType.Streaming);
+                                    await ((DiscordShardedClient)client).SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", ActivityType.Streaming);
                                     break;
                                 case ("WAIT"):
                                     int v = 1;
