@@ -11,9 +11,10 @@
 * Change custom commands system ✅ 
   * Seperate Per-guild and global commands ✅
   * Improve command management ✅
-* NEW ConsoleIO class ✅
+* ***NEW ConsoleIO class*** 🔜⚠
    * ~~JSon Log mode (for GUI Wrapper)~~ ⛔
    * Improved Console Layout ✅
+   * ***FIX Random output glitches See Issue #9*** 🔜⚠
    
 * **Improve stability (killscreen/autorestart Uncaught crashes)** 🔜
 * **Optimize code (lol)** 🔜
@@ -41,4 +42,4 @@
    * Module Management Screen (CONSOLE)
    * Module Installer
    
-* *Auto-configure Shard count based on number of guilds.* ⚠
+* *Auto-configure Shard count based on number of guilds. See #8* ⚠
