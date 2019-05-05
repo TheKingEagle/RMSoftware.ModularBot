@@ -42,4 +42,4 @@
    * Module Management Screen (CONSOLE)
    * Module Installer
    
-* *Auto-configure Shard count based on number of guilds. See #8* ⚠
+* *Auto-configure Shard count based on number of guilds. See #8 * ⚠
