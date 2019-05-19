@@ -53,7 +53,7 @@ namespace ModularBOT
             LogChannel = 0;                        //step 3
             CommandPrefix = null;                  //step 4
             LogoPath = null;                       //step 5
-            RegisterManagementOnJoin = null;             //step 6
+            RegisterManagementOnJoin = null;       //step 6
             ReadyActivity = ActivityType.Playing;
             ReadyStatus = UserStatus.Online;
             LoadCoreModule = true;
