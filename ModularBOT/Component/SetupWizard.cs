@@ -22,7 +22,7 @@ namespace ModularBOT.Component
             if (!appConfig.DebugWizard)
             {
                 if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.UsePreReleaseChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
-                    && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath))
+                    && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath) && appConfig.RegisterManagementOnJoin.HasValue)
                 {
                     return false;//if every critical thing is set... continue.
                 }
@@ -36,7 +36,7 @@ namespace ModularBOT.Component
                 };
             }
             #region PAGE 1 - Introduction
-            consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Welcome", 1, 6, ConsoleColor.Green);
+            consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Welcome", 1, 8, ConsoleColor.Green);
 
             #region Welcome Check - Additional messages
             if (appConfig.DebugWizard)
@@ -54,11 +54,14 @@ namespace ModularBOT.Component
             #endregion
 
             consoleIO.WriteEntry("\u2502 Welcome to the initial setup wizard for your new modular discord bot!");
-            consoleIO.WriteEntry("\u2502 Here we will go through some basic configuration steps to get your new bot up and running. Some things to note before getting started:");
+            consoleIO.WriteEntry("\u2502 Here we will go through some basic configuration steps to get your new bot up and running.");
+            consoleIO.WriteEntry("\u2502\u2005");
+            consoleIO.WriteEntry("\u2502 Some things to note before getting started:");
             consoleIO.WriteEntry("\u2502\u2005");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- This wizard will automatically determine what needs to be set up, and will prompt you when needed.");
             consoleIO.WriteEntry("\u2502\u2005");
-            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- PRIVACY Notice: This application will output any message that mentions the bot, or messages that start with the command prefix, to the console.", ConsoleColor.Red);
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- PRIVACY Notice: This application will output any message that mentions the bot", ConsoleColor.Red);
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005\u2005\u2005 or messages that start with the command prefix, to the console.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Messages between other users in any given channel WILL NOT show up in the console.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Any data written to the console will ONLY appear in the console.", ConsoleColor.Red);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Otherwise, that would be extremely creepy. This isn't what we want.", ConsoleColor.Red);
@@ -71,7 +74,7 @@ namespace ModularBOT.Component
             #region PAGE 2 - Authorization token
             if (string.IsNullOrWhiteSpace(appConfig.AuthToken))
             {
-                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Authorization Token", 2, 6, ConsoleColor.Green);
+                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Authorization Token", 2, 8, ConsoleColor.Green);
 
 
 
@@ -153,7 +156,7 @@ namespace ModularBOT.Component
             #region PAGE 3 - Log channel
             if (appConfig.LogChannel == 0)
             {
-                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Channel", 3, 6, ConsoleColor.Green);
+                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Channel", 3, 8, ConsoleColor.Green);
 
 
 
@@ -218,7 +221,7 @@ namespace ModularBOT.Component
             #region PAGE 4 - Prefix
             if (string.IsNullOrWhiteSpace(appConfig.CommandPrefix) || appConfig.CommandPrefix.Contains('`'))
             {
-                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Command Prefix", 4, 6, ConsoleColor.Green);
+                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Command Prefix", 4, 8, ConsoleColor.Green);
 
 
 
@@ -239,7 +242,6 @@ namespace ModularBOT.Component
                 if (appConfig.DebugWizard)
                 {
                     consoleIO.WriteEntry("\u2502 DEBUG MODE: (This value WILL NOT BE SAVED)", ConsoleColor.Yellow, true);
-
                 }
                 Console.Write("\u2502 > ");
                 string prefix = "";
@@ -284,7 +286,6 @@ namespace ModularBOT.Component
                 if (appConfig.DebugWizard)
                 {
                     consoleIO.WriteEntry("\u2502 DEBUG MODE: (This value WILL NOT BE SAVED)", ConsoleColor.Yellow, true);
-
                 }
 
                 ConsoleKeyInfo k;
@@ -309,7 +310,7 @@ namespace ModularBOT.Component
                         Thread.Sleep(800);
                         consoleIO.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
                         Thread.Sleep(3000);
-                        consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
+                        consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 7, ConsoleColor.Green);
                         break;
                     }
                     if (k.KeyChar == '3')
@@ -350,12 +351,61 @@ namespace ModularBOT.Component
             }
             #endregion
 
-            #region PAGE 6 - Updates
+            #region PAGE 6 - Register Command Managers
+            if(!appConfig.RegisterManagementOnJoin.HasValue)
+            {
+                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Mass-deployment Mode", 6, 8, ConsoleColor.Green);
+                if (appConfig.DebugWizard)
+                {
+                    consoleIO.WriteEntry("\u2502 DEBUG MODE: (This value WILL NOT BE SAVED)", ConsoleColor.Yellow, true);
+                }
+                consoleIO.WriteEntry("\u2502 Would you like to enable large-scale permission assignment? This is useful if you plan on making your bot public.");
+                consoleIO.WriteEntry("\u2502\u2005");
+                consoleIO.WriteEntry("\u2502 WHAT IT DOES:");
+                consoleIO.WriteEntry("\u2502\u2005");
+                consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 - Enables bot to download all users when it joins a guild");
+                consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 - Searches for all users who can manage the guild");
+                consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 - Registers all found guild managers to your bot's permission system as 'CommandManager'...");
+                consoleIO.WriteEntry("\u2502\u2005");
+                consoleIO.WriteEntry("\u2502\u2005");
+                consoleIO.WriteEntry("\u2502 This may cause increased memory use. Please plan accordingly.", ConsoleColor.Yellow);
+                consoleIO.WriteEntry("\u2502\u2005");
+                consoleIO.WriteEntry("\u2502\u2005");
+                bool md = false;
+                while (true)
+                {
+                    consoleIO.WriteEntry("\u2502 Please enter a choice below... (Y/N)", ConsoleColor.DarkBlue, true);
+                    Console.Write("\u2502 > ");
+                    ConsoleKeyInfo kz = Console.ReadKey();
+                    
+                    if (kz.Key == ConsoleKey.Y )
+                    {
+                        md = true;
+                        break;
+                    }
+                    if (kz.Key == ConsoleKey.N)
+                    {
+                        md = false;
+                        break;
+                    }
+
+                }
+                if(!appConfig.DebugWizard)
+                {
+                    appConfig.RegisterManagementOnJoin = md;
+                }
+            }
+            #endregion
+
+            #region PAGE 7 - Updates
             if (!appConfig.CheckForUpdates.HasValue || !appConfig.UsePreReleaseChannel.HasValue)
             {
-                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Check for updates", 6, 6, ConsoleColor.Green);
+                consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Check for updates", 7, 8, ConsoleColor.Green);
 
-
+                if (appConfig.DebugWizard)
+                {
+                    consoleIO.WriteEntry("\u2502 DEBUG MODE: (This value WILL NOT BE SAVED)", ConsoleColor.Yellow, true);
+                }
 
                 consoleIO.WriteEntry("\u2502 RMSoftware Development may occasionally push live updates, with feature improvements and important bug fixes.");
                 consoleIO.WriteEntry("\u2502 While enabling update notifications is purely optional, it is highly recommended.");
@@ -377,7 +427,10 @@ namespace ModularBOT.Component
                         var k = Console.ReadKey();
                         if (k.KeyChar == 'n')
                         {
-                            appConfig.CheckForUpdates = false;
+                            if (!appConfig.DebugWizard)
+                            {
+                                appConfig.CheckForUpdates = false;
+                            }
                             consoleIO.WriteEntry("\u2502 OK. You will not receive application update notifications.");
                             consoleIO.WriteEntry("\u2502 You can change this later via command: `config.setupdates true`");
                             
@@ -385,7 +438,10 @@ namespace ModularBOT.Component
                         }
                         if (k.KeyChar == 'y')
                         {
-                            appConfig.CheckForUpdates = true;
+                            if(!appConfig.DebugWizard)
+                            {
+                                appConfig.CheckForUpdates = true;
+                            }
                             consoleIO.WriteEntry("\u2502 OK. You will receive application update notifications.");
                             consoleIO.WriteEntry("\u2502 You can change this later via command: `config.setupdates false`");
                             consoleIO.WriteEntry("\u2502\u2005");
@@ -396,7 +452,10 @@ namespace ModularBOT.Component
                 }
                 if (!appConfig.CheckForUpdates.Value)
                 {
-                    appConfig.UsePreReleaseChannel = false;//set to use stable by default so wizard will stop bothering us.
+                    if (!appConfig.DebugWizard)
+                    {
+                        appConfig.UsePreReleaseChannel = false;//set to use stable by default so wizard will stop bothering us.
+                    }
                 }
                 if (!appConfig.UsePreReleaseChannel.HasValue && appConfig.CheckForUpdates.Value)
                 {
@@ -411,7 +470,10 @@ namespace ModularBOT.Component
                         var k = Console.ReadKey();
                         if (k.KeyChar == '1')
                         {
-                            appConfig.UsePreReleaseChannel = false;
+                            if(!appConfig.DebugWizard)
+                            {
+                                appConfig.UsePreReleaseChannel = false;
+                            }
                             consoleIO.WriteEntry("\u2502 You've subscribed to the STABLE updates channel.");
                             consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease true`");
 
@@ -419,7 +481,10 @@ namespace ModularBOT.Component
                         }
                         if (k.KeyChar == '2')
                         {
-                            appConfig.UsePreReleaseChannel = true;
+                            if (!appConfig.DebugWizard)
+                            {
+                                appConfig.UsePreReleaseChannel = true;
+                            }
                             consoleIO.WriteEntry("\u2502  You've subscribed to the PRE-RELEASE updates channel.");
                             consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease false`");
                             break;
@@ -430,12 +495,13 @@ namespace ModularBOT.Component
             }
 
             #endregion
+
             #region Final page
-            consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Complete", 6, 6, ConsoleColor.Green);
+            consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Complete", 8, 8, ConsoleColor.Green);
             consoleIO.WriteEntry("\u2502\u2005That is all the configuration for right now! Here are a few more things to know:");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- If you want to run this configuration wizard again, delete the 'modbot.-config.cnf' file in the program's directory.");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- The documentation, and links to the source code are available at https://rmsoftware.org/modularbot");
-            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- The documentation, Version history can be found here https://rmsoftware.org/modularbot/history");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Version history can be found here https://rmsoftware.org/modularbot/history");
             consoleIO.WriteEntry("\u2502\u2005");
             consoleIO.WriteEntry("\u2502\u2005Available Console Commands");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- cls or clear: clear the console output");
@@ -466,7 +532,7 @@ namespace ModularBOT.Component
 
         internal void WritePage5BODY(ref ConsoleIO consoleIO)
         {
-            consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
+            consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 8, ConsoleColor.Green);
 
             consoleIO.WriteEntry("\u2502 Have you ever seen those old DOS programs that have the fancy ASCII art @ startup?");
             consoleIO.WriteEntry("\u2502 Yea? Well great! This bot can do that! Why? (You may be asking) WHY NOT?!");
