@@ -146,9 +146,12 @@ namespace ModularBOT.Component
                 {
                     if (item.GuildPermissions.ManageGuild)
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a guild manager: " +
+                        if(PermissionManager.GetAccessLevel(item) < AccessLevels.CommandManager)
+                        {
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a guild manager: " +
                             $"{item.Username + "#" + item.Discriminator}. Registering them as CommandManager!"));
-                        PermissionManager.RegisterEntity(item, AccessLevels.CommandManager);
+                            PermissionManager.RegisterEntity(item, AccessLevels.CommandManager);
+                        }
                     }
                 }
             }
