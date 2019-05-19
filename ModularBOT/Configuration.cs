@@ -44,6 +44,7 @@ namespace ModularBOT
 
         public ConsoleColor ConsoleForegroundColor { get; set; }
 
+        public bool? RegisterManagementOnJoin { get; set; }
 
         public Configuration()
         {
@@ -52,14 +53,16 @@ namespace ModularBOT
             LogChannel = 0;                        //step 3
             CommandPrefix = null;                  //step 4
             LogoPath = null;                       //step 5
+            RegisterManagementOnJoin = null;             //step 6
             ReadyActivity = ActivityType.Playing;
             ReadyStatus = UserStatus.Online;
             LoadCoreModule = true;
-            CheckForUpdates = null;                //step 6 - 1
-            UsePreReleaseChannel = null;           //step 6 - 2
+            CheckForUpdates = null;                //step 7 - 1
+            UsePreReleaseChannel = null;           //step 7 - 2
             DebugWizard = false;
             ReadyText = "Ready!";
             ShardCount = 1;                        //TODO: Figure out proper implementation to automatically set this as bot is added to more guilds.
+            
             DiscordEventLogLevel = LogSeverity.Verbose;
             ConsoleForegroundColor = ConsoleColor.White;
             ConsoleBackgroundColor = ConsoleColor.DarkBlue;
