@@ -127,7 +127,7 @@ namespace ModularBOT.Component
             }
         }
 
-        private Task Client_JoinedGuild(SocketGuild arg)
+        private async Task Client_JoinedGuild(SocketGuild arg)
         {
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
                 $"Creating {arg.Name}'s {arg.Id}.guild file!"));
@@ -138,7 +138,21 @@ namespace ModularBOT.Component
                 GuildCommands = new List<GuildCommand>(),
             };
             CustomCMDMgr.AddGuildObject(g);
-            return Task.Delay(0);
+            if(serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value)
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
+                await arg.DownloadUsersAsync();
+                foreach (SocketGuildUser item in arg.Users)
+                {
+                    if (item.GuildPermissions.ManageGuild)
+                    {
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a guild manager: " +
+                            $"{item.Username + "#" + item.Discriminator}. Registering them as CommandManager!"));
+                        PermissionManager.RegisterEntity(item, AccessLevels.CommandManager);
+                    }
+                }
+            }
+            
 
         }
 
