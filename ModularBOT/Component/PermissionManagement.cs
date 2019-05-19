@@ -370,6 +370,7 @@ namespace ModularBOT.Component
         public ulong EntityID { get; set; }
 
         public bool WarnIfBlacklisted { get; set; }
+        
     }
     
 }
