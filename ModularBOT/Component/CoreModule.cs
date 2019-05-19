@@ -85,7 +85,7 @@ namespace ModularBOT.Component
         }
 
         #region Command Management
-        [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command."), Remarks("AccessLevels.CommandManager")]
+        [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command. (NOTE: Creating a global commands requires AccessLevels.Administrator)"), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_Add(string cmdname, bool restricted, [Remainder]string action)
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
@@ -98,11 +98,18 @@ namespace ModularBOT.Component
             {
                 gid = Context.Guild.Id;
             }
-
+            if(gid==0)
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)//global commands require administrator priv.
+                {
+                    await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
+            }
             await _DiscordNet.CustomCMDMgr.AddCmd(Context.Message, cmdname, action, restricted,gid);
         }
 
-        [Command("addgcmd"), Summary("Add a global command to your bot"),Remarks("AccessLevels.CommandManager")]
+        [Command("addgcmd"), Summary("Add a global command to your bot"),Remarks("AccessLevels.Administrator")]
         public async Task CMD_AddGlobal(string cmdname, bool restricted, [Remainder]string action)
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
@@ -113,7 +120,7 @@ namespace ModularBOT.Component
             await _DiscordNet.CustomCMDMgr.AddCmd(Context.Message, cmdname, action, restricted);
         }
 
-        [Command("delcmd"), Summary("delete a command from your bot. If you run this via DM, it will delete a global command."), Remarks("AccessLevels.CommandManager")]
+        [Command("delcmd"), Summary("delete a command from your bot. If you run this via DM, it will delete a global command (AccessLevels.Administrator)."), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_Delete(string cmdname)
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
@@ -126,16 +133,23 @@ namespace ModularBOT.Component
             {
                 gid = Context.Guild.Id;
             }
-
+            if (gid == 0)
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)//global commands require administrator priv.
+                {
+                    await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
+            }
             await _DiscordNet.CustomCMDMgr.DelCmd(Context.Message, cmdname, gid);
         }
 
-        [Command("delgcmd"), Summary("delete a global command from your bot."), Remarks("AccessLevels.CommandManager")]
+        [Command("delgcmd"), Summary("delete a global command from your bot."), Remarks("AccessLevels.Administrator")]
         public async Task CMD_DeleteGlobal(string cmdname)
         {
-            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
 
@@ -254,7 +268,7 @@ namespace ModularBOT.Component
             }
         }
 
-        [Command("editcmd"), Summary("Edit a command"), Remarks("AccessLevels.CommandManager")]
+        [Command("editcmd"), Summary("Edit a command. Note: Global command edits require AccessLevels.Administrator"), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_EditCommand(string cmdName, bool? requirePermission=null, [Remainder]string newAction = "(unchanged)")
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
@@ -262,19 +276,43 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
-            await _DiscordNet.CustomCMDMgr.EditCMD(Context, cmdName, requirePermission, newAction, Context.Guild?.Id ?? 0);
+            ulong gid = Context.Guild?.Id ?? 0;
+            if(gid == 0)
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                {
+                    await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
+            }
+            await _DiscordNet.CustomCMDMgr.EditCMD(Context, cmdName, requirePermission, newAction, gid);
 
         }
 
         #endregion
 
         #region Permission Management
-        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.Administrator"),Summary("Set permissions for a user")]
+        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.CommandManager"),Summary("Set permissions for a user")]
         public async Task PERM_SetUser(IUser user, AccessLevels accessLevel)
         {
-            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                return;
+            }
+            if(user == Context.User)
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.","You can't change your own access level.",Color.DarkRed));
+                return;
+            }
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < accessLevel)
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't give someone a higher access level than your own.", Color.DarkRed));
+                return;
+            }
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < _DiscordNet.PermissionManager.GetAccessLevel(user))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't change a user who has a higher access level than your own.", Color.DarkRed));
                 return;
             }
 
@@ -399,7 +437,7 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.Administrator"), Summary("Remove permission entry for user. (Assumes default: AccessLevels.Normal)")]
+        [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.CommandManager"), Summary("Remove permission entry for user. (Assumes default: AccessLevels.Normal)")]
         public async Task PERM_DeleteUser(IUser user)
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -407,7 +445,11 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
-
+            if (user == Context.User)
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't remove yourself from the permission system.", Color.DarkRed));
+                return;
+            }
             EmbedBuilder b = new EmbedBuilder();
             try
             {
