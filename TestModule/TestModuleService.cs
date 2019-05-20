@@ -110,8 +110,14 @@ namespace TestModule
         [Command("pollJoin", RunMode = RunMode.Async)]
         public async Task DoJoinCheck(ulong GuildID, ulong ChannelID, ulong RoleID = 0,[Remainder]string WelcomeMessage=null)
         {
+            
             LogMessage ER3R = new LogMessage(LogSeverity.Info, "Greetings", "COMMAND CALLED");
             _writer.WriteEntry(ER3R);
+            if (Context.User != Context.Client.CurrentUser)
+            {
+                await ReplyAsync(Context.User.Mention+": `This command is not intended to be run by users, only bot's Startup.CORE script.`");
+                return;
+            }
             //_jservice.WelcomeMessage = WelcomeMessage;
             GuildQueryItem item = new GuildQueryItem
             {
@@ -131,6 +137,7 @@ namespace TestModule
                 item.WelcomeMessage = "Please Enjoy Your Stay.";
             }
             await _jservice.StartListening(Context, item);
+            
         }
         
       
