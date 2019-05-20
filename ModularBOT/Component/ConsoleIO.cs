@@ -480,22 +480,22 @@ namespace ModularBOT.Component
         /// <param name="timeout">auto restart timeout in seconds.</param>
         /// <param name="ex">The inner exception leading to the killscreen.</param>
         /// <returns></returns>
-        public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ShutdownCalled, int timeout = 5, Exception ex = null)
+        public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ProgramShutdownFlag, ref bool ProgramRestartFlag, int timeout = 5, Exception ex = null)
         {
-            
+            ScreenBusy = true;
             ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, title);
-            WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."));
+            WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."),null,false,true,false);
             LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
             WriteEntry(m);
 
-            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"));
+            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"), null, false, true, false);
             CreateCrashLog(ex, m);
-            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"));
+            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"), null, false, true, false);
             WriteErrorsLog(ex);
 
             if (!autorestart)
             {
-                WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."), ConsoleColor.Black, true);
+                WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."), null, false, true, false);
                 Console.ReadKey();
             }
             else
@@ -506,7 +506,7 @@ namespace ModularBOT.Component
                     int l = Console.CursorLeft;
                     int t = Console.CursorTop;
 
-                    WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", $"Restarting in {timeout - i} second(s)..."), ConsoleColor.Black, false);
+                    WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", $"Restarting in {timeout - i} second(s)..."), null, false, true, false);
 
                     Console.CursorLeft = l;
                     Console.CursorTop = t;//reset.
@@ -521,8 +521,10 @@ namespace ModularBOT.Component
                 ARGS = restart_args;
 
             }
-            ShutdownCalled = true;
-            return Task.FromResult(autorestart);
+            ProgramShutdownFlag = true;
+            ProgramRestartFlag = autorestart;//redundancy
+            ScreenBusy = false;
+            return Task.FromResult(autorestart);//redundancy
 
         }
         /// <summary>
@@ -613,7 +615,7 @@ namespace ModularBOT.Component
                 if (input.ToLower() == "rskill")
                 {
 
-                    RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will auto restart the program.", true, ref ShutdownCalled, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
+                    RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will auto restart the program.", true, ref ShutdownCalled,ref RestartRequested, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
                     break;
                 }
                 if (input.ToLower() == "cls" || input.ToLower() == "clear")
@@ -624,7 +626,7 @@ namespace ModularBOT.Component
                 }
                 if (input.ToLower() == "tskill")
                 {
-                    RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will prompt you to terminate the program.", false, ref ShutdownCalled, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
+                    RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will prompt you to terminate the program.", false, ref ShutdownCalled, ref RestartRequested, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
                     break;
                 }
                 if (input.ToLower() == "disablecmd")
