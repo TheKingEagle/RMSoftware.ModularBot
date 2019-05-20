@@ -96,7 +96,7 @@ namespace ModularBOT.Component
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 Task.Run(async () => await Client.StartAsync());
                 SpinWait.SpinUntil(ReadyForInit);//Hold thread until needed shard is ready.
-                OffloadReady(ref FromCrash, ref ShutdownRequest);
+                OffloadReady(ref FromCrash, ref ShutdownRequest, ref RestartRequested);
                 
             }
             catch (Discord.Net.HttpException httex)
@@ -104,26 +104,26 @@ namespace ModularBOT.Component
                 if (httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
                 {
 
-                     RestartRequested = consoleIO.ShowKillScreen("Unauthorized", "The server responded with error 401. Make sure your authorization token is correct.", false, ref ShutdownRequest, 5, httex).GetAwaiter().GetResult();
+                     RestartRequested = consoleIO.ShowKillScreen("Unauthorized", "The server responded with error 401. Make sure your authorization token is correct.", false, ref ShutdownRequest, ref RestartRequested,5, httex).GetAwaiter().GetResult();
                 }
                 if (httex.DiscordCode == 4007)
                 {
-                    RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,ref ShutdownRequest, 5, httex).GetAwaiter().GetResult();
+                    RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
                 }
                 if (httex.DiscordCode == 5001)
                 {
-                    RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true, ref ShutdownRequest, 5, httex).GetAwaiter().GetResult();
+                    RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true, ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
                 }
 
                 else
                 {
-                    RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.", true, ref ShutdownRequest, 5, httex).GetAwaiter().GetResult();
+                    RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.", true, ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
                 }
             }
 
             catch (Exception ex)
             {
-                RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, 5, ex).GetAwaiter().GetResult();
+                RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex).GetAwaiter().GetResult();
             }
         }
 
@@ -171,7 +171,7 @@ namespace ModularBOT.Component
             }
         }
 
-        private void OffloadReady(ref bool recovered,ref bool shutdownRequested)
+        private void OffloadReady(ref bool recovered,ref bool shutdownRequested,ref bool RestartRequested)
         {
             try
             {
@@ -197,7 +197,7 @@ namespace ModularBOT.Component
                     {
                         InputCanceled = true;
                         ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
-                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, ref shutdownRequested, 0, new ArgumentException("Guild channel was invalid.", "botChannel"));
+                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, ref shutdownRequested, ref RestartRequested, 0, new ArgumentException("Guild channel was invalid.", "botChannel"));
                         
                         Stop(ref shutdownRequested);
                         return;
@@ -212,7 +212,7 @@ namespace ModularBOT.Component
                     {
                         InputCanceled = true;
                         ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
-                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", $"{ex.Message}", false, ref shutdownRequested, 0, ex);
+                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", $"{ex.Message}", false, ref shutdownRequested, ref RestartRequested, 0, ex);
                         Stop(ref shutdownRequested);
 
                         return;
