@@ -159,6 +159,27 @@ namespace ModularBOT.Component
             return AccessLevels.Normal;
         }
 
+        public bool IsEntityRegistered(ISnowflakeEntity item)
+        {
+            DefaultAdmin = new RegisteredEntity
+            {
+                AccessLevel = AccessLevels.Administrator,
+                EntityID = _services.GetRequiredService<DiscordShardedClient>()
+                .GetApplicationInfoAsync().GetAwaiter().GetResult().Owner.Id,
+                WarnIfBlacklisted = true//though this should never happen.
+            };//This will not be added to list, as it doesn't count.
+            if (item.Id == DefaultAdmin.EntityID)
+            {
+                _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Detected entity as bot owner. User is registered!"));
+
+                return true;
+            }
+            _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "User is registered!"));
+
+            RegisteredEntity df = _entities.FirstOrDefault(z => z.EntityID == item.Id);
+            return df != null;//true if exist
+        }
+
         public bool GetWarnOnBlacklist(ISnowflakeEntity item)
         {
             RegisteredEntity df = _entities.FirstOrDefault(z => z.EntityID == item.Id);
