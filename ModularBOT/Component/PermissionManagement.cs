@@ -174,9 +174,13 @@ namespace ModularBOT.Component
 
                 return true;
             }
-            _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "User is registered!"));
+            
+            
 
             RegisteredEntity df = _entities.FirstOrDefault(z => z.EntityID == item.Id);
+            string cont = (df!=null) ? "is":"is not";
+            LogSeverity ls = (df != null) ? LogSeverity.Verbose : LogSeverity.Warning;
+            _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(ls, "Permissions", $"User {cont} registered!"));
             return df != null;//true if exist
         }
 
