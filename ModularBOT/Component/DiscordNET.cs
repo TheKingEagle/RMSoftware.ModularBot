@@ -315,6 +315,7 @@ namespace ModularBOT.Component
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             if (DisableMessages) return;
+            if (arg.Author.IsBot && !PermissionManager.IsEntityRegistered(arg.Author)) return;//ignore bots unless bot is registered in the permission system!
             if (!(arg is SocketUserMessage message)) return;
             ulong gid = 0;//global by default
             string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
