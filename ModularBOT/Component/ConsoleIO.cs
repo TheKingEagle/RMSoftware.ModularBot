@@ -16,13 +16,13 @@ using System.Globalization;
 
 namespace ModularBOT.Component
 {
-    public static class ConsoleIOWait
-    {
-        public static bool Writing { get; set; }
-    }
+    //public static class ConsoleIOWait
+    //{
+    //    public static bool Writing { get; set; }
+    //}
     public class ConsoleIO
     {
-        public static bool Writing { get; private set; }
+        public bool Writing { get; private set; }
 
         /// <summary>
         /// TRUE if a console command resets the screen temporarily.
@@ -263,8 +263,8 @@ namespace ModularBOT.Component
                 return;
             }
 
-            SpinWait.SpinUntil(() => !ConsoleIOWait.Writing);//This will help prevent the console from being sent into a mess of garbled words.
-            ConsoleIOWait.Writing = true;
+            SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
+            Writing = true;
             PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
             LogMessage l = new LogMessage(message.Severity, message.Source.PadRight(11, '\u2000'), message.Message, message.Exception);
@@ -328,7 +328,9 @@ namespace ModularBOT.Component
                 Thread.Sleep(1);
                 Console.BackgroundColor = bglast;//restore previous color.
                 Console.ForegroundColor = ConsoleForegroundColor;
+                Thread.Sleep(1);
                 Console.Write("\u2551");//uileft
+                Thread.Sleep(1);
                 if (i == 0)
                 {
                     Console.WriteLine(lines[i]);//write current line in queue.
@@ -344,25 +346,27 @@ namespace ModularBOT.Component
             Thread.Sleep(1);
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
+            Thread.Sleep(1);
             if (showCursor)
             {
                 Console.Write(">");//Write the input indicator.
 
             }
             //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
-            Thread.Sleep(5);
+            Thread.Sleep(1);
             Console.BackgroundColor = ConsoleBackgroundColor;
             Console.ForegroundColor = ConsoleForegroundColor;
+            Thread.Sleep(1);
             Console.CursorVisible = showCursor;
             if (showCursor)
             {
                 Console.Write("\u2551");
             }
 
-            Thread.Sleep(5);
+            Thread.Sleep(1);
             CurTop = Console.CursorTop;
-            Thread.Sleep(5);
-            ConsoleIOWait.Writing = false;
+            Thread.Sleep(1);
+            Writing = false;
         }
 
         /// <summary>
@@ -374,11 +378,11 @@ namespace ModularBOT.Component
         {
 
 
-            SpinWait.SpinUntil(() => !ConsoleIOWait.Writing);//This will help prevent the console from being sent into a mess of garbled words.
+            SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             
+            
+            Writing = true;
             PrvTop = Console.CursorTop;
-            ConsoleIOWait.Writing = true;
-
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
 
             string[] lines = WordWrap(message, 1).Split('\n');
@@ -397,6 +401,7 @@ namespace ModularBOT.Component
                 fg = Entrycolor;
                 Console.BackgroundColor = bg;
                 Console.ForegroundColor = fg;
+                Thread.Sleep(1);//safe.
                 Console.Write((char)9617);//Write the colored space.
                 Console.BackgroundColor = bglast;//restore previous color.
                 Console.ForegroundColor = ConsoleForegroundColor;
@@ -413,6 +418,7 @@ namespace ModularBOT.Component
             }
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
+            Thread.Sleep(1);//safe.
             if (showCursor)
             {
                 Console.Write(">");//Write the input indicator.
@@ -423,8 +429,8 @@ namespace ModularBOT.Component
             Console.BackgroundColor = ConsoleBackgroundColor;
             Console.ForegroundColor = ConsoleForegroundColor;
             Console.CursorVisible = showCursor;
-            Writing = false;
             CurTop = Console.CursorTop;
+            Writing = false;
         }
 
         /// <summary>
