@@ -258,11 +258,8 @@ namespace ModularBOT.Component
             {
                 return;
             }
-            if (Writing)
-            {
-                SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
-            }
-            
+
+            SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             Writing = true;
             PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
@@ -355,9 +352,11 @@ namespace ModularBOT.Component
             {
                 Console.Write("\u2551");
             }
-
-            Writing = false;
+            
+            
             CurTop = Console.CursorTop;
+            Thread.Sleep(10);
+            Writing = false;
         }
 
         /// <summary>
@@ -379,9 +378,6 @@ namespace ModularBOT.Component
 
             string[] lines = WordWrap(message, 1).Split('\n');
             ConsoleColor bglast = ConsoleBackgroundColor;
-
-
-
 
             for (int i = 0; i < lines.Length; i++)
             {
