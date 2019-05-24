@@ -855,7 +855,11 @@ namespace ModularBOT.Component
                             break;
                         }
                         string line = await sr.ReadLineAsync();
-
+                        if(string.IsNullOrWhiteSpace(line))
+                        {
+                            LineInScript++;
+                            continue;
+                        }
                         if (LineInScript >= 1)
                         {
                             if (line.ToUpper().StartsWith("::") || line.ToUpper().StartsWith("REM") || line.ToUpper().StartsWith("//"))
