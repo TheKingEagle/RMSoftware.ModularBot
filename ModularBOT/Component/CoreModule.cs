@@ -700,6 +700,32 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync(format + " " + args);
         }
 
+        [Command("Shards")]
+        public async Task BOT_ShardInfo()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("  Shard      Ping      Guilds    ");
+            sb.AppendLine("═════════  ════════  ══════════  ");
+            int id = 0;
+            foreach (DiscordSocketClient socketClient in Client.Shards)
+            {
+                if(id > 22)
+                {
+                    sb.AppendLine("═════════  ════════  ══════════  ");
+                    sb.AppendLine("Only showing first 22 results.");
+                    break;
+                }
+                string strid = id.ToString().PadLeft(9) + "  ";
+                string ping = socketClient.Latency.ToString().PadLeft(8) + "  ";
+                string guilds = socketClient.Guilds.Count.ToString().PadLeft(10) + "  ";
+
+                sb.AppendLine(strid + ping + guilds);
+                id++;
+            }
+            await ReplyAsync("Shard info:");
+            await ReplyAsync($"```DOS\r\n{sb.ToString()}\r\n```");
+        }
+
         [Command("invitebot"), Summary("Generate a basic invite link to add the bot to your guild.")]
         public async Task ShowInvite()
         {
