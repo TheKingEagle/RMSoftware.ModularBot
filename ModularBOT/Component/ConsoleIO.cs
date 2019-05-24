@@ -16,9 +16,13 @@ using System.Globalization;
 
 namespace ModularBOT.Component
 {
+    public static class ConsoleIOWait
+    {
+        public static bool Writing { get; set; }
+    }
     public class ConsoleIO
     {
-        public bool Writing { get; private set; }
+        public static bool Writing { get; private set; }
 
         /// <summary>
         /// TRUE if a console command resets the screen temporarily.
@@ -259,16 +263,13 @@ namespace ModularBOT.Component
                 return;
             }
 
-            SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
-            Writing = true;
+            SpinWait.SpinUntil(() => !ConsoleIOWait.Writing);//This will help prevent the console from being sent into a mess of garbled words.
+            ConsoleIOWait.Writing = true;
             PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
             LogMessage l = new LogMessage(message.Severity, message.Source.PadRight(11, '\u2000'), message.Message, message.Exception);
             string[] lines = WordWrap(l.ToString()).Split('\n');
             ConsoleColor bglast = ConsoleBackgroundColor;
-
-
-
 
             for (int i = 0; i < lines.Length; i++)
             {
@@ -279,6 +280,7 @@ namespace ModularBOT.Component
                 }
                 ConsoleColor bg = ConsoleColor.Black;
                 ConsoleColor fg = ConsoleColor.Black;
+                
                 #region setup entry color.
                 if (!Entrycolor.HasValue)
                 {
@@ -321,21 +323,25 @@ namespace ModularBOT.Component
 
                 Console.BackgroundColor = bg;
                 Console.ForegroundColor = fg;
+                Thread.Sleep(1);
                 Console.Write((char)9617);//Write the colored space.
+                Thread.Sleep(1);
                 Console.BackgroundColor = bglast;//restore previous color.
                 Console.ForegroundColor = ConsoleForegroundColor;
                 Console.Write("\u2551");//uileft
-                Thread.Sleep(1);//safe.
                 if (i == 0)
                 {
                     Console.WriteLine(lines[i]);//write current line in queue.
+                    Thread.Sleep(1);
                 }
                 if (i > 0)
                 {
                     Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000'));//write current line in queue, padded by 21 enQuads to preserve line format.
+                    Thread.Sleep(1);
                 }
 
             }
+            Thread.Sleep(1);
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
             if (showCursor)
@@ -344,7 +350,7 @@ namespace ModularBOT.Component
 
             }
             //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
-            Thread.Sleep(1);//safe.
+            Thread.Sleep(5);
             Console.BackgroundColor = ConsoleBackgroundColor;
             Console.ForegroundColor = ConsoleForegroundColor;
             Console.CursorVisible = showCursor;
@@ -352,11 +358,11 @@ namespace ModularBOT.Component
             {
                 Console.Write("\u2551");
             }
-            
-            
+
+            Thread.Sleep(5);
             CurTop = Console.CursorTop;
-            Thread.Sleep(10);
-            Writing = false;
+            Thread.Sleep(5);
+            ConsoleIOWait.Writing = false;
         }
 
         /// <summary>
@@ -367,12 +373,11 @@ namespace ModularBOT.Component
         public void WriteEntry(string message, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true)
         {
 
-            if (Writing)
-            {
-                SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
-            }
+
+            SpinWait.SpinUntil(() => !ConsoleIOWait.Writing);//This will help prevent the console from being sent into a mess of garbled words.
+            
             PrvTop = Console.CursorTop;
-            Writing = true;
+            ConsoleIOWait.Writing = true;
 
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
 
@@ -482,7 +487,7 @@ namespace ModularBOT.Component
             ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, title);
             WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."),null,false,true,false);
             LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
-            WriteEntry(m);
+            WriteEntry(m, null, false, true, false);
 
             WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"), null, false, true, false);
             CreateCrashLog(ex, m);
