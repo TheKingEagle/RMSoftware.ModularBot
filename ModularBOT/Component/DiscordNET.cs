@@ -24,8 +24,9 @@ namespace ModularBOT.Component
         public bool InputCanceled = false;                                     //ModularBOT Console Read Operation
         private static bool init_start = false;                                //DiscordNET Conditional Initialization
         private bool Initialized = false;                                      //Conditional Completed Initialization
+        private bool LogConnected = false;                                     //Conditional Log channel found & connected
         private List<SocketMessage> messageQueue = new List<SocketMessage>();  //DiscordNET Message Queue
-
+        
         #endregion
 
         #region Properties
@@ -89,7 +90,7 @@ namespace ModularBOT.Component
                 Client.GuildAvailable += Client_GuildAvailable;
                 Client.GuildUnavailable += Client_GuildUnavailable;
                 Client.JoinedGuild += Client_JoinedGuild;
-
+                
                 
                 Updater = new UpdateManager(serviceProvider);
                 cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
@@ -283,12 +284,44 @@ namespace ModularBOT.Component
             }
         }
 
+        private void StartTimeoutKS( int msec_timeout, string eventDescription="Generic Event")
+        {
+            SpinWait.SpinUntil(() => LogConnected == true, msec_timeout);
+            if(!LogConnected)
+            {
+                try
+                {
+                    throw (new TimeoutException($"The specified operation timed out: {eventDescription}"));
+                }
+                catch (Exception ex)
+                {
+
+                    serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Operation Timed out", $"The specified operation timed out: {eventDescription}",
+                    true, ref Program.ShutdownCalled, ref Program.RestartRequested, 5,ex);
+                }
+                
+                
+            }
+            else
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "TaskMgr", "Log Connected within time limit."));
+            }
+
+        }
+
         #endregion
 
         #region Events
-        private Task Client_GuildUnavailable(SocketGuild arg)
+        private Task Client_GuildUnavailable(SocketGuild guild)
         {
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{arg.Name}] "));
+            SocketTextChannel c = guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel);
+            if (c != null)
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Requested initialization channel ({c.Name}) became unavailable."));
+                
+                LogConnected = false;
+            }
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{guild.Name}] "));
             return Task.Delay(0);
         }
 
@@ -302,6 +335,7 @@ namespace ModularBOT.Component
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Requested initialization channel ({c.Name}) has been found. {guild.Name} currently has it!"));
                 StartTime = DateTime.Now;
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"System uptime set to {StartTime}"));
+                LogConnected = true;
             }
             return Task.Delay(0);
         }
@@ -309,6 +343,12 @@ namespace ModularBOT.Component
         private Task Client_ShardDisconnected(Exception arg1, DiscordSocketClient arg2)
         {
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Error, "Shards", $"A shard was disconnected! {arg2.Guilds.Count} guild(s) lost contact. "));
+            if(!Program.ShutdownCalled)
+            {
+                //Set timeout based on shard count.
+                //Ie: 1 shard: 10 second timeout; 10 shards: 100 seconds.
+                Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord re-connection Attempt"));
+            }
             return Task.Delay(0);
         }
 
@@ -442,6 +482,9 @@ namespace ModularBOT.Component
         {
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
+
+            Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
+            
             return Task.Delay(0);
         }
 
