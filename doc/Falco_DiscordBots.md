@@ -25,6 +25,9 @@ Falco Lombardi is a multi-purpose bot that is designed to be customized for each
 # Custom Commands
 Falco Lombardi is a customizable bot, which means you can add custom commands per guild. Any new guild will have very few commands to start out. You can give users permission to add commands to the bot using the built-in permission system. These commands can be as basic as a simple message reply, or as advanced as running a script. For full details on this please visit the [Addcmd Documentation](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/addcmd.md) for more information.
 
+### Suggest Your Own External Libraries
+If you want to see your own command modules or external library added to the Falco Lombardi Instance, feel free to drop a suggestion into the `#modules-and-libs` channel in the support guild. For external libs, plese make sure to provide a function list. Find out more about that, here: [External Libraries](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/AdvancedActions/ExternalLibs.md)
+
 # Permission system
 
 Some commands will only work for certain users who are registered into the permission system. To get all the details on this system, visit the [Permissions Documentation](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/permissions.md)  for more information.
