@@ -19,7 +19,7 @@ Usage: `!addgcmd <string cmdName> <boolean restricted> <string action>`
 
 *Context:*
 * **Guild** - If `addcmd` is called here, the command will be added for that specific guild only.
-* **DM** - if `addcmd` is called here, the command will be added for ALL guilds and DM.
+* **DM** - if `addcmd` is called here, the command will be added for ALL guilds and DM, however this will require `AccessLevels.Administrator`
 
 ### Parameter breakdown
 * **\<string cmdName>**
