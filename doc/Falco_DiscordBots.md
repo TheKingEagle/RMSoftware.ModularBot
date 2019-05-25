@@ -4,7 +4,7 @@ Falco Lombardi is a multi-purpose bot that is designed to be customized for each
 
 * `!about` - Display info about Falco Lombardi
 * `!changes` - Show the bot's change log
-* `!addcmd` & `!addgcmd` - Add a custom command to the bot. See [Addcmd](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/addcmd.md) for details.
+* `!addcmd` & `!addgcmd` - Add a custom command to the bot.
    * Usage: `!addcmd <string cmdName> <bool restrict> <string action>`
    * Requires `AccessLevels.CommandManager`
 * `!delcmd` & `!delgcmd` - Delete a custom command
@@ -22,9 +22,12 @@ Falco Lombardi is a multi-purpose bot that is designed to be customized for each
 * `!invitebot` - Get an invite link to add bot to your guild.
 * `!shards` - Get a shard list, displaying guild number, and ping.
 
+# Custom Commands
+Falco Lombardi is a customizable bot, which means you can add custom commands per guild. Any new guild will have very few commands to start out. You can give users permission to add commands to the bot using the built-in permission system. These commands can be as basic as a simple message reply, or as advanced as running a script. For full details on this please visit the [Addcmd Documentation](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/addcmd.md) for more information.
+
 # Permission system
 
-Some commands will only work for certain users who are registered into the permission system. To get all the details on this system, visit the [Permissions](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/permissions.md) documentation for more information.
+Some commands will only work for certain users who are registered into the permission system. To get all the details on this system, visit the [Permissions Documentation](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/permissions.md)  for more information.
 
 This bot will automatically assign any user who is permitted to manage servers (thus, adding bots) the AccessLevels.CommandManager permission set.
 
@@ -47,6 +50,3 @@ This bot will automatically assign any user who is permitted to manage servers (
    * Usage `!permissions get <@usermention OR UserName#1234>`
    * Requires `AccessLevels.Administrator`
 * **Full Example:** `!permissions set user @TheKingEagle#0404 CommandManager`
-
-# Custom Commands
-Falco Lombardi is a customizable bot, which means you can add custom commands per guild. Any new guild will have very few commands to start out. You can give users permission to add commands to the bot using the built-in permission system.
