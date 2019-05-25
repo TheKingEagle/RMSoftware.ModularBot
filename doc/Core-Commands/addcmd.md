@@ -1,4 +1,3 @@
-*Disclaimer: This documentation is a WORK IN PROGRESS for the v2 update!*
 #### Please note: You will assign a custom prefix for your bot when you run initial setup. We will be using `!` as a command prefix for all future examples.
 *Reminder:*
 > * Prefixes can be one or more characters, typically symbols.
