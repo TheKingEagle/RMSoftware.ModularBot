@@ -48,5 +48,5 @@ This bot will automatically assign any user who is permitted to manage servers (
    * Requires `AccessLevels.Administrator`
 * **Full Example:** `!permissions set user @TheKingEagle#0404 CommandManager`
 
-Custom Commands
+# Custom Commands
 Falco Lombardi is a customizable bot, which means you can add custom commands per guild. Any new guild will have very few commands to start out. You can give users permission to add commands to the bot using the built-in permission system.
