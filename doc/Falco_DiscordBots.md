@@ -8,7 +8,7 @@ Falco Lombardi is a running instance of ModularBOT, a multi-purpose bot that is 
    * Usage: `!addcmd <string cmdName> <bool restrict> <string action>`
    * Requires `AccessLevels.CommandManager`
 * `!delcmd` & `!delgcmd` - Delete a custom command
-   * Usage: !delcmd <string cmdName>
+   * Usage: `!delcmd <string cmdName>`
    * Requires `AccessLevels.CommandManager`
 * `!getcmd` - Displays the inner workings of a specific command
    * Usage: `!getcmd <string cmdName>`
