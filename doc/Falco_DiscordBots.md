@@ -1,4 +1,4 @@
-Falco Lombardi is a multi-purpose bot that is designed to be customized for each guild. It includes a core module which trusted users can safely manage commands, and add specific functionality.
+Falco Lombardi is a running instance of ModularBOT, a multi-purpose bot that is designed to be customized for each guild. It includes a core module which trusted users can safely manage commands, and add specific functionality.
 
 # Core Commands
 
