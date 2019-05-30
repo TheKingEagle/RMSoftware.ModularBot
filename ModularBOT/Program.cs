@@ -32,6 +32,7 @@ namespace ModularBOT
             }
             recoveredFromCrash = AppArguments.Contains("-crashed");
             consoleIO = new ConsoleIO(AppArguments);
+            
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
             if (!Directory.Exists("guilds")) { Directory.CreateDirectory("guilds"); }
             if (!Directory.Exists("modules")) { Directory.CreateDirectory("modules"); }
@@ -40,7 +41,7 @@ namespace ModularBOT
             
             consoleIO.ConsoleGUIReset(configMGR.CurrentConfig.ConsoleForegroundColor,
                 configMGR.CurrentConfig.ConsoleBackgroundColor, "Active Session");
-
+            Task.Run(() => consoleIO.ProcessQueue());//START ConsoleIO processing.
             #region DEBUG
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
@@ -71,23 +72,23 @@ namespace ModularBOT
                 return 0x5BB;//code for RESTART NEEDED
             }
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 3..."), ConsoleColor.Black, false);
-            Console.CursorTop = consoleIO.PrvTop;
+            //Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 2..."), ConsoleColor.Black, false);
-            Console.CursorTop = consoleIO.PrvTop;
+            //Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 1..."), ConsoleColor.Black, false);
-            Console.CursorTop = consoleIO.PrvTop;
+            //Console.CursorTop = consoleIO.PrvTop;
             Thread.Sleep(1000);
             return 0x000;//ok;
         }
 
         private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
         {
-            Thread.Sleep(300);
+            //Thread.Sleep(300);
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", e.Exception.Message), ConsoleColor.DarkRed, false, false, true);
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", "DETAILS in Errors.log"), ConsoleColor.DarkRed, false, false, true);
-            Thread.Sleep(300);
+            //Thread.Sleep(300);
             consoleIO.WriteErrorsLog(e.Exception);
         }
 
