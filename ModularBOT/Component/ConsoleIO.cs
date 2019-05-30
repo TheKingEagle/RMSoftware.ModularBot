@@ -24,13 +24,19 @@ namespace ModularBOT.Component
     {
         public bool Writing { get; private set; }
 
+        public bool QueueProcessStarted { get; private set; } = false;
+
         /// <summary>
         /// TRUE if a console command resets the screen temporarily.
         /// </summary>
-        public bool ScreenBusy { get; private set; }
+        public bool ScreenBusy { get; private set; }//If console is resetting or rendering new ui.
+
+        public bool ScreenModal { get; private set; }//If there is a screen showing above discord logs
         public List<string> ARGS { get; private set; }
 
         List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
+
+        public static Queue<LogEntry> Backlog { get; private set; } = new Queue<LogEntry>();
         public int CurTop { get; private set; }
         public int PrvTop { get; private set; }
 
@@ -44,6 +50,162 @@ namespace ModularBOT.Component
             ARGS = ProgramArgs;
         }
 
+        public void ProcessQueue()
+        {
+
+            if(QueueProcessStarted)
+            {
+                WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO", "An attempt was made to start the queue processor task, but it is already started..."));
+
+                return;
+            }
+            QueueProcessStarted = true;
+            WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO", "Console Queue has initialized. Processing any incoming log events."));
+            
+            while (true)
+            {
+                //SpinWait.SpinUntil(() => Backlog.Peek() != null);//once atleast one item enters queue, process the entry.
+                if(Backlog.Count == 0)
+                {
+                    SpinWait.SpinUntil(() => Backlog.Count > 0);
+                    continue;
+                }
+                SpinWait.SpinUntil(() => !ScreenBusy);//pause queue if screen is resetting
+                LogEntry qitem = Backlog.Dequeue();
+                LogMessage message = qitem.LogMessage;
+                if(message.Source == "___CLS___")
+                {
+                    ConsoleGUIReset(ConsoleForegroundColor, ConsoleBackgroundColor, currentTitle);
+                }
+                ConsoleColor? Entrycolor = qitem.EntryColor;
+                bool bypassFilter = qitem.BypassFilter;
+                bool bypassScreenLock = qitem.BypassScreenLock;
+                bool showCursor = qitem.ShowCursor;
+                if (message.Severity > Program.configMGR.CurrentConfig.DiscordEventLogLevel && !bypassFilter)
+                {
+                    continue;
+                }
+
+                LogEntries.Add(new LogEntry(message, Entrycolor));//add to buffer. regardless of screen-lock.
+
+                if (ScreenModal && !bypassScreenLock)
+                {
+                    continue;
+                }
+
+                SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
+                Writing = true;
+                PrvTop = Console.CursorTop;
+                Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
+                LogMessage l = new LogMessage(message.Severity, message.Source.PadRight(11, '\u2000'), message.Message, message.Exception);
+                string[] lines = WordWrap(l.ToString()).Split('\n');
+                ConsoleColor bglast = ConsoleBackgroundColor;
+                int prt = Console.CursorTop;
+                for (int i = 0; i < lines.Length; i++)
+                {
+
+                    if (lines[i].Length == 0)
+                    {
+                        continue;
+                    }
+                    ConsoleColor bg = ConsoleColor.Black;
+                    ConsoleColor fg = ConsoleColor.Black;
+
+                    #region setup entry color.
+                    if (!Entrycolor.HasValue)
+                    {
+                        switch (message.Severity)
+                        {
+                            case LogSeverity.Critical:
+                                bg = ConsoleColor.Red;
+                                fg = ConsoleColor.Red;
+                                break;
+                            case LogSeverity.Error:
+                                fg = ConsoleColor.DarkRed;
+                                bg = ConsoleColor.DarkRed;
+                                break;
+                            case LogSeverity.Warning:
+                                fg = ConsoleColor.Yellow;
+                                bg = ConsoleColor.Yellow;
+                                break;
+                            case LogSeverity.Info:
+                                fg = ConsoleColor.Black;
+                                bg = ConsoleColor.Black;
+                                break;
+                            case LogSeverity.Verbose:
+                                fg = ConsoleColor.Magenta;
+                                bg = ConsoleColor.Cyan;
+                                break;
+                            case LogSeverity.Debug:
+                                fg = ConsoleColor.DarkGray;
+                                bg = ConsoleColor.DarkGray;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        bg = Entrycolor.Value;
+                        fg = Entrycolor.Value;
+                    }
+                    #endregion
+
+                    Console.BackgroundColor = bg;
+                    Console.ForegroundColor = fg;
+                    //Thread.Sleep(1);
+                    Console.Write((char)9617);//Write the colored space.
+                                              //Thread.Sleep(1);
+                    Console.BackgroundColor = bglast;//restore previous color.
+                    Console.ForegroundColor = ConsoleForegroundColor;
+                    //Thread.Sleep(1);
+                    Console.Write("\u2551");//uileft
+                                            //Thread.Sleep(1);
+                    
+                    if (i == 0)
+                    {
+                        Console.WriteLine(lines[i]);//write current line in queue.
+                                                    //Thread.Sleep(1);
+                    }
+                    if (i > 0)
+                    {
+                        Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000'));//write current line in queue, padded by 21 enQuads to preserve line format.
+                                                                                            //Thread.Sleep(1);
+                    }
+
+                }
+                //Thread.Sleep(1);
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.White;
+                //Thread.Sleep(1);
+                if (showCursor)
+                {
+                    Console.Write(">");//Write the input indicator.
+
+                }
+                if(!showCursor)
+                {
+                    //Console.CursorTop = PrvTop;//testing
+                    Console.CursorTop = prt;
+                }
+                //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
+                //Thread.Sleep(1);
+                Console.BackgroundColor = ConsoleBackgroundColor;
+                Console.ForegroundColor = ConsoleForegroundColor;
+                //Thread.Sleep(1);
+                Console.CursorVisible = showCursor;
+                if (showCursor)
+                {
+                    Console.Write("\u2551");
+                }
+
+                //Thread.Sleep(1);
+                CurTop = Console.CursorTop;
+                //Thread.Sleep(1);
+                Writing = false;
+            }
+        }
+
         /// <summary>
         /// Reset the console layout using specified values
         /// </summary>
@@ -53,7 +215,7 @@ namespace ModularBOT.Component
         public void ConsoleGUIReset(ConsoleColor fore, ConsoleColor back, string title)
         {
 
-
+            ScreenBusy = true;
             if (title.Length > 72)
             {
                 title = title.Remove(71) + "...";
@@ -77,12 +239,30 @@ namespace ModularBOT.Component
             Console.Write("\u2551{0}\u2551", pTitle);
 
             DecorateBottom();
-
+            Console.CursorVisible = false;
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
-
             ConsoleBackgroundColor = back;
             ConsoleForegroundColor = fore;
+            int ct = Console.CursorTop;
+            for (int i = ct; i < 34; i++)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.Black;
+                //Thread.Sleep(1);
+                Console.Write((char)9617);//Write the colored space.
+                                          //Thread.Sleep(1);
+                Console.BackgroundColor = ConsoleBackgroundColor;//restore previous color.
+                Console.ForegroundColor = ConsoleForegroundColor;
+                //Thread.Sleep(1);
+                Console.Write("\u2551");//uileft
+                                        //Thread.Sleep(1);
+                Console.CursorTop = i;
+                Console.CursorLeft = 0;
+            }
+            Console.CursorTop = 0;
+            Console.CursorTop = ct;
+            ScreenBusy = false;
         }
 
         /// <summary>
@@ -96,6 +276,7 @@ namespace ModularBOT.Component
         /// <param name="ProgressColor"></param>
         public void ConsoleGUIReset(ConsoleColor fore, ConsoleColor back, string title, short ProgressValue, short ProgressMax, ConsoleColor ProgressColor)
         {
+            ScreenBusy = true;
             if (title.Length > 72)
             {
                 title = title.Remove(71) + "...";
@@ -151,6 +332,7 @@ namespace ModularBOT.Component
 
             ConsoleBackgroundColor = back;
             ConsoleForegroundColor = fore;
+            ScreenBusy = false;
         }
 
         /// <summary>
@@ -163,7 +345,7 @@ namespace ModularBOT.Component
         /// <param name="h">Console window & buffer height</param>
         public void ConsoleGUIReset(ConsoleColor fore, ConsoleColor back, string title, short w, short h)
         {
-
+            ScreenBusy = true;
             if (title.Length > 72)
             {
                 title = title.Remove(71) + "...";
@@ -191,6 +373,7 @@ namespace ModularBOT.Component
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
             ConsoleBackgroundColor = back;
+            ScreenBusy = false;
         }
 
         //Heavily tweaked from: https://stackoverflow.com/questions/20534318/make-console-writeline-wrap-words-instead-of-letters
@@ -244,133 +427,18 @@ namespace ModularBOT.Component
         }
 
         /// <summary>
-        /// Write a color cordinated log message to console. Function is intended for full mode.
+        /// Write a color coordinated log message to console. Function is intended for full mode.
         /// </summary>
         /// <param name="message">The Discord.NET Log message</param>
         /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
         public void WriteEntry(LogMessage message, ConsoleColor? Entrycolor = null, bool showCursor = true, bool bypassScreenLock = false, bool bypassFilter = false)
         {
-            
-            if(message.Severity > Program.configMGR.CurrentConfig.DiscordEventLogLevel && !bypassFilter)
-            {
-                return;
-            }
 
-            LogEntries.Add(new LogEntry(message, Entrycolor));//add to buffer. regardless of screen-lock.
-
-            if(ScreenBusy && !bypassScreenLock)
-            {
-                return;
-            }
-
-            SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
-            Writing = true;
-            PrvTop = Console.CursorTop;
-            Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
-            LogMessage l = new LogMessage(message.Severity, message.Source.PadRight(11, '\u2000'), message.Message, message.Exception);
-            string[] lines = WordWrap(l.ToString()).Split('\n');
-            ConsoleColor bglast = ConsoleBackgroundColor;
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-
-                if (lines[i].Length == 0)
-                {
-                    continue;
-                }
-                ConsoleColor bg = ConsoleColor.Black;
-                ConsoleColor fg = ConsoleColor.Black;
-                
-                #region setup entry color.
-                if (!Entrycolor.HasValue)
-                {
-                    switch (message.Severity)
-                    {
-                        case LogSeverity.Critical:
-                            bg = ConsoleColor.Red;
-                            fg = ConsoleColor.Red;
-                            break;
-                        case LogSeverity.Error:
-                            fg = ConsoleColor.DarkRed;
-                            bg = ConsoleColor.DarkRed;
-                            break;
-                        case LogSeverity.Warning:
-                            fg = ConsoleColor.Yellow;
-                            bg = ConsoleColor.Yellow;
-                            break;
-                        case LogSeverity.Info:
-                            fg = ConsoleColor.Black;
-                            bg = ConsoleColor.Black;
-                            break;
-                        case LogSeverity.Verbose:
-                            fg = ConsoleColor.Magenta;
-                            bg = ConsoleColor.Cyan;
-                            break;
-                        case LogSeverity.Debug:
-                            fg = ConsoleColor.DarkGray;
-                            bg = ConsoleColor.DarkGray;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                {
-                    bg = Entrycolor.Value;
-                    fg = Entrycolor.Value;
-                }
-                #endregion
-
-                Console.BackgroundColor = bg;
-                Console.ForegroundColor = fg;
-                Thread.Sleep(1);
-                Console.Write((char)9617);//Write the colored space.
-                Thread.Sleep(1);
-                Console.BackgroundColor = bglast;//restore previous color.
-                Console.ForegroundColor = ConsoleForegroundColor;
-                Thread.Sleep(1);
-                Console.Write("\u2551");//uileft
-                Thread.Sleep(1);
-                if (i == 0)
-                {
-                    Console.WriteLine(lines[i]);//write current line in queue.
-                    Thread.Sleep(1);
-                }
-                if (i > 0)
-                {
-                    Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000'));//write current line in queue, padded by 21 enQuads to preserve line format.
-                    Thread.Sleep(1);
-                }
-
-            }
-            Thread.Sleep(1);
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.ForegroundColor = ConsoleColor.White;
-            Thread.Sleep(1);
-            if (showCursor)
-            {
-                Console.Write(">");//Write the input indicator.
-
-            }
-            //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
-            Thread.Sleep(1);
-            Console.BackgroundColor = ConsoleBackgroundColor;
-            Console.ForegroundColor = ConsoleForegroundColor;
-            Thread.Sleep(1);
-            Console.CursorVisible = showCursor;
-            if (showCursor)
-            {
-                Console.Write("\u2551");
-            }
-
-            Thread.Sleep(1);
-            CurTop = Console.CursorTop;
-            Thread.Sleep(1);
-            Writing = false;
+            Backlog.Enqueue(new LogEntry(message, Entrycolor, bypassFilter, bypassScreenLock, showCursor));
         }
 
         /// <summary>
-        /// Write a color cordinated log message to console. Function is intended for full mode.
+        /// Write a color coordinated log message to console. Function is intended for full mode.
         /// </summary>
         /// <param name="message">The Discord.NET Log message</param>
         /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
@@ -489,20 +557,20 @@ namespace ModularBOT.Component
         /// <returns></returns>
         public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ProgramShutdownFlag, ref bool ProgramRestartFlag, int timeout = 5, Exception ex = null)
         {
-            ScreenBusy = true;
+            ScreenModal = true;
             ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, title);
-            WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."),null,false,true,false);
+            WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."),null,true,true);
             LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
             WriteEntry(m, null, false, true, false);
 
-            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"), null, false, true, false);
+            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"), null, true, true, false);
             CreateCrashLog(ex, m);
-            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"), null, false, true, false);
+            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"), null, true, true, false);
             WriteErrorsLog(ex);
 
             if (!autorestart)
             {
-                WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."), null, false, true, false);
+                WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."), null, true, true, false);
                 Console.ReadKey();
             }
             else
@@ -530,7 +598,7 @@ namespace ModularBOT.Component
             }
             ProgramShutdownFlag = true;
             ProgramRestartFlag = autorestart;//redundancy
-            ScreenBusy = false;
+            //ScreenBusy = false;
             return Task.FromResult(autorestart);//redundancy
 
         }
@@ -610,7 +678,7 @@ namespace ModularBOT.Component
                     return Task.Delay(0);
                 }
                 Console.CursorTop = CurTop;
-                WriteEntry(new LogMessage(LogSeverity.Info, "Console", input), null, true, false, true);
+                
                 if (input.ToLower() == "stopbot")
                 {
                     WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "Console session called STOPBOT."));
@@ -627,9 +695,8 @@ namespace ModularBOT.Component
                 }
                 if (input.ToLower() == "cls" || input.ToLower() == "clear")
                 {
-                    ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, currentTitle);//default
-                    LogEntries.Clear();//clear buffer
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Console cleared!!"), null, true, false, true);
+                    
+                    WriteEntry(new LogMessage(LogSeverity.Info, "___CLS___", "CONSOLE CLEARED"), null, true, false, true);
                 }
                 if (input.ToLower() == "tskill")
                 {
@@ -794,10 +861,11 @@ namespace ModularBOT.Component
                     List<LogEntry> v = new List<LogEntry>();
 
                     ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
+                    
                     SetLogo_Choices();
                     ConsoleKeyInfo k;
                     string path = "";
-                    ScreenBusy = true;
+                    ScreenModal = true;
                     while (true)
                     {
                         WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
@@ -852,7 +920,7 @@ namespace ModularBOT.Component
                     Program.configMGR.CurrentConfig.LogoPath = path.Replace("\"", "");
                     Program.configMGR.Save();
                     ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, PRV_TITLE);
-                    ScreenBusy = false;
+                    ScreenModal = false;
                     v.AddRange(LogEntries);
                     LogEntries.Clear();//clear buffer.
                     //output previous logEntry.
@@ -870,6 +938,7 @@ namespace ModularBOT.Component
                     List<LogEntry> v = new List<LogEntry>();
 
                     #region Background Color
+                    ScreenModal = true;
                     ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 1, 2, ConsoleColor.Green);
                     WriteEntry("\u2502 Please select a background color.");
                     WriteEntry("\u2502");
@@ -879,7 +948,7 @@ namespace ModularBOT.Component
                     }
                     WriteEntry("\u2502");
                     ConsoleKeyInfo k;
-                    ScreenBusy = true;
+                    ScreenModal = true;
                     while (true)
                     {
                         WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
@@ -905,7 +974,7 @@ namespace ModularBOT.Component
                     }
                     WriteEntry("\u2502");
                     ConsoleKeyInfo k1;
-                    ScreenBusy = true;
+                    ScreenModal = true;
                     while (true)
                     {
                         WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
@@ -924,7 +993,7 @@ namespace ModularBOT.Component
                     Program.configMGR.Save();
                     ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor, 
                         Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                    ScreenBusy = false;
+                    ScreenModal = false;
                     v.AddRange(LogEntries);
                     LogEntries.Clear();//clear buffer.
                     //output previous logEntry.
@@ -934,6 +1003,10 @@ namespace ModularBOT.Component
                     }
                     WriteEntry(new LogMessage(LogSeverity.Info, "Config", "Console colors were changed successfully."), null, true, false, true);
                     v = null;
+                }
+                if (!ScreenBusy && !ScreenModal)
+                {
+                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", input), null, true, false, true);
                 }
             }
             return Task.Delay(1);
@@ -1015,10 +1088,19 @@ namespace ModularBOT.Component
 
             public ConsoleColor? EntryColor { get; set; }
 
-            public LogEntry(LogMessage msg, ConsoleColor? color)
+            public bool BypassFilter { get; set; }
+
+            public bool BypassScreenLock { get; set; }
+
+            public bool ShowCursor { get; set; }
+
+            public LogEntry(LogMessage msg, ConsoleColor? color, bool bypassfilt = false, bool bypassScreen = false,bool showCursor = true)
             {
                 LogMessage = msg;
                 EntryColor = color;
+                BypassFilter = bypassfilt;
+                BypassScreenLock = bypassScreen;
+                ShowCursor = showCursor;
             }
         }
         #endregion
