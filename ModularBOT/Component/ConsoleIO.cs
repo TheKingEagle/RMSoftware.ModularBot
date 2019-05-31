@@ -779,7 +779,7 @@ namespace ModularBOT.Component
                     {
                         Program.configMGR.CurrentConfig.DiscordEventLogLevel = result;
                         Program.configMGR.Save();
-                        ScreenBusy = true;
+                        ScreenModal = true;
                         while (true)
                         {
                             WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Saved logging level. Changes will take place when bot is restarted. Do you want to restart now? [Y/N]"),null,true,true,true);
@@ -797,7 +797,7 @@ namespace ModularBOT.Component
                                 break;
                             }
                         }
-                        ScreenBusy = false;
+                        ScreenModal = false;
 
                     }
 
