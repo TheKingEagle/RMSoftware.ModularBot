@@ -632,7 +632,8 @@ namespace ModularBOT.Component
                 {
                     sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
                     sw.Flush();
-
+                    sw.Close();
+                    Thread.Sleep(150);
                 }
             }
         }
@@ -651,7 +652,8 @@ namespace ModularBOT.Component
                     }
 
                     sw.Flush();
-
+                    sw.Close();
+                    Thread.Sleep(150);
                 }
             }
         }
