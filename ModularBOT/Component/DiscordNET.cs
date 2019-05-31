@@ -129,7 +129,7 @@ namespace ModularBOT.Component
             PermissionManager = new PermissionManager(serviceProvider);
             services.AddSingleton(PermissionManager);
             serviceProvider = services.BuildServiceProvider();
-            ModuleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, serviceProvider.GetRequiredService<Configuration>());
+            ModuleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider);
             CustomCMDMgr = new CustomCommandManager(serviceProvider);
             services.AddSingleton(CustomCMDMgr);
             serviceProvider = services.BuildServiceProvider();

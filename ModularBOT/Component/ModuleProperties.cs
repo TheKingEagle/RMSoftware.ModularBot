@@ -24,7 +24,7 @@ namespace ModularBOT.Component
         List<ModulePropertyItem> _modules;
         public IReadOnlyCollection<ModulePropertyItem> Modules { get { return _modules.AsReadOnly(); } }
 
-        public ModuleManager(ref CommandService cmdsvr,ref IServiceCollection serviceCollection, ref IServiceProvider serviceProvider, ref Configuration appConfig)
+        public ModuleManager(ref CommandService cmdsvr,ref IServiceCollection serviceCollection, ref IServiceProvider serviceProvider)
         {
             _modules = new List<ModulePropertyItem>();
             //LOAD MODULES AND SERVICES.
