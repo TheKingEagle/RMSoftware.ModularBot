@@ -1,5 +1,6 @@
 >### Legend
->* **Indicates a WORK IN PROGRESS** 🔜
+>* **Indicates a WORK IN PROGRESS** ⏳
+>* ### Indicates critical item 🔥
 >* *Indicates HELP WANTED* ⚠
 >* Indicates fully implemented ✅
 >* ~~Indicates SCRAPPED feature~~ ⛔
@@ -11,35 +12,37 @@
 * Change custom commands system ✅ 
   * Seperate Per-guild and global commands ✅
   * Improve command management ✅
-* ***NEW ConsoleIO class*** 🔜⚠
+* ***NEW ConsoleIO class*** ⏳⚠
    * ~~JSon Log mode (for GUI Wrapper)~~ ⛔
    * Improved Console Layout ✅
-   * ***FIX Random output glitches See Issue [#9](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/9)*** 🔜⚠
+   * ***FIX Random output glitches See Issue [#9](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/9)*** ⏳⚠
    
-* **Improve stability (killscreen/autorestart Uncaught crashes)** 🔜
-* **Optimize code (lol)** 🔜
+* **Improve stability (killscreen/autorestart Uncaught crashes)** ⏳
+* **Optimize code (lol)** ⏳
 * Use Discord.NET 2.0.1 ✅
 * Use Shards ✅
 * Write new setup wizard ✅
 * Move to JSON Configuration manager ✅
 * Per-guild command modules
-* New Permission system ✅
-* **Update Checking** 🔜
+* ### ***New Permission system*** 🔥⏳
+* **Update Checking** ⏳
 
 # Current TODOs
 * Write Modules loader ✅
-* **FINISH CoreModule commands** 🔜
+* **FINISH CoreModule commands** ⏳
    * variables get
    * variables list
    * variables set
    
-* **Automatic Updates** 🔜
+* **Automatic Updates** ⏳
    * Real time update push (Api.rms0.org)
-   * **Client-side download and run (TASK MANAGER)** 🔜
-   * **Download Progress screen (CONSOLE)** 🔜
+   * **Client-side download and run (TASK MANAGER)** ⏳
+   * **Download Progress screen (CONSOLE)** ⏳
    
 * Per-guild modules
    * Module Management Screen (CONSOLE)
    * Module Installer
+* ### ***Per-guild Permission system*** 🔥⏳
+   * The current permission system is hardly ideal if planning on mass-deploying the bot. Must switch to a system that will improve guild security.
    
 * *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
