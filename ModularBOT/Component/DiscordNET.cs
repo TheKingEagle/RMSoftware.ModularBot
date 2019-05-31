@@ -142,22 +142,27 @@ namespace ModularBOT.Component
             if(serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value)
             {
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
-                await arg.DownloadUsersAsync();
-                foreach (SocketGuildUser item in arg.Users)
+                await Task.Delay(1);
+                Task.Run(() => SyncGuild(arg));
+            }
+
+
+        }
+
+        public void SyncGuild(SocketGuild arg)
+        {
+            foreach (SocketGuildUser item in arg.Users)
+            {
+                if (item.GuildPermissions.ManageGuild)
                 {
-                    if (item.GuildPermissions.ManageGuild)
+                    if (PermissionManager.GetAccessLevel(item) < AccessLevels.CommandManager)
                     {
-                        if(PermissionManager.GetAccessLevel(item) < AccessLevels.CommandManager)
-                        {
-                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a guild manager: " +
-                            $"{item.Username + "#" + item.Discriminator}. Registering them as CommandManager!"));
-                            PermissionManager.RegisterEntity(item, AccessLevels.CommandManager);
-                        }
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a guild manager: " +
+                        $"{item.Username + "#" + item.Discriminator}. Registering them as CommandManager!"));
+                        PermissionManager.RegisterEntity(item, AccessLevels.CommandManager);
                     }
                 }
             }
-            
-
         }
 
         public void Stop(ref bool ShutdownRequest)
