@@ -211,19 +211,19 @@ namespace ModularBOT.Component
             RegisteredEntity c = _entities.FirstOrDefault(x => x.EntityID == r.EntityID);
             if (c != null)
             {
-                if(c.AccessLevel == level)
-                {
-                    return 0;
-                }
-                c.AccessLevel = level;
-                SaveJson();
+                //if (c.AccessLevel == level)
+                //{
+                //    return 0;
+                //}
+                //c.AccessLevel = level;
+                //SaveJson();
 
                 return 2;
             }
             else
             {
                 _entities.Add(r);
-                SaveJson();
+                //SaveJson();
 
                 return 1;
             }
@@ -294,7 +294,7 @@ namespace ModularBOT.Component
             return false;
         }
 
-        private void SaveJson()
+        public void SaveJson()
         {
             try
             {

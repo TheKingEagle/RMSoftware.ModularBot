@@ -132,7 +132,7 @@ namespace ModularBOT.Component
         {
             foreach (SocketGuildUser item in arg.Users)
             {
-                if (item.GuildPermissions.ManageGuild)
+                if (item.GuildPermissions.ManageGuild && !item.IsBot)
                 {
                     if (PermissionManager.GetAccessLevel(item) < AccessLevels.CommandManager)
                     {
@@ -142,6 +142,8 @@ namespace ModularBOT.Component
                     }
                 }
             }
+            PermissionManager.SaveJson();
+            Thread.Sleep(300);
         }
 
         public void Stop(ref bool ShutdownRequest)
