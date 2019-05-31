@@ -175,12 +175,12 @@ namespace TestModule
 
         private async Task ShardedClient_UserJoined(SocketGuildUser arg)
         {
-            LogMessage Log = new LogMessage(LogSeverity.Info, "Greetings", "A wild user appears!");
+            LogMessage Log = new LogMessage(LogSeverity.Verbose, "Greetings", "A wild user appears!");
             Writer.WriteEntry(Log);
             bool result = BoundItems.TryGetValue(arg.Guild.Id, out GuildQueryItem item);
             if (result)
             {
-                Log = new LogMessage(LogSeverity.Info, "Greetings", $"What is the default channel? {item.DefaultChannel.Name}");//debuglul
+                Log = new LogMessage(LogSeverity.Verbose, "Greetings", $"What is the default channel? {item.DefaultChannel.Name}");//debuglul
                 Writer.WriteEntry(Log);
                 await item.DefaultChannel.SendMessageAsync($"Hello {arg.Mention}, Welcome to `{arg.Guild.Name}`! {item.WelcomeMessage}");
                 if (item.RoleToAssign == null)
@@ -199,9 +199,9 @@ namespace TestModule
             }
             else
             {
-                Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser uses JoinEvent... It's Not very effective...");//debuglul
+                Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser uses JoinEvent... It's Not very effective...");//debuglul
                 Writer.WriteEntry(Log);
-                Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser: " + arg.Username + "\r\n" + "The Guild: " + arg.Guild.Name);//debuglul
+                Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser: " + arg.Username + "\r\n" + "The Guild: " + arg.Guild.Name);//debuglul
                 Writer.WriteEntry(Log);
             }
         }
