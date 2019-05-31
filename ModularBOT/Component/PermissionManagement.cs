@@ -10,6 +10,7 @@ using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using Discord;
 using Discord.Commands;
+using System.Threading;
 
 namespace ModularBOT.Component
 {
@@ -22,6 +23,8 @@ namespace ModularBOT.Component
     {
         private List<RegisteredEntity> _entities;
         private IServiceProvider _services;
+        private static bool gotOwner = false;
+        bool writingToDisk = false;
         
         public IReadOnlyCollection<RegisteredEntity> RegisteredEntities { get { return _entities.AsReadOnly(); } }
         public RegisteredEntity DefaultAdmin { get; private set; }
@@ -31,10 +34,20 @@ namespace ModularBOT.Component
             _services = services;
 
             _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Creating default administrator info"));
-            
-            
 
-          
+            if (!gotOwner)
+            {
+                DefaultAdmin = new RegisteredEntity
+                {
+                    AccessLevel = AccessLevels.Administrator,
+                    EntityID = _services.GetRequiredService<DiscordShardedClient>()
+                .GetApplicationInfoAsync().GetAwaiter().GetResult().Owner.Id,
+                    WarnIfBlacklisted = true//though this should never happen.
+                };//This will not be added to list, as it doesn't count.
+                gotOwner = true;
+            }
+
+
             //load json.
             if (File.Exists("Permissions.cnf"))
             {
@@ -60,13 +73,8 @@ namespace ModularBOT.Component
         /// <returns>Item's accessLevel, or AccessLevels.Normal if nothing is found.</returns>
         public AccessLevels GetAccessLevel(ISnowflakeEntity item)
         {
-            DefaultAdmin = new RegisteredEntity
-            {
-                AccessLevel = AccessLevels.Administrator,
-                EntityID = _services.GetRequiredService<DiscordShardedClient>()
-                .GetApplicationInfoAsync().GetAwaiter().GetResult().Owner.Id,
-                WarnIfBlacklisted = true//though this should never happen.
-            };//This will not be added to list, as it doesn't count.
+            
+            
             if (item.Id == DefaultAdmin.EntityID)
             {
                 _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Detected entity as bot owner."));
@@ -109,13 +117,7 @@ namespace ModularBOT.Component
         /// <param name="inheritedRole">Returns an IRole if one is found, otherwise null.</param>
         public AccessLevels GetAccessLevel(ISnowflakeEntity item, out IRole inheritedRole, out bool BotOwner)
         {
-            DefaultAdmin = new RegisteredEntity
-            {
-                AccessLevel = AccessLevels.Administrator,
-                EntityID = _services.GetRequiredService<DiscordShardedClient>()
-                .GetApplicationInfoAsync().GetAwaiter().GetResult().Owner.Id,
-                WarnIfBlacklisted = true//though this should never happen.
-            };//This will not be added to list, as it doesn't count.
+            
             if (item.Id == DefaultAdmin.EntityID)
             {
                 _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Detected entity as bot owner."));
@@ -296,6 +298,8 @@ namespace ModularBOT.Component
 
         public void SaveJson()
         {
+            SpinWait.SpinUntil(() => !writingToDisk);//wait until we are done here.
+            writingToDisk = true;
             try
             {
                 using (StreamWriter sw = new StreamWriter("Permissions.cnf"))
@@ -305,11 +309,13 @@ namespace ModularBOT.Component
                     sw.Flush();
                     sw.Close();
                     _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Write success!"),ConsoleColor.Green);
+                    writingToDisk = false;
                 }
             }
             catch (Exception ex)
             {
                 _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Permissions", "Write failed!",ex));
+                writingToDisk = false;
             }
         }
 
