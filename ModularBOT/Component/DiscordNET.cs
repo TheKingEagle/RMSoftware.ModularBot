@@ -128,27 +128,6 @@ namespace ModularBOT.Component
             }
         }
 
-        private async Task Client_JoinedGuild(SocketGuild arg)
-        {
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
-                $"Creating {arg.Name}'s {arg.Id}.guild file!"));
-            GuildObject g = new GuildObject
-            {
-                ID = arg.Id,
-                CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
-                GuildCommands = new List<GuildCommand>(),
-            };
-            CustomCMDMgr.AddGuildObject(g);
-            if(serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value)
-            {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
-                await Task.Delay(1);
-                Task.Run(() => SyncGuild(arg));
-            }
-
-
-        }
-
         public void SyncGuild(SocketGuild arg)
         {
             foreach (SocketGuildUser item in arg.Users)
@@ -330,7 +309,7 @@ namespace ModularBOT.Component
             return Task.Delay(0);
         }
 
-        private Task Client_GuildAvailable(SocketGuild guild)
+        private async Task Client_GuildAvailable(SocketGuild guild)
         {
             Console.Title = "RMSoftware.ModularBOT -> " + guild.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"A guild just appeared. [{guild.Name}] "),ConsoleColor.Green);
@@ -342,7 +321,8 @@ namespace ModularBOT.Component
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"System uptime set to {StartTime}"));
                 LogConnected = true;
             }
-            return Task.Delay(0);
+            await Task.Delay(0);
+            Task.Run(() => SyncGuild(guild));//don't really care about result in this case. just want a new thread.
         }
 
         private Task Client_ShardDisconnected(Exception arg1, DiscordSocketClient arg2)
@@ -512,6 +492,26 @@ namespace ModularBOT.Component
             return Task.Delay(0);
         }
 
+        private async Task Client_JoinedGuild(SocketGuild arg)
+        {
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
+                $"Creating {arg.Name}'s {arg.Id}.guild file!"));
+            GuildObject g = new GuildObject
+            {
+                ID = arg.Id,
+                CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                GuildCommands = new List<GuildCommand>(),
+            };
+            CustomCMDMgr.AddGuildObject(g);
+            if (serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value)
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
+                await Task.Delay(1);
+                Task.Run(() => SyncGuild(arg));//don't really care about result in this case. just want a new thread.
+            }
+
+
+        }
         #endregion
     }
 }
