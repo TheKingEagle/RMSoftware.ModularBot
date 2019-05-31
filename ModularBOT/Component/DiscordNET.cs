@@ -73,16 +73,11 @@ namespace ModularBOT.Component
 
                 services.AddSingleton(Client);
                 serviceProvider = services.BuildServiceProvider();
-                PermissionManager = new PermissionManager(serviceProvider);
-                services.AddSingleton(PermissionManager);
-                serviceProvider = services.BuildServiceProvider();
-                ModuleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, ref AppConfig);
-                CustomCMDMgr = new CustomCommandManager(serviceProvider);
-                services.AddSingleton(CustomCMDMgr);
-                serviceProvider = services.BuildServiceProvider();
-                Client.Log += Client_Log;
                 
+               
+                Client.Log += Client_Log;
 
+                Client.LoggedIn += Client_LoggedIn;
                 Client.ShardReady += Client_ShardReady;
                 Client.ShardConnected += Client_ShardConnected;
                 Client.MessageReceived += Client_MessageReceived;
@@ -92,7 +87,7 @@ namespace ModularBOT.Component
                 Client.JoinedGuild += Client_JoinedGuild;
                 
                 
-                Updater = new UpdateManager(serviceProvider);
+                
                 cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 Task.Run(async () => await Client.StartAsync());
@@ -126,6 +121,20 @@ namespace ModularBOT.Component
             {
                 RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex).GetAwaiter().GetResult();
             }
+        }
+
+        private Task Client_LoggedIn()
+        {
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Client", "Client is logged in! We can now start permissions system."));
+            PermissionManager = new PermissionManager(serviceProvider);
+            services.AddSingleton(PermissionManager);
+            serviceProvider = services.BuildServiceProvider();
+            ModuleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider, serviceProvider.GetRequiredService<Configuration>());
+            CustomCMDMgr = new CustomCommandManager(serviceProvider);
+            services.AddSingleton(CustomCMDMgr);
+            serviceProvider = services.BuildServiceProvider();
+            Updater = new UpdateManager(serviceProvider);
+            return Task.Delay(1);
         }
 
         public void SyncGuild(SocketGuild arg)
@@ -313,7 +322,7 @@ namespace ModularBOT.Component
 
         private async Task Client_GuildAvailable(SocketGuild guild)
         {
-            Console.Title = "RMSoftware.ModularBOT -> " + guild.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
+            //Console.Title = "RMSoftware.ModularBOT -> " + guild.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"A guild just appeared. [{guild.Name}] "),ConsoleColor.Green);
             SocketTextChannel c = guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel);
             if ( c != null)
@@ -467,7 +476,7 @@ namespace ModularBOT.Component
 
         private Task Client_ShardConnected(DiscordSocketClient arg)
         {
-            Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
+            //Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
 
             Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
@@ -496,6 +505,7 @@ namespace ModularBOT.Component
 
         private async Task Client_JoinedGuild(SocketGuild arg)
         {
+            Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
                 $"Creating {arg.Name}'s {arg.Id}.guild file!"));
             GuildObject g = new GuildObject
