@@ -8,7 +8,7 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ModularBOT")]
-[assembly: AssemblyDescription("RMSoftware Modular Bot implementing Discord.NET v2.0.1")]
+[assembly: AssemblyDescription("RMSoftware Modular Bot implementing Discord.NET v2.1.0")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("RMSoftware Development")]
 [assembly: AssemblyProduct("ModularBOT")]
@@ -26,8 +26,8 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.589.1778")]
-[assembly: AssemblyFileVersion("2.0.589.1778")]
+[assembly: AssemblyVersion("2.0.590.1779")]
+[assembly: AssemblyFileVersion("2.0.590.1779")]
 [assembly: ComVisible(false)]
 
 [assembly: AssemblyInformationalVersion("2.0.0-beta-30")]
