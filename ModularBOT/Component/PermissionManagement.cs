@@ -213,12 +213,16 @@ namespace ModularBOT.Component
             RegisteredEntity c = _entities.FirstOrDefault(x => x.EntityID == r.EntityID);
             if (c != null)
             {
-                //if (c.AccessLevel == level)
-                //{
-                //    return 0;
-                //}
-                //c.AccessLevel = level;
-                //SaveJson();
+                if (c.AccessLevel == level)
+                {
+                    return 0;
+                }
+                if (c.AccessLevel == level)
+                {
+                    return 0;
+                }
+                c.AccessLevel = level;
+                SaveJson();
 
                 return 2;
             }
@@ -273,6 +277,72 @@ namespace ModularBOT.Component
                 return 1;
             }
             
+        }
+
+        /// <summary>
+        /// Register a new role, or modify an existing.
+        /// </summary>
+        /// <param name="Context">Context for this registration</param>
+        /// <param name="genericID">ID this registration</param>
+        /// <param name="level">Level for this registration</param>
+        /// <returns>0: if nothing changed. 1: if new user created; 2: if user edited; </returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        internal int RegisterEntity(ICommandContext Context, ulong GenericID, AccessLevels level)
+        {
+            IRole role = null;
+            IGuildUser user = null;
+            if(Context.Guild != null)
+            {
+                 role = Context.Guild?.GetRole(GenericID);
+                if(role == null)
+                {
+                     user =  Context.Guild?.GetUserAsync(GenericID, CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    if(user == null)
+                    {
+                        throw new InvalidCastException("The entity id did not match a user or role. Please make sure you got it right!");
+                    }
+                }
+            }
+            else
+            {
+                throw new InvalidCastException("You should use this command in a guild.");
+            }
+            if(role != null)
+            {
+                if (level == AccessLevels.Blacklisted)
+                {
+                    throw new InvalidOperationException("You can't blacklist an entire role.");
+                    //Unfortunately this would cause the warning system to work incorrectly.
+                    //Example: One user with BL role interacts with bot, gets the warning -> Warning flag resets.
+                    //         Another user with same BL role (who never got warned before) would NOT get warning.
+                }
+            }
+            RegisteredEntity r = new RegisteredEntity
+            {
+                EntityID = GenericID,
+                WarnIfBlacklisted = true,
+                AccessLevel = level
+            };
+            RegisteredEntity c = _entities.FirstOrDefault(x => x.EntityID == r.EntityID);
+            if (c != null)
+            {
+                if (c.AccessLevel == level)
+                {
+                    return 0;
+                }
+                c.AccessLevel = level;
+                SaveJson();
+
+                return 2;
+            }
+            else
+            {
+                _entities.Add(r);
+                SaveJson();
+
+                return 1;
+            }
+
         }
 
         /// <summary>
