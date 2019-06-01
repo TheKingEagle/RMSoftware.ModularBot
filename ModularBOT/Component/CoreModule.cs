@@ -379,12 +379,136 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr"), Remarks("AccessLevels.Administrator"), Summary("Set permissions for a role")]
-        public async Task PERM_SetRole(IRole role, AccessLevels accessLevel)
+        [Command("permissions set entity"), Alias("pse"), Remarks("AccessLevels.Administrator"), Summary("Set permissions for a generic ID")]
+        public async Task PERM_SetEntity(ulong GenericID, AccessLevels accessLevel)
         {
+            #region RequiredCheck
+            IRole role = null;
+            IGuildUser user = null;
+            if (Context.Guild != null)
+            {
+                role = Context.Guild?.GetRole(GenericID);
+                if (role == null)
+                {
+                    user = Context.Guild?.GetUserAsync(GenericID, CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    if (user == null)
+                    {
+                        await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... What?", 
+                            "The entity id did not match a user or role. Please make sure you got it right!", Color.DarkRed));
+                        return;
+                    }
+                }
+            }
+            #endregion
+
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            if (GenericID == Context.User.Id)
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't change your own access level.", Color.DarkRed));
+                return;
+            }
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < accessLevel)
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't give anyone a higher access level than your own.", Color.DarkRed));
+                return;
+            }
+            if(role != null)
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < _DiscordNet.PermissionManager.GetAccessLevel(role))
+                {
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't change a role who has a higher access level than your own.", Color.DarkRed));
+                    return;
+                }
+            }
+            if (user != null)
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < _DiscordNet.PermissionManager.GetAccessLevel(user))
+                {
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't change a user who has a higher access level than your own.", Color.DarkRed));
+                    return;
+                }
+            }
+            EmbedBuilder b = new EmbedBuilder();
+            try
+            {
+                int result = _DiscordNet.PermissionManager.RegisterEntity(Context,GenericID, accessLevel);
+                switch (result)
+                {
+                    case (1):
+                        b.WithAuthor(Client.CurrentUser);
+
+                        b.WithTitle("Permission Manager");
+                        b.WithDescription("The user was successfully added to the permissions file.");
+                        b.WithColor(Color.Green);
+                        if (accessLevel == AccessLevels.Blacklisted)
+                        {
+                            b.WithColor(new Color(255, 255, 0));
+                            b.AddField("Warning", "You have added this user to the blacklisted access level. They will not be able to interact or run commands.");
+                        }
+                        b.AddField("User", $"`{user.Username}#{user.Discriminator}`", true);
+                        b.AddField("AccessLevel", $"`{accessLevel.ToString()}`", true);
+                        b.WithFooter("ModularBOT • Core");
+
+
+                        break;
+                    case (2):
+                        b.WithAuthor(Client.CurrentUser);
+                        b.WithTitle("Permission Manager");
+                        b.WithDescription("The user was successfully updated.");
+                        b.WithColor(Color.Green);
+                        if (accessLevel == AccessLevels.Blacklisted)
+                        {
+                            b.WithColor(new Color(255, 255, 0));
+                            b.AddField("Warning", "You have moved this user to the blacklisted access level. They will not be able to interact or run commands.");
+                        }
+                        b.AddField("User", $"`{user.Username}#{user.Discriminator}`", true);
+                        b.AddField("AccessLevel", $"`{accessLevel.ToString()}`", true);
+                        b.WithFooter("ModularBOT • Core");
+
+                        break;
+                    default:
+                        b.WithAuthor(Client.CurrentUser);
+                        b.WithTitle("Permission Manager");
+                        b.WithDescription("Permission manager did not make any changes. The user may already have that access level.");
+                        b.WithFooter("ModularBOT • Core");
+                        b.WithColor(Color.Orange);
+                        break;
+                }
+            }
+            catch (InvalidCastException ex)
+            {
+                b.WithAuthor(Client.CurrentUser);
+                b.WithTitle("Permission Manager");
+                b.WithDescription("Permission manager failed to make desired changes, due to an invalid type.");
+                b.AddField("More Details", $"{ex.Message}", true);
+                b.WithFooter("ModularBOT • Core");
+                b.WithColor(Color.Red);
+            }
+            catch (InvalidOperationException ex)
+            {
+                b.WithAuthor(Client.CurrentUser);
+                b.WithTitle("Permission Manager");
+                b.WithDescription("Permission manager failed to make desired changes, due to an invalid operation.");
+                b.AddField("More Details", $"{ex.Message}", true);
+                b.WithFooter("ModularBOT • Core");
+                b.WithColor(Color.Red);
+            }
+
+
+
+            await Context.Channel.SendMessageAsync("", false, b.Build());
+        }
+
+        [Command("permissions set role"),RequireContext(ContextType.Guild), Alias("psr"), Remarks("AccessLevels.CommandManager"), Summary("Set permissions for a role")]
+        public async Task PERM_SetRole(IRole role, AccessLevels accessLevel)
+        {
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
 
@@ -440,9 +564,9 @@ namespace ModularBOT.Component
         [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.CommandManager"), Summary("Remove permission entry for user. (Assumes default: AccessLevels.Normal)")]
         public async Task PERM_DeleteUser(IUser user)
         {
-            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
             if (user == Context.User)
@@ -488,12 +612,12 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions del role"), Alias("pdr", "prr"), Remarks("AccessLevels.Administrator"), Summary("Remove permission entry for role. (Assumes default: AccessLevels.Normal)")]
+        [Command("permissions del role"), Alias("pdr", "prr"), Remarks("AccessLevels.CommandManager"), Summary("Remove permission entry for role. (Assumes default: AccessLevels.Normal)")]
         public async Task PERM_DeleteRole(IRole role)
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
 
@@ -531,12 +655,12 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions get"),Alias("plist"),Remarks("AccessLevels.Administrator"), Summary("List permissions file."),RequireContext(ContextType.Guild)]
+        [Command("permissions get"),Alias("plist"),Remarks("AccessLevels.CommandManager"), Summary("List permissions file."),RequireContext(ContextType.Guild)]
         public async Task PERM_ListPermissions(IUser user)
         {
-            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
             AccessLevels l = _DiscordNet.PermissionManager.GetAccessLevel(user, out IRole inheritedRole, out bool BotOwner);
@@ -716,7 +840,7 @@ namespace ModularBOT.Component
                     break;
                 }
                 string strid = socketClient.ShardId.ToString().PadLeft(9) + "  ";
-                string ping = socketClient.Latency.ToString().PadLeft(8) + "  ";
+                string ping = (socketClient.Latency.ToString() + " ms").PadLeft(8) + "  ";
                 string guilds = socketClient.Guilds.Count.ToString().PadLeft(10) + "  ";
 
                 sb.AppendLine(strid + ping + guilds);
