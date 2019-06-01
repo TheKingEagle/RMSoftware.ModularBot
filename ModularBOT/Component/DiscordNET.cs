@@ -139,14 +139,14 @@ namespace ModularBOT.Component
 
         public void SyncGuild(SocketGuild arg)
         {
-            foreach (SocketGuildUser item in arg.Users)
+            foreach (SocketRole item in arg.Roles)
             {
-                if (item.GuildPermissions.ManageGuild && !item.IsBot)
+                if (item.Permissions.ManageGuild)
                 {
                     if (PermissionManager.GetAccessLevel(item) < AccessLevels.CommandManager)
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a guild manager: " +
-                        $"{item.Username + "#" + item.Discriminator}. Registering them as CommandManager!"));
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a role that can manage guilds: " +
+                        $"{item.Name} <@&{item.Id}>. Registering role as CommandManager!"));
                         PermissionManager.RegisterEntity(item, AccessLevels.CommandManager);
                     }
                 }
