@@ -19,7 +19,7 @@
    
 * **Improve stability (killscreen/autorestart Uncaught crashes)** ⏳
 * **Optimize code (lol)** ⏳
-* Use Discord.NET 2.0.1 ✅
+* Use Discord.NET 2.1.0 ✅
 * Use Shards ✅
 * Write new setup wizard ✅
 * Move to JSON Configuration manager ✅
