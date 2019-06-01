@@ -449,7 +449,8 @@ namespace ModularBOT.Component
                             b.WithColor(new Color(255, 255, 0));
                             b.AddField("Warning", "You have added this user to the blacklisted access level. They will not be able to interact or run commands.");
                         }
-                        b.AddField("User", $"`{user.Username}#{user.Discriminator}`", true);
+                        if (user != null) { b.AddField("User", $"`{user.Username}#{user.Discriminator}`", true); }
+                        if (role != null) { b.AddField("Role", $"`{role.Name}`", true); }
                         b.AddField("AccessLevel", $"`{accessLevel.ToString()}`", true);
                         b.WithFooter("ModularBOT • Core");
 
@@ -465,7 +466,8 @@ namespace ModularBOT.Component
                             b.WithColor(new Color(255, 255, 0));
                             b.AddField("Warning", "You have moved this user to the blacklisted access level. They will not be able to interact or run commands.");
                         }
-                        b.AddField("User", $"`{user.Username}#{user.Discriminator}`", true);
+                        if(user != null) { b.AddField("User", $"`{user.Username}#{user.Discriminator}`", true); }
+                        if (role != null) { b.AddField("Role", $"`{role.Name}`", true); }
                         b.AddField("AccessLevel", $"`{accessLevel.ToString()}`", true);
                         b.WithFooter("ModularBOT • Core");
 
@@ -497,7 +499,15 @@ namespace ModularBOT.Component
                 b.WithFooter("ModularBOT • Core");
                 b.WithColor(Color.Red);
             }
-
+            catch (NullReferenceException ex)
+            {
+                b.WithAuthor(Client.CurrentUser);
+                b.WithTitle("Permission Manager");
+                b.WithDescription("Permission manager failed to make desired changes, due to an invalid operation.");
+                b.AddField("More Details", $"{ex.ToString()}", true);
+                b.WithFooter("ModularBOT • Core");
+                b.WithColor(Color.Red);
+            }
 
 
             await Context.Channel.SendMessageAsync("", false, b.Build());
