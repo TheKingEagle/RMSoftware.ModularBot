@@ -715,7 +715,7 @@ namespace ModularBOT.Component
                     sb.AppendLine("Only showing first 22 results.");
                     break;
                 }
-                string strid = id.ToString().PadLeft(9) + "  ";
+                string strid = socketClient.ShardId.ToString().PadLeft(9) + "  ";
                 string ping = socketClient.Latency.ToString().PadLeft(8) + "  ";
                 string guilds = socketClient.Guilds.Count.ToString().PadLeft(10) + "  ";
 
