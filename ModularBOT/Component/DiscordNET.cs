@@ -434,6 +434,12 @@ namespace ModularBOT.Component
                 return;
             }
             if (arg.Author.IsBot && !PermissionManager.IsEntityRegistered(arg.Author)) return;//ignore bots unless bot is registered in the permission system!
+            string cgontext = "DM/Group";
+            if (message.Channel is SocketGuildChannel)
+            {
+                cgontext = ((SocketGuildChannel)message.Channel).Guild.Name;
+            }
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands", $"<#{message.Channel.Name} [{cgontext}]> {message.Author.Username}: {message.Content}"));
             string result = "";
            
             await Task.Run(() =>  result = CustomCMDMgr.ProcessMessage(arg));
