@@ -108,8 +108,39 @@ namespace ModularBOT.Component
             }
             if (Processed.Contains("%self%"))
             {
-
                 Processed = Processed.Replace("%self%", client.CurrentUser.Mention);
+            }
+            if (Processed.Contains("%self_avatar%"))
+            {
+                Processed = Processed.Replace("%self_avatar%", client.CurrentUser.GetAvatarUrl(ImageFormat.Auto,512));
+            }
+            if (Processed.Contains("%guild_count%"))
+            {
+                DiscordShardedClient cl = client as DiscordShardedClient;
+                Processed = Processed.Replace("%guild_count%", cl.Guilds.Count.ToString());
+            }
+            if (Processed.Contains("%context%"))
+            {
+                string Context = message.Author.Mention;
+                if(gobj != null || gobj.ID != 0)
+                {
+                    Context = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult().Name;
+                }
+                Processed = Processed.Replace("%context%",Context);
+            }
+            if (Processed.Contains("%command%"))
+            {
+                Processed = Processed.Replace("%command%", cmd.Name);
+            }
+            if (Processed.Contains("%command_count%"))
+            {
+                int c = gobj.GuildCommands.Count + cmdsvr.Commands.Count();
+                Processed = Processed.Replace("%command_count%", c.ToString());
+            }
+            if (Processed.Contains("%latency%"))
+            {
+                DiscordShardedClient cl = client as DiscordShardedClient;
+                Processed = Processed.Replace("%latency%",cl.Latency.ToString()+" ms");
             }
             if (Processed.Contains("%prefix%") || Processed.Contains("%pf%"))
             {
@@ -121,6 +152,10 @@ namespace ModularBOT.Component
             if (Processed.Contains("%invoker%"))
             {
                 Processed = Processed.Replace("%invoker%", message.Author.Mention);
+            }
+            if (Processed.Contains("%invoker_nomention%"))
+            {
+                Processed = Processed.Replace("%invoker_nomention%", message.Author.Username+"#"+message.Author.Discriminator);
             }
             if (Processed.Contains("%version%"))
             {
@@ -557,7 +592,7 @@ namespace ModularBOT.Component
                                 case ("EMBED_ADDFIELD")://embed_addfield <name> <contents> (Quotes required.)
 
                                     //Get the line removing echo.
-                                    output = line.Remove(0, 14);
+                                    output = line.Remove(0, 15);
                                     output = ProcessVariableString(gobj, output, cmd, client, message);
                                     Regex r = new Regex("\"[^\"]*\"");
                                     #region ERRORS
@@ -617,7 +652,7 @@ namespace ModularBOT.Component
                                 case ("EMBED_ADDFIELD_I")://embed_addfield <name> <contents> (Quotes required.)
 
                                     //Get the line removing echo.
-                                    output = line.Remove(0, 16);
+                                    output = line.Remove(0, 17);
                                     output = ProcessVariableString(gobj, output, cmd, client, message);
                                     Regex ri = new Regex("\"[^\"]*\"");
                                     #region ERRORS
