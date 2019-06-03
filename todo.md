@@ -46,5 +46,5 @@
    * Permission system was altered to mass-deploy on a ROLE-BY-ROLE basis.
 * **Additional CoreSCRIPT functionality** ⏳
    * IF/ELSE statements
-   
+* Add implementations for External Libraries to use new `ConsoleIO`.   
 * *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
