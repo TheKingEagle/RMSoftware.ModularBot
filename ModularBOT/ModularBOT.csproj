@@ -89,6 +89,9 @@
   <PropertyGroup>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Discord.Net.Commands, Version=2.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Discord.Net.Commands.2.0.1\lib\net46\Discord.Net.Commands.dll</HintPath>
@@ -218,6 +221,7 @@
     <Compile Include="Component\ConsoleIO.cs" />
     <Compile Include="Component\CoreModule.cs" />
     <Compile Include="Component\ModuleProperties.cs" />
+    <Compile Include="Component\OS_SystemInfo.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
     <Compile Include="Component\PseudoMessage.cs" />
   </ItemGroup>
@@ -244,6 +248,7 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="app.manifest" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
