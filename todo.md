@@ -24,7 +24,7 @@
 * Write new setup wizard ✅
 * Move to JSON Configuration manager ✅
 * Per-guild command modules
-* ### ***New Permission system*** 🔥⏳
+* New Permission system ✅
 * **Update Checking** ⏳
 
 # Current TODOs
@@ -42,7 +42,9 @@
 * Per-guild modules
    * Module Management Screen (CONSOLE)
    * Module Installer
-* ### ***Per-guild Permission system*** 🔥⏳
-   * The current permission system is hardly ideal if planning on mass-deploying the bot. Must switch to a system that will improve guild security.
+* ~~Per-guild~~⛔ Permission system ✅
+   * Permission system was altered to mass-deploy on a ROLE-BY-ROLE basis.
+* **Additional CoreSCRIPT functionality** ⏳
+   * IF/ELSE statements
    
 * *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
