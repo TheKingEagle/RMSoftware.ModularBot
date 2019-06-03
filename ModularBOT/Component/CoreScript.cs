@@ -161,6 +161,23 @@ namespace ModularBOT.Component
             {
                 Processed = Processed.Replace("%version%", Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
             }
+            if (Processed.Contains("%os_name%"))
+            {
+                Processed = Processed.Replace("%os_name%", SystemInfo.FriendlyName());
+            }
+            if (Processed.Contains("%os_bit%"))
+            {
+                Processed = Processed.Replace("%os_bit%", Environment.Is64BitOperatingSystem ? "x64" : "x86");
+            }
+            if (Processed.Contains("%os_ver%"))
+            {
+                OperatingSystem os = Environment.OSVersion;
+                Processed = Processed.Replace("%os_ver%", os.Version.ToString());
+            }
+            if (Processed.Contains("%bot_mem%"))
+            {
+                Processed = Processed.Replace("%bot_mem%", SystemInfo.SizeSuffix(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64));
+            }
             //Check for use of Custom defined variables.
 
             foreach (Match item in Regex.Matches(Processed, @"%[^%]*%"))
