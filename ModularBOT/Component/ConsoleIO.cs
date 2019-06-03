@@ -1006,9 +1006,76 @@ namespace ModularBOT.Component
                     WriteEntry(new LogMessage(LogSeverity.Info, "Config", "Console colors were changed successfully."), null, true, false, true);
                     v = null;
                 }
-                if (!ScreenBusy && !ScreenModal)
+
+                if(input.ToLower().StartsWith("guilds"))
                 {
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", input), null, true, false, true);
+                    string PRV_TITLE = currentTitle;
+                    List<LogEntry> v = new List<LogEntry>();
+                    //---------------start modal---------------
+                    ListGuilds(ref discordNET);
+                    //----------------End modal----------------
+                    ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                        Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+                    ScreenModal = false;
+                    v.AddRange(LogEntries);
+                    LogEntries.Clear();//clear buffer.
+                    //output previous logEntry.
+                    foreach (var item in v)
+                    {
+                        WriteEntry(item.LogMessage, item.EntryColor);
+                    }
+                }
+                if (input.ToLower().StartsWith("users"))
+                {
+                    if (input.Split(' ').Length > 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    input = input.Remove(0, 6).Trim();
+                    if (!ulong.TryParse(input, out ulong id))
+                    {
+                        
+                    }
+
+                    string PRV_TITLE = currentTitle;
+                    List<LogEntry> v = new List<LogEntry>();
+                    //---------------start modal---------------
+                    bool ModalResult = ListUsers(ref discordNET, id);
+                    if (!ModalResult)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "The guild was not found..."));
+                        
+                        continue;
+                    }
+                    //----------------End modal----------------
+                    if(ModalResult)
+                    {
+
+                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+                        
+                        v.AddRange(LogEntries);
+                        LogEntries.Clear();//clear buffer.
+                                           //output previous logEntry.
+                        foreach (var item in v)
+                        {
+                            WriteEntry(item.LogMessage, item.EntryColor);
+                        }
+                    }
+                }
+
+                else
+                {
+                    if (!ScreenBusy && !ScreenModal)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", input), null, true, false, true);
+                    }
                 }
             }
             return Task.Delay(1);
@@ -1024,6 +1091,172 @@ namespace ModularBOT.Component
             WriteEntry("\u2502\u2005\u2005\u2005 2. Default logo", ConsoleColor.DarkGreen);
             WriteEntry("\u2502\u2005\u2005\u2005 3. Custom logo", ConsoleColor.DarkGreen);
             WriteEntry("\u2502\u2005");
+        }
+
+        private void ListGuilds(ref DiscordNET discord)
+        {
+            short page = 1;
+            
+            short max = (short)(Math.Ceiling((double)(discord.Client.Guilds.Count / 24))+1);
+            int index = 0;
+            ScreenModal = true;
+            
+            while (true)
+            {
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+                for (int i = index; i < 24 * page; i++)//28 results per page.
+                {
+                    if (index >= discord.Client.Guilds.Count)
+                    {
+                        break;
+                    }
+                    string name = discord.Client.Guilds.ElementAt(i).Name;
+                    if(name.Length > 35)
+                    {
+                        name = name.Remove(35) + "...";
+                    }
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {name.PadRight(38,'\u2005')} [{discord.Client.Guilds.ElementAt(i).Id}]",ConsoleColor.DarkGreen);
+                    
+                    index++;
+                }
+                WriteEntry($"\u2502");
+                if (page > 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page == max)
+                {
+                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                }
+                if (page > 1 && page == max)
+                {
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                ConsoleKeyInfo s = Console.ReadKey();
+                if(s.Key == ConsoleKey.P)
+                {
+                    if(page>1)
+                    {
+                        page--;
+                        index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                        //continue;
+                    }
+                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+                if (s.Key == ConsoleKey.E)
+                {
+                    break;
+                }
+                if (s.Key == ConsoleKey.N)
+                {
+                    if (page < max)
+                    {
+                        page++;
+                    }
+
+                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                else
+                {
+                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+            }
+
+            ScreenModal = false;
+
+        }
+
+        private bool ListUsers(ref DiscordNET discord,ulong guildID)
+        {
+            SocketGuild g = discord.Client.GetGuild(guildID);
+            if(g == null)
+            {
+                return false;
+            }
+            g.DownloadUsersAsync();
+            string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
+            short page = 1;
+
+            short max = (short)(Math.Ceiling((double)(g.Users.Count / 24))+1);
+            int index = 0;
+            ScreenModal = true;
+            
+            while (true)
+            {
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Users for Guild: {name}", page, max, ConsoleColor.White);
+                
+                for (int i = index; i < 24 * page; i++)//20 results per page.
+                {
+                    if (index >= g.Users.Count)
+                    {
+                        break;
+                    }
+                    string p = $"{ g.Users.ElementAt(i).Username }#{g.Users.ElementAt(i).Discriminator}".PadRight(38, '\u2005');
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Users.ElementAt(i).Id}]", ConsoleColor.DarkGreen);
+                    index++;
+                }
+                WriteEntry($"\u2502");
+                if (page > 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page == max)
+                {
+                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                }
+                if (page > 1 && page == max)
+                {
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                ConsoleKeyInfo s = Console.ReadKey();
+                if (s.Key == ConsoleKey.P)
+                {
+                    if (page > 1)
+                    {
+                        page--;
+                        index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                        //continue;
+                    }
+                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+                if (s.Key == ConsoleKey.E)
+                {
+                    break;
+                }
+                if (s.Key == ConsoleKey.N)
+                {
+                    if (page < max)
+                    {
+                        page++;
+                    }
+
+                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                else
+                {
+                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+            }
+
+            ScreenModal = false;
+            return true;
+
         }
 
         #region Console pixel art - Slight modification of https://stackoverflow.com/a/33715138/4655190
@@ -1082,6 +1315,8 @@ namespace ModularBOT.Component
             Console.ResetColor();
         }
         #endregion
+
+
 
         #region Screen buffer
         public class LogEntry
