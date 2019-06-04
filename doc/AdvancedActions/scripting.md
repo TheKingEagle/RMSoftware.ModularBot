@@ -30,6 +30,16 @@ ROLE_ADD <ulong roleID> <string successMessage>
 ROLE_DEL <ulong roleID> <string successMessage>
 CMD <CommandName> [command parameters]
 WAIT <time_in_milliseconds+20>
+EMBED <title>
+EMBED_DESC <description>
+EMBED_ADDFIELD "<title>" "<Value>"
+EMBED_ADDFIELD_I "<title>" "<value">
+EMBED_IMAGE <image url>
+EMBED_THIMAGE <image url>
+EMBED_FOOTER <text>
+EMBED_COLOR <#HEXCOLOR>
+EMBED_SEND
+SET_TARGET <DIRECT or CHANNEL>
 ```
   
 # Usage Notes
