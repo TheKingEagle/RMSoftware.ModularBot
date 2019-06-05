@@ -316,7 +316,7 @@ namespace ModularBOT.Component
                     progressBAR += "\u2591";
                 }
             }
-            progressBAR += $" STEP {ProgressValue} OF {ProgressMax}";
+            progressBAR += $" PAGE {ProgressValue} OF {ProgressMax}";
             string pbar = progressBAR.PadLeft(71 + progressBAR.Length / 2);
             pbar += "".PadRight(71 - progressBAR.Length / 2);
             Console.Write("\u2551");
@@ -1027,7 +1027,9 @@ namespace ModularBOT.Component
                 }
                 if (input.ToLower().StartsWith("users"))
                 {
-                    if (input.Split(' ').Length > 2)
+                    string page = "1";
+                
+                    if (input.Split(' ').Length > 3)
                     {
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
                         continue;
@@ -1037,16 +1039,30 @@ namespace ModularBOT.Component
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
                         continue;
                     }
-                    input = input.Remove(0, 6).Trim();
+                    if(input.Split(' ').Length <3)
+                    {
+                        input = input.Remove(0, 6).Trim();
+                    }
+                    if(input.Split(' ').Length == 3)
+                    {
+                        page = input.Split(' ')[2];
+                        input = input.Split(' ')[1];
+                    }
+                    if(!short.TryParse(page,out short numpage))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Page number"));
+                        continue;
+                    }
                     if (!ulong.TryParse(input, out ulong id))
                     {
-                        
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Guild ID format"));
+                        continue;
                     }
 
                     string PRV_TITLE = currentTitle;
                     List<LogEntry> v = new List<LogEntry>();
                     //---------------start modal---------------
-                    bool ModalResult = ListUsers(ref discordNET, id);
+                    bool ModalResult = ListUsers(ref discordNET, id,numpage);
                     if (!ModalResult)
                     {
                         WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "The guild was not found..."));
@@ -1174,7 +1190,7 @@ namespace ModularBOT.Component
 
         }
 
-        private bool ListUsers(ref DiscordNET discord,ulong guildID)
+        private bool ListUsers(ref DiscordNET discord,ulong guildID, short page=1)
         {
             SocketGuild g = discord.Client.GetGuild(guildID);
             if(g == null)
@@ -1183,10 +1199,18 @@ namespace ModularBOT.Component
             }
             g.DownloadUsersAsync();
             string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
-            short page = 1;
+            
 
             short max = (short)(Math.Ceiling((double)(g.Users.Count / 24))+1);
-            int index = 0;
+            if(page > max)
+            {
+                page = max;
+            }
+            if (page < 1)
+            {
+                page = 1;
+            }
+            int index = (page * 24) - 24;
             ScreenModal = true;
             
             while (true)
