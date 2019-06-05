@@ -801,9 +801,11 @@ namespace ModularBOT.Component
             GuildObject obj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid);
             if(obj!=null)
             {
+                
                 obj.CommandPrefix = newPrefix;
                 obj.SaveJson();
                 var g = await Context.Client.GetGuildAsync(gid);
+                ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Prefix", $"The prefix for `{g?.Name ?? "Direct Messages"}` has been set to `{newPrefix}`"), ConsoleColor.Cyan);
                 await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Success!", $"The prefix for `{g?.Name ?? "Direct Messages"}` has been set to `{newPrefix}`", Color.Green));
                 return;
             }
@@ -820,11 +822,13 @@ namespace ModularBOT.Component
                 {
                     _DiscordNet.CustomCMDMgr.AddGuildObject(obj);//safely inject the new object.
                     var g = await Context.Client.GetGuildAsync(gid);
+                    ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Prefix", $"The prefix for `{g?.Name ?? "Direct Messages"}` has been set to `{newPrefix}`"), ConsoleColor.Cyan);
                     await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Success!", $"The prefix for `{g.Name}` has been set to `{newPrefix}`", Color.Green));
 
                 }
                 catch (Exception ex)
                 {
+                    ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Prefix", $"Something went wrong... {ex.Message}",ex), ConsoleColor.Cyan);
                     await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Something Went Wrong.", "A new guild object was needed here, but couldn't be created.", Color.DarkRed, ex));
                 }
 
