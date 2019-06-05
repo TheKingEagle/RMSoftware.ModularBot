@@ -5,6 +5,7 @@
 >* Indicates fully implemented ✅
 >* ~~Indicates SCRAPPED feature~~ ⛔
 >* Indicates TODO with no immediate action
+
 # Planned changes
 * Add to allow for some changes, on the fly (avatar, nickname, username, prefix, etc.) ✅
 * Add support for per-guild prefixes ✅
@@ -18,31 +19,32 @@
    * ***FIX Random output glitches See Issue [#9](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/9)*** ⏳⚠
    
 * **Improve stability (killscreen/autorestart Uncaught crashes)** ⏳
-* **Optimize code (lol)** ⏳
+   * **Undergoing testing process** ⏳
 * Use Discord.NET 2.1.0 ✅
 * Use Shards ✅
 * Write new setup wizard ✅
 * Move to JSON Configuration manager ✅
-* Per-guild command modules
-* ### ***New Permission system*** 🔥⏳
+* New Permission system ✅
 * **Update Checking** ⏳
+* Per-guild command modules
 
 # Current TODOs
-* Write Modules loader ✅
 * **FINISH CoreModule commands** ⏳
    * variables get
    * variables list
    * variables set
    
 * **Automatic Updates** ⏳
-   * Real time update push (Api.rms0.org)
+   * Real time update push (Api.rms0.org)/SERVER SIDE
    * **Client-side download and run (TASK MANAGER)** ⏳
    * **Download Progress screen (CONSOLE)** ⏳
    
 * Per-guild modules
    * Module Management Screen (CONSOLE)
    * Module Installer
-* ### ***Per-guild Permission system*** 🔥⏳
-   * The current permission system is hardly ideal if planning on mass-deploying the bot. Must switch to a system that will improve guild security.
    
+* **Additional CoreSCRIPT functionality** ⏳
+   * IF/ELSE statements
+   
+* Add implementations for External Libraries to use new `ConsoleIO`.   
 * *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
