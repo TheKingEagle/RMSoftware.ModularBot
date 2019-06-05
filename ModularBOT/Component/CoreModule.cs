@@ -385,6 +385,7 @@ namespace ModularBOT.Component
             #region RequiredCheck
             IRole role = null;
             IGuildUser user = null;
+            IWebhook hook = null;
             if (Context.Guild != null)
             {
                 role = Context.Guild?.GetRole(GenericID);
@@ -393,9 +394,13 @@ namespace ModularBOT.Component
                     user = Context.Guild?.GetUserAsync(GenericID, CacheMode.AllowDownload).GetAwaiter().GetResult();
                     if (user == null)
                     {
-                        await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... What?", 
-                            "The entity id did not match a user or role. Please make sure you got it right!", Color.DarkRed));
-                        return;
+                        hook = Context.Guild?.GetWebhookAsync(GenericID).GetAwaiter().GetResult();
+                        if(hook==null)
+                        {
+                            await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... What?",
+                                "The entity id did not match a user or role. Please make sure you got it right!", Color.DarkRed));
+                            return;
+                        }
                     }
                 }
             }
