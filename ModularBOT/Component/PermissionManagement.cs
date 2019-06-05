@@ -291,15 +291,20 @@ namespace ModularBOT.Component
         {
             IRole role = null;
             IGuildUser user = null;
+            IWebhook wuser = null;
             if(Context.Guild != null)
             {
-                 role = Context.Guild?.GetRole(GenericID);
+                role = Context.Guild?.GetRole(GenericID);
                 if(role == null)
                 {
-                     user =  Context.Guild?.GetUserAsync(GenericID, CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    user = Context.Guild?.GetUserAsync(GenericID, CacheMode.AllowDownload).GetAwaiter().GetResult();
                     if(user == null)
                     {
-                        throw new InvalidCastException("The entity id did not match a user or role. Please make sure you got it right!");
+                        wuser = Context.Guild?.GetWebhookAsync(GenericID).GetAwaiter().GetResult();
+                        if(wuser == null)
+                        {
+                            throw new InvalidCastException("The entity id did not match a user, webhook, or role. Please make sure you got it right!");
+                        }
                     }
                 }
             }
