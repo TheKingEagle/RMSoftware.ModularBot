@@ -46,5 +46,9 @@
 * **Additional CoreSCRIPT functionality** ⏳
    * IF/ELSE statements
    
+* Change default command list
+   * Add support for "paginator" type command list.
+   * Must have a fallback in the event of catestrophic failure (HTML)
+   
 * Add implementations for External Libraries to use new `ConsoleIO`.   
 * *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
