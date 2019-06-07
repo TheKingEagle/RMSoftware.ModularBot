@@ -159,18 +159,19 @@ namespace ModularBOT.Component
                     Console.BackgroundColor = bglast;//restore previous color.
                     Console.ForegroundColor = ConsoleForegroundColor;
                     //Thread.Sleep(1);
-                    Console.Write("\u2551");//uileft
+                    Console.Write("\u2551");//uileft ║
                                             //Thread.Sleep(1);
                     
                     if (i == 0)
                     {
-                        Console.WriteLine(lines[i]);//write current line in queue.
-                                                    //Thread.Sleep(1);
+                        //Console.WriteLine(lines[i].PadRight(Console.WindowWidth - (lines[i].Length + 1),'\u2005'));//write current line in queue.
+                        Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2,'\u2000'));//write current line in queue.
+                        Console.CursorTop = Console.CursorTop - 1;
                     }
                     if (i > 0)
                     {
-                        Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000'));//write current line in queue, padded by 21 enQuads to preserve line format.
-                                                                                            //Thread.Sleep(1);
+                        Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000').PadRight(Console.BufferWidth - 2  ));//write current line in queue, padded by 21 enQuads to preserve line format.
+                        Console.CursorTop = Console.CursorTop - 1;
                     }
 
                 }
@@ -183,7 +184,7 @@ namespace ModularBOT.Component
                     Console.Write(">");//Write the input indicator.
 
                 }
-                if(!showCursor)
+                if (!showCursor)
                 {
                     //Console.CursorTop = PrvTop;//testing
                     Console.CursorTop = prt;
@@ -561,7 +562,7 @@ namespace ModularBOT.Component
             ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, title);
             WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."),null,true,true);
             LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
-            WriteEntry(m, null, false, true, false);
+            WriteEntry(m, null, true, true, false);
 
             WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"), null, true, true, false);
             CreateCrashLog(ex, m);
@@ -596,6 +597,8 @@ namespace ModularBOT.Component
                 ARGS = restart_args;
 
             }
+
+            ScreenModal = false;
             ProgramShutdownFlag = true;
             ProgramRestartFlag = autorestart;//redundancy
             //ScreenBusy = false;
