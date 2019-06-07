@@ -29,11 +29,6 @@
 * Per-guild command modules
 
 # Current TODOs
-* **FINISH CoreModule commands** ⏳
-   * variables get
-   * variables list
-   * variables set
-   
 * **Automatic Updates** ⏳
    * Real time update push (Api.rms0.org)/SERVER SIDE
    * **Client-side download and run (TASK MANAGER)** ⏳
