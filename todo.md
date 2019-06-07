@@ -29,11 +29,6 @@
 * Per-guild command modules
 
 # Current TODOs
-* **FINISH CoreModule commands** ⏳
-   * variables get
-   * variables list
-   * variables set
-   
 * **Automatic Updates** ⏳
    * Real time update push (Api.rms0.org)/SERVER SIDE
    * **Client-side download and run (TASK MANAGER)** ⏳
@@ -45,6 +40,18 @@
    
 * **Additional CoreSCRIPT functionality** ⏳
    * IF/ELSE statements
+   * Add `%owner%`, `%owner_avatar%`, and `%owner_nomention%` flags
+   * Add `%self_nick%` flag
+   * Add `%invoker_avatar%` and `%invoker_nick%` flags
+   * Add `EMBED_URL` and `EMBED_FOOTER_IMG` Functions
+   
+* Update External Library support
+   * Remove `CLI_EXEC`
+   * Change `EXEC` to reference Discord.NET's client, message, and `ConsoleIO` class.
+   
+* Change default command list
+   * Add support for "paginator" type command list.
+   * Must have a fallback in the event of catestrophic failure (HTML)
    
 * Add implementations for External Libraries to use new `ConsoleIO`.   
 * *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
