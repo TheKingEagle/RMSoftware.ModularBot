@@ -40,6 +40,14 @@
    
 * **Additional CoreSCRIPT functionality** ⏳
    * IF/ELSE statements
+   * Add `%owner%`, `%owner_avatar%`, and `%owner_nomention%` flags
+   * Add `%self_nick%` flag
+   * Add `%invoker_avatar%` and `%invoker_nick%` flags
+   * Add `EMBED_URL` and `EMBED_FOOTER_IMG` Functions
+   
+* Update External Library support
+   * Remove `CLI_EXEC`
+   * Change `EXEC` to reference Discord.NET's client, message, and `ConsoleIO` class.
    
 * Change default command list
    * Add support for "paginator" type command list.
