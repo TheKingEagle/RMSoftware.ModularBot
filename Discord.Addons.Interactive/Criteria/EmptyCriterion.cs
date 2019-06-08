@@ -1,14 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Discord.Commands;
-using Discord.WebSocket;
-
+﻿// ReSharper disable StyleCop.SA1600
 namespace Discord.Addons.Interactive
 {
+    using System.Threading.Tasks;
+
+    using Discord.Commands;
+
     public class EmptyCriterion<T> : ICriterion<T>
     {
+        /// <summary>
+        /// The judge async.
+        /// </summary>
+        /// <param name="sourceContext">
+        /// The source context.
+        /// </param>
+        /// <param name="parameter">
+        /// The parameter.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
         public Task<bool> JudgeAsync(CommandContext sourceContext, T parameter)
             => Task.FromResult(true);
     }
