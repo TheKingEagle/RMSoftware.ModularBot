@@ -8,7 +8,7 @@ namespace Discord.Addons.Interactive
 {
     public class PaginatedMessageCallback : IReactionCallback
     {
-        public SocketCommandContext Context { get; }
+        public CommandContext Context { get; }
         public InteractiveService Interactive { get; private set; }
         public IUserMessage Message { get; private set; }
 
@@ -25,7 +25,7 @@ namespace Discord.Addons.Interactive
         
 
         public PaginatedMessageCallback(InteractiveService interactive, 
-            SocketCommandContext sourceContext,
+            CommandContext sourceContext,
             PaginatedMessage pager,
             ICriterion<SocketReaction> criterion = null)
         {

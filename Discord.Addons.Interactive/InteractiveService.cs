@@ -33,7 +33,7 @@ namespace Discord.Addons.Interactive
             _callbacks = new Dictionary<ulong, IReactionCallback>();
         }
 
-        public Task<SocketMessage> NextMessageAsync(SocketCommandContext context, 
+        public Task<SocketMessage> NextMessageAsync(CommandContext context, 
             bool fromSourceUser = true, 
             bool inSourceChannel = true, 
             TimeSpan? timeout = null,
@@ -47,7 +47,7 @@ namespace Discord.Addons.Interactive
             return NextMessageAsync(context, criterion, timeout, token);
         }
         
-        public async Task<SocketMessage> NextMessageAsync(SocketCommandContext context, 
+        public async Task<SocketMessage> NextMessageAsync(CommandContext context, 
             ICriterion<SocketMessage> criterion, 
             TimeSpan? timeout = null,
             CancellationToken token = default(CancellationToken))
@@ -66,14 +66,14 @@ namespace Discord.Addons.Interactive
                     eventTrigger.SetResult(message);
             }
 
-            context.Client.MessageReceived += Handler;
+            ((DiscordShardedClient)context.Client).MessageReceived += Handler;
 
             var trigger = eventTrigger.Task;
             var cancel = cancelTrigger.Task;
             var delay = Task.Delay(timeout.Value);
             var task = await Task.WhenAny(trigger, delay, cancel).ConfigureAwait(false);
 
-            context.Client.MessageReceived -= Handler;
+            ((DiscordShardedClient)context.Client).MessageReceived -= Handler;
 
             if (task == trigger)
                 return await trigger.ConfigureAwait(false);
@@ -81,7 +81,7 @@ namespace Discord.Addons.Interactive
                 return null;
         }
 
-        public async Task<IUserMessage> ReplyAndDeleteAsync(SocketCommandContext context, 
+        public async Task<IUserMessage> ReplyAndDeleteAsync(CommandContext context, 
             string content, bool isTTS = false, 
             Embed embed = null, 
             TimeSpan? timeout = null, 
@@ -95,7 +95,7 @@ namespace Discord.Addons.Interactive
             return message;
         }
 
-        public async Task<IUserMessage> SendPaginatedMessageAsync(SocketCommandContext context, 
+        public async Task<IUserMessage> SendPaginatedMessageAsync(CommandContext context, 
             PaginatedMessage pager, 
             ICriterion<SocketReaction> criterion = null)
         {

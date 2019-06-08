@@ -5,7 +5,7 @@ namespace Discord.Addons.Interactive
 {
     public class EnsureSourceUserCriterion : ICriterion<IMessage>
     {
-        public Task<bool> JudgeAsync(SocketCommandContext sourceContext, IMessage parameter)
+        public Task<bool> JudgeAsync(CommandContext sourceContext, IMessage parameter)
         {
             var ok = sourceContext.User.Id == parameter.Author.Id;
             return Task.FromResult(ok);

@@ -7,12 +7,12 @@ using Discord.WebSocket;
 
 namespace Discord.Addons.Interactive
 {
-    public abstract class InteractiveBase : InteractiveBase<SocketCommandContext>
+    public abstract class InteractiveBase : InteractiveBase<CommandContext>
     {
     }
 
     public abstract class InteractiveBase<T> : ModuleBase<T>
-        where T : SocketCommandContext
+        where T : CommandContext
     {
         public InteractiveService Interactive { get; set; }
 
@@ -28,7 +28,7 @@ namespace Discord.Addons.Interactive
         {
             var pager = new PaginatedMessage
             {
-                Pages = pages
+                Pages = (IEnumerable<PaginatedMessage.Page>)pages
             };
             return PagedReplyAsync(pager, fromSourceUser);
         }

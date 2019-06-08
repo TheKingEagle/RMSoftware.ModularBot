@@ -10,7 +10,7 @@ namespace Discord.Addons.Interactive
         public EnsureFromChannelCriterion(IMessageChannel channel)
             => _channelId = channel.Id;
 
-        public Task<bool> JudgeAsync(SocketCommandContext sourceContext, IMessage parameter)
+        public Task<bool> JudgeAsync(CommandContext sourceContext, IMessage parameter)
         {
             bool ok = _channelId == parameter.Channel.Id;
             return Task.FromResult(ok);

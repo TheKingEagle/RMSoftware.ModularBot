@@ -9,6 +9,6 @@ namespace Discord.Addons.Interactive
 {
     public interface ICriterion<in T>
     {
-        Task<bool> JudgeAsync(SocketCommandContext sourceContext, T parameter);
+        Task<bool> JudgeAsync(CommandContext sourceContext, T parameter);
     }
 }

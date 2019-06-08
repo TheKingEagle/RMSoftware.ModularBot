@@ -14,7 +14,7 @@ namespace Discord.Addons.Interactive
             return this;
         }
 
-        public async Task<bool> JudgeAsync(SocketCommandContext sourceContext, T parameter)
+        public async Task<bool> JudgeAsync(CommandContext sourceContext, T parameter)
         {
             foreach (var criterion in _critiera)
             {

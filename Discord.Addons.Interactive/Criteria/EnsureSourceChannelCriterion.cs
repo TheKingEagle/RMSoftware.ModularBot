@@ -5,7 +5,7 @@ namespace Discord.Addons.Interactive
 {
     public class EnsureSourceChannelCriterion : ICriterion<IMessage>
     {
-        public Task<bool> JudgeAsync(SocketCommandContext sourceContext, IMessage parameter)
+        public Task<bool> JudgeAsync(CommandContext sourceContext, IMessage parameter)
         {
             var ok = sourceContext.Channel.Id == parameter.Channel.Id;
             return Task.FromResult(ok);

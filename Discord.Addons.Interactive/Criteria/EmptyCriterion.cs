@@ -9,7 +9,7 @@ namespace Discord.Addons.Interactive
 {
     public class EmptyCriterion<T> : ICriterion<T>
     {
-        public Task<bool> JudgeAsync(SocketCommandContext sourceContext, T parameter)
+        public Task<bool> JudgeAsync(CommandContext sourceContext, T parameter)
             => Task.FromResult(true);
     }
 }
