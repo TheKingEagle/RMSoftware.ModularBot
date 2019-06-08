@@ -15,7 +15,7 @@ namespace ModularBOT.Component
         MessageSource _source;
         MessageType _type;
         public PseudoMessage(string content, SocketUser author, IGuildChannel ch, MessageSource source)
-        {
+        { 
             _content = content;
             _author = author;
             _c = ch;
