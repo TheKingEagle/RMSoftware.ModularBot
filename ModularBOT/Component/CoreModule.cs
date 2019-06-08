@@ -293,11 +293,6 @@ namespace ModularBOT.Component
                 Name = $"{Context.Client.CurrentUser.Username}'s Command List",
                 IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
             };
-            PageItem.FooterOverride = new EmbedFooterBuilder()
-            {
-                Text = $"Requested by {Context.User.Username}#{Context.User.Discriminator}",
-                IconUrl = Context.User.GetAvatarUrl(ImageFormat.Auto)
-            };
 
             #region CORE
             foreach (CommandInfo item in Cmdsvr.Commands)
@@ -318,11 +313,6 @@ namespace ModularBOT.Component
                     {
                         Name = $"{Context.Client.CurrentUser.Username}'s Command List",
                         IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
-                    };
-                    PageItem.FooterOverride = new EmbedFooterBuilder()
-                    {
-                        Text = $"Requested by {Context.User.Username}#{Context.User.Discriminator}",
-                        IconUrl = Context.User.GetAvatarUrl(ImageFormat.Auto)
                     };
                 }
                 string group = item.Module.Aliases[0] + " ";
@@ -383,12 +373,11 @@ namespace ModularBOT.Component
                     Url = Context.Client.CurrentUser.GetAvatarUrl()
                 },
                 Color = Color.DarkGreen,
-                FooterOverride = null,
                 Options = PaginatedAppearanceOptions.Default,
                 TimeStamp = DateTimeOffset.UtcNow
             };
 
-
+            
             await PagedReplyAsync(pager, new ReactionList
             {
                 Forward = true,
