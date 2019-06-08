@@ -140,7 +140,18 @@ namespace ModularBOT.Component
             if (Processed.Contains("%latency%"))
             {
                 DiscordShardedClient cl = client as DiscordShardedClient;
-                Processed = Processed.Replace("%latency%",cl.Latency.ToString()+" ms");
+                int? l = null;
+                if(message is SocketUserMessage a)
+                {
+                    if(a.Channel is SocketTextChannel c)
+                    {
+                        if(c.Guild != null)
+                        {
+                            l = cl.GetShardFor(c.Guild).Latency;
+                        }
+                    }
+                }
+                Processed = Processed.Replace("%latency%",(l ?? cl.Latency).ToString() + " ms");
             }
             if (Processed.Contains("%prefix%") || Processed.Contains("%pf%"))
             {
