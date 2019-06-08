@@ -270,6 +270,12 @@
   <ItemGroup>
     <None Include="Resources\RMSoftwareICO.png" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Discord.Addons.Interactive\Discord.Addons.Interactive.csproj">
+      <Project>{dde7ccff-e5ad-41be-85f7-0492e335d007}</Project>
+      <Name>Discord.Addons.Interactive</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM Move assembly references to LIB.
