@@ -1,93 +1,188 @@
-﻿using System;
-using System.Threading.Tasks;
-using Discord.Commands;
-using Discord.WebSocket;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-
-namespace Discord.Addons.Interactive
+﻿namespace Discord.Addons.Interactive
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    using Discord.Commands;
+    using Discord.WebSocket;
+
+    /// <summary>
+    /// The interactive service.
+    /// </summary>
     public class InteractiveService : IDisposable
     {
-        public BaseSocketClient Discord { get; }
+        /// <summary>
+        /// The callbacks.
+        /// </summary>
+        private readonly Dictionary<ulong, IReactionCallback> callbacks;
 
-        private Dictionary<ulong, IReactionCallback> _callbacks;
-        private TimeSpan _defaultTimeout;
+        /// <summary>
+        /// The default timeout.
+        /// </summary>
+        private readonly TimeSpan defaultTimeout;
 
-        // helpers to allow DI containers to resolve without a custom factory
-        public InteractiveService(DiscordSocketClient discord, InteractiveServiceConfig config = null)
-            : this((BaseSocketClient)discord, config) {}
-            
-        public InteractiveService(DiscordShardedClient discord, InteractiveServiceConfig config = null)
-            : this((BaseSocketClient)discord, config) {}
-
-        public InteractiveService(BaseSocketClient discord, InteractiveServiceConfig config = null)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="InteractiveService"/> class.
+        /// </summary>
+        /// <param name="discord">
+        /// The discord.
+        /// </param>
+        /// <param name="defaultTimeout">
+        /// The default timeout.
+        /// </param>
+        public InteractiveService(DiscordSocketClient discord, TimeSpan? defaultTimeout = null)
         {
             Discord = discord;
-            Discord.ReactionAdded += HandleReactionAsync;
+            discord.ReactionAdded += HandleReactionAsync;
 
-            config = config ?? new InteractiveServiceConfig();
-            _defaultTimeout = config.DefaultTimeout;
-
-            _callbacks = new Dictionary<ulong, IReactionCallback>();
+            callbacks = new Dictionary<ulong, IReactionCallback>();
+            this.defaultTimeout = defaultTimeout ?? TimeSpan.FromSeconds(15);
         }
 
-        public Task<SocketMessage> NextMessageAsync(CommandContext context, 
-            bool fromSourceUser = true, 
-            bool inSourceChannel = true, 
-            TimeSpan? timeout = null,
-            CancellationToken token = default(CancellationToken))
+        public InteractiveService(DiscordShardedClient discord, TimeSpan? defaultTimeout = null)
+        {
+            Discord = discord;
+            discord.ReactionAdded += HandleReactionAsync;
+
+            callbacks = new Dictionary<ulong, IReactionCallback>();
+            this.defaultTimeout = defaultTimeout ?? TimeSpan.FromSeconds(15);
+        }
+
+
+        /// <summary>
+        /// Gets the client
+        /// </summary>
+        public IDiscordClient Discord { get; }
+
+        /// <summary>
+        /// waits for the next message in the channel
+        /// </summary>
+        /// <param name="context">
+        /// The context.
+        /// </param>
+        /// <param name="fromSourceUser">
+        /// The from source user.
+        /// </param>
+        /// <param name="inSourceChannel">
+        /// The in source channel.
+        /// </param>
+        /// <param name="timeout">
+        /// The timeout.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        public Task<SocketMessage> NextMessageAsync(CommandContext context, bool fromSourceUser = true, bool inSourceChannel = true, TimeSpan? timeout = null)
         {
             var criterion = new Criteria<SocketMessage>();
             if (fromSourceUser)
-                criterion.AddCriterion(new EnsureSourceUserCriterion());
-            if (inSourceChannel)
-                criterion.AddCriterion(new EnsureSourceChannelCriterion());
-            return NextMessageAsync(context, criterion, timeout, token);
-        }
-        
-        public async Task<SocketMessage> NextMessageAsync(CommandContext context, 
-            ICriterion<SocketMessage> criterion, 
-            TimeSpan? timeout = null,
-            CancellationToken token = default(CancellationToken))
-        {
-            timeout = timeout ?? _defaultTimeout;
-
-            var eventTrigger = new TaskCompletionSource<SocketMessage>();
-            var cancelTrigger = new TaskCompletionSource<bool>();
-
-            token.Register(() => cancelTrigger.SetResult(true));
-
-            async Task Handler(SocketMessage message)
             {
-                var result = await criterion.JudgeAsync(context, message).ConfigureAwait(false);
-                if (result)
-                    eventTrigger.SetResult(message);
+                criterion.AddCriterion(new EnsureSourceUserCriterion());
             }
 
-            ((DiscordShardedClient)context.Client).MessageReceived += Handler;
+            if (inSourceChannel)
+            {
+                criterion.AddCriterion(new EnsureSourceChannelCriterion());
+            }
 
-            var trigger = eventTrigger.Task;
-            var cancel = cancelTrigger.Task;
-            var delay = Task.Delay(timeout.Value);
-            var task = await Task.WhenAny(trigger, delay, cancel).ConfigureAwait(false);
-
-            ((DiscordShardedClient)context.Client).MessageReceived -= Handler;
-
-            if (task == trigger)
-                return await trigger.ConfigureAwait(false);
-            else
-                return null;
+            return NextMessageAsync(context, criterion, timeout);
         }
 
-        public async Task<IUserMessage> ReplyAndDeleteAsync(CommandContext context, 
-            string content, bool isTTS = false, 
-            Embed embed = null, 
-            TimeSpan? timeout = null, 
-            RequestOptions options = null)
+        /// <summary>
+        /// waits for the next message in the channel
+        /// </summary>
+        /// <param name="context">
+        /// The context.
+        /// </param>
+        /// <param name="criterion">
+        /// The criterion.
+        /// </param>
+        /// <param name="timeout">
+        /// The timeout.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        public async Task<SocketMessage> NextMessageAsync(CommandContext context, ICriterion<SocketMessage> criterion, TimeSpan? timeout = null)
         {
-            timeout = timeout ?? _defaultTimeout;
+            timeout = timeout ?? defaultTimeout;
+
+            var eventTrigger = new TaskCompletionSource<SocketMessage>();
+
+            Task Func(SocketMessage m) => HandlerAsync(m, context, eventTrigger, criterion);
+
+            ((DiscordShardedClient)context.Client).MessageReceived += Func;
+
+            var trigger = eventTrigger.Task;
+            var delay = Task.Delay(timeout.Value);
+            var task = await Task.WhenAny(trigger, delay).ConfigureAwait(false);
+
+            ((DiscordShardedClient)context.Client).MessageReceived -= Func;
+
+            if (task == trigger)
+            {
+                return await trigger.ConfigureAwait(false);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Sends a message with reaction callbacks
+        /// </summary>
+        /// <param name="context">
+        /// The context.
+        /// </param>
+        /// <param name="reactionCallbackData">
+        /// The callbacks.
+        /// </param>
+        /// <param name="fromSourceUser">
+        /// The from source user.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        public async Task<IUserMessage> SendMessageWithReactionCallbacksAsync(CommandContext context, ReactionCallbackData reactionCallbackData, bool fromSourceUser = true)
+        {
+            var criterion = new Criteria<SocketReaction>();
+            if (fromSourceUser)
+            {
+                criterion.AddCriterion(new EnsureReactionFromSourceUserCriterion());
+            }
+
+            var callback = new InlineReactionCallback(this, context, reactionCallbackData, criterion);
+            await callback.DisplayAsync().ConfigureAwait(false);
+            return callback.Message;
+        }
+
+        /// <summary>
+        /// Replies and then deletes the message after the provided time-span
+        /// </summary>
+        /// <param name="context">
+        /// The context.
+        /// </param>
+        /// <param name="content">
+        /// The content.
+        /// </param>
+        /// <param name="isTTS">
+        /// The is tts.
+        /// </param>
+        /// <param name="embed">
+        /// The embed.
+        /// </param>
+        /// <param name="timeout">
+        /// The timeout.
+        /// </param>
+        /// <param name="options">
+        /// The options.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        public async Task<IUserMessage> ReplyAndDeleteAsync(CommandContext context, string content, bool isTTS = false, Embed embed = null, TimeSpan? timeout = null, RequestOptions options = null)
+        {
+            timeout = timeout ?? defaultTimeout;
             var message = await context.Channel.SendMessageAsync(content, isTTS, embed, options).ConfigureAwait(false);
             _ = Task.Delay(timeout.Value)
                 .ContinueWith(_ => message.DeleteAsync().ConfigureAwait(false))
@@ -95,51 +190,157 @@ namespace Discord.Addons.Interactive
             return message;
         }
 
-        public async Task<IUserMessage> SendPaginatedMessageAsync(CommandContext context, 
-            PaginatedMessage pager, 
-            ICriterion<SocketReaction> criterion = null)
+        /// <summary>
+        /// Sends a paginated message in the current channel
+        /// </summary>
+        /// <param name="context">
+        /// The context.
+        /// </param>
+        /// <param name="pager">
+        /// The pager.
+        /// </param>
+        /// <param name="reactions">
+        /// The reactions.
+        /// </param>
+        /// <param name="criterion">
+        /// The criterion.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        public async Task<IUserMessage> SendPaginatedMessageAsync(CommandContext context, PaginatedMessage pager, ReactionList reactions, ICriterion<SocketReaction> criterion = null)
         {
             var callback = new PaginatedMessageCallback(this, context, pager, criterion);
-            await callback.DisplayAsync().ConfigureAwait(false);
+            await callback.DisplayAsync(reactions).ConfigureAwait(false);
             return callback.Message;
         }
 
+        /// <summary>
+        /// The add reaction callback.
+        /// </summary>
+        /// <param name="message">
+        /// The message.
+        /// </param>
+        /// <param name="callback">
+        /// The callback.
+        /// </param>
         public void AddReactionCallback(IMessage message, IReactionCallback callback)
-            => _callbacks[message.Id] = callback;
-        public void RemoveReactionCallback(IMessage message)
-            => RemoveReactionCallback(message.Id);
-        public void RemoveReactionCallback(ulong id)
-            => _callbacks.Remove(id);
-        public void ClearReactionCallbacks()
-            => _callbacks.Clear();
-        
-        private async Task HandleReactionAsync(Cacheable<IUserMessage, ulong> message, 
-            ISocketMessageChannel channel, 
-            SocketReaction reaction)
+            => callbacks[message.Id] = callback;
+
+        /// <summary>
+        /// Removes a reaction callback via message
+        /// </summary>
+        /// <param name="message">
+        /// The message.
+        /// </param>
+        public void RemoveReactionCallback(IMessage message) => RemoveReactionCallback(message.Id);
+
+        /// <summary>
+        /// Removes a reaction callback via message Id
+        /// </summary>
+        /// <param name="id">
+        /// The id.
+        /// </param>
+        public void RemoveReactionCallback(ulong id) => callbacks.Remove(id);
+
+        /// <summary>
+        /// Clears all reaction callbacks
+        /// </summary>
+        public void ClearReactionCallbacks() => callbacks.Clear();
+
+        /// <summary>
+        /// Unsubscribes from a reactionHandler event
+        /// </summary>
+        public void Dispose()
         {
-            if (reaction.UserId == Discord.CurrentUser.Id) return;
-            if (!(_callbacks.TryGetValue(message.Id, out var callback))) return;
-            if (!(await callback.Criterion.JudgeAsync(callback.Context, reaction).ConfigureAwait(false)))
+            if (Discord is DiscordShardedClient shardedClient)
+            {
+                shardedClient.ReactionAdded -= HandleReactionAsync;
+            }
+            else if (Discord is DiscordSocketClient socketClient)
+            {
+                socketClient.ReactionAdded -= HandleReactionAsync;
+            }
+        }
+
+        /// <summary>
+        /// Handles messages for NextMessageAsync
+        /// </summary>
+        /// <param name="message">
+        /// The message.
+        /// </param>
+        /// <param name="context">
+        /// The context.
+        /// </param>
+        /// <param name="eventTrigger">
+        /// The event trigger.
+        /// </param>
+        /// <param name="criterion">
+        /// The criterion.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        private static async Task HandlerAsync(SocketMessage message, CommandContext context, TaskCompletionSource<SocketMessage> eventTrigger, ICriterion<SocketMessage> criterion)
+        {
+            var result = await criterion.JudgeAsync(context, message).ConfigureAwait(false);
+            if (result)
+            {
+                eventTrigger.SetResult(message);
+            }
+        }
+
+        /// <summary>
+        /// Handles a message reaction
+        /// </summary>
+        /// <param name="message">
+        /// The message.
+        /// </param>
+        /// <param name="channel">
+        /// The channel.
+        /// </param>
+        /// <param name="reaction">
+        /// The reaction.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        private async Task HandleReactionAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            if (reaction.UserId == Discord.CurrentUser.Id)
+            {
                 return;
+            }
+
+            if (!callbacks.TryGetValue(message.Id, out var callback))
+            {
+                return;
+            }
+
+            if (!(await callback.Criterion.JudgeAsync(callback.Context, reaction).ConfigureAwait(false)))
+            {
+                return;
+            }
+
             switch (callback.RunMode)
             {
                 case RunMode.Async:
                     _ = Task.Run(async () =>
                     {
                         if (await callback.HandleCallbackAsync(reaction).ConfigureAwait(false))
+                        {
                             RemoveReactionCallback(message.Id);
+                        }
                     });
                     break;
                 default:
                     if (await callback.HandleCallbackAsync(reaction).ConfigureAwait(false))
+                    {
                         RemoveReactionCallback(message.Id);
+                    }
+
                     break;
             }
-        }
-
-        public void Dispose()
-        {
-            Discord.ReactionAdded -= HandleReactionAsync;
         }
     }
 }
