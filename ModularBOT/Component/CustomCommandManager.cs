@@ -169,17 +169,16 @@ namespace ModularBOT.Component
                         }
                         if (!string.IsNullOrWhiteSpace(res))
                         {
-
                             return ProcessAction(res, args, ref ContextGO, ref cmd, ref msg);
                         }
                         else
                         {
-                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Conext guild didn't know what that custom command was!")); return null;
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild didn't know what that custom command was!")); return null;
                         }
                     }
                     else
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Global command list not found! Do you have any guild commands defined?"));
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild's command list not found! Do they have any guild commands defined?"));
                         return null;
                     }
 
