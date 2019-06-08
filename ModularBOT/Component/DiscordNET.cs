@@ -71,9 +71,9 @@ namespace ModularBOT.Component
                     TotalShards = AppConfig.ShardCount
                 });
 
+                services.AddSingleton(new Discord.Addons.Interactive.InteractiveService(Client));
                 services.AddSingleton(Client);
                 serviceProvider = services.BuildServiceProvider();
-                
                
                 Client.Log += Client_Log;
 
