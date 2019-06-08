@@ -10,10 +10,10 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-
+using Discord.Addons.Interactive;
 namespace ModularBOT.Component
 {
-    public class CoreModule:ModuleBase
+    public class CoreModule:InteractiveBase<CommandContext>
     {
         #region Property/Construct
         DiscordShardedClient Client { get; set; }
@@ -268,6 +268,23 @@ namespace ModularBOT.Component
             }
         }
 
+        [Command("listcmdPN"), Summary("Lists all available commands for current context."), Remarks("AccessLevels.Normal")]
+        public async Task CMD_ListPaginator()
+        {
+
+            
+            string prefix = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            if (Context.Guild != null)
+            {
+                GuildObject obj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                if (obj != null) prefix = obj.CommandPrefix;
+            }
+
+            List<object> pages = new List<object>();
+            await ReplyAsync(Context.User.Mention + ", this ain't ready yet, but it will soon replace listcmd. this is just testing stuff.");
+
+        }
+
         [Command("editcmd"), Summary("Edit a command. Note: Global command edits require AccessLevels.Administrator"), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_EditCommand(string cmdName, bool? requirePermission=null, [Remainder]string newAction = "(unchanged)")
         {
@@ -391,7 +408,7 @@ namespace ModularBOT.Component
                 role = Context.Guild?.GetRole(GenericID);
                 if (role == null)
                 {
-                    user = Context.Guild?.GetUserAsync(GenericID, CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    user = Context.Guild?.GetUserAsync(GenericID,CacheMode.AllowDownload).GetAwaiter().GetResult();
                     if (user == null)
                     {
                         hook = Context.Guild?.GetWebhookAsync(GenericID).GetAwaiter().GetResult();
@@ -946,7 +963,7 @@ namespace ModularBOT.Component
         {
             try
             {
-                var user = await Context.Guild.GetUserAsync(Client.CurrentUser.Id);
+                var user = Context.Guild.GetUserAsync(Client.CurrentUser.Id).GetAwaiter().GetResult();
                 await user.ModifyAsync(x => {
                     x.Nickname = nick;
                 });
