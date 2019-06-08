@@ -272,7 +272,7 @@ namespace ModularBOT.Component
         public async Task CMD_ListPaginator()
         {
 
-            
+
             string prefix = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             if (Context.Guild != null)
             {
@@ -280,8 +280,122 @@ namespace ModularBOT.Component
                 if (obj != null) prefix = obj.CommandPrefix;
             }
 
-            List<object> pages = new List<object>();
+            List<PaginatedMessage.Page> pages = new List<PaginatedMessage.Page>();
             await ReplyAsync(Context.User.Mention + ", this ain't ready yet, but it will soon replace listcmd. this is just testing stuff.");
+            int cmdcount = 0;//comdcount
+            int pageNum = 1;
+            PaginatedMessage.Page PageItem = new PaginatedMessage.Page();
+
+            PageItem.Title = $"Core Commands (Page {pageNum})";
+            PageItem.Color = Color.Green;
+            PageItem.Author = new EmbedAuthorBuilder()
+            {
+                Name = $"{Context.Client.CurrentUser.Username}'s Command List",
+                IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
+            };
+            PageItem.FooterOverride = new EmbedFooterBuilder()
+            {
+                Text = $"Requested by {Context.User.Username}#{Context.User.Discriminator}",
+                IconUrl = Context.User.GetAvatarUrl(ImageFormat.Auto)
+            };
+
+            #region CORE
+            foreach (CommandInfo item in Cmdsvr.Commands)
+            {
+                if(item.Module.Name != "CoreModule")
+                {
+                    continue;
+                }
+                if (cmdcount > 8)
+                {
+                    cmdcount = 0;
+                    pageNum++;
+                    pages.Add(PageItem);
+                    PageItem = new PaginatedMessage.Page();//start a new page.
+                    PageItem.Title = $"Core Commands (Page {pageNum})";
+                    PageItem.Color = Color.Green;
+                    PageItem.Author = new EmbedAuthorBuilder()
+                    {
+                        Name = $"{Context.Client.CurrentUser.Username}'s Command List",
+                        IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
+                    };
+                    PageItem.FooterOverride = new EmbedFooterBuilder()
+                    {
+                        Text = $"Requested by {Context.User.Username}#{Context.User.Discriminator}",
+                        IconUrl = Context.User.GetAvatarUrl(ImageFormat.Auto)
+                    };
+                }
+                string group = item.Module.Aliases[0] + " ";
+                string sum = item.Summary;
+                if (string.IsNullOrWhiteSpace(group))
+                {
+                    group = "";//Command's groupAttribute?
+                }
+
+                string usage = prefix + group + item.Name + " ";
+                foreach (var param in item.Parameters)
+                {
+                    if (param.IsOptional)
+                    {
+                        usage += $"[{param.Type.Name} {param.Name}] ";
+                    }
+                    if (!param.IsOptional)
+                    {
+                        usage += $"<{param.Type.Name} {param.Name}> ";
+                    }
+                }
+                AccessLevels? lv = null;
+                if (item.Remarks != null)
+                {
+                    lv = (AccessLevels)Enum.Parse(typeof(AccessLevels), item.Remarks.Replace("AccessLevels.", ""));
+                }
+                cmdcount++;
+                EmbedFieldBuilder fb = new EmbedFieldBuilder()
+                {
+                    Name = prefix + group + item.Name + $"<:CORE_super:586933688890032189>",
+                    Value = $"**{sum}**" + "\r\n" +
+                            $"```\r\n• Access Level: {item.Remarks ?? "Not properly annotated in remark."}" + "\r\n" +
+                            $"• Usage: {usage}\r\n```"
+
+                };
+                PageItem.Fields.Add(fb);
+                //commandList.AddCommand(prefix + group + item.Name, lv, item.Module.Name == "CoreModule" ? CommandTypes.Core : CommandTypes.Module, sum, usage);
+            }
+
+            #endregion
+            if (PageItem.Fields.Count > 0)
+            {
+
+                pages.Add(PageItem);//add the page if it has more than 0 commands still
+            }
+            PageItem = new PaginatedMessage.Page();
+            PageItem.Title = $"Core Commands (Page {pageNum})";
+            PageItem.Color = Color.Red;
+            PageItem.Description = "This is not finished yet. I am purely testing.";
+            pages.Add(PageItem);
+            var pager = new PaginatedMessage
+            {
+                Pages = pages,
+                Author = new EmbedAuthorBuilder
+                {
+                    IconUrl = Context.Client.CurrentUser.GetAvatarUrl(),
+                    Name = Context.Client.CurrentUser.ToString(),
+                    Url = Context.Client.CurrentUser.GetAvatarUrl()
+                },
+                Color = Color.DarkGreen,
+                FooterOverride = null,
+                Options = PaginatedAppearanceOptions.Default,
+                TimeStamp = DateTimeOffset.UtcNow
+            };
+
+
+            await PagedReplyAsync(pager, new ReactionList
+            {
+                Forward = true,
+                Backward = true,
+                Jump = true,
+                Trash = true
+            });
 
         }
 
