@@ -167,7 +167,7 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, _DiscordNet.CustomCMDMgr.ViewCmd(Context, cmdname));
         }
 
-        [Command("listcmd"), Summary("Lists all available commands for current context."), Remarks("AccessLevels.Normal")]
+        [Command("listcmd-html"), Summary("Lists all available commands for current context. sends as HTML file"), Remarks("AccessLevels.Normal")]
         public async Task CMD_ListCommands()
         {
 
@@ -268,7 +268,7 @@ namespace ModularBOT.Component
             }
         }
 
-        [Command("listcmdPN"), Summary("Lists all available commands for current context."), Remarks("AccessLevels.Normal")]
+        [Command("listcmd"), Summary("Lists all available commands for current context."), Remarks("AccessLevels.Normal")]
         public async Task CMD_ListPaginator()
         {
 
@@ -281,12 +281,12 @@ namespace ModularBOT.Component
             }
 
             List<PaginatedMessage.Page> pages = new List<PaginatedMessage.Page>();
-            await ReplyAsync(Context.User.Mention + ", this ain't ready yet, but it will soon replace listcmd. this is just testing stuff.");
+            await ReplyAsync(Context.User.Mention + $", Here's a list of commands! If you are unable to navigate the list, please do `{prefix}listcmd-html` instead.");
             int cmdcount = 0;//comdcount
             int pageNum = 1;
             PaginatedMessage.Page PageItem = new PaginatedMessage.Page();
 
-            PageItem.Title = $"Core Commands (Page {pageNum})";
+            PageItem.Title = $"Core Commands";
             PageItem.Color = Color.Green;
             PageItem.Author = new EmbedAuthorBuilder()
             {
@@ -307,7 +307,7 @@ namespace ModularBOT.Component
                     pageNum++;
                     pages.Add(PageItem);
                     PageItem = new PaginatedMessage.Page();//start a new page.
-                    PageItem.Title = $"Core Commands (Page {pageNum})";
+                    PageItem.Title = $"Core Commands";
                     PageItem.Color = Color.Green;
                     PageItem.Author = new EmbedAuthorBuilder()
                     {
@@ -316,7 +316,7 @@ namespace ModularBOT.Component
                     };
                 }
                 string group = item.Module.Aliases[0] + " ";
-                string sum = item.Summary;
+                string sum = item.Summary ?? "No summary provided";
                 if (string.IsNullOrWhiteSpace(group))
                 {
                     group = "";//Command's groupAttribute?
@@ -353,16 +353,181 @@ namespace ModularBOT.Component
             }
 
             #endregion
+
+
+            if (PageItem.Fields.Count > 0)
+            {
+                pages.Add(PageItem);//add the page if it has more than 0 commands still
+            }
+
+            #region Modules
+            cmdcount = 0;
+            PageItem = new PaginatedMessage.Page();
+
+            PageItem.Title = $"External Module Commands";
+            PageItem.Color = Color.Blue;
+            PageItem.Author = new EmbedAuthorBuilder()
+            {
+                Name = $"{Context.Client.CurrentUser.Username}'s Command List",
+                IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
+            };
+            foreach (CommandInfo item in Cmdsvr.Commands)
+            {
+                if (item.Module.Name == "CoreModule")
+                {
+                    continue;
+                }
+                if (cmdcount > 8)
+                {
+                    cmdcount = 0;
+                    pageNum++;
+                    pages.Add(PageItem);
+                    PageItem = new PaginatedMessage.Page();//start a new page.
+                    PageItem.Title = $"External Module Commands";
+                    PageItem.Color = Color.Blue;
+                    PageItem.Author = new EmbedAuthorBuilder()
+                    {
+                        Name = $"{Context.Client.CurrentUser.Username}'s Command List",
+                        IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
+                    };
+                }
+                string group = item.Module.Aliases[0] + " ";
+                string sum = item.Summary ?? "No summary provided";
+
+                if (string.IsNullOrWhiteSpace(group))
+                {
+                    group = "";//Command's groupAttribute?
+                }
+
+                string usage = prefix + group + item.Name + " ";
+                foreach (var param in item.Parameters)
+                {
+                    if (param.IsOptional)
+                    {
+                        usage += $"[{param.Type.Name} {param.Name}] ";
+                    }
+                    if (!param.IsOptional)
+                    {
+                        usage += $"<{param.Type.Name} {param.Name}> ";
+                    }
+                }
+                AccessLevels? lv = null;
+                if (item.Remarks != null)
+                {
+                    lv = (AccessLevels)Enum.Parse(typeof(AccessLevels), item.Remarks.Replace("AccessLevels.", ""));
+                }
+                cmdcount++;
+                EmbedFieldBuilder fb = new EmbedFieldBuilder()
+                {
+                    Name = prefix + group + item.Name + $"<:MODULE_super:586933688730910723>",
+                    Value = $"**{sum}**" + "\r\n" +
+                            $"```\r\n• Access Level: {item.Remarks ?? "Not properly annotated in remark."}" + "\r\n" +
+                            $"• Usage: {usage}\r\n" +
+                            $"• Module: {item.Module.Name}\r\n```"
+
+                };
+                PageItem.Fields.Add(fb);
+                //commandList.AddCommand(prefix + group + item.Name, lv, item.Module.Name == "CoreModule" ? CommandTypes.Core : CommandTypes.Module, sum, usage);
+            }
+
+            #endregion
+
             if (PageItem.Fields.Count > 0)
             {
 
                 pages.Add(PageItem);//add the page if it has more than 0 commands still
             }
+
+            #region Custom Commands
+            cmdcount = 0;
             PageItem = new PaginatedMessage.Page();
-            PageItem.Title = $"Core Commands (Page {pageNum})";
-            PageItem.Color = Color.Red;
-            PageItem.Description = "This is not finished yet. I am purely testing.";
-            pages.Add(PageItem);
+
+            PageItem.Title = $"Custom Commands";
+            PageItem.Color = Color.Purple;
+            PageItem.Author = new EmbedAuthorBuilder()
+            {
+                Name = $"{Context.Client.CurrentUser.Username}'s Command List",
+                IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
+            };
+            //GLOBAL
+
+            GuildObject globalGO = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
+            if (globalGO != null)
+            {
+                foreach (GuildCommand item in globalGO.GuildCommands)
+                {
+                    if (cmdcount > 8)
+                    {
+                        cmdcount = 0;
+                        pageNum++;
+                        pages.Add(PageItem);
+                        PageItem = new PaginatedMessage.Page();//start a new page.
+                        PageItem.Title = $"Custom Commands";
+                        PageItem.Color = Color.Purple;
+                        PageItem.Author = new EmbedAuthorBuilder()
+                        {
+                            Name = $"{Context.Client.CurrentUser.Username}'s Command List",
+                            IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
+                        };
+                    }
+                    //commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.GCustom);
+                    cmdcount++;
+                    string perm = item.RequirePermission ? "AccessLevels.CommandManager" : "AccessLevels.Normal";
+                    EmbedFieldBuilder fb = new EmbedFieldBuilder()
+                    {
+                        Name = prefix + item.Name + $"<:GLOBAL_super:586933688860803073>",
+                        
+                        Value = $"```\r\n• Required Access Level: {perm}" + "\r\n```"
+
+                    };
+                    PageItem.Fields.Add(fb);
+                }
+            }
+            //Guild
+            if (Context.Guild != null)
+            {
+                GuildObject currentGuild = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                if (currentGuild != null)
+                {
+                    foreach (GuildCommand item in currentGuild.GuildCommands)
+                    {
+                        if (cmdcount > 8)
+                        {
+                            cmdcount = 0;
+                            pageNum++;
+                            pages.Add(PageItem);
+                            PageItem = new PaginatedMessage.Page();//start a new page.
+                            PageItem.Title = $"Custom Commands";
+                            PageItem.Color = Color.Purple;
+                            PageItem.Author = new EmbedAuthorBuilder()
+                            {
+                                Name = $"{Context.Client.CurrentUser.Username}'s Command List",
+                                IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto)
+                            };
+                        }
+                        //commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.Custom);
+                        cmdcount++;
+                        string perm = item.RequirePermission ? "AccessLevels.CommandManager" : "AccessLevels.Normal";
+                        EmbedFieldBuilder fb = new EmbedFieldBuilder()
+                        {
+                            Name = prefix + item.Name,
+
+                            Value = $"```\r\n• Required Access Level: {perm}" + "\r\n```"
+
+                        };
+                        PageItem.Fields.Add(fb);
+                    }
+                }
+            }
+
+            #endregion
+
+            if (PageItem.Fields.Count > 0)
+            {
+
+                pages.Add(PageItem);//add the page if it has more than 0 commands still
+            }
+
             var pager = new PaginatedMessage
             {
                 Pages = pages,
@@ -382,7 +547,7 @@ namespace ModularBOT.Component
             {
                 Forward = true,
                 Backward = true,
-                Jump = true,
+                Jump = false,
                 Trash = true
             });
 
