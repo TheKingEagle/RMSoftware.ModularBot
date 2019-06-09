@@ -305,7 +305,13 @@
         /// <returns>
         /// The <see cref="Task"/>.
         /// </returns>
-        private async Task HandleReactionAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        private Task HandleReactionAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
+        {
+            Task.Run(() => OffloadReactionAsync(message,channel,reaction));
+            return Task.Delay(0);
+        }
+
+        public async Task OffloadReactionAsync(Cacheable<IUserMessage,ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {
             if (reaction.UserId == Discord.CurrentUser.Id)
             {
