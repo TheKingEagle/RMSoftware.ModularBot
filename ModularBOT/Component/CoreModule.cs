@@ -892,7 +892,7 @@ namespace ModularBOT.Component
                     case (true):
                         b.WithAuthor(Client.CurrentUser);
                         b.WithTitle("Permission Manager");
-                        b.WithDescription("The user was successfully removed from the permissions file. User will inherit permissions from any registered roles. Otherwise, they'll be treated as `AccessLevel: 0`");
+                        b.WithDescription("The user was successfully removed from the permissions file. User will inherit permissions from any registered roles. Otherwise, they'll be treated as `AccessLevels.Normal`");
                         b.AddField("Affected User", $"`{user.Username}#{user.Discriminator}`", true);
                         b.WithFooter("ModularBOT • Core");
                         b.WithColor(Color.Green);
@@ -977,11 +977,27 @@ namespace ModularBOT.Component
             b.WithColor(Color.Blue);
             b.WithAuthor(Client.CurrentUser);
             b.WithTitle($"User permissions for {user.Username}#{user.Discriminator}");
-            string inheritedPerms = inheritedRole == null ? "does not inherit an access level from a role" : "inherit an access level from a role";
-            string inp_sep = inheritedRole == null && InList ? "and" : "However, they";
-            string inListed = InList ? "is registered globally," : "is not registered globally. ";
+            string inheritedPerms = inheritedRole == null ? "not inherit an access level from a role" : "inherit an access level from a role";
+            string sep = "";
+            if(InList && inheritedRole == null)
+            {
+                sep = " and does";
+            }
+            if (InList && inheritedRole != null)
+            {
+                sep = ", but also";
+            }
+            if (!InList && inheritedRole != null)
+            {
+                sep = ", but they";
+            }
+            if (!InList && inheritedRole == null)
+            {
+                sep = ", and they do";
+            }
+            string inListed = InList ? "is registered globally" : "is not registered globally";
             string ownerstring = BotOwner ? "This user is bot owner." : "This user isn't bot owner.";
-            b.WithDescription($"This user {inListed} {inp_sep} {inheritedPerms}. {ownerstring}");
+            b.WithDescription($"This user {inListed}{sep} {inheritedPerms}. {ownerstring}");
 
             b.AddField("Access Level", $"`{l}`",true);
             b.WithThumbnailUrl(user.GetAvatarUrl(ImageFormat.Auto));
