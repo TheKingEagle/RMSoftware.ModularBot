@@ -972,14 +972,16 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
-            AccessLevels l = _DiscordNet.PermissionManager.GetAccessLevel(user, out IRole inheritedRole, out bool BotOwner);
+            AccessLevels l = _DiscordNet.PermissionManager.GetAccessLevel(user, out IRole inheritedRole, out bool BotOwner, out bool InList);
             EmbedBuilder b = new EmbedBuilder();
             b.WithColor(Color.Blue);
             b.WithAuthor(Client.CurrentUser);
             b.WithTitle($"User permissions for {user.Username}#{user.Discriminator}");
-            string inheritedPerms = inheritedRole == null ? "does not inherit an access level from a role." : "inherits an access level from a role.";
+            string inheritedPerms = inheritedRole == null ? "does not inherit an access level from a role" : "inherit an access level from a role";
+            string inp_sep = inheritedRole == null && InList ? "and" : "However, they";
+            string inListed = InList ? "is registered globally," : "is not registered globally. ";
             string ownerstring = BotOwner ? "This user is bot owner." : "This user isn't bot owner.";
-            b.WithDescription($"This user {inheritedPerms}\r\n\r\n{ownerstring}");
+            b.WithDescription($"This user {inListed} {inp_sep} {inheritedPerms}. {ownerstring}");
 
             b.AddField("Access Level", $"`{l}`",true);
             b.WithThumbnailUrl(user.GetAvatarUrl(ImageFormat.Auto));
