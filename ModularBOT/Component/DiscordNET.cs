@@ -385,6 +385,11 @@ namespace ModularBOT.Component
             #region Deep-rooted prefix command
             if (message.Content.StartsWith("!prefix") || message.Content.StartsWith(".prefix") || message.Content.StartsWith("/prefix")) //This command will ALWAYS be a thing. it cannot be overridden.
             {
+                if(arg.Author.IsBot)
+                {
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "BOT", "Someone tried to change the prefix as a bot..."));
+                    return;
+                }
                 if (PermissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
                 {
                     if (PermissionManager.GetWarnOnBlacklist(arg.Author))
