@@ -115,7 +115,7 @@ namespace ModularBOT.Component
         /// <param name="item">Item that interfaces with ISnowflakeEntity. Preferably IUser or IRole.</param>
         /// <returns>Item's accessLevel, or AccessLevels.Normal if nothing is found.</returns>
         /// <param name="inheritedRole">Returns an IRole if one is found, otherwise null.</param>
-        public AccessLevels GetAccessLevel(ISnowflakeEntity item, out IRole inheritedRole, out bool BotOwner)
+        public AccessLevels GetAccessLevel(ISnowflakeEntity item, out IRole inheritedRole, out bool BotOwner, out bool InList)
         {
             
             if (item.Id == DefaultAdmin.EntityID)
@@ -123,6 +123,7 @@ namespace ModularBOT.Component
                 _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Detected entity as bot owner."));
                 inheritedRole = null;
                 BotOwner = true;
+                InList = true;
                 return DefaultAdmin.AccessLevel;
             }
 
@@ -132,6 +133,7 @@ namespace ModularBOT.Component
             {
                 inheritedRole = null;
                 BotOwner = false;
+                InList = true;
                 return df.AccessLevel;
             }
             if (df == null)
@@ -151,6 +153,7 @@ namespace ModularBOT.Component
                     {
                         inheritedRole = sgu.Roles.FirstOrDefault(x=> x.Id==r) ?? null;
                         BotOwner = false;
+                        InList = false;
                         return df.AccessLevel;
                     }
                 }
@@ -158,6 +161,7 @@ namespace ModularBOT.Component
             _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Specified entity isn't on the list. Assume NORMAL."));
             inheritedRole = null;
             BotOwner = false;
+            InList = false;
             return AccessLevels.Normal;
         }
 
