@@ -342,7 +342,7 @@ namespace ModularBOT.Component
                 cmdcount++;
                 EmbedFieldBuilder fb = new EmbedFieldBuilder()
                 {
-                    Name = prefix + group + item.Name + $"<:CORE_super:586933688890032189>",
+                    Name = "💠 " + prefix + group + item.Name,
                     Value = $"**{sum}**" + "\r\n" +
                             $"```\r\n• Access Level: {item.Remarks ?? "Not properly annotated in remark."}" + "\r\n" +
                             $"• Usage: {usage}\r\n```"
@@ -419,7 +419,7 @@ namespace ModularBOT.Component
                 cmdcount++;
                 EmbedFieldBuilder fb = new EmbedFieldBuilder()
                 {
-                    Name = prefix + group + item.Name + $"<:MODULE_super:586933688730910723>",
+                    Name = $"💾 " + prefix + group + item.Name,
                     Value = $"**{sum}**" + "\r\n" +
                             $"```\r\n• Access Level: {item.Remarks ?? "Not properly annotated in remark."}" + "\r\n" +
                             $"• Usage: {usage}\r\n" +
@@ -475,7 +475,7 @@ namespace ModularBOT.Component
                     string perm = item.RequirePermission ? "AccessLevels.CommandManager" : "AccessLevels.Normal";
                     EmbedFieldBuilder fb = new EmbedFieldBuilder()
                     {
-                        Name = prefix + item.Name + $"<:GLOBAL_super:586933688860803073>",
+                        Name = $"🌐 " + prefix + item.Name,
                         
                         Value = $"```\r\n• Required Access Level: {perm}" + "\r\n```"
 
