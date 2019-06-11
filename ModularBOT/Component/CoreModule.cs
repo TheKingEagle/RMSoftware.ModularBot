@@ -419,7 +419,7 @@ namespace ModularBOT.Component
                 cmdcount++;
                 EmbedFieldBuilder fb = new EmbedFieldBuilder()
                 {
-                    Name = $"💾 " + prefix + group + item.Name,
+                    Name = $"📦 " + prefix + group + item.Name,
                     Value = $"**{sum}**" + "\r\n" +
                             $"```\r\n• Access Level: {item.Remarks ?? "Not properly annotated in remark."}" + "\r\n" +
                             $"• Usage: {usage}\r\n" +
@@ -577,7 +577,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region Permission Management
-        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.CommandManager"),Summary("Set permissions for a user")]
+        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.CommandManager"),Summary("Set permissions for a user. NOTE: whitelisting a bot requires you to be administrator.")]
         public async Task PERM_SetUser(IUser user, AccessLevels accessLevel)
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
@@ -585,7 +585,16 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
-            if(user == Context.User)
+            if(user.IsBot)
+            {
+
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                {
+                    await Context.Channel.SendMessageAsync("This user is a bot...", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
+            }
+            if (user == Context.User)
             {
                 await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.","You can't change your own access level.",Color.DarkRed));
                 return;
