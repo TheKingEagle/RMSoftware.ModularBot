@@ -27,6 +27,8 @@
 * New Permission system ✅
 * **Update Checking** ⏳
 * Per-guild command modules
+* Interactive Command list (Paginator) ✅
+* Add a guilds and users list screen ✅
 
 # Current TODOs
 * **Automatic Updates** ⏳
@@ -45,13 +47,9 @@
    * Add `%invoker_avatar%` and `%invoker_nick%` flags
    * Add `EMBED_URL` and `EMBED_FOOTER_IMG` Functions
    
-* Update External Library support
+* **Update External Library support** ⏳
    * Remove `CLI_EXEC`
    * Change `EXEC` to reference Discord.NET's client, message, and `ConsoleIO` class.
-   
-* Change default command list
-   * Add support for "paginator" type command list.
-   * Must have a fallback in the event of catestrophic failure (HTML)
-   
-* Add implementations for External Libraries to use new `ConsoleIO`.   
+* ### FIX Random output glitches See Issue [#9](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/9) 🔥⏳⚠
 * *Auto-configure Shard count based on number of guilds. See [#8](https://github.com/rmsoftware-development/RMSoftware.ModularBot/issues/8)* ⚠
+* **Add guild channels list screen** ⏳
