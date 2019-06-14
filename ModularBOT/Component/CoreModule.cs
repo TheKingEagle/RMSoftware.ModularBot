@@ -109,15 +109,75 @@ namespace ModularBOT.Component
             await _DiscordNet.CustomCMDMgr.AddCmd(Context.Message, cmdname, action, restricted,gid);
         }
 
-        [Command("addgcmd"), Summary("Add a global command to your bot"),Remarks("AccessLevels.Administrator")]
-        public async Task CMD_AddGlobal(string cmdname, bool restricted, [Remainder]string action)
+        [Command("addcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command. (NOTE: Creating a global commands requires AccessLevels.Administrator)"), Remarks("AccessLevels.CommandManager")]
+        public async Task CMD_Add(string cmdname, AccessLevels CommandAccessLevel, [Remainder]string action)
         {
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context,AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
+            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < CommandAccessLevel)
+            {
+                await ReplyAsync("", false, 
+                    GetEmbeddedMessage("Wait... That's Illegal.", "You can't create a command you won't have permission to use.", Color.DarkRed));
+                return;
+            }
+            if (CommandAccessLevel == AccessLevels.Blacklisted)
+            {
+                await ReplyAsync("", false,
+                    GetEmbeddedMessage("Wait... That's Illegal.", "You can't create a blacklisted command...", Color.DarkRed));
+                return;
+            }
+            ulong gid = 0;
+            if (Context.Guild != null)
+            {
+                gid = Context.Guild.Id;
+            }
+            if (gid == 0)
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)//global commands require administrator priv.
+                {
+                    await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
+            }
+            await _DiscordNet.CustomCMDMgr.AddCmd(Context.Message, cmdname, action, CommandAccessLevel > AccessLevels.Normal,CommandAccessLevel, gid);
+        }
+
+        [Command("addgcmd"), Summary("Add a global command to your bot"),Remarks("AccessLevels.Administrator")]
+        public async Task CMD_AddGlobal(string cmdname, bool restricted, [Remainder]string action)
+        {
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context,AccessLevels.Administrator));
+                return;
+            }
+
             await _DiscordNet.CustomCMDMgr.AddCmd(Context.Message, cmdname, action, restricted);
+        }
+
+        [Command("addgcmd"), Summary("Add a global command to your bot"), Remarks("AccessLevels.Administrator")]
+        public async Task CMD_AddGlobal(string cmdname, AccessLevels CommandAccessLevel, [Remainder]string action)
+        {
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < CommandAccessLevel)
+            {
+                await ReplyAsync("", false,
+                    GetEmbeddedMessage("Wait... That's Illegal.", "You can't create a command you won't have permission to use.", Color.DarkRed));
+                return;
+            }
+            if (CommandAccessLevel == AccessLevels.Blacklisted)
+            {
+                await ReplyAsync("", false,
+                    GetEmbeddedMessage("Wait... That's Illegal.", "You can't create a blacklisted command...", Color.DarkRed));
+                return;
+            }
+            await _DiscordNet.CustomCMDMgr.AddCmd(Context.Message, cmdname, action, CommandAccessLevel > AccessLevels.Normal,CommandAccessLevel);
         }
 
         [Command("delcmd"), Summary("delete a command from your bot. If you run this via DM, it will delete a global command (AccessLevels.Administrator)."), Remarks("AccessLevels.CommandManager")]
@@ -561,6 +621,7 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
+
             ulong gid = Context.Guild?.Id ?? 0;
             if(gid == 0)
             {
@@ -571,6 +632,39 @@ namespace ModularBOT.Component
                 }
             }
             await _DiscordNet.CustomCMDMgr.EditCMD(Context, cmdName, requirePermission, newAction, gid);
+
+        }
+
+        [Command("editcmd"), Summary("Edit a command. Note: Global command edits require AccessLevels.Administrator"), Remarks("AccessLevels.CommandManager")]
+        public async Task CMD_EditCommand(string cmdName, AccessLevels CommandAccessLevel, [Remainder]string newAction = "(unchanged)")
+        {
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                return;
+            }
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < CommandAccessLevel)
+            {
+                await ReplyAsync("", false,
+                    GetEmbeddedMessage("Wait... That's Illegal.", "You can't modify a command you don't have permission to use.", Color.DarkRed));
+                return;
+            }
+            if (CommandAccessLevel == AccessLevels.Blacklisted)
+            {
+                await ReplyAsync("", false,
+                    GetEmbeddedMessage("Wait... That's Illegal.", "You can't create a blacklisted command...", Color.DarkRed));
+                return;
+            }
+            ulong gid = Context.Guild?.Id ?? 0;
+            if (gid == 0)
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                {
+                    await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
+            }
+            await _DiscordNet.CustomCMDMgr.EditCMD(Context, cmdName,CommandAccessLevel, newAction, gid);
 
         }
 
