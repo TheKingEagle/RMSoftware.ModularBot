@@ -135,9 +135,9 @@ namespace ModularBOT.Component
                 {
                     if (cmd.RequirePermission)
                     {
-                        if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                        if (permissionManager.GetAccessLevel(msg.Author) < cmd.CommandAccessLevel)
                         {
-                            msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
+                            msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, cmd.CommandAccessLevel));
                             return null;
                         }
                     }
@@ -160,9 +160,9 @@ namespace ModularBOT.Component
                         {
                             if (cmd.RequirePermission)
                             {
-                                if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                                if (permissionManager.GetAccessLevel(msg.Author) < cmd.CommandAccessLevel)
                                 {
-                                    msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
+                                    msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, cmd.CommandAccessLevel));
                                     return null;
                                 }
                             }
@@ -190,9 +190,9 @@ namespace ModularBOT.Component
                     {
                         if (cmd.RequirePermission)
                         {
-                            if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                            if (permissionManager.GetAccessLevel(msg.Author) < cmd.CommandAccessLevel)
                             {
-                                msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
+                                msg.Channel.SendMessageAsync("", false, permissionManager.GetAccessDeniedMessage(msg.Author, cmd.CommandAccessLevel));
                                 return null;
                             }
                         }
@@ -219,9 +219,9 @@ namespace ModularBOT.Component
                     {
                         if (cmd.RequirePermission)
                         {
-                            if (permissionManager.GetAccessLevel(msg.Author) < AccessLevels.CommandManager)
+                            if (permissionManager.GetAccessLevel(msg.Author) < cmd.CommandAccessLevel)
                             {
-                                msg.Channel.SendMessageAsync("",false,permissionManager.GetAccessDeniedMessage(msg.Author, AccessLevels.CommandManager));
+                                msg.Channel.SendMessageAsync("",false,permissionManager.GetAccessDeniedMessage(msg.Author, cmd.CommandAccessLevel));
                                 return null;
                             }
                         }
@@ -355,7 +355,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region Command Management
-        public async Task AddCmd(IUserMessage message, string name, string action, bool restricted, ulong gid = 0)
+        public async Task AddCmd(IUserMessage message, string name, string action, bool restricted,AccessLevels CommandAccessLevel,  ulong gid = 0)
         {
             
             string g_prefix = "";
@@ -405,7 +405,8 @@ namespace ModularBOT.Component
                 {
                     Name = name.ToLower(),
                     Action = action,
-                    RequirePermission = restricted
+                    RequirePermission = restricted,
+                    CommandAccessLevel = CommandAccessLevel
                 };
                 go.GuildCommands.Add(gc);
                 go.SaveJson();
@@ -413,7 +414,7 @@ namespace ModularBOT.Component
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithTitle("Custom Command Added!");
                 b.AddField("Command", $"`{g_prefix}{name}`");
-                b.AddField("Requires permission", restricted ? "`Yes`" : "`No`",true);
+                b.AddField("Minimum AccessLevel", restricted ? $"`AccessLevels.{CommandAccessLevel}`" : "`AccessLevels.Normal`",true);
                 string guild = (gid > 0) ? serviceProvider.GetRequiredService<DiscordShardedClient>().Guilds.FirstOrDefault(g => g.Id == gid).Name : "All Guilds";
                 b.AddField("Availability", $"`{guild}`",true);
                 b.AddField("Action", action);
@@ -427,6 +428,78 @@ namespace ModularBOT.Component
             
         }
 
+        public async Task AddCmd(IUserMessage message, string name, string action, bool restricted, ulong gid = 0)
+        {
+
+            string g_prefix = "";
+
+            if (message.Channel is SocketGuildChannel c)
+            {
+                GuildObject pgo = guilds.FirstOrDefault(a => a.ID == c.Guild.Id);
+
+                if (pgo != null)
+                {
+                    g_prefix = pgo.CommandPrefix;
+                }
+                else
+                {
+                    g_prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+                }
+            }
+            GuildObject go = guilds.FirstOrDefault(x => x.ID == gid);
+            if (go == null)
+            {
+                //create the new guildObject
+                go = new GuildObject
+                {
+                    CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                    ID = gid,
+                    GuildCommands = new List<GuildCommand>()
+                };
+                go.SaveJson();
+                guilds.Add(go);
+            }
+            GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.Name.ToLower() == name.ToLower());
+
+            if (gc != null)
+            {
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithTitle("This command already exists!");
+                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                b.WithDescription($"If you would like to edit this command, please use `{g_prefix}editcmd` instead.");
+                b.WithColor(Color.Red);
+                b.WithFooter("ModularBOT • Core");
+                await message.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+            else
+            {
+                gc = new GuildCommand
+                {
+                    Name = name.ToLower(),
+                    Action = action,
+                    RequirePermission = restricted,
+                    CommandAccessLevel = AccessLevels.CommandManager
+                };
+                go.GuildCommands.Add(gc);
+                go.SaveJson();
+                EmbedBuilder b = new EmbedBuilder();
+                b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
+                b.WithTitle("Custom Command Added!");
+                b.AddField("Command", $"`{g_prefix}{name}`");
+                b.AddField("Minimum AccessLevel", restricted ? $"`AccessLevels.CommandManager`" : "`AccessLevels.Normal`", true);
+                string guild = (gid > 0) ? serviceProvider.GetRequiredService<DiscordShardedClient>().Guilds.FirstOrDefault(g => g.Id == gid).Name : "All Guilds";
+                b.AddField("Availability", $"`{guild}`", true);
+                b.AddField("Action", action);
+
+
+                b.WithColor(Color.Green);
+                b.WithFooter("ModularBOT • Core");
+                await message.Channel.SendMessageAsync("", false, b.Build());
+                return;
+            }
+
+        }
         public async Task DelCmd(IUserMessage message, string name, ulong gid=0)
         {
             string g_prefix = "";
@@ -559,9 +632,7 @@ namespace ModularBOT.Component
                     }
                     if (string.IsNullOrWhiteSpace(preconds)) { preconds = "`No Preconditions.`"; }
                     builder.AddField("Preconditions", preconds, true);
-                    
-                    
-                    
+
                     return builder.Build();
                 }
 
@@ -572,7 +643,7 @@ namespace ModularBOT.Component
 
 
             bool hasCounter = GCMD.Counter.HasValue;
-            builder.AddField("Requires Access level: ", GCMD.RequirePermission ? "`AccessLevels.CommandManager`" : "`AccessLevels.Normal`");
+            builder.AddField("Requires Access level: ", GCMD.RequirePermission ? $"`AccessLevels.{GCMD.CommandAccessLevel.ToString()}`" : "`AccessLevels.Normal`");
             builder.AddField("Is Global Command:", isglobal ? "Yes": "No");
             
 
@@ -595,29 +666,49 @@ namespace ModularBOT.Component
             GuildObject ggo = guilds.FirstOrDefault(x => x.ID == 0);//global guild object.
             GuildObject cgo = guilds.FirstOrDefault(x => x.ID == gid);//context guild object.
             //first check for global.
-            GuildCommand gco = ggo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;
+            GuildCommand gco = ggo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;//global
             if(gco != null)
             {
+                if(serviceProvider.GetRequiredService<PermissionManager>().GetAccessLevel(context.User) < AccessLevels.Administrator)
+                {
+                    await context.Channel.SendMessageAsync("", false, serviceProvider.GetRequiredService<PermissionManager>().GetAccessDeniedMessage(context, AccessLevels.Administrator));
+                    return;
+                }
+                if(serviceProvider.GetRequiredService<PermissionManager>().GetAccessLevel(context.User) < gco.CommandAccessLevel)
+                {
+                    await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Wait... That's Illegal.", "You can't edit a command you don't have permission to use!", Color.DarkRed));
+                    return;
+                }
                 if(asRestricted.HasValue) { gco.RequirePermission = asRestricted.Value; }
                 if(newAction != "(unchanged)") { gco.Action = newAction; }
                 ggo.SaveJson();
                 cgo.SaveJson();
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Global command modified!"));
-                await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, newAction));
+                await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, AccessLevels.CommandManager, newAction));
                 return;
             }
             else
             {
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "WARNING: global command not found. Trying for context guild."));
-                GuildCommand cco = cgo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;
+                GuildCommand cco = cgo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;//context
                 if(cco != null)
                 {
+                    if (serviceProvider.GetRequiredService<PermissionManager>().GetAccessLevel(context.User) < cco.CommandAccessLevel)
+                    {
+                        await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Wait... That's Illegal.", "You can't edit a command you don't have permission to use!", Color.DarkRed));
+                        return;
+                    }
+                    if (serviceProvider.GetRequiredService<PermissionManager>().GetAccessLevel(context.User) < cco.CommandAccessLevel)
+                    {
+                        await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Wait... That's Illegal.", "You can't edit a command you don't have permission to use!", Color.DarkRed));
+                        return;
+                    }
                     if (asRestricted.HasValue) { cco.RequirePermission = asRestricted.Value; }
                     if (newAction != "(unchanged)") { cco.Action = newAction; }
                     ggo.SaveJson();
                     cgo.SaveJson();
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Context-guild command modified!"));
-                    await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, newAction));
+                    await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, AccessLevels.CommandManager, newAction));
                     return;
                 }
                 else
@@ -632,7 +723,64 @@ namespace ModularBOT.Component
                 }
             }
         }
-        
+
+        public async Task EditCMD(ICommandContext context, string cmdName, AccessLevels CommandAccessLevel, string newAction = "(unchanged)", ulong gid = 0)
+        {
+            GuildObject ggo = guilds.FirstOrDefault(x => x.ID == 0);//global guild object.
+            GuildObject cgo = guilds.FirstOrDefault(x => x.ID == gid);//context guild object.
+            //first check for global.
+            GuildCommand gco = ggo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;
+            if (gco != null)
+            {
+                if (serviceProvider.GetRequiredService<PermissionManager>().GetAccessLevel(context.User) < gco.CommandAccessLevel)
+                {
+                    await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Wait... That's Illegal.", "You can't edit a command you don't have permission to use!", Color.DarkRed));
+                    return;
+                }
+                gco.RequirePermission = CommandAccessLevel > AccessLevels.Normal;
+                gco.CommandAccessLevel = CommandAccessLevel;
+                
+                if (newAction != "(unchanged)") { gco.Action = newAction; }
+                ggo.SaveJson();
+                cgo.SaveJson();
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Global command modified!"));
+                await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, CommandAccessLevel > AccessLevels.Normal,CommandAccessLevel, newAction));
+                return;
+            }
+            else
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "WARNING: global command not found. Trying for context guild."));
+                GuildCommand cco = cgo?.GuildCommands.FirstOrDefault(c => c.Name.ToLower() == cmdName.ToLower()) ?? null;
+                if (cco != null)
+                {
+                    if (serviceProvider.GetRequiredService<PermissionManager>().GetAccessLevel(context.User) < cco.CommandAccessLevel)
+                    {
+                        await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Wait... That's Illegal.", "You can't edit a command you don't have permission to use!", Color.DarkRed));
+                        return;
+                    }
+                    cco.RequirePermission = CommandAccessLevel > AccessLevels.Normal;
+                    cco.CommandAccessLevel = CommandAccessLevel;
+                    
+                    if (newAction != "(unchanged)") { cco.Action = newAction; }
+                    ggo.SaveJson();
+                    cgo.SaveJson();
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Context-guild command modified!"));
+                    await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, CommandAccessLevel > AccessLevels.Normal, CommandAccessLevel, newAction));
+                    return;
+                }
+                else
+                {
+                    EmbedBuilder b = new EmbedBuilder();
+                    b.WithAuthor(context.Client.CurrentUser);
+                    b.WithColor(Color.DarkRed);
+                    b.WithDescription("The command did not exist. You can only edit custom commands.");
+                    b.WithTitle("Command Not Found");
+                    await context.Channel.SendMessageAsync("", false, b.Build());
+                    return;
+                }
+            }
+        }
+
         #endregion
 
         #region GuildObject manipulation
@@ -648,7 +796,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region Reusable embeds
-        Embed GetCMDModified(ICommandContext Context,string cmdName, bool? asRestricted, string newAction="(unchanged)")
+        Embed GetCMDModified(ICommandContext Context,string cmdName, bool? asRestricted, AccessLevels CommandAccessLevel= AccessLevels.CommandManager, string newAction="(unchanged)")
         {
             EmbedBuilder b = new EmbedBuilder();
             b.WithAuthor(Context.Client.CurrentUser);
@@ -672,7 +820,23 @@ namespace ModularBOT.Component
             b.AddField("New Action", displayAction);
             if(asRestricted.HasValue)
             {
-                b.AddField("Requires Permission", asRestricted.Value ? "`Yes`" : "`No`");
+                b.AddField("Minimum AccessLevel", asRestricted.Value ? $"`AccessLevels.{CommandAccessLevel}`" : "`AccessLevels.Normal`");
+            }
+            return b.Build();
+        }
+
+        public Embed GetEmbeddedMessage(ICommandContext Context, string title, string message, Color color, Exception e = null)
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(color);
+            b.WithAuthor(Context.Client.CurrentUser);
+            b.WithTitle(title);
+            b.WithDescription(message);
+            b.WithFooter("ModularBOT • Core");
+            if (e != null)
+            {
+                b.AddField("Extended Details", e.Message);
+                b.AddField("For developers", e.StackTrace);
             }
             return b.Build();
         }
@@ -684,6 +848,8 @@ namespace ModularBOT.Component
         public string Name { get; set; }
         public string Action { get; set; }
         public bool RequirePermission { get; set; }
+        public AccessLevels CommandAccessLevel { get; set; } = AccessLevels.CommandManager;
+        //access level, by default, won't be enforced unless RequirePermission = true
         public int? Counter { get; set; }
     }
 
