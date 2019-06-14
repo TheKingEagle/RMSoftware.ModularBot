@@ -1216,18 +1216,22 @@ namespace ModularBOT.Component
             int index = (page * 24) - 24;
             ScreenModal = true;
             
+
             while (true)
             {
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Users for Guild: {name}", page, max, ConsoleColor.White);
-                
-                for (int i = index; i < 24 * page; i++)//20 results per page.
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"USERNAME#1234".PadRight(39, '\u2005')} [{"Snowflake ID".PadLeft(20, '\u2005')}]", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} \u2500{"".PadLeft(20, '\u2500')}\u2500", ConsoleColor.Blue);
+                for (int i = index; i < 22 * page; i++)//22 results per page.
                 {
                     if (index >= g.Users.Count)
                     {
                         break;
                     }
-                    string p = $"{ g.Users.ElementAt(i).Username }#{g.Users.ElementAt(i).Discriminator}".PadRight(38, '\u2005');
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Users.ElementAt(i).Id}]", ConsoleColor.DarkGreen);
+                    string userinput = g.Users.ElementAt(i).Username;
+                    string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ','\u2005').Replace("??","?");
+                    string p = $"{o}#{g.Users.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Users.ElementAt(i).Id.ToString().PadLeft(20,'0')}]", ConsoleColor.DarkGreen);
                     index++;
                 }
                 WriteEntry($"\u2502");
@@ -1253,10 +1257,10 @@ namespace ModularBOT.Component
                     if (page > 1)
                     {
                         page--;
-                        index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
-                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
                 if (s.Key == ConsoleKey.E)
@@ -1270,13 +1274,13 @@ namespace ModularBOT.Component
                         page++;
                     }
 
-                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
 
                 else
                 {
-                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
             }
