@@ -5,9 +5,13 @@
 
 # Core Command: `addcmd & addgcmd`
 
-Usage: `!addcmd <string cmdName> <boolean restricted> <string action>`
+Usage: `!addcmd <string cmdName> <boolean restricted> <string action>` OR
+Usage: `!addcmd <string cmdName> <AccessLevels CommandAccessLevel> <string action>`
 
 * This command is restricted to users who have been registered as `AccessLevels.CommandManager` or higher. See [Permissions System](https://github.com/rmsoftware-development/RMSoftware.ModularBot/blob/v2/doc/Core-Commands/permissions.md) for more information.
+* You can create a command that requires a user to be at or higher than a specific access level in the permission system. However, there are some limitations
+   * You cannot create a command with a higher access level than your own.
+   * You cannot create a command for `AccessLevels.Blacklisted`.
 
 
 ### `addgcmd` vs. `addcmd`
@@ -15,7 +19,8 @@ addgcmd will create a global command (as in, available to all guilds & dm) regar
 
 The syntax for both commands will be the same.
 
-Usage: `!addgcmd <string cmdName> <boolean restricted> <string action>`
+Usage: `!addgcmd <string cmdName> <boolean restricted> <string action>` OR 
+Usage: `!addgcmd <string cmdName> <AccessLevels CommandAccessLevel> <string action>`
 
 *Context:*
 * **Guild** - If `addcmd` is called here, the command will be added for that specific guild only.
@@ -39,10 +44,20 @@ For the \<ACTION> segment of the command, you can specify variables and flags th
 * `{params}` will take all text typed after the original command and output it into the response/action.
 * `{n}` will take 'n' parameter from the text. Words wrapped in Quotes will count as one parameter.
 * `%self%` will output the bot's mention.
+* `%self_avatar%` will output bot user's avatar url at 512 px; automatic format.
 * `%invoker%` will output the command sender's mention.
+* `%invoker_nomention%` will output the command sender's username and discriminator. `username#1234`
 * `%version%` will output the program's version number.
 * `%counter%` will output the number of command uses.
+* `%bot_mem%` will output bot's memory usage in the most compact unit of storage (eg. `65.9 MB`)
+* `%os_name%` will output the bot's host machine operating system name.
+* `%os_ver%` will output the bot's host machine Operating system version.
+* `%os_bit%` will output the bot's target platform. (`x86` or `x64`)
 * `%prefix%` or `%pf%` will output context command prefix.
+* `%context%` will output guild name, or Direct message.
+* `%command%` will output current command name.
+* `%command_count%` will output the number of available commands available in the execution context.
+* `%guild_count%` will output the number of guilds the bot is in.
 At this time, you can set temporary `%flags%` by using the console command `setvar <variableName-NoPercents> <value>`. Please note, these are case sensitive.
 
 ##### Example usage: `!addcmd hug false %invoker% hugs {params} for a long time!`
