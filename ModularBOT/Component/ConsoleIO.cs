@@ -1089,6 +1089,67 @@ namespace ModularBOT.Component
                     }
                 }
 
+                if (input.ToLower().StartsWith("channels"))
+                {
+                    string page = "1";
+
+                    if (input.Split(' ').Length > 3)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 3)
+                    {
+                        input = input.Remove(0, 9).Trim();
+                    }
+                    if (input.Split(' ').Length == 3)
+                    {
+                        page = input.Split(' ')[2];
+                        input = input.Split(' ')[1];
+                    }
+                    if (!short.TryParse(page, out short numpage))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Channels", "Invalid Page number"));
+                        continue;
+                    }
+                    if (!ulong.TryParse(input, out ulong id))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Channels", "Invalid Guild ID format"));
+                        continue;
+                    }
+
+                    string PRV_TITLE = currentTitle;
+                    List<LogEntry> v = new List<LogEntry>();
+                    //---------------start modal---------------
+                    bool ModalResult = ListChannels(ref discordNET, id, numpage);
+                    if (!ModalResult)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Channels", "The guild was not found..."));
+
+                        continue;
+                    }
+                    //----------------End modal----------------
+                    if (ModalResult)
+                    {
+
+                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+
+                        v.AddRange(LogEntries);
+                        LogEntries.Clear();//clear buffer.
+                                           //output previous logEntry.
+                        foreach (var item in v)
+                        {
+                            WriteEntry(item.LogMessage, item.EntryColor);
+                        }
+                    }
+                }
+
                 else
                 {
                     if (!ScreenBusy && !ScreenModal)
@@ -1220,8 +1281,8 @@ namespace ModularBOT.Component
             while (true)
             {
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Users for Guild: {name}", page, max, ConsoleColor.White);
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"USERNAME#1234".PadRight(39, '\u2005')} [{"Snowflake ID".PadLeft(20, '\u2005')}]", ConsoleColor.Blue);
-                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} \u2500{"".PadLeft(20, '\u2500')}\u2500", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"USERNAME#1234".PadRight(39, '\u2005')} [{"Snowflake ID".PadLeft(20, '\u2005')}] {"Access Level".PadLeft(25, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} \u2500{"".PadLeft(20, '\u2500')}\u2500 {"".PadLeft(25, '\u2500')}", ConsoleColor.Blue);
                 for (int i = index; i < 22 * page; i++)//22 results per page.
                 {
                     if (index >= g.Users.Count)
@@ -1231,7 +1292,105 @@ namespace ModularBOT.Component
                     string userinput = g.Users.ElementAt(i).Username;
                     string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ','\u2005').Replace("??","?");
                     string p = $"{o}#{g.Users.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Users.ElementAt(i).Id.ToString().PadLeft(20,'0')}]", ConsoleColor.DarkGreen);
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Users.ElementAt(i).Id.ToString().PadLeft(20,'0')}] {discord.PermissionManager.GetAccessLevel(g.Users.ElementAt(i)).ToString().PadLeft(25,'\u2005')}", ConsoleColor.DarkGreen);
+                    index++;
+                }
+                WriteEntry($"\u2502");
+                if (page > 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page == max)
+                {
+                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                }
+                if (page > 1 && page == max)
+                {
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                ConsoleKeyInfo s = Console.ReadKey();
+                if (s.Key == ConsoleKey.P)
+                {
+                    if (page > 1)
+                    {
+                        page--;
+                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                        //continue;
+                    }
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+                if (s.Key == ConsoleKey.E)
+                {
+                    break;
+                }
+                if (s.Key == ConsoleKey.N)
+                {
+                    if (page < max)
+                    {
+                        page++;
+                    }
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                else
+                {
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+            }
+
+            ScreenModal = false;
+            return true;
+
+        }
+
+        private bool ListChannels(ref DiscordNET discord, ulong guildID, short page = 1)
+        {
+            SocketGuild g = discord.Client.GetGuild(guildID);
+            if (g == null)
+            {
+                return false;
+            }
+            string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
+
+
+            short max = (short)(Math.Ceiling((double)(g.Channels.Count / 24)) + 1);
+            if (page > max)
+            {
+                page = max;
+            }
+            if (page < 1)
+            {
+                page = 1;
+            }
+            int index = (page * 24) - 24;
+            ScreenModal = true;
+
+
+            while (true)
+            {
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Channels for Guild: {name}", page, max, ConsoleColor.White);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Channel Name".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')} {"Channel Type".PadLeft(12, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(12, '\u2500')}", ConsoleColor.Blue);
+                for (int i = index; i < 22 * page; i++)//22 results per page.
+                {
+                    if (index >= g.Channels.Count)
+                    {
+                        break;
+                    }
+                    string channelin = g.Channels.ElementAt(i).Name;
+                    string chtype = g.Channels.ElementAt(i).GetType().ToString();
+                    string chltype = chtype.Remove(0, chtype.LastIndexOf('.') + 1).Replace("Socket", "").Replace("Channel", "");
+                    string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
+                    string p = $"{o}".PadRight(39, '\u2005');
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Channels.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {chltype.PadRight(12,'\u2005')}", ConsoleColor.DarkGreen);
                     index++;
                 }
                 WriteEntry($"\u2502");
