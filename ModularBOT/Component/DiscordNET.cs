@@ -460,7 +460,7 @@ namespace ModularBOT.Component
                 
             }
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands", 
-                $"<#{message.Channel.Name} [{cgontext}]> {message.Author.Username}: {message.Content}"));
+                $"<#{message.Channel.Name} [{cgontext}]> {message.Author.Username}#{message.Author.Discriminator}: {message.Content}"));
             string result = "";
            
             await Task.Run(() =>  result = CustomCMDMgr.ProcessMessage(arg));
