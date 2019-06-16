@@ -1262,10 +1262,11 @@ namespace ModularBOT.Component
                 return false;
             }
             g.DownloadUsersAsync();
+            List<SocketGuildUser> guildusers = g.Users.ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
             string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
             
 
-            short max = (short)(Math.Ceiling((double)(g.Users.Count / 24))+1);
+            short max = (short)(Math.Ceiling((double)(guildusers.Count / 22))+1);
             if(page > max)
             {
                 page = max;
@@ -1274,25 +1275,25 @@ namespace ModularBOT.Component
             {
                 page = 1;
             }
-            int index = (page * 24) - 24;
+            int index = (page * 22) - 22;
             ScreenModal = true;
             
 
             while (true)
             {
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Users for Guild: {name}", page, max, ConsoleColor.White);
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"USERNAME#1234".PadRight(39, '\u2005')} [{"Snowflake ID".PadLeft(20, '\u2005')}] {"Access Level".PadLeft(25, '\u2005')}", ConsoleColor.Blue);
-                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} \u2500{"".PadLeft(20, '\u2500')}\u2500 {"".PadLeft(25, '\u2500')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')}", ConsoleColor.Blue);
                 for (int i = index; i < 22 * page; i++)//22 results per page.
                 {
-                    if (index >= g.Users.Count)
+                    if (index >= guildusers.Count)
                     {
                         break;
                     }
-                    string userinput = g.Users.ElementAt(i).Username;
+                    string userinput = guildusers.ElementAt(i).Username;
                     string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ','\u2005').Replace("??","?");
-                    string p = $"{o}#{g.Users.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Users.ElementAt(i).Id.ToString().PadLeft(20,'0')}] {discord.PermissionManager.GetAccessLevel(g.Users.ElementAt(i)).ToString().PadLeft(25,'\u2005')}", ConsoleColor.DarkGreen);
+                    string p = $"{o}#{guildusers.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20,'0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18,'\u2005')}", ConsoleColor.DarkGreen);
                     index++;
                 }
                 WriteEntry($"\u2502");
