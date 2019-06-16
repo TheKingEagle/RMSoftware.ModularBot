@@ -1147,18 +1147,22 @@ namespace ModularBOT.Component
             if(text.ToLower().StartsWith("playing "))
             {
                 await _DiscordNet.Client.SetGameAsync(text.Remove(0,8),null);
+                await ReplyAsync(null, false, GetEmbeddedMessage("Success!", $"Bot's status changed to: **{text}**", Color.Green));
             }
             if (text.ToLower().StartsWith("watching "))
             {
                 await _DiscordNet.Client.SetGameAsync(text.Remove(0, 9), null,ActivityType.Watching);
+                await ReplyAsync(null, false, GetEmbeddedMessage("Success!", $"Bot's status changed to: **{text}**", Color.Green));
             }
             if (text.ToLower().StartsWith("streaming "))
             {
                 await _DiscordNet.Client.SetGameAsync(text.Remove(0, 10), StreamURL, ActivityType.Streaming);
+                await ReplyAsync(null, false, GetEmbeddedMessage("Success!", $"Bot's status changed to: **{text}**", Color.Green));
             }
             if (text.ToLower().StartsWith("listening to "))
             {
                 await _DiscordNet.Client.SetGameAsync(text.Remove(0, 13), null, ActivityType.Listening);
+                await ReplyAsync(null, false, GetEmbeddedMessage("Success!", $"Bot's status changed to: **{text}**", Color.Green));
             }
         }
 

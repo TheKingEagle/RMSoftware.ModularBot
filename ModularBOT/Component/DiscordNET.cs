@@ -100,26 +100,33 @@ namespace ModularBOT.Component
                 if (httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
                 {
 
-                     RestartRequested = consoleIO.ShowKillScreen("Unauthorized", "The server responded with error 401. Make sure your authorization token is correct.", false, ref ShutdownRequest, ref RestartRequested,5, httex).GetAwaiter().GetResult();
+                     RestartRequested = consoleIO.ShowKillScreen("Unauthorized", 
+                         "The server responded with error 401. Make sure your authorization token is correct.", false,
+                         ref ShutdownRequest, ref RestartRequested,5, httex).GetAwaiter().GetResult();
                 }
                 if (httex.DiscordCode == 4007)
                 {
-                    RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
+                    RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,
+                        ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
                 }
                 if (httex.DiscordCode == 5001)
                 {
-                    RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true, ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
+                    RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true, 
+                        ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
                 }
 
                 else
                 {
-                    RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.", true, ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
+                    RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.",
+                        true, ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
                 }
             }
 
             catch (Exception ex)
             {
-                RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex).GetAwaiter().GetResult();
+                RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex)
+                    .GetAwaiter()
+                    .GetResult();
             }
         }
 
@@ -309,25 +316,31 @@ namespace ModularBOT.Component
         #region Events
         private Task Client_GuildUnavailable(SocketGuild guild)
         {
+            string guildName = guild.Name.Length > 20 ? guild.Name.Remove(17) + "..." : guild.Name;
             SocketTextChannel c = guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel);
             if (c != null)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Requested initialization channel ({c.Name}) became unavailable."));
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", 
+                    $"Requested initialization channel ({c.Name}) became unavailable."));
                 
                 LogConnected = false;
             }
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{guild.Name}] "));
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{guildName}] "));
             return Task.Delay(0);
         }
 
         private async Task Client_GuildAvailable(SocketGuild guild)
         {
             //Console.Title = "RMSoftware.ModularBOT -> " + guild.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"A guild just appeared. [{guild.Name}] "),ConsoleColor.Green);
+            string guildName = guild.Name.Length > 20 ? guild.Name.Remove(17) + "..." : guild.Name;
+
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", 
+                $"A guild just appeared. [{guildName}] "),ConsoleColor.Green);
             SocketTextChannel c = guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel);
             if ( c != null)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Requested initialization channel ({c.Name}) has been found. {guild.Name} currently has it!"));
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", 
+                    $"Requested initialization channel ({c.Name}) has been found. {guild.Name} currently has it!"));
                 StartTime = DateTime.Now;
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"System uptime set to {StartTime}"));
                 LogConnected = true;
@@ -439,12 +452,15 @@ namespace ModularBOT.Component
                 return;
             }
             if (arg.Author.IsBot && !PermissionManager.IsEntityRegistered(arg.Author)) return;//ignore bots unless bot is registered in the permission system!
-            string cgontext = "DM/Group";
+            string cgontext = "Direct Message";
             if (message.Channel is SocketGuildChannel)
             {
-                cgontext = ((SocketGuildChannel)message.Channel).Guild.Name;
+                cgontext = ((SocketGuildChannel)message.Channel).Guild.Name.Length > 20 ? 
+                    ((SocketGuildChannel)message.Channel).Guild.Name.Remove(17) + "..." : ((SocketGuildChannel)message.Channel).Guild.Name;
+                
             }
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands", $"<#{message.Channel.Name} [{cgontext}]> {message.Author.Username}: {message.Content}"));
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands", 
+                $"<#{message.Channel.Name} [{cgontext}]> {message.Author.Username}: {message.Content}"));
             string result = "";
            
             await Task.Run(() =>  result = CustomCMDMgr.ProcessMessage(arg));
@@ -488,7 +504,8 @@ namespace ModularBOT.Component
         private Task Client_ShardConnected(DiscordSocketClient arg)
         {
             //Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
+                $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
 
             Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
             
@@ -498,7 +515,8 @@ namespace ModularBOT.Component
         private Task Client_ShardReady(DiscordSocketClient arg)
         {
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", $"Shard ready! {arg.Guilds.Count} guilds are fully loaded. "),ConsoleColor.Green);
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
+                $"Shard ready! {arg.Guilds.Count} guilds are fully loaded. "),ConsoleColor.Green);
             if (arg.GetChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel) is SocketTextChannel ch && !Initialized)
             {
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", $"Executing OnStart.CORE"));
