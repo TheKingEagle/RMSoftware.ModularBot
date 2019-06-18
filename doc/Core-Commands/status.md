@@ -10,5 +10,5 @@
    * `"Playing (text here)"` - To show as playing a game
    * `"Watching (text here)"` - To show as watching something
    * `"Listening to (text here)"` - To show as listening to something
-   * `"Streaming (Text here)"` - To show as live streaming. **NB:** You must add a valid twitch.TV channel in order to show the proper status.
+   * `"Streaming (Text here)" <Twitch.TV channel>` - To show as live streaming. **NB:** You must add a valid twitch.TV channel in order to show the proper status.
 * **Warning:** Failure to quote your text will result in command errors, or undesired side effects.
