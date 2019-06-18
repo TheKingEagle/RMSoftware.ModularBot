@@ -19,3 +19,5 @@
 
 ## Special Notes
 * You must have the `AccessLevels.CommandManager` permission set to use this command.
+* If you have a command tag with spaces, please wrap the command tag in quotes.
+* `getcmd` will fail if you specify an alias command tag.
