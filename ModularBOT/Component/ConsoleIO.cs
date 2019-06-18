@@ -692,22 +692,26 @@ namespace ModularBOT.Component
                     RestartRequested = false;
                     break;
                 }
+
                 if (input.ToLower() == "rskill")
                 {
 
                     RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will auto restart the program.", true, ref ShutdownCalled,ref RestartRequested, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
                     break;
                 }
+
                 if (input.ToLower() == "cls" || input.ToLower() == "clear")
                 {
                     
                     WriteEntry(new LogMessage(LogSeverity.Info, "___CLS___", "CONSOLE CLEARED"), null, true, false, true);
                 }
+
                 if (input.ToLower() == "tskill")
                 {
                     RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will prompt you to terminate the program.", false, ref ShutdownCalled, ref RestartRequested, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
                     break;
                 }
+
                 if (input.ToLower() == "disablecmd")
                 {
                     WriteEntry(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
@@ -717,6 +721,7 @@ namespace ModularBOT.Component
                     discordNET.Client.SetGameAsync("");
                     discordNET.DisableMessages = true;
                 }
+
                 if (input.ToLower() == "enablecmd")
                 {
                     WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
@@ -725,11 +730,13 @@ namespace ModularBOT.Component
                     discordNET.Client.SetGameAsync("for commands!", null, ActivityType.Watching);
                     discordNET.DisableMessages = false;
                 }
+
                 if (input.ToLower() == "mbotdata")
                 {
                     WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Opening ModularBOT's installation directory."));
                     Process.Start(Path.GetDirectoryName(Assembly.GetCallingAssembly().Location));
                 }
+
                 if (input.ToLower().StartsWith("status"))
                 {
                     string status = input.Remove(0, 7).Trim();
@@ -737,6 +744,7 @@ namespace ModularBOT.Component
                     discordNET.Client.SetGameAsync(status);
                     //_client.SetGameAsync(status);
                 }
+
                 if (input.ToLower().StartsWith("setgch"))
                 {
                     input = input.Remove(0, 6).Trim();
@@ -748,6 +756,7 @@ namespace ModularBOT.Component
                     WriteEntry(new LogMessage(LogSeverity.Error, "Console", "Set guild channel id."));
 
                 }
+
                 if (input.ToLower().StartsWith("conmsg"))
                 {
                     input = input.Remove(0, 6).Trim();
@@ -758,6 +767,7 @@ namespace ModularBOT.Component
                     }
                     Channel.SendMessageAsync(input);
                 }
+
                 if (input.ToLower().StartsWith("setvar"))
                 {
                     input = input.Remove(0, 6).Trim();
@@ -826,8 +836,9 @@ namespace ModularBOT.Component
                     if (bool.TryParse(input, out bool result))
                     {
                         Program.configMGR.CurrentConfig.CheckForUpdates = result;
+                        string pr = result ? "will" : "will not";
                         Program.configMGR.Save();
-                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Program will check updates on startup."),null, true, false, true);
+                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", $"Program {pr} check for updates on startup."),null, true, false, true);
                     }
                     else
                     {
@@ -835,6 +846,7 @@ namespace ModularBOT.Component
                         continue;
                     }
                 }
+
                 if (input.ToLower().StartsWith("config.update.prerelease"))
                 {
                     if (input.Split(' ').Length > 1)
@@ -860,7 +872,8 @@ namespace ModularBOT.Component
                         continue;
                     }
                 }
-                if(input.ToLower().StartsWith("config.setlogo"))
+
+                if (input.ToLower().StartsWith("config.setlogo"))
                 {
                     string PRV_TITLE = currentTitle;
                     List<LogEntry> v = new List<LogEntry>();
@@ -1028,6 +1041,7 @@ namespace ModularBOT.Component
                         WriteEntry(item.LogMessage, item.EntryColor);
                     }
                 }
+
                 if (input.ToLower().StartsWith("users"))
                 {
                     string page = "1";
