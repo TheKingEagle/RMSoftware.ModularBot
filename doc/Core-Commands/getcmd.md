@@ -1,4 +1,3 @@
-*DISCLAIMER: This command is not yet implemented in v2.*
 # Core Command: `getcmd`
 #### Please note: We will always use `!` as a command prefix for usage examples.
 * Usage: `!getcmd <commandTag>`
@@ -19,4 +18,4 @@
   * This will display an unprocessed output of the command. Variables will not be processed, but emotes will display.
 
 ## Special Notes
-* You must be bot owner, or have a role that has been added to the bot management system in order to use this command.
+* You must have the `AccessLevels.CommandManager` permission set to use this command.
