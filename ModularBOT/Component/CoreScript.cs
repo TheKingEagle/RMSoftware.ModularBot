@@ -739,6 +739,15 @@ namespace ModularBOT.Component
                                     break;
                                 case ("ECHOTTS"):
                                     //Get the line removing echo.
+                                    if (cmd.CommandAccessLevel < AccessLevels.CommandManager)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: This requires `AccessLevels.Administrator`");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     output = line.Remove(0, 8);
                                     if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
                                     {
@@ -784,9 +793,27 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("BOTSTATUS"):
+                                    if(cmd.CommandAccessLevel < AccessLevels.Administrator)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: This requires `AccessLevels.Administrator`");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     await ((DiscordShardedClient)client).SetGameAsync(ProcessVariableString(gobj, line.Remove(0, 10), cmd, client, message));
                                     break;
                                 case ("STATUSORB"):
+                                    if (cmd.CommandAccessLevel < AccessLevels.Administrator)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: This requires `AccessLevels.Administrator`");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     string cond = line.Remove(0, 10).ToUpper();
                                     switch (cond)
                                     {
@@ -819,6 +846,15 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("BOTGOLIVE"):
+                                    if (cmd.CommandAccessLevel < AccessLevels.Administrator)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: This requires `AccessLevels.Administrator`");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     string linevar = ProcessVariableString(gobj, line, cmd, client, message);
                                     string[] data = linevar.Remove(0, 10).Split(' ');
                                     if (data.Length < 2)
