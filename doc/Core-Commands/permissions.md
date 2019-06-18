@@ -9,7 +9,7 @@
 >    * [Permissions get](#core-command-permissions-get)
 >    * [Permissions del user](#core-command-permissions-del-user)
 >    * [Permissions del user](#core-command-permissions-del-user)
-
+> * [Additional Notes](#additional-notes)
 ## Summary
 The new permission system is designed to be a bit more robust, and organized.
 
@@ -47,18 +47,19 @@ Users who are not listed in the permission system will be granted normal access.
 >**All examples will be using `!` as a command prefix. You will specify your own when setting up ModularBOT**
 
 ## Core Command: `permissions set user`
-Adds a new user (or updates existing user) to the permission system file.
+Adds a new user (or updates existing user) to the permission system file. 
 
-**This command requires `AccessLevels.Administrator`**
+**This command requires `AccessLevels.CommandManager`, However, if you are whitelisting a bot or a webhook it requires `AccessLevels.Administrator`**
 
 Usage: `!permissions set user <@User#1234> <AccessLevelString>` **OR** `!psu <@User#1234> <AccessLevelString>`
 * You can either mention the user, or type out their `username#tag`.
 * `AccessLevelString` does not include `AccessLevels.` Please only use `Blacklisted`, `Normal`, `CommandManager`, or `Administrator`
 
+
 ## Core Command: `permissions set role`
 Adds a new role (or updates existing role) to the permission system file.
 
-**This command requires `AccessLevels.Administrator`**
+**This command requires `AccessLevels.CommandManager`**
 
 Usage: `!permissions set role <@RoleMention> <AccessLevelString>` **OR** `!psr <@RoleMention> <AccessLevelString>`
 * You must be able to mention the role.
@@ -74,20 +75,29 @@ Usage: `!permissions set role <@RoleMention> <AccessLevelString>` **OR** `!psr <
 ## Core Command: `permissions get`
 Shows information regarding permissions on a specific user.
 
-**This command requires `AccessLevels.Administrator`**
+**This command requires `AccessLevels.CommandManager`**
 
 Usage: `!permissions get <@User#1234>` **OR** `!plist <@User#1234>`
 
 ## Core Command: `permissions del role`
 Removes a role from the permission system.
 
-**This command requires `AccessLevels.Administrator`**
+**This command requires `AccessLevels.CommandManager`**
 
 Usage: `!permissions del role <@RoleMention>` **OR** `!pdr <@RoleMention>`
 
 ## Core Command: `permissions del user`
 Removes a role from the permission system.
 
-**This command requires `AccessLevels.Administrator`**
+**This command requires `AccessLevels.CommandManager`**
 
 Usage: `!permissions del user <@User#1234>` **OR** `!pdu <@User#1234>`
+
+## Additional Notes
+There are some additional restrictions to keep in mind with this permission system.
+
+* You may not modify/delete your own permissions
+* You may not modify/delete a user or role with a higher access level than your own.
+* You may not register a new permission entity with higher access levels.
+* You may not modify the default administrator permission set.
+* By default, no other bot will be able to communicate with ModularBOT. You must register the bot into the permission system. In the event the other bot has a role with a registered access level, it will still be unable to communicate with your ModularBOT instance.
