@@ -93,6 +93,14 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
+            if(action == "{params}" || action == "{0}")
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                {
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Sorry!",$"You may not create this type of command. You must have `AccessLevels.Administrator`.",Color.DarkRed));
+                    return;
+                }
+            }
             ulong gid = 0;
             if(Context.Guild != null)
             {
@@ -117,7 +125,15 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
-            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < CommandAccessLevel)
+            if (action == "{params}" || action == "{0}")
+            {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                {
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Sorry!", $"You may not create this type of command. You must have `AccessLevels.Administrator`.", Color.DarkRed));
+                    return;
+                }
+            }
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < CommandAccessLevel)
             {
                 await ReplyAsync("", false, 
                     GetEmbeddedMessage("Wait... That's Illegal.", "You can't create a command you won't have permission to use.", Color.DarkRed));
