@@ -55,49 +55,55 @@ namespace ModularBOT.Component
 
             if(QueueProcessStarted)
             {
-                WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO", "An attempt was made to start the queue processor task, but it is already started..."));
+                WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO", 
+                    "An attempt was made to start the queue processor task, but it is already started..."));
 
                 return;
             }
             QueueProcessStarted = true;
-            WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO", "Console Queue has initialized. Processing any incoming log events."));
+            WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO", 
+                "Console Queue has initialized. Processing any incoming log events."));
             
             while (true)
             {
-                //SpinWait.SpinUntil(() => Backlog.Peek() != null);//once atleast one item enters queue, process the entry.
-                if(Backlog.Count == 0)
+                SpinWait.SpinUntil(() => Backlog.Count > 0);        //will this solve the random deadlock? who knows.
+                SpinWait.SpinUntil(() => !ScreenBusy);              //pause queue if screen is resetting.
+                LogEntry qitem = Backlog.Dequeue();                 //take a new entry out of queue.
+
+                LogMessage message = qitem.LogMessage;              //Entry's log message data.
+                ConsoleColor? Entrycolor = qitem.EntryColor;        //left margin color
+
+                bool bypassFilter = qitem.BypassFilter;             //will this entry obey application log level?
+                bool bypassScreenLock = qitem.BypassScreenLock;     //will this entry show up through a modal screen?
+                bool showCursor = qitem.ShowCursor;                 //will this entry output and show the console cursor?
+
+                if (message.Severity > Program.configMGR
+                    .CurrentConfig
+                    .DiscordEventLogLevel && !bypassFilter)
                 {
-                    SpinWait.SpinUntil(() => Backlog.Count > 0);
-                    continue;
-                }
-                SpinWait.SpinUntil(() => !ScreenBusy);//pause queue if screen is resetting
-                LogEntry qitem = Backlog.Dequeue();
-                LogMessage message = qitem.LogMessage;
-                if(message.Source == "___CLS___")
-                {
-                    ConsoleGUIReset(ConsoleForegroundColor, ConsoleBackgroundColor, currentTitle);
-                }
-                ConsoleColor? Entrycolor = qitem.EntryColor;
-                bool bypassFilter = qitem.BypassFilter;
-                bool bypassScreenLock = qitem.BypassScreenLock;
-                bool showCursor = qitem.ShowCursor;
-                if (message.Severity > Program.configMGR.CurrentConfig.DiscordEventLogLevel && !bypassFilter)
-                {
-                    continue;
+                    continue;                                       //Do not output
                 }
 
-                LogEntries.Add(new LogEntry(message, Entrycolor));//add to buffer. regardless of screen-lock.
+                LogEntries.Add(new LogEntry(message, Entrycolor));  //Add the entry to buffer. Ignore screen modal, for outputting when modal is closed.
+
+                if(LogEntries.Count > Console.BufferHeight - 3)
+                {
+                    LogEntries.Remove(LogEntries.First());          //keep the buffer tidy.
+                }
 
                 if (ScreenModal && !bypassScreenLock)
                 {
-                    continue;
+                    continue;                                       //Do not output
                 }
 
-                SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
+                SpinWait.SpinUntil(() => !Writing);                 //This will help prevent the console from being sent into a mess of garbled words. 
+                                                                    //(In theory)
                 Writing = true;
                 PrvTop = Console.CursorTop;
-                Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
-                LogMessage l = new LogMessage(message.Severity, message.Source.PadRight(11, '\u2000'), message.Message, message.Exception);
+                Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
+                LogMessage l = new LogMessage(message.Severity, 
+                    message.Source.PadRight(11, '\u2000'), 
+                    message.Message, message.Exception);
                 string[] lines = WordWrap(l.ToString()).Split('\n');
                 ConsoleColor bglast = ConsoleBackgroundColor;
                 int prt = Console.CursorTop;
@@ -153,32 +159,26 @@ namespace ModularBOT.Component
 
                     Console.BackgroundColor = bg;
                     Console.ForegroundColor = fg;
-                    //Thread.Sleep(1);
-                    Console.Write((char)9617);//Write the colored space.
-                                              //Thread.Sleep(1);
-                    Console.BackgroundColor = bglast;//restore previous color.
-                    Console.ForegroundColor = ConsoleForegroundColor;
-                    //Thread.Sleep(1);
-                    Console.Write("\u2551");//uileft ║
-                                            //Thread.Sleep(1);
+                    Console.Write((char)9617);                          //Write the colored space.
+                    Console.BackgroundColor = bglast;                   //restore previous color.
+                    Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
+                    Console.Write("\u2551");                            //uileft ║
                     
                     if (i == 0)
                     {
-                        //Console.WriteLine(lines[i].PadRight(Console.WindowWidth - (lines[i].Length + 1),'\u2005'));//write current line in queue.
-                        Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2,'\u2000'));//write current line in queue.
+                        Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2,'\u2000')); //write current line in queue.
                         Console.CursorTop = Console.CursorTop - 1;
                     }
                     if (i > 0)
                     {
-                        Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000').PadRight(Console.BufferWidth - 2  ));//write current line in queue, padded by 21 enQuads to preserve line format.
+                        //write current line in queue, padded by 21 enQuads to preserve line format.
+                        Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000').PadRight(Console.BufferWidth - 2  )); 
                         Console.CursorTop = Console.CursorTop - 1;
                     }
 
                 }
-                //Thread.Sleep(1);
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.White;
-                //Thread.Sleep(1);
                 if (showCursor)
                 {
                     Console.Write(">");//Write the input indicator.
@@ -186,25 +186,20 @@ namespace ModularBOT.Component
                 }
                 if (!showCursor)
                 {
-                    //Console.CursorTop = PrvTop;//testing
                     Console.CursorTop = prt;
                 }
-                //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
-                //Thread.Sleep(1);
                 Console.BackgroundColor = ConsoleBackgroundColor;
                 Console.ForegroundColor = ConsoleForegroundColor;
-                //Thread.Sleep(1);
                 Console.CursorVisible = showCursor;
                 if (showCursor)
                 {
                     Console.Write("\u2551");
                 }
-
-                //Thread.Sleep(1);
+                
                 CurTop = Console.CursorTop;
-                //Thread.Sleep(1);
                 Writing = false;
             }
+            
         }
 
         /// <summary>
@@ -702,8 +697,10 @@ namespace ModularBOT.Component
 
                 if (input.ToLower() == "cls" || input.ToLower() == "clear")
                 {
-                    
-                    WriteEntry(new LogMessage(LogSeverity.Info, "___CLS___", "CONSOLE CLEARED"), null, true, false, true);
+                    LogEntries.Clear();//remove buffer.
+                    ConsoleGUIReset(ConsoleForegroundColor, ConsoleBackgroundColor, currentTitle);
+                    SpinWait.SpinUntil(() => !ScreenBusy);
+                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Console cleared!"), null, true, false, true);
                 }
 
                 if (input.ToLower() == "tskill")
