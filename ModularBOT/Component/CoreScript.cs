@@ -106,6 +106,8 @@ namespace ModularBOT.Component
                     }
                 }
             }
+
+            #region Bot Instance
             if (Processed.Contains("%self%"))
             {
                 Processed = Processed.Replace("%self%", client.CurrentUser.Mention);
@@ -114,20 +116,64 @@ namespace ModularBOT.Component
             {
                 Processed = Processed.Replace("%self_avatar%", client.CurrentUser.GetAvatarUrl(ImageFormat.Auto,512));
             }
-            if (Processed.Contains("%guild_count%"))
+            if (Processed.Contains("%self_nick%"))
             {
-                DiscordShardedClient cl = client as DiscordShardedClient;
-                Processed = Processed.Replace("%guild_count%", cl.Guilds.Count.ToString());
-            }
-            if (Processed.Contains("%context%"))
-            {
-                string Context = message.Author.Mention;
-                if(gobj != null || gobj.ID != 0)
+                string snick = "Not specified";
+                if (client.CurrentUser is SocketGuildUser sgu)
                 {
-                    Context = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult().Name;
+                    snick = sgu.Nickname ?? "Not specified";
                 }
-                Processed = Processed.Replace("%context%",Context);
+
+                Processed = Processed.Replace("%self_nick%", snick);
             }
+
+            #endregion
+
+            #region Command Invoker
+            if (Processed.Contains("%invoker%"))
+            {
+                Processed = Processed.Replace("%invoker%", message.Author.Mention);
+            }
+            if (Processed.Contains("%invoker_nick%"))
+            {
+                SocketGuildUser sgu = message.Author as SocketGuildUser;
+                string nick = "Not specified";
+                if(sgu != null)
+                {
+                    nick = sgu.Nickname ?? "Not specified";
+                }
+                Processed = Processed.Replace("%invoker_nick%", nick);
+            }
+            if (Processed.Contains("%invoker_nomention%"))
+            {
+                Processed = Processed.Replace("%invoker_nomention%", message.Author.Username+"#"+message.Author.Discriminator);
+            }
+            if (Processed.Contains("%invoker_avatar%"))
+            {
+                Processed = Processed.Replace("%invoker_avatar%", message.Author.GetAvatarUrl(ImageFormat.Auto, 512));
+            }
+
+            #endregion
+
+            #region Bot Owner
+            if (Processed.Contains("%bot_owner%"))
+            {
+                Processed = Processed.Replace("%bot_owner%", client.GetApplicationInfoAsync().GetAwaiter().GetResult().Owner.Mention);
+            }
+            if (Processed.Contains("%bot_owner_nomention%"))
+            {
+                IUser b_own = client.GetApplicationInfoAsync().GetAwaiter().GetResult().Owner;
+                Processed = Processed.Replace("%bot_owner_nomention%", b_own.Username + "#" + b_own.Discriminator);
+            }
+            if (Processed.Contains("%bot_owner_avatar%"))
+            {
+                IUser b_own = client.GetApplicationInfoAsync().GetAwaiter().GetResult().Owner;
+                Processed = Processed.Replace("%bot_owner_avatar%", b_own.GetAvatarUrl(ImageFormat.Auto,512));
+            }
+
+            #endregion
+
+            #region Statistics
             if (Processed.Contains("%command%"))
             {
                 Processed = Processed.Replace("%command%", cmd.Name);
@@ -141,17 +187,17 @@ namespace ModularBOT.Component
             {
                 DiscordShardedClient cl = client as DiscordShardedClient;
                 int? l = null;
-                if(message is SocketUserMessage a)
+                if (message is SocketUserMessage a)
                 {
-                    if(a.Channel is SocketTextChannel c)
+                    if (a.Channel is SocketTextChannel c)
                     {
-                        if(c.Guild != null)
+                        if (c.Guild != null)
                         {
                             l = cl.GetShardFor(c.Guild).Latency;
                         }
                     }
                 }
-                Processed = Processed.Replace("%latency%",(l ?? cl.Latency).ToString() + " ms");
+                Processed = Processed.Replace("%latency%", (l ?? cl.Latency).ToString() + " ms");
             }
             if (Processed.Contains("%prefix%") || Processed.Contains("%pf%"))
             {
@@ -159,14 +205,6 @@ namespace ModularBOT.Component
                 Processed = Processed.Replace("%prefix%", gobj.CommandPrefix);
 
                 Processed = Processed.Replace("%pf%", gobj.CommandPrefix.ToString());
-            }
-            if (Processed.Contains("%invoker%"))
-            {
-                Processed = Processed.Replace("%invoker%", message.Author.Mention);
-            }
-            if (Processed.Contains("%invoker_nomention%"))
-            {
-                Processed = Processed.Replace("%invoker_nomention%", message.Author.Username+"#"+message.Author.Discriminator);
             }
             if (Processed.Contains("%version%"))
             {
@@ -189,6 +227,65 @@ namespace ModularBOT.Component
             {
                 Processed = Processed.Replace("%bot_mem%", SystemInfo.SizeSuffix(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64));
             }
+            if (Processed.Contains("%guild_count%"))
+            {
+                DiscordShardedClient cl = client as DiscordShardedClient;
+                Processed = Processed.Replace("%guild_count%", cl.Guilds.Count.ToString());
+            }
+            if (Processed.Contains("%context%"))
+            {
+                string Context = message.Author.Mention;
+                if (gobj != null || gobj.ID != 0)
+                {
+                    Context = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult().Name;
+                }
+                Processed = Processed.Replace("%context%", Context);
+            }
+
+            #endregion
+
+            #region Guild Owner
+            if (Processed.Contains("%guild_owner%"))
+            {
+                string GuildOwner = "Null";
+
+
+                if(gobj.ID != 0)
+                {
+                    IGuild g = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult();
+                    IGuildUser gu = g.GetOwnerAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    GuildOwner = gu.Username + "#" + gu.Discriminator;
+                }
+                Processed = Processed.Replace("%guild_owner%",GuildOwner);
+            }
+            if (Processed.Contains("%go_avatar%"))
+            {
+                string GuildOwnerav = "Null";
+
+
+                if (gobj.ID != 0)
+                {
+                    IGuild g = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult();
+                    IGuildUser gu = g.GetOwnerAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    GuildOwnerav = gu.GetAvatarUrl(ImageFormat.Auto,512);
+                }
+                Processed = Processed.Replace("%go_avatar%", GuildOwnerav);
+            }
+            if (Processed.Contains("%go_nick%"))
+            {
+                string GuildOwnernick = "Null";
+
+
+                if (gobj.ID != 0)
+                {
+                    IGuild g = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult();
+                    IGuildUser gu = g.GetOwnerAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    GuildOwnernick = gu.Nickname;
+                }
+                Processed = Processed.Replace("%go_nick%", GuildOwnernick);
+            }
+            #endregion
+
             //Check for use of Custom defined variables.
 
             foreach (Match item in Regex.Matches(Processed, @"%[^%]*%"))
@@ -289,6 +386,7 @@ namespace ModularBOT.Component
                             if (line.ToUpper().StartsWith("::") || line.ToUpper().StartsWith("REM") || line.ToUpper().StartsWith("//"))
                             {
                                 //comment line.
+                                services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CoreScript", "Comment: " + line));
                                 LineInScript++;
                                 continue;
                             }
