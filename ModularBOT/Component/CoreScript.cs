@@ -1255,9 +1255,17 @@ namespace ModularBOT.Component
             string ecmd = line.Remove(0, 4);
             string resp = ccmg.ProcessMessage(new PseudoMessage(guildObject.CommandPrefix + ecmd, ArgumentMessage.Author as SocketUser,
                 (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot));
-            if (!string.IsNullOrWhiteSpace(resp))
+            if (resp != "SCRIPT" && resp != "EXEC" && resp != "" && resp != "CLI_EXEC" && resp != null)
             {
+
                 ArgumentMessage.Channel.SendMessageAsync(resp);
+                LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
+                LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "CustomCMD Success..."));
+                return;
+            }
+            if ((resp == "SCRIPT" || resp == "EXEC" || resp == "" || resp == "CLI_EXEC") && resp != null)
+            {
+
                 LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
                 LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "CustomCMD Success..."));
                 return;
