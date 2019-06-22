@@ -452,6 +452,10 @@ namespace ModularBOT.Component
                 await arg.Channel.SendMessageAsync(result);
                 return;
             }
+            if((result == "SCRIPT" || result == "EXEC" || result == "" || result == "CLI_EXEC") && result != null)
+            {
+                return;
+            }
             var context = new CommandContext(Client, message);
             
             // Execute the command. (result does not indicate a return value, 
