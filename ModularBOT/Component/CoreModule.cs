@@ -1416,7 +1416,8 @@ namespace ModularBOT.Component
             if (e != null)
             {
                 b.AddField("Extended Details", e.Message);
-                b.AddField("For developers", e.StackTrace);
+                b.AddField("For developer", "See the Errors.LOG for more info!!!");
+                ConsoleIO.WriteErrorsLog(e);
             }
             return b.Build();
         }
