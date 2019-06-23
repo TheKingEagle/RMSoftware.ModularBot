@@ -32,7 +32,6 @@ namespace ModularBOT.Component
         public bool ScreenBusy { get; private set; }//If console is resetting or rendering new ui.
 
         public bool ScreenModal { get; private set; }//If there is a screen showing above discord logs
-        public List<string> ARGS { get; private set; }
 
         List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
 
@@ -44,10 +43,9 @@ namespace ModularBOT.Component
         private ConsoleColor ConsoleForegroundColor = ConsoleColor.Gray;
         private ConsoleColor ConsoleBackgroundColor = ConsoleColor.Black;
 
-        public ConsoleIO(List<string> ProgramArgs)
+        public ConsoleIO()
         {
             Writing = false;
-            ARGS = ProgramArgs;
         }
 
         public void ProcessQueue()
@@ -583,13 +581,11 @@ namespace ModularBOT.Component
                     Console.CursorTop = t;//reset.
                     Thread.Sleep(1000);
                 }
-                List<string> restart_args = new List<string>();
-                restart_args.AddRange(ARGS);
-                if (!restart_args.Contains("-crashed"))
+                
+                if (!Program.AppArguments.Contains("-crashed"))
                 {
-                    restart_args.Add("-crashed");
+                    Program.AppArguments.Add("-crashed");
                 }
-                ARGS = restart_args;
 
             }
 
