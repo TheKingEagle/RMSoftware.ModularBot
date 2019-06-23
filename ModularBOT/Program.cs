@@ -14,7 +14,7 @@ namespace ModularBOT
     {
         public static ConfigurationManager configMGR;
 
-        private static List<string> AppArguments = new List<string>();
+        public static List<string> AppArguments = new List<string>();
         private static DiscordNET discord = new DiscordNET();
         internal static bool ShutdownCalled = false;
         public static bool RestartRequested = false;
@@ -31,7 +31,7 @@ namespace ModularBOT
                 AppArguments.AddRange(ARGS);
             }
             recoveredFromCrash = AppArguments.Contains("-crashed");
-            consoleIO = new ConsoleIO(AppArguments);
+            consoleIO = new ConsoleIO();
             
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
             if (!Directory.Exists("guilds")) { Directory.CreateDirectory("guilds"); }
@@ -42,6 +42,7 @@ namespace ModularBOT
             consoleIO.ConsoleGUIReset(configMGR.CurrentConfig.ConsoleForegroundColor,
                 configMGR.CurrentConfig.ConsoleBackgroundColor, "Active Session");
             Task.Run(() => consoleIO.ProcessQueue());//START ConsoleIO processing.
+
             #region DEBUG
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
@@ -58,12 +59,12 @@ namespace ModularBOT
             Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested,ref recoveredFromCrash));//Discord.NET thread
             Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord.InputCanceled,ref discord));//Console reader thread;
            
-            SpinWait.SpinUntil(BotShutdown);//HOLD THREAD
+            SpinWait.SpinUntil(() => ShutdownCalled);//HOLD THREAD
             if (RestartRequested)
             {
                 Process p = new Process();
                 string flattened = "";
-                foreach (string item in ARGS)
+                foreach (string item in AppArguments)
                 {
                     flattened += item + " ";
                 }
@@ -91,12 +92,7 @@ namespace ModularBOT
             //Thread.Sleep(300);
             consoleIO.WriteErrorsLog(e.Exception);
         }
-
-        private static readonly Func<bool> BotShutdown = delegate ()
-        {
-            return ShutdownCalled;
-        };
-
+        
         private static void RunStartlogo()
         {
             Console.CursorVisible = false;
