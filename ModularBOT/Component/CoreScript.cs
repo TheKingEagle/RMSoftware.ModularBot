@@ -15,7 +15,7 @@ namespace ModularBOT.Component
 {
     internal class CoreScript
     {
-        CustomCommandManager ccmgr;
+        private CustomCommandManager ccmgr;
         private Dictionary<string, object> Variables { get; set; }
         private CommandService cmdsvr;
         private IServiceProvider services;
@@ -37,9 +37,56 @@ namespace ModularBOT.Component
 
         /// <summary>
         /// These are variable names that are defined by the custom commands class.
-        /// They are not managed by the CoreScript in any way.
+        /// They are not managed by the CoreScript in any way, therefore must be protected.
         /// </summary>
-        private readonly string[] SystemVars = { "counter", "invoker", "self", "version", "pf", "prefix" };
+        private readonly string[] SystemVars =
+        {
+            #region Bot Instance
+            "self",
+            "self_nick",
+            "self_avatar",
+
+            #endregion
+
+            #region Command Invoker
+            "invoker",
+            "invoker_nomention",
+            "invoker_avatar",
+            "invoker_nick",
+
+            #endregion
+
+            #region Bot Owner
+            "bot_owner",
+            "bot_owner_nomention",
+            "bot_owner_avatar",
+
+            #endregion
+
+            #region Statistics
+            "command",
+            "command_count",
+            "latency",
+            "prefix","pf",
+            "version",
+            "os_name",
+            "os_bit",
+            "os_ver",
+            "bot_mem",
+            "guild_count",
+            "context",
+            "counter",
+
+            #endregion
+
+            #region Guild Owner
+            "guild_owner",
+            "go_avatar",
+            "go_nick"
+
+            #endregion
+
+        };
 
         #region Public Methods
         public void Set(string var, object value)
@@ -86,27 +133,8 @@ namespace ModularBOT.Component
 
         public string ProcessVariableString(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message)
         {
-            
             string Processed = response;
-            if(cmd != null)
-            {
-                if (Processed.Contains("%counter%"))
-                {
-                    if (cmd.Counter.HasValue)
-                    {
-                        cmd.Counter++;
-                        gobj.SaveJson();
-                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
-                    }
-                    else
-                    {
-                        cmd.Counter = 1;
-                        gobj.SaveJson();
-                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
-                    }
-                }
-            }
-
+            
             #region Bot Instance
             if (Processed.Contains("%self%"))
             {
@@ -241,6 +269,25 @@ namespace ModularBOT.Component
                 }
                 Processed = Processed.Replace("%context%", Context);
             }
+
+            if (cmd != null)
+            {
+                if (Processed.Contains("%counter%"))
+                {
+                    if (cmd.Counter.HasValue)
+                    {
+                        cmd.Counter++;
+                        gobj.SaveJson();
+                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
+                    }
+                    else
+                    {
+                        cmd.Counter = 1;
+                        gobj.SaveJson();
+                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
+                    }
+                }
+            } //("%counter%"))
 
             #endregion
 
@@ -1024,11 +1071,6 @@ namespace ModularBOT.Component
             }
         }
 
-        //private void caseExecCmd(string v, CustomCommandManager ccmgr, char commandPrefix, ref bool error, ref EmbedBuilder errorEmbed, ref int lineInScript, ref string cmd, ref IMessage message)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         public async Task EvaluateScriptFile(GuildObject gobj, string filename, IDiscordClient client, IMessage message, GuildCommand cmd = null)
         {
             int LineInScript = 1;
@@ -1204,6 +1246,7 @@ namespace ModularBOT.Component
         }
         #endregion
 
+        #region Private methods
         private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd)
         {
             string output = line;
@@ -1308,5 +1351,7 @@ namespace ModularBOT.Component
                 services.GetRequiredService<ConsoleIO>().WriteErrorsLog(msg.Exception);
             }
         }
+
+        #endregion
     }
 }
