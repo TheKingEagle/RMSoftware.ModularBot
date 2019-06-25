@@ -687,12 +687,12 @@ namespace ModularBOT.Component
         #endregion
 
         #region Permission Management
-        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.CommandManager"),Summary("Set permissions for a user. NOTE: whitelisting a bot requires you to be administrator.")]
+        [Command("permissions set user"),Alias("psu"), Remarks("AccessLevels.Administrator"),Summary("Set a user's access level. NOTE: This will grant said user said access level in ALL guilds.")]
         public async Task PERM_SetUser(IUser user, AccessLevels accessLevel)
         {
-            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
             if(user.IsBot)
@@ -783,7 +783,7 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions set entity"), Alias("pse"), Remarks("AccessLevels.Administrator"), Summary("Set permissions for a generic ID")]
+        [Command("permissions set entity"), Alias("pse"), Remarks("AccessLevels.Administrator"), Summary("Set permissions for a generic ID. Note: if entity is user/bot/webhook, it will be set for ALL guilds.")]
         public async Task PERM_SetEntity(ulong GenericID, AccessLevels accessLevel)
         {
             #region RequiredCheck
@@ -980,17 +980,22 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync("", false, b.Build());
         }
 
-        [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.CommandManager"), Summary("Remove permission entry for user. (Assumes default: AccessLevels.Normal)")]
+        [Command("permissions del user"), Alias("pdu","pru"), Remarks("AccessLevels.Administrator"), Summary("Remove permission entry for user. (Assumes default: AccessLevels.Normal)")]
         public async Task PERM_DeleteUser(IUser user)
         {
-            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
             if (user == Context.User)
             {
                 await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't remove yourself from the permission system.", Color.DarkRed));
+                return;
+            }
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < _DiscordNet.PermissionManager.GetAccessLevel(user))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't remove a user from the system if they have a higher access level than you...", Color.DarkRed));
                 return;
             }
             EmbedBuilder b = new EmbedBuilder();
@@ -1034,12 +1039,16 @@ namespace ModularBOT.Component
         [Command("permissions del role"), Alias("pdr", "prr"), Remarks("AccessLevels.CommandManager"), Summary("Remove permission entry for role. (Assumes default: AccessLevels.Normal)")]
         public async Task PERM_DeleteRole(IRole role)
         {
-            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
-
+            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < _DiscordNet.PermissionManager.GetAccessLevel(role))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You can't remove a role from the system if they have a higher access level than you...", Color.DarkRed));
+                return;
+            }
             EmbedBuilder b = new EmbedBuilder();
             try
             {
