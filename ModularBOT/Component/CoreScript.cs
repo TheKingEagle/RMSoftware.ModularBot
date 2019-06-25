@@ -63,6 +63,7 @@ namespace ModularBOT.Component
 
             #endregion
 
+                        
             #region Statistics
             "command",
             "command_count",
@@ -75,9 +76,10 @@ namespace ModularBOT.Component
             "bot_mem",
             "guild_count",
             "context",
+            "context_image",
             "counter",
-
             #endregion
+            
 
             #region Guild Owner
             "guild_owner",
@@ -269,7 +271,15 @@ namespace ModularBOT.Component
                 }
                 Processed = Processed.Replace("%context%", Context);
             }
-
+            if (Processed.Contains("%context_image%"))
+            {
+                string Context = message.Author.GetAvatarUrl(ImageFormat.Auto,512);
+                if (gobj != null || gobj.ID != 0)
+                {
+                    Context = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult().IconUrl;
+                }
+                Processed = Processed.Replace("%context_image%", Context);
+            }
             if (cmd != null)
             {
                 if (Processed.Contains("%counter%"))
