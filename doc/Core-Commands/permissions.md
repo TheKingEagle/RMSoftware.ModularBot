@@ -101,3 +101,4 @@ There are some additional restrictions to keep in mind with this permission syst
 * You may not register a new permission entity with higher access levels.
 * You may not modify the default administrator permission set.
 * By default, no other bot will be able to communicate with ModularBOT. You must register the bot into the permission system. In the event the other bot has a role with a registered access level, it will still be unable to communicate with your ModularBOT instance.
+* When the bot instance is configured  to run in "Mass-deployment mode", the instance will automatically assign `CommandManager` to all roles with the `Manage Server` permission set. **Please keep in mind:** If you are a guild owner without a server management role, you will not be able to manage commands, unless you are also the bot owner.
