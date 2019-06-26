@@ -17,6 +17,8 @@ namespace ModularBOT.Component
         public string ModuleName { get; set; }
         public string ServiceClass { get;  set; }
         public List<ulong> GuildsAvailable { get;  set; }
+
+        public List<string> ModuleGroups { get; set; }
     }
 
     public class ModuleManager
@@ -62,14 +64,29 @@ namespace ModularBOT.Component
                                 if(propertyItem.GuildsAvailable.Count == 0)
                                 {
                                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, 
-                                        "Modules", $"MPI didnt specify specific guild availability. Assuming ALL. Module: {asmb.GetName().Name}"));
+                                        "Modules", $"MPI didn't specify guild availability. Assuming ALL. Module: {asmb.GetName().Name}"));
+                                }
+                            }
+                            if (propertyItem.ModuleGroups != null)
+                            {
+                                if (propertyItem.ModuleGroups.Count == 0)
+                                {
+                                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info,
+                                        "Modules", $"MPI must specify at least one module group name! Unable to load module: {asmb.GetName().Name}"));
+                                    continue;
                                 }
                             }
                             if (propertyItem.GuildsAvailable == null)
                             {
 
                                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical,
-                                    "Modules", $"MPI's available guild list was null! Unable to load module: {asmb.GetName().Name}"));
+                                    "Modules", $"MPI missed GuildsAvailable! Unable to load module: {asmb.GetName().Name}"));
+                                continue;
+                            }
+                            if (propertyItem.ModuleGroups == null)
+                            {
+                                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical,
+                                    "Modules", $"MPI missed ModuleGroups! Unable to load module: {asmb.GetName().Name}"));
                                 continue;
                             }
                             serviceProvider = serviceCollection.BuildServiceProvider();
