@@ -293,7 +293,7 @@ namespace ModularBOT.Component
             {
                 foreach (GuildCommand item in globalGO.GuildCommands)
                 {
-                    commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.GCustom);
+                    commandList.AddCommand(prefix + item.Name, item.RequirePermission ? item.CommandAccessLevel : AccessLevels.Normal, CommandTypes.GCustom);
                 }
             }
 
@@ -304,7 +304,7 @@ namespace ModularBOT.Component
                 {
                     foreach (GuildCommand item in currentGuild.GuildCommands)
                     {
-                        commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.Custom);
+                        commandList.AddCommand(prefix + item.Name, item.RequirePermission ? item.CommandAccessLevel : AccessLevels.Normal, CommandTypes.Custom);
                     }
                 }
             }
@@ -548,7 +548,7 @@ namespace ModularBOT.Component
                     }
                     //commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.GCustom);
                     cmdcount++;
-                    string perm = item.RequirePermission ? "AccessLevels.CommandManager" : "AccessLevels.Normal";
+                    string perm = item.RequirePermission ? $"AccessLevels.{item.CommandAccessLevel.ToString()}" : "AccessLevels.Normal";
                     EmbedFieldBuilder fb = new EmbedFieldBuilder()
                     {
                         Name = $"🌐 " + prefix + item.Name,
