@@ -105,6 +105,19 @@ namespace ModularBOT.Component
             return "";
         }
 
+        public string ProcessMessage(IMessage socketmsg,string prefix)
+        {
+            
+            if (socketmsg.Content.StartsWith(prefix))
+            {
+                string cmdLine = socketmsg.Content.Remove(0, prefix.Length);//remove prefix length.
+
+                return ProcessCmdLine(cmdLine, ref socketmsg);
+            }
+
+            return "";
+        }
+
         private string ProcessCmdLine(string cmdline, ref IMessage msg)
         {
             GuildObject ContextGO = guilds.FirstOrDefault(x => x.ID == 0);
