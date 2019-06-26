@@ -598,6 +598,30 @@ namespace ModularBOT.Component
             {
                 
                 var c = serviceProvider.GetRequiredService<CommandService>().Commands.FirstOrDefault(x => x.Name.ToLower() == Command.ToLower());
+                if(c!= null)
+                {
+
+                    #region Per-guild module Check
+                    string module = c.Module.Name;
+                    var m = serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0, x.ModuleName.LastIndexOf('.') + 1) == module);
+                    if (m != null)
+                    {
+                        if (m.GuildsAvailable.Count > 0)
+                        {
+                            if (m.GuildsAvailable.FirstOrDefault(ggid => ggid == gid) == 0)//if no match for guild, don't populate.
+                            {
+                                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "getcmd", $"{c.Name}: {module} exists, but not for guild ID: {gid}."));
+                                builder.WithColor(Color.Red);
+                                builder.WithDescription("This command does not exist.");
+                                builder.AddField("More info:", $"The command you requested was not found.\r\nPlease note: if a new module was just added, the bot will need to restart.\r\n\r\nTo check for a list of commands run `{g_prefix}listcmd`");
+                                builder.WithFooter("ModularBOT • CORE");
+                                return builder.Build();
+                            }
+                        }
+                    }
+                    #endregion
+                }
+
                 if (c == null)
                 {
                     builder.WithColor(Color.Red);

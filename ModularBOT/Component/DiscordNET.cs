@@ -514,7 +514,31 @@ namespace ModularBOT.Component
 
         private async Task ExecuteModuleCMD(SocketUserMessage message, string prefix)
         {
+            
             var context = new CommandContext(Client, message);
+
+            #region Guild-specific module check
+            var search = cmdsvr.Search(context, prefix.Length);
+            if(search.IsSuccess)
+            {
+                var c = search.Commands;
+                //get module name
+                string module = c.First().Command.Module.Name;
+                var m = ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0,x.ModuleName.LastIndexOf('.')+1) == module);
+                if(m != null)
+                {
+                    if(m.GuildsAvailable.Count > 0)
+                    {
+                        if(m.GuildsAvailable.FirstOrDefault(gid => gid == context.Guild?.Id) == 0)//if no match for guild, don't execute.
+                        {
+                            serviceProvider.GetRequiredService<ConsoleIO>()
+                                .WriteEntry(new LogMessage(LogSeverity.Verbose, "ModuleCMD", "Module was called but wrong guild."));
+                            return;
+                        }
+                    }
+                }
+            }
+            #endregion
 
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)

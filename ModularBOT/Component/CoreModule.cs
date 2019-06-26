@@ -246,18 +246,35 @@ namespace ModularBOT.Component
         [Command("listcmd-html"), Summary("Lists all available commands for current context. sends as HTML file"), Remarks("AccessLevels.Normal")]
         public async Task CMD_ListCommands()
         {
-
+            ulong gid = 0;
             CommandList commandList = new CommandList(Client.CurrentUser.Username,Context.Guild?.Name ?? "Direct Messages");
             string prefix = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             if (Context.Guild != null)
             {
                 GuildObject obj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
                 if (obj != null) prefix = obj.CommandPrefix;
+                gid = Context.Guild.Id;
             }
 
-            #region CORE
+            #region CORE & Modules.
             foreach (CommandInfo item in Cmdsvr.Commands)
             {
+                #region Per-guild module Check
+                string module = item.Module.Name;
+                var m = _DiscordNet.ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0, x.ModuleName.LastIndexOf('.') + 1) == module);
+                if (m != null)
+                {
+                    if (m.GuildsAvailable.Count > 0)
+                    {
+                        if (m.GuildsAvailable.FirstOrDefault(ggid => ggid == gid) == 0)//if no match for guild, don't populate.
+                        {
+                            ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Verbose, "Listcmd-HTML", $"{item.Name}: {module} exists, but not for guild ID: {gid}."));
+                            continue;
+                        }
+                    }
+                }
+                #endregion
+
                 string group = item.Module.Aliases[0] + " ";
                 string sum = item.Summary;
                 if (string.IsNullOrWhiteSpace(group))
@@ -348,11 +365,12 @@ namespace ModularBOT.Component
         public async Task CMD_ListPaginator()
         {
 
-
+            ulong gid = 0;
             string prefix = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             if (Context.Guild != null)
             {
                 GuildObject obj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                gid = Context.Guild.Id;
                 if (obj != null) prefix = obj.CommandPrefix;
             }
 
@@ -453,6 +471,23 @@ namespace ModularBOT.Component
                 {
                     continue;
                 }
+
+                #region Per-guild module Check
+                string module = item.Module.Name;
+                var m = _DiscordNet.ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0, x.ModuleName.LastIndexOf('.') + 1) == module);
+                if (m != null)
+                {
+                    if (m.GuildsAvailable.Count > 0)
+                    {
+                        if (m.GuildsAvailable.FirstOrDefault(ggid => ggid == gid) == 0)//if no match for guild, don't populate.
+                        {
+                            ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Verbose, "Listcmd", $"{module} exists, but not for guild ID: {gid}."));
+                            continue;
+                        }
+                    }
+                }
+                #endregion
+
                 if (cmdcount > 8)
                 {
                     cmdcount = 0;
