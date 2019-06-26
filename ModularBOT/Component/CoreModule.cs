@@ -261,7 +261,7 @@ namespace ModularBOT.Component
             {
                 #region Per-guild module Check
                 string module = item.Module.Name;
-                var m = _DiscordNet.ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0, x.ModuleName.LastIndexOf('.') + 1) == module);
+                var m = _DiscordNet.ModuleMgr.Modules.FirstOrDefault(x => x.ModuleGroups.Contains(module));
                 if (m != null)
                 {
                     if (m.GuildsAvailable.Count > 0)
@@ -474,7 +474,7 @@ namespace ModularBOT.Component
 
                 #region Per-guild module Check
                 string module = item.Module.Name;
-                var m = _DiscordNet.ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0, x.ModuleName.LastIndexOf('.') + 1) == module);
+                var m = _DiscordNet.ModuleMgr.Modules.FirstOrDefault(x => x.ModuleGroups.Contains(module));
                 if (m != null)
                 {
                     if (m.GuildsAvailable.Count > 0)
