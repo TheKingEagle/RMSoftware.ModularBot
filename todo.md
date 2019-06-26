@@ -46,7 +46,7 @@
    * Module Management Screen (CONSOLE)
    * Module Installer
    * Per-guild modules (Execution) ✅
-   * **Per-guild modules (Command listing)** ⏳
+   * Per-guild modules (Command listing) ✅
    
 * **Additional CoreSCRIPT functionality** ⏳
    * IF/ELSE statements
