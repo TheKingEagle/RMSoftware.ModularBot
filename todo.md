@@ -26,7 +26,7 @@
 * Move to JSON Configuration manager ✅
 * New Permission system ✅
 * **Update Checking** ⏳
-* Per-guild command modules
+* **Per-guild command modules** ⏳
 * Interactive Command list (Paginator) ✅
 * Add a guilds and users list screen ✅
 
