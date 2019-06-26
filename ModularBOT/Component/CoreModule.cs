@@ -1261,9 +1261,27 @@ namespace ModularBOT.Component
                     await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                     return;
                 }
+                if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) == AccessLevels.CommandManager)
+                {
+                    if(Context.User is SocketGuildUser sgu)
+                    {
+                        if(!sgu.GuildPermissions.Has(GuildPermission.ManageMessages))
+                        {
+                            await ReplyAsync("", false, GetEmbeddedMessage("DENIED!", 
+                                "You must have `AccessLevels.CommandManager` AND have permission to manage messages.", Color.DarkRed));
+                            return;
+                        }
+                    }
+                }
+               
             }
             if(gid == 0)
             {
+                if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                {
+                    await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
                 _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix = newPrefix;
                 Program.configMGR.Save();
                 
