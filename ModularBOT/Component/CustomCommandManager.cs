@@ -603,7 +603,9 @@ namespace ModularBOT.Component
 
                     #region Per-guild module Check
                     string module = c.Module.Name;
-                    var m = serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0, x.ModuleName.LastIndexOf('.') + 1) == module);
+                    var m = serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleGroups.Contains(module));
+
+                    //var m = serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0, x.ModuleName.LastIndexOf('.') + 1) == module);
                     if (m != null)
                     {
                         if (m.GuildsAvailable.Count > 0)
