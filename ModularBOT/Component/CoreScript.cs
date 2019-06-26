@@ -62,8 +62,7 @@ namespace ModularBOT.Component
             "bot_owner_avatar",
 
             #endregion
-
-                        
+     
             #region Statistics
             "command",
             "command_count",
@@ -80,7 +79,6 @@ namespace ModularBOT.Component
             "counter",
             #endregion
             
-
             #region Guild Owner
             "guild_owner",
             "go_avatar",
@@ -1328,7 +1326,7 @@ namespace ModularBOT.Component
             var context = new CommandContext(client, new PseudoMessage(guildObject.CommandPrefix + ecmd, ArgumentMessage.Author as SocketUser, (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot));
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
-            var result = cmdsvr.ExecuteAsync(context, 1, services);
+            var result = cmdsvr.ExecuteAsync(context, guildObject.CommandPrefix.Length, services);
             LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", line));
             LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", result.Result.ToString()));
             if (!result.Result.IsSuccess)
