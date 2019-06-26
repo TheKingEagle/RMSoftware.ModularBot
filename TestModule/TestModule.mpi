@@ -1,5 +1,5 @@
 {
   "moduleName": "TestModule.TestModule",
   "serviceClass": "TestModule.TestModuleService",
-  "guildAvailable": 0
+  "guildsAvailable": []
 }
