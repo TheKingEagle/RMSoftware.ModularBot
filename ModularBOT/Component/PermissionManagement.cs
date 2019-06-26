@@ -233,7 +233,7 @@ namespace ModularBOT.Component
             else
             {
                 _entities.Add(r);
-                //SaveJson();
+                SaveJson();
 
                 return 1;
             }
@@ -378,6 +378,10 @@ namespace ModularBOT.Component
         public void SaveJson()
         {
             SpinWait.SpinUntil(() => !writingToDisk);//wait until we are done here.
+            if(writingToDisk)
+            {
+                return;//if something causes it to start writing again, just ignore it.
+            }
             writingToDisk = true;
             try
             {
