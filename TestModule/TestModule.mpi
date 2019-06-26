@@ -1,5 +1,6 @@
 {
   "moduleName": "TestModule.TestModule",
   "serviceClass": "TestModule.TestModuleService",
-  "guildsAvailable": []
+  "guildsAvailable": [],
+  "moduleGroups": [ "TestModule" ]
 }
