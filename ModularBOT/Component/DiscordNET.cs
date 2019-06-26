@@ -364,7 +364,7 @@ namespace ModularBOT.Component
         private async Task Client_MessageReceived(SocketMessage arg)
         {
             if (DisableMessages) return;
-            
+
             if (!(arg is SocketUserMessage message)) return;
             ulong gid = 0;//global by default
             string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
@@ -377,7 +377,7 @@ namespace ModularBOT.Component
             {
                 prefix = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.CommandPrefix;
             }
-            
+
             if (message.Content.StartsWith(prefix))
             {
                 if (PermissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
@@ -394,15 +394,16 @@ namespace ModularBOT.Component
                     return;
                 }
             }
-            
-            #region Deep-rooted prefix command
+
+            #region @Mention command
             if (message.Content.StartsWith($"<@{Client.CurrentUser.Id}>") || message.Content.StartsWith($"<@!{Client.CurrentUser.Id}>")) //This command will ALWAYS be a thing. it cannot be overridden.
             {
-                if(arg.Author.IsBot)
+                if (arg.Author.IsBot)//do not allow bots to mention command. PERIOD.
                 {
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "BOT", "Someone tried to bait the bot with a bot..."));
                     return;
                 }
+                
                 if (PermissionManager.GetAccessLevel(arg.Author) == AccessLevels.Blacklisted)
                 {
                     if (PermissionManager.GetWarnOnBlacklist(arg.Author))
@@ -417,50 +418,107 @@ namespace ModularBOT.Component
                     return;
                 }
 
+                #region Log
+                string mcgontext = "Direct Message";
+                if (message.Channel is SocketGuildChannel)
+                {
+                    mcgontext = ((SocketGuildChannel)message.Channel).Guild.Name.Length > 20 ?
+                        ((SocketGuildChannel)message.Channel).Guild.Name.Remove(17) + "..." : ((SocketGuildChannel)message.Channel).Guild.Name;
+
+                }
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Mention",
+                    $"<#{message.Channel.Name} [{mcgontext}]> {message.Author.Username}#{message.Author.Discriminator}: {message.Content}"));
+                #endregion
+
+                string cm1 = $"<@{Client.CurrentUser.Id}>";
+                string cm2 = $"<@!{Client.CurrentUser.Id}>";
+                if (message.Content.StartsWith($"{cm1} ")) //modules via mention
+                {
+                    string cm1result = "";
+
+                    await Task.Run(() => cm1result = CustomCMDMgr.ProcessMessage(arg, cm1 + " "));
+                    if (cm1result != "SCRIPT" && cm1result != "EXEC" && cm1result != "" && cm1result != "CLI_EXEC" && cm1result != null)
+                    {
+                        await arg.Channel.SendMessageAsync(cm1result);
+                        return;
+                    }
+                    if ((cm1result == "SCRIPT" || cm1result == "EXEC" || cm1result == "" || cm1result == "CLI_EXEC") && cm1result != null)
+                    {
+                        return;
+                    }
+                    await ExecuteModuleCMD(message, cm1+" ");
+                    return;
+                }
+                if (message.Content.StartsWith($"{cm2} ")) //modules via nick mention
+                {
+                    string cm2result = "";
+
+                    await Task.Run(() => cm2result = CustomCMDMgr.ProcessMessage(arg, cm2 + " "));
+                    if (cm2result != "SCRIPT" && cm2result != "EXEC" && cm2result != "" && cm2result != "CLI_EXEC" && cm2result != null)
+                    {
+                        await arg.Channel.SendMessageAsync(cm2result);
+                        return;
+                    }
+                    if ((cm2result == "SCRIPT" || cm2result == "EXEC" || cm2result == "" || cm2result == "CLI_EXEC") && cm2result != null)
+                    {
+                        return;
+                    }
+                    await ExecuteModuleCMD(message, cm2 + " ");
+                    return;
+                }
                 EmbedBuilder prefixer = new EmbedBuilder();
                 prefixer.WithAuthor(Client.CurrentUser);
                 prefixer.WithColor(new Color(244, 255, 12));
                 prefixer.WithTitle("You rang?");
                 prefixer.WithDescription($"Hi {arg.Author.Mention} My prefix is `{prefix}`");
                 await arg.Channel.SendMessageAsync("", false, prefixer.Build());
-                    
-                
+
+
                 return;
             }
             #endregion
-
             
             if (!message.Content.StartsWith(prefix))
             {
                 return;
             }
             if (arg.Author.IsBot && !PermissionManager.IsEntityRegistered(arg.Author)) return;//ignore bots unless bot is registered in the permission system!
+            
+            #region Log
             string cgontext = "Direct Message";
             if (message.Channel is SocketGuildChannel)
             {
-                cgontext = ((SocketGuildChannel)message.Channel).Guild.Name.Length > 20 ? 
+                cgontext = ((SocketGuildChannel)message.Channel).Guild.Name.Length > 20 ?
                     ((SocketGuildChannel)message.Channel).Guild.Name.Remove(17) + "..." : ((SocketGuildChannel)message.Channel).Guild.Name;
-                
+
             }
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands", 
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands",
                 $"<#{message.Channel.Name} [{cgontext}]> {message.Author.Username}#{message.Author.Discriminator}: {message.Content}"));
+            #endregion
+
             string result = "";
-           
-            await Task.Run(() =>  result = CustomCMDMgr.ProcessMessage(arg));
-            if(result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC" && result != null)
+
+            await Task.Run(() => result = CustomCMDMgr.ProcessMessage(arg));
+            if (result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC" && result != null)
             {
                 await arg.Channel.SendMessageAsync(result);
                 return;
             }
-            if((result == "SCRIPT" || result == "EXEC" || result == "" || result == "CLI_EXEC") && result != null)
+            if ((result == "SCRIPT" || result == "EXEC" || result == "" || result == "CLI_EXEC") && result != null)
             {
                 return;
             }
+            await ExecuteModuleCMD(message, prefix);
+            await Task.Delay(1);
+        }
+
+        private async Task ExecuteModuleCMD(SocketUserMessage message, string prefix)
+        {
             var context = new CommandContext(Client, message);
-            
+
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
-            var cmdres = await cmdsvr.ExecuteAsync(context,prefix.Length, serviceProvider);
+            var cmdres = await cmdsvr.ExecuteAsync(context, prefix.Length, serviceProvider);
             //If the result is unsuccessful AND not unknown command, send the error details.
             if (cmdres.Error.HasValue)
             {
@@ -485,7 +543,6 @@ namespace ModularBOT.Component
                     await context.Channel.SendMessageAsync("", false, b.Build());
                 }
             }
-            await Task.Delay(1);
         }
 
         private Task Client_ShardConnected(DiscordSocketClient arg)
