@@ -524,8 +524,8 @@ namespace ModularBOT.Component
                 var c = search.Commands;
                 //get module name
                 string module = c.First().Command.Module.Name;
-                var m = ModuleMgr.Modules.FirstOrDefault(x => x.ModuleName.Remove(0,x.ModuleName.LastIndexOf('.')+1) == module);
-                if(m != null)
+                var m = serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleGroups.Contains(module));
+                if (m != null)
                 {
                     if(m.GuildsAvailable.Count > 0)
                     {
