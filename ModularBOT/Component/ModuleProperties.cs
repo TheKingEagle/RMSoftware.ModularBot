@@ -69,8 +69,8 @@ namespace ModularBOT.Component
                             {
 
                                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical,
-                                    "Modules", $"MPI's available guild list was null! Creating an empty list. Assuming ALL. Module: {asmb.GetName().Name}"));
-                                propertyItem.GuildsAvailable = new List<ulong>();
+                                    "Modules", $"MPI's available guild list was null! Unable to load module: {asmb.GetName().Name}"));
+                                continue;
                             }
                             serviceProvider = serviceCollection.BuildServiceProvider();
                             cmdsvr.AddModuleAsync(asmb?.GetType(propertyItem.ModuleName), serviceProvider);
