@@ -19,6 +19,7 @@ namespace ModularBOT.Component
         private Dictionary<string, object> Variables { get; set; }
         private CommandService cmdsvr;
         private IServiceProvider services;
+        private short OutputCount = 0;
         public CoreScript(CustomCommandManager ccmgr,
             ref IServiceProvider _services, Dictionary<string, object> dict = null)
         {
@@ -33,6 +34,7 @@ namespace ModularBOT.Component
             {
                 Variables = dict;
             }
+            Task.Run(() => OutputThrottleRS());//new thread throttle loop check.
         }
 
         /// <summary>
@@ -461,8 +463,15 @@ namespace ModularBOT.Component
                             switch (line.Split(' ')[0].ToUpper())
                             {
                                 case ("ECHO"):
-
-                                    //Get the line removing echo.
+                                    OutputCount++;
+                                    if (OutputCount > 4)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`ECHO` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     output = line.Remove(0, 5);
                                     if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
                                     {
@@ -489,7 +498,15 @@ namespace ModularBOT.Component
 
                                 case ("ROLE_ADD"):
 
-                                    //Get the line removing echo.
+                                    OutputCount++;
+                                    if (OutputCount > 4)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`ROLE_ADD` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     output = line.Remove(0, 9);
                                     output = ProcessVariableString(gobj, output, cmd, client, message);
                                     string[] arguments = output.Split(' ');
@@ -549,7 +566,15 @@ namespace ModularBOT.Component
 
                                 case ("ROLE_DEL"):
 
-                                    //Get the line removing echo.
+                                    OutputCount++;
+                                    if (OutputCount > 4)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`ROLE_DEL` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     output = line.Remove(0, 9);
                                     output = ProcessVariableString(gobj, output, cmd, client, message);
                                     string[] arguments1 = output.Split(' ');
@@ -739,7 +764,15 @@ namespace ModularBOT.Component
                                     break;
 
                                 case ("EMBED_SEND")://embed footer text
-
+                                    OutputCount++;
+                                    if (OutputCount > 4)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`EMBED_SEND` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        return;
+                                    }
                                     //Get the line removing echo.
                                     if (contextToDM)
                                     {
@@ -892,11 +925,20 @@ namespace ModularBOT.Component
                                     break;
                                 case ("ECHOTTS"):
                                     //Get the line removing echo.
+                                    OutputCount++;
+                                    if (OutputCount > 4)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`ECHOTTS` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     if (cmd.CommandAccessLevel < AccessLevels.CommandManager)
                                     {
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
-                                        errorEmbed.WithDescription($"Function error: This requires `AccessLevels.Administrator`");
+                                        errorEmbed.WithDescription($"Function error: This requires `AccessLevels.CommandManager`");
                                         errorEmbed.AddField("Line", LineInScript, true);
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
@@ -946,7 +988,16 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("BOTSTATUS"):
-                                    if(cmd.CommandAccessLevel < AccessLevels.Administrator)
+                                    OutputCount++;
+                                    if (OutputCount > 2)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`BOTSTATUS` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    if (cmd.CommandAccessLevel < AccessLevels.Administrator)
                                     {
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
@@ -958,6 +1009,15 @@ namespace ModularBOT.Component
                                     await ((DiscordShardedClient)client).SetGameAsync(ProcessVariableString(gobj, line.Remove(0, 10), cmd, client, message));
                                     break;
                                 case ("STATUSORB"):
+                                    OutputCount++;
+                                    if (OutputCount > 2)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`STATUSORB` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     if (cmd.CommandAccessLevel < AccessLevels.Administrator)
                                     {
                                         error = true;
@@ -999,6 +1059,15 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("BOTGOLIVE"):
+                                    OutputCount++;
+                                    if (OutputCount > 2)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`BOTGOLIVE` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     if (cmd.CommandAccessLevel < AccessLevels.Administrator)
                                     {
                                         error = true;
@@ -1296,6 +1365,7 @@ namespace ModularBOT.Component
         private void CaseExecCmd(string line, CustomCommandManager ccmg, GuildObject guildObject, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript,
             ref IDiscordClient client, ref GuildCommand cmd, ref IMessage ArgumentMessage)
         {
+            OutputCount++;
             ulong gid = 0;
             if (ArgumentMessage.Channel is SocketGuildChannel channel)
             {
@@ -1304,6 +1374,26 @@ namespace ModularBOT.Component
             guildObject = ccmg.GuildObjects.FirstOrDefault(x => x.ID == gid) ?? ccmg.GuildObjects.FirstOrDefault(x => x.ID == 0);
             
             string ecmd = line.Remove(0, 4);
+            if (OutputCount > 4)
+            {
+                error = true;
+                errorEmbed.WithDescription($"CMD Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", ecmd ?? "No context", true);
+                return;
+            }
+            if (cmd != null)
+            {
+
+                if (ecmd == cmd.Name)
+                {
+                    error = true;
+                    errorEmbed.WithDescription($"CMD Function Error: You cannot call this command here, that's API abuse.\r\n```{line}```");
+                    errorEmbed.AddField("Line", LineInScript, true);
+                    errorEmbed.AddField("Execution Context", ecmd ?? "No context", true);
+                    return;
+                }
+            }
             string resp = ccmg.ProcessMessage(new PseudoMessage(guildObject.CommandPrefix + ecmd, ArgumentMessage.Author as SocketUser,
                 (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot));
             if (resp != "SCRIPT" && resp != "EXEC" && resp != "" && resp != "CLI_EXEC" && resp != null)
@@ -1357,6 +1447,15 @@ namespace ModularBOT.Component
             if (msg.Exception != null)
             {
                 services.GetRequiredService<ConsoleIO>().WriteErrorsLog(msg.Exception);
+            }
+        }
+
+        private void OutputThrottleRS()
+        {
+            while (true)
+            {
+                System.Threading.Thread.Sleep(5000);
+                OutputCount = 0;//reset every 5 seconds.
             }
         }
 
