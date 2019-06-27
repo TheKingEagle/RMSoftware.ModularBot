@@ -467,7 +467,9 @@ namespace ModularBOT.Component
                                     if (OutputCount > 4)
                                     {
                                         error = true;
-                                        errorEmbed.WithDescription($"`ECHO` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.WithDescription($"`ECHO` Function Error: Preemptive rate limit reached."+
+                                            " Please slow down your script with `WAIT`\r\n```{line}```");
+
                                         errorEmbed.AddField("Line", LineInScript, true);
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
@@ -1365,7 +1367,7 @@ namespace ModularBOT.Component
         private void CaseExecCmd(string line, CustomCommandManager ccmg, GuildObject guildObject, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript,
             ref IDiscordClient client, ref GuildCommand cmd, ref IMessage ArgumentMessage)
         {
-            OutputCount++;
+            
             ulong gid = 0;
             if (ArgumentMessage.Channel is SocketGuildChannel channel)
             {
@@ -1374,14 +1376,6 @@ namespace ModularBOT.Component
             guildObject = ccmg.GuildObjects.FirstOrDefault(x => x.ID == gid) ?? ccmg.GuildObjects.FirstOrDefault(x => x.ID == 0);
             
             string ecmd = line.Remove(0, 4);
-            if (OutputCount > 4)
-            {
-                error = true;
-                errorEmbed.WithDescription($"CMD Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", ecmd ?? "No context", true);
-                return;
-            }
             if (cmd != null)
             {
 
