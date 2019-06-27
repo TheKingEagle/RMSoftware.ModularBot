@@ -65,7 +65,7 @@ namespace ModularBOT.Component
             while (true)
             {
                 SpinWait.SpinUntil(() => Backlog.Count > 0);        //will this solve the random deadlock? who knows.
-                SpinWait.SpinUntil(() => !ScreenBusy);              //pause queue if screen is resetting.
+                if (ScreenBusy) { continue; }
                 LogEntry qitem = Backlog.Dequeue();                 //take a new entry out of queue.
 
                 LogMessage message = qitem.LogMessage;              //Entry's log message data.
@@ -326,6 +326,7 @@ namespace ModularBOT.Component
 
             ConsoleBackgroundColor = back;
             ConsoleForegroundColor = fore;
+            Thread.Sleep(5);
             ScreenBusy = false;
         }
 
@@ -463,11 +464,11 @@ namespace ModularBOT.Component
                 fg = Entrycolor;
                 Console.BackgroundColor = bg;
                 Console.ForegroundColor = fg;
-                Thread.Sleep(1);//safe.
+                //Thread.Sleep(1);//safe.
                 Console.Write((char)9617);//Write the colored space.
                 Console.BackgroundColor = bglast;//restore previous color.
                 Console.ForegroundColor = ConsoleForegroundColor;
-                Thread.Sleep(1);//safe.
+               // Thread.Sleep(1);//safe.
                 if (i == 0)
                 {
                     Console.WriteLine(lines[i]);//write current line in queue.
@@ -480,14 +481,14 @@ namespace ModularBOT.Component
             }
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
-            Thread.Sleep(1);//safe.
+            //Thread.Sleep(1);//safe.
             if (showCursor)
             {
                 Console.Write(">");//Write the input indicator.
 
             }
             //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
-            Thread.Sleep(1);//safe.
+            //Thread.Sleep(1);//safe.
             Console.BackgroundColor = ConsoleBackgroundColor;
             Console.ForegroundColor = ConsoleForegroundColor;
             Console.CursorVisible = showCursor;
@@ -674,7 +675,10 @@ namespace ModularBOT.Component
                 {
                     return Task.Delay(0);
                 }
-                
+                if (ScreenBusy)
+                {
+                    continue;
+                }
                 Console.CursorTop = CurTop;
                 
                 if (input.ToLower() == "stopbot")
