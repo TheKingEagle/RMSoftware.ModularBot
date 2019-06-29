@@ -64,8 +64,14 @@ namespace ModularBOT.Component
             
             while (true)
             {
-                SpinWait.SpinUntil(() => Backlog.Count > 0);        //will this solve the random deadlock? who knows.
-                if (ScreenBusy) { continue; }
+                SpinWait.SpinUntil(() => Backlog.Count > 0);        
+                if (ScreenBusy) { continue; }                      //will this solve the random deadlock? who knows.
+                if (Writing)
+                {
+                    WriteErrorsLog("Console attempted to process queue block while writing!!! [ProcessQueue WhileLoop]"); // RIP hdd.
+
+                    continue;                                       //Will THIS solve the random deadlock? Who knows! Hopefully!
+                }                           
                 LogEntry qitem = Backlog.Dequeue();                 //take a new entry out of queue.
 
                 LogMessage message = qitem.LogMessage;              //Entry's log message data.
@@ -93,9 +99,6 @@ namespace ModularBOT.Component
                 {
                     continue;                                       //Do not output
                 }
-
-                SpinWait.SpinUntil(() => !Writing);                 //This will help prevent the console from being sent into a mess of garbled words. 
-                                                                    //(In theory)
                 Writing = true;
                 PrvTop = Console.CursorTop;
                 Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
@@ -1091,7 +1094,7 @@ namespace ModularBOT.Component
 
                         ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
                             Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                        
+                        ScreenModal = false;
                         v.AddRange(LogEntries);
                         LogEntries.Clear();//clear buffer.
                                            //output previous logEntry.
@@ -1135,7 +1138,7 @@ namespace ModularBOT.Component
 
                         ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
                             Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-
+                        ScreenModal = false;
                         v.AddRange(LogEntries);
                         LogEntries.Clear();//clear buffer.
                                            //output previous logEntry.
@@ -1196,7 +1199,7 @@ namespace ModularBOT.Component
 
                         ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
                             Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-
+                        ScreenModal = false;
                         v.AddRange(LogEntries);
                         LogEntries.Clear();//clear buffer.
                                            //output previous logEntry.
@@ -1234,25 +1237,27 @@ namespace ModularBOT.Component
         {
             short page = 1;
             
-            short max = (short)(Math.Ceiling((double)(discord.Client.Guilds.Count / 24))+1);
+            short max = (short)(Math.Ceiling((double)(discord.Client.Guilds.Count / 22))+1);
             int index = 0;
             ScreenModal = true;
             
             while (true)
             {
                 ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
-                for (int i = index; i < 24 * page; i++)//28 results per page.
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue);
+                for (int i = index; i < 22 * page; i++)//28 results per page.
                 {
                     if (index >= discord.Client.Guilds.Count)
                     {
                         break;
                     }
                     string name = discord.Client.Guilds.ElementAt(i).Name;
-                    if(name.Length > 35)
+                    if(name.Length > 36)
                     {
-                        name = name.Remove(35) + "...";
+                        name = name.Remove(36) + "...";
                     }
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {name.PadRight(38,'\u2005')} [{discord.Client.Guilds.ElementAt(i).Id}]",ConsoleColor.DarkGreen);
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {name.PadRight(39,'\u2005')} [{discord.Client.Guilds.ElementAt(i).Id.ToString().PadLeft(20,'0')}]",ConsoleColor.DarkGreen);
                     
                     index++;
                 }
@@ -1279,10 +1284,10 @@ namespace ModularBOT.Component
                     if(page>1)
                     {
                         page--;
-                        index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
-                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
                 if (s.Key == ConsoleKey.E)
@@ -1296,13 +1301,13 @@ namespace ModularBOT.Component
                         page++;
                     }
 
-                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
 
                 else
                 {
-                    index = (page * 24) - 24;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
             }
