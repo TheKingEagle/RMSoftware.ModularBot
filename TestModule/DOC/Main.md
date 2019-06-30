@@ -40,7 +40,7 @@ It features a small subset of commands that allow you to manage your guild with 
      >Note: This command will automatically purge the last 7 days of messages by banned user.
      
 * #### `!cpurge <number of messages>`
-   * **Summary**: Bulk-deletes upto 7 days worth of messages in the thannel.
+   * **Summary**: Bulk-deletes up to 7 days worth of messages in the that channel.
       >Note: This 7 day limit is maximum allowed by a bot.
       
       >Note: This command requires both bot and user to have the `Manage Messages` permission set.
