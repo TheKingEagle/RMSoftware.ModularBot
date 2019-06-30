@@ -389,18 +389,60 @@ namespace TestModule
             
         }
 
-        [Command("ml-bind")]
+        [Command("ml-bind"), Remarks("AccessLevels.Normal"), 
+            Summary("Creates a log channel binding. Requires user permission to 'Manage Channels'. "+
+            "Call the command in the channel you want to use as moderator log.")]
         public async Task StartML(SocketRole MuteRole)
         {
+            if (Context.Guild == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wrong Context!", "You can only use this command in a guild.", Color.Red));
+                return;
+            }
+            if (Context.User is SocketGuildUser SGU)
+            {
+                if (!SGU.GuildPermissions.Has(GuildPermission.ManageChannels))
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("ACCESS DENIED!", "You lack permission. You must have the ability to manage channels.", Color.Red));
+                    return;
+                }
+                if((await Context.Guild.GetCurrentUserAsync()) is SocketGuildUser bgu)
+                {
+                    int p = bgu.Roles.Max(x => x.Position);
+                    if (p < MuteRole.Position)
+                    {
+                        await ReplyAsync("", false, GetEmbeddedMessage("ACCESS DENIED!",
+                        $"You're trying to use a mute role that I don't have access to! Try moving the mute role below {bgu.Roles.FirstOrDefault(x=>x.Position == p).Mention}", Color.Red));
+
+                        return;
+                    }
+                    
+                    
+                }
+            }
             await _jservice.BindModLog(Context,MuteRole);
-            await ReplyAsync("", false, GetEmbeddedMessage("Guild's Mod Log - Bound", 
-                $"This channel will be used for all future mod log entries. This guild's Muted role is `{MuteRole.Name}`", Color.Green));
+            
         }
-        [Command("ml-unbind")]
+        [Command("ml-unbind"),Remarks("AccessLevels.Normal"),
+            Summary("Removes a log channel binding. Requires user permission to 'Manage Channels'. " +
+            "Call the command in the current moderator log channel.")]
         public async Task stopML()
         {
+            if(Context.Guild == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wrong Context!", "You can only use this command in a guild.", Color.Red));
+                return;
+            }
+            if(Context.User is SocketGuildUser SGU)
+            {
+                if(!SGU.GuildPermissions.Has(GuildPermission.ManageChannels))
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("ACCESS DENIED!", "You lack permission. You must have the ability to manage channels.", Color.Red));
+                    return;
+                }
+            }
             await _jservice.UnBindModLog(Context);
-            await ReplyAsync("", false, GetEmbeddedMessage("Guild's Mod Log - Unbound", "This channel will no longer be used for mod log entries.", Color.Green));
+            
         }
 
         #region Messages
@@ -545,8 +587,15 @@ namespace TestModule
             }
         }
 
-        public Task BindModLog(ICommandContext context, IRole role)
+        public async Task BindModLog(ICommandContext context, IRole role)
         {
+            if(MLbindings.FirstOrDefault(x=>x.GuildID == context.Guild.Id) != null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Nope!",
+                $"You can only have one moderation log per guild.", Color.Red));
+                return;
+            }
+
             ModLogBinding ml = new ModLogBinding();
             ml.GuildID = context.Guild.Id;
             ml.ChannelID = context.Channel.Id;
@@ -556,13 +605,20 @@ namespace TestModule
             {
                 sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
             }
-            return Task.Delay(1);
+            await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Success!",
+                $"You've established <#{context.Channel.Id}> as a Moderation Log.\r\n\r\nServer Mute role is currently {role.Mention}.", Color.DarkGreen));
         }
 
-        public Task UnBindModLog(ICommandContext context)
+        public async Task UnBindModLog(ICommandContext context)
         {
-
+            
             ModLogBinding mlr = MLbindings.FirstOrDefault(x => x.ChannelID == context.Channel.Id);
+            if (mlr == null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Nope!",
+                $"This channel isn't a moderation log. Please make sure you're in the right channel!", Color.Red));
+                return;
+            }
             if (mlr != null)
             {
                 MLbindings.Remove(mlr);
@@ -571,9 +627,29 @@ namespace TestModule
             {
                 sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
             }
-            return Task.Delay(1);
-        }
 
+            await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Moderation Log Removed",
+            $"This channel will not receive moderation logs anymore.", new Color(244, 168, 0)));
+        }
+        
+        #region Messages
+        public Embed GetEmbeddedMessage(ICommandContext Context, string title, string message, Color color, Exception e = null)
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(color);
+            b.WithAuthor(Context.Client.CurrentUser);
+            b.WithTitle(title);
+            b.WithDescription(message);
+            b.WithFooter("ModularBOT • TestModuleService");
+            if (e != null)
+            {
+                b.AddField("Extended Details", e.Message);
+                b.AddField("For developer", "See the Errors.LOG for more info!!!");
+                Writer.WriteErrorsLog(e);
+            }
+            return b.Build();
+        }
+        #endregion
     }
 
     public class GuildQueryItem
