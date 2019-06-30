@@ -7,6 +7,8 @@ using Discord;
 using Discord.WebSocket;
 using ModularBOT.Component;
 using Discord.Commands;
+using System.IO;
+using Newtonsoft.Json;
 namespace TestModule
 {
     [Summary("A Basic moderation toolkit for ModularBOT")]
@@ -35,62 +37,312 @@ namespace TestModule
             }
             await ReplyAsync("You have the correct access level!");
         }
-        [Command("Kick", RunMode = RunMode.Async), RequireUserPermission(GuildPermission.KickMembers), RequireBotPermission(GuildPermission.KickMembers), RequireContext(ContextType.Guild)]
+
+        [Command("Kick", RunMode = RunMode.Async)]
         public async Task Kick(IGuildUser user, [Remainder]string reason = "being an ass")
         {
+            #region ERRORS
+            if(Context.Guild == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Not Supported", 
+                    "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
+                return;
+            }
+            SocketGuildUser SGUuser = Context.User as SocketGuildUser;
+            if(!SGUuser.GuildPermissions.Has(GuildPermission.KickMembers))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
+                    "You must have permission to kick members.", Color.Red));
+                return;
+            }
+            if (!(await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload))
+                .GuildPermissions.Has(GuildPermission.KickMembers))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("I'm Sorry, but I can't!",
+                    "I must have permission to kick members.", Color.Red));
+                return;
+            }
+
+            if (user.Id == _client.CurrentUser.Id)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to kick myself...", Color.Red));
+                return;
+            }
+            if (user == SGUuser)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to kick you...", Color.Red));
+                return;
+            }
+            if (user == await Context.Guild.GetOwnerAsync())
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't kick the server owner...", Color.Red));
+                return;
+            }
+            #endregion
 
             try
             {
+                await user.KickAsync(reason);
                 EmbedBuilder b = new EmbedBuilder
                 {
-                    Title = $"Kicked {user.Username} from guild.",
-                    Description = $"Kick command was issued by {Context.User.Username} with attached reason.",
+                    Title = $"Kick | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
                     Timestamp = DateTimeOffset.Now
                 };
-                b.WithColor(new Color(128, 12, 12));
+                b.WithColor(new Color(225, 192, 12));
+                string ut = user.IsBot ? "Bot" : "User";
+                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
+                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
                 b.AddField("Reason", reason);
-                await user.KickAsync(reason);
-                await Context.Channel.SendMessageAsync("", false, b.Build());
+                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                await ReplyAsync("", false, GetEmbeddedMessage($"Kicked {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
             }
             catch (Discord.Net.HttpException ex)
             {
                 if (ex.HttpCode == System.Net.HttpStatusCode.Forbidden)
                 {
-                    await Context.Channel.SendMessageAsync($"\u26A0 `You really thought you could do that? Very funny.`");
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", "Server responded with a 403.", Color.DarkRed, ex));
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync($"\u26A0 `{ex.Message}`");
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", $"{ex.Message}", Color.DarkRed, ex));
+
                 }
             }
         }
 
-        [Command("ban", RunMode = RunMode.Async), RequireUserPermission(GuildPermission.BanMembers), RequireBotPermission(GuildPermission.BanMembers), RequireContext(ContextType.Guild)]
-        public async Task Ban(IGuildUser user, [Remainder]string reason = "being a supreme ass")
+        [Command("mute", RunMode = RunMode.Async)]
+        public async Task mute(IGuildUser user, [Remainder]string reason = "being obnoxious")
         {
+            #region ERRORS
+            if (Context.Guild == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Not Supported",
+                    "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
+                return;
+            }
+            SocketGuildUser SGUuser = Context.User as SocketGuildUser;
+            if (!SGUuser.GuildPermissions.Has(GuildPermission.ManageRoles))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
+                    "You must have permission to manage roles.", Color.Red));
+                return;
+            }
+            if (!(await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload))
+                .GuildPermissions.Has(GuildPermission.ManageRoles))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("I'm Sorry, but I can't!",
+                    "I must have permission to manage roles.", Color.Red));
+                return;
+            }
+
+            if (user.Id == _client.CurrentUser.Id)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to mute myself...", Color.Red));
+                return;
+            }
+            if (user == SGUuser)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to mute you...", Color.Red));
+                return;
+            }
+            if (user == await Context.Guild.GetOwnerAsync())
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't mute the server owner...", Color.Red));
+                return;
+            }
+            #endregion
 
             try
             {
+                ModLogBinding ml = _jservice.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
+                if (ml != null)
+                {
+                    await user.AddRoleAsync(Context.Guild.GetRole(ml.MuteRoleID));
+                }
                 EmbedBuilder b = new EmbedBuilder
                 {
-                    Title = $"Banned {user.Username} from guild.",
-                    Description = $"ban command was issued by {Context.User.Username} with attached reason.",
+                    Title = $"Mute | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
                     Timestamp = DateTimeOffset.Now
                 };
-                b.WithColor(new Color(255, 0, 0));
+                b.WithColor(new Color(225, 192, 12));
+                string ut = user.IsBot ? "Bot" : "User";
+                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
+                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
                 b.AddField("Reason", reason);
-                await Context.Guild.AddBanAsync(user, 0, reason);
-                await Context.Channel.SendMessageAsync("", false, b.Build());
+                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                await ReplyAsync("", false, GetEmbeddedMessage($"Mute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
             }
             catch (Discord.Net.HttpException ex)
             {
                 if (ex.HttpCode == System.Net.HttpStatusCode.Forbidden)
                 {
-                    await Context.Channel.SendMessageAsync($"\u26A0 `You really thought you could do that? Very funny.`");
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", "Server responded with a 403.", Color.DarkRed, ex));
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync($"\u26A0 `{ex.Message}`");
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", $"{ex.Message}", Color.DarkRed, ex));
+
+                }
+            }
+        }
+
+        [Command("unmute", RunMode = RunMode.Async)]
+        public async Task unmute(IGuildUser user, [Remainder]string reason = "Time's up!")
+        {
+            #region ERRORS
+            if (Context.Guild == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Not Supported",
+                    "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
+                return;
+            }
+            SocketGuildUser SGUuser = Context.User as SocketGuildUser;
+            if (!SGUuser.GuildPermissions.Has(GuildPermission.ManageRoles))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
+                    "You must have permission to manage roles.", Color.Red));
+                return;
+            }
+            if (!(await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload))
+                .GuildPermissions.Has(GuildPermission.ManageRoles))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("I'm Sorry, but I can't!",
+                    "I must have permission to manage roles.", Color.Red));
+                return;
+            }
+
+            if (user.Id == _client.CurrentUser.Id)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to unmute myself...", Color.Red));
+                return;
+            }
+            if (user == SGUuser)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to unmute you...", Color.Red));
+                return;
+            }
+            if (user == await Context.Guild.GetOwnerAsync())
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't unmute the server owner...", Color.Red));
+                return;
+            }
+            #endregion
+
+            try
+            {
+                ModLogBinding ml = _jservice.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
+                if(ml!= null)
+                {
+                    await user.RemoveRoleAsync(Context.Guild.GetRole(ml.MuteRoleID));
+                }
+                EmbedBuilder b = new EmbedBuilder
+                {
+                    Title = $"Unmute",
+                    Timestamp = DateTimeOffset.Now
+                };
+                b.WithColor(new Color(0, 192, 12));
+                string ut = user.IsBot ? "Bot" : "User";
+                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
+                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+                b.AddField("Reason", reason);
+                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                await ReplyAsync("", false, GetEmbeddedMessage($"Unmute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(0, 192, 12)));
+            }
+            catch (Discord.Net.HttpException ex)
+            {
+                if (ex.HttpCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", "Server responded with a 403.", Color.DarkRed, ex));
+                }
+                else
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", $"{ex.Message}", Color.DarkRed, ex));
+
+                }
+            }
+        }
+
+        [Command("ban", RunMode = RunMode.Async)]
+        public async Task Ban(IGuildUser user, [Remainder]string reason = "being a supreme ass")
+        {
+
+            #region ERRORS
+            if (Context.Guild == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Not Supported",
+                    "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
+                return;
+            }
+            SocketGuildUser SGUuser = Context.User as SocketGuildUser;
+            if (!SGUuser.GuildPermissions.Has(GuildPermission.BanMembers))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
+                    "You must have permission to ban members.", Color.Red));
+                return;
+            }
+            if (!(await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload))
+                .GuildPermissions.Has(GuildPermission.BanMembers))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("I'm Sorry, but I can't!",
+                    "I must have permission to ban members.", Color.Red));
+                return;
+            }
+
+            if (user.Id == _client.CurrentUser.Id)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to ban myself...", Color.Red));
+                return;
+            }
+            if (user == SGUuser)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to ban you...", Color.Red));
+                return;
+            }
+            if (user == await Context.Guild.GetOwnerAsync())
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't ban the server owner...", Color.Red));
+                return;
+            }
+            #endregion
+
+            try
+            {
+                await user.BanAsync(7,reason);
+                EmbedBuilder b = new EmbedBuilder
+                {
+                    Title = $"Ban | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
+                    Timestamp = DateTimeOffset.Now
+                };
+                b.WithColor(new Color(225, 18, 12));
+                string ut = user.IsBot ? "Bot" : "User";
+                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
+                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+                b.AddField("Reason", reason);
+                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                await ReplyAsync("", false, GetEmbeddedMessage($"Banned {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 18, 12)));
+            }
+            catch (Discord.Net.HttpException ex)
+            {
+                if (ex.HttpCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", "Server responded with a 403.", Color.DarkRed, ex));
+                }
+                else
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", $"{ex.Message}", Color.DarkRed, ex));
+
                 }
             }
         }
@@ -98,13 +350,10 @@ namespace TestModule
         [Command("cpurge", RunMode = RunMode.Async), RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task Clear(int amount = 90)
         {
-            await Context.Channel.SendMessageAsync($"Clearing messages... this might take some time.");
             var msgs = await Context.Channel.GetMessagesAsync(amount + 1, CacheMode.AllowDownload).FlattenAsync();
-            foreach (var item in msgs)
-            {
-                await Context.Channel.DeleteMessageAsync(item, new RequestOptions { RetryMode = RetryMode.AlwaysRetry });
-            }
-            await Context.Channel.SendMessageAsync($"done.");
+            var f = Context.Channel as ITextChannel;
+            await f?.DeleteMessagesAsync(msgs);
+            await Context.Channel.SendMessageAsync($"Purged.");
         }
         
         [Command("pollJoin", RunMode = RunMode.Async)]
@@ -139,18 +388,53 @@ namespace TestModule
             await _jservice.StartListening(Context, item);
             
         }
-        
-      
+
+        [Command("ml-bind")]
+        public async Task StartML(SocketRole MuteRole)
+        {
+            await _jservice.BindModLog(Context,MuteRole);
+            await ReplyAsync("", false, GetEmbeddedMessage("Guild's Mod Log - Bound", 
+                $"This channel will be used for all future mod log entries. This guild's Muted role is `{MuteRole.Name}`", Color.Green));
+        }
+        [Command("ml-unbind")]
+        public async Task stopML()
+        {
+            await _jservice.UnBindModLog(Context);
+            await ReplyAsync("", false, GetEmbeddedMessage("Guild's Mod Log - Unbound", "This channel will no longer be used for mod log entries.", Color.Green));
+        }
+
+        #region Messages
+        public Embed GetEmbeddedMessage(string title, string message, Color color, Exception e = null)
+        {
+            EmbedBuilder b = new EmbedBuilder();
+            b.WithColor(color);
+            b.WithAuthor(Context.Client.CurrentUser);
+            b.WithTitle(title);
+            b.WithDescription(message);
+            b.WithFooter("ModularBOT • TestModule");
+            if (e != null)
+            {
+                b.AddField("Extended Details", e.Message);
+                b.AddField("For developer", "See the Errors.LOG for more info!!!");
+                _writer.WriteErrorsLog(e);
+            }
+            return b.Build();
+        }
+        #endregion
     }
 
     public class TestModuleService
     {
         DiscordShardedClient ShardedClient { get; set; }
         ConsoleIO Writer { get; set; }
-        
+
+        string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
+
         [DontInject]
         public Dictionary<ulong, GuildQueryItem> BoundItems { get; set; }//This contains <guildID,role> value pairs to check user's join event.
 
+        
+        public List<ModLogBinding> MLbindings = new List<ModLogBinding>();
 
         public TestModuleService(DiscordShardedClient _client, ConsoleIO _consoleIO)
         {
@@ -163,9 +447,24 @@ namespace TestModule
                 LogMessage ERR = new LogMessage(LogSeverity.Critical, "Greetings", "Client is null! You should be ashamed.");
                 _consoleIO.WriteEntry(ERR);
             }
-
-
-            BoundItems = new Dictionary<ulong, GuildQueryItem>();
+            if(!Directory.Exists(Path.GetDirectoryName(ModLogBindingsConfig)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(ModLogBindingsConfig));
+                MLbindings = new List<ModLogBinding>();
+                using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+                {
+                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings,Formatting.Indented));
+                }
+            }
+            using (StreamReader sr = new StreamReader(ModLogBindingsConfig))
+            {
+                MLbindings = JsonConvert.DeserializeObject<List<ModLogBinding>>(sr.ReadToEnd());
+            }
+            if(MLbindings == null)
+            {
+                MLbindings = new List<ModLogBinding>();
+            }
+                BoundItems = new Dictionary<ulong, GuildQueryItem>();
             ShardedClient.UserJoined += ShardedClient_UserJoined;
             LogMessage Log = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
             _consoleIO.WriteEntry(Log);
@@ -214,11 +513,81 @@ namespace TestModule
             Writer.WriteEntry(Log);
             return Task.Delay(0);
         }
+
+        public async Task SendModLog(ulong GuildID, Embed embed)
+        {
+            ModLogBinding mb = MLbindings.FirstOrDefault(x => x.GuildID == GuildID);
+            if(mb != null)
+            {
+                if (ShardedClient.GetGuild(GuildID).GetChannel(mb.ChannelID) is SocketTextChannel sfl)
+                {
+                    await sfl.SendMessageAsync("", false, embed);
+                }
+            }
+        }
+
+        public ulong GetCaseCount(ulong guildID)
+        {
+            ModLogBinding mb = MLbindings.FirstOrDefault(x => x.GuildID == guildID);
+            
+            if(mb!= null)
+            {
+                mb.CaseCount++;
+                using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+                {
+                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+                }
+                return mb.CaseCount;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public Task BindModLog(ICommandContext context, IRole role)
+        {
+            ModLogBinding ml = new ModLogBinding();
+            ml.GuildID = context.Guild.Id;
+            ml.ChannelID = context.Channel.Id;
+            ml.MuteRoleID = role.Id;
+            MLbindings.Add(ml);
+            using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+            {
+                sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+            }
+            return Task.Delay(1);
+        }
+
+        public Task UnBindModLog(ICommandContext context)
+        {
+
+            ModLogBinding mlr = MLbindings.FirstOrDefault(x => x.ChannelID == context.Channel.Id);
+            if (mlr != null)
+            {
+                MLbindings.Remove(mlr);
+            }
+            using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+            {
+                sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+            }
+            return Task.Delay(1);
+        }
+
     }
+
     public class GuildQueryItem
     {
         public ITextChannel DefaultChannel { get; set; }
         public IRole RoleToAssign { get; set; }
         public string WelcomeMessage { get; set; }
+    }
+
+    public class ModLogBinding
+    {
+        public ulong GuildID { get; set; }
+        public ulong ChannelID { get; set; }
+        public ulong CaseCount { get; set; }
+        public ulong MuteRoleID { get; set; }
     }
 }
