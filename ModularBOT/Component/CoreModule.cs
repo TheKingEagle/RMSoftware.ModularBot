@@ -1331,6 +1331,61 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync(format + " " + args);
         }
 
+        [Command("consoleio",RunMode=RunMode.Async), Remarks("AccessLevels.Administrator"), Summary("Print consoleIO stats")]
+        public async Task BOT_Consoleio([Remainder] string args = null)
+        {
+            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            EmbedBuilder b = new EmbedBuilder
+            {
+                Title = "ConsoleIO Statistics",
+                Author = new EmbedAuthorBuilder
+                {
+                    IconUrl = Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto, 128),
+                    Name = Client.CurrentUser.Username + "#" + Client.CurrentUser.Discriminator
+
+                },
+                Color = Color.Orange,
+                Description = "Current `ConsoleIO` Class statistics Debugging information"
+            };
+            b.AddField("Backlog Count", ConsoleIO.Backlog.Count);
+            b.AddField("Is there an active Modal Dialog?", ConsoleIO.ScreenModal);
+            b.AddField("Is Screen Resetting?", ConsoleIO.ScreenBusy);
+            b.AddField("Is screen Active/writing?", ConsoleIO.Writing);
+            b.AddField("Was input canceled?", _DiscordNet.InputCanceled);
+            b.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry.LogMessage.ToString()}`");
+            b.AddField("Console Title", $"`{ConsoleIO.ConsoleTitle}`");
+            var msg = await ReplyAsync("", false, b.Build());
+            for (int i = 1; i < 5; i++)
+            {
+                await Task.Delay(1000);
+                EmbedBuilder be = new EmbedBuilder
+                {
+                    Title = "ConsoleIO Statistics",
+                    Author = new EmbedAuthorBuilder
+                    {
+                        IconUrl = Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto, 128),
+                        Name = Client.CurrentUser.Username + "#" + Client.CurrentUser.Discriminator
+
+                    },
+                    Color = Color.Orange,
+                    Description = $"Current `ConsoleIO` Class statistics Debugging information (Update `{i}`)"
+                };
+                be.AddField("Backlog Count", ConsoleIO.Backlog.Count,true);
+                be.AddField("Current Output Count", ConsoleIO.LogEntriesBuffer.Count, true);
+                be.AddField("Is there an active Modal Dialog?", ConsoleIO.ScreenModal);
+                be.AddField("Is Screen Resetting?", ConsoleIO.ScreenBusy);
+                be.AddField("Is screen Active/writing?", ConsoleIO.Writing);
+                be.AddField("Was input canceled?", _DiscordNet.InputCanceled);
+                be.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry.LogMessage.ToString()}`");
+                be.AddField("Console Title", $"`{ConsoleIO.ConsoleTitle}`");
+                await msg.ModifyAsync(m => m.Embed = be.Build());
+            }
+        }
+
         [Command("Shards")]
         public async Task BOT_ShardInfo()
         {
