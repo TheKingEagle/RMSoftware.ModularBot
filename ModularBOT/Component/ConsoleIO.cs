@@ -22,24 +22,28 @@ namespace ModularBOT.Component
     //}
     public class ConsoleIO
     {
-        public bool Writing { get; private set; }
+        public static bool Writing { get; private set; }
 
-        public bool QueueProcessStarted { get; private set; } = false;
+        public static bool QueueProcessStarted { get; private set; } = false;
 
         /// <summary>
         /// TRUE if a console command resets the screen temporarily.
         /// </summary>
-        public bool ScreenBusy { get; private set; }//If console is resetting or rendering new ui.
+        public static bool ScreenBusy { get; private set; }//If console is resetting or rendering new ui.
 
-        public bool ScreenModal { get; private set; }//If there is a screen showing above discord logs
+        public static bool ScreenModal { get; private set; }//If there is a screen showing above discord logs
 
         List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
 
+        public IReadOnlyCollection<LogEntry> LogEntriesBuffer { get { return LogEntries.AsReadOnly(); } }
         public static Queue<LogEntry> Backlog { get; private set; } = new Queue<LogEntry>();
         public int CurTop { get; private set; }
         public int PrvTop { get; private set; }
 
         private string currentTitle = "";
+        public string ConsoleTitle { get { return currentTitle; } }
+
+        public LogEntry LatestEntry { get; private set; }
         private ConsoleColor ConsoleForegroundColor = ConsoleColor.Gray;
         private ConsoleColor ConsoleBackgroundColor = ConsoleColor.Black;
 
@@ -73,7 +77,7 @@ namespace ModularBOT.Component
                     continue;                                       //Will THIS solve the random deadlock? Who knows! Hopefully!
                 }                           
                 LogEntry qitem = Backlog.Dequeue();                 //take a new entry out of queue.
-
+                LatestEntry = qitem;
                 LogMessage message = qitem.LogMessage;              //Entry's log message data.
                 ConsoleColor? Entrycolor = qitem.EntryColor;        //left margin color
 
@@ -81,12 +85,12 @@ namespace ModularBOT.Component
                 bool bypassScreenLock = qitem.BypassScreenLock;     //will this entry show up through a modal screen?
                 bool showCursor = qitem.ShowCursor;                 //will this entry output and show the console cursor?
 
-                if (message.Severity > Program.configMGR
-                    .CurrentConfig
-                    .DiscordEventLogLevel && !bypassFilter)
-                {
-                    continue;                                       //Do not output
-                }
+                //if (message.Severity > Program.configMGR
+                //    .CurrentConfig
+                //    .DiscordEventLogLevel && !bypassFilter)
+                //{
+                //    continue;                                       //Do not output
+                //}
 
                 LogEntries.Add(new LogEntry(message, Entrycolor));  //Add the entry to buffer. Ignore screen modal, for outputting when modal is closed.
 
@@ -431,7 +435,12 @@ namespace ModularBOT.Component
         /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
         public void WriteEntry(LogMessage message, ConsoleColor? Entrycolor = null, bool showCursor = true, bool bypassScreenLock = false, bool bypassFilter = false)
         {
-
+            if (message.Severity > Program.configMGR
+                .CurrentConfig
+                .DiscordEventLogLevel && !bypassFilter)
+            {
+                return;                                       //Do Not Queue
+            }
             Backlog.Enqueue(new LogEntry(message, Entrycolor, bypassFilter, bypassScreenLock, showCursor));
         }
 
@@ -1174,12 +1183,12 @@ namespace ModularBOT.Component
                     }
                     if (!short.TryParse(page, out short numpage))
                     {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Channels", "Invalid Page number"));
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Channels", "Invalid Page number"));
                         continue;
                     }
                     if (!ulong.TryParse(input, out ulong id))
                     {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Channels", "Invalid Guild ID format"));
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Channels", "Invalid Guild ID format"));
                         continue;
                     }
 
@@ -1189,7 +1198,129 @@ namespace ModularBOT.Component
                     bool ModalResult = ListChannels(ref discordNET, id, numpage);
                     if (!ModalResult)
                     {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Channels", "The guild was not found..."));
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Channels", "The guild was not found..."));
+
+                        continue;
+                    }
+                    //----------------End modal----------------
+                    if (ModalResult)
+                    {
+
+                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+                        ScreenModal = false;
+                        v.AddRange(LogEntries);
+                        LogEntries.Clear();//clear buffer.
+                                           //output previous logEntry.
+                        foreach (var item in v)
+                        {
+                            WriteEntry(item.LogMessage, item.EntryColor);
+                        }
+                    }
+                }
+
+                if (input.ToLower().StartsWith("myroles"))
+                {
+                    string page = "1";
+
+                    if (input.Split(' ').Length > 3)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 3)
+                    {
+                        input = input.Remove(0, 8).Trim();
+                    }
+                    if (input.Split(' ').Length == 3)
+                    {
+                        page = input.Split(' ')[2];
+                        input = input.Split(' ')[1];
+                    }
+                    if (!short.TryParse(page, out short numpage))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "Invalid Page number"));
+                        continue;
+                    }
+                    if (!ulong.TryParse(input, out ulong id))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "Invalid Guild ID format"));
+                        continue;
+                    }
+
+                    string PRV_TITLE = currentTitle;
+                    List<LogEntry> v = new List<LogEntry>();
+                    //---------------start modal---------------
+                    bool ModalResult = ListCURoles(ref discordNET, id, numpage);
+                    if (!ModalResult)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "The guild was not found..."));
+
+                        continue;
+                    }
+                    //----------------End modal----------------
+                    if (ModalResult)
+                    {
+
+                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+                        ScreenModal = false;
+                        v.AddRange(LogEntries);
+                        LogEntries.Clear();//clear buffer.
+                                           //output previous logEntry.
+                        foreach (var item in v)
+                        {
+                            WriteEntry(item.LogMessage, item.EntryColor);
+                        }
+                    }
+                }
+
+                if (input.ToLower().StartsWith("roles"))
+                {
+                    string page = "1";
+
+                    if (input.Split(' ').Length > 3)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 3)
+                    {
+                        input = input.Remove(0, 6).Trim();
+                    }
+                    if (input.Split(' ').Length == 3)
+                    {
+                        page = input.Split(' ')[2];
+                        input = input.Split(' ')[1];
+                    }
+                    if (!short.TryParse(page, out short numpage))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Roles", "Invalid Page number"));
+                        continue;
+                    }
+                    if (!ulong.TryParse(input, out ulong id))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Roles", "Invalid Guild ID format"));
+                        continue;
+                    }
+
+                    string PRV_TITLE = currentTitle;
+                    List<LogEntry> v = new List<LogEntry>();
+                    //---------------start modal---------------
+                    bool ModalResult = ListRoles(ref discordNET, id, numpage);
+                    if (!ModalResult)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Roles", "The guild was not found..."));
 
                         continue;
                     }
@@ -1575,6 +1706,198 @@ namespace ModularBOT.Component
                     string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
                     string p = $"{o}".PadRight(39, '\u2005');
                     WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Channels.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {chltype.PadRight(12,'\u2005')}", ConsoleColor.DarkGreen);
+                    index++;
+                }
+                WriteEntry($"\u2502");
+                if (page > 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page == max)
+                {
+                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                }
+                if (page > 1 && page == max)
+                {
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                ConsoleKeyInfo s = Console.ReadKey();
+                if (s.Key == ConsoleKey.P)
+                {
+                    if (page > 1)
+                    {
+                        page--;
+                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                        //continue;
+                    }
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+                if (s.Key == ConsoleKey.E)
+                {
+                    break;
+                }
+                if (s.Key == ConsoleKey.N)
+                {
+                    if (page < max)
+                    {
+                        page++;
+                    }
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                else
+                {
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+            }
+
+            ScreenModal = false;
+            return true;
+
+        }
+
+        private bool ListCURoles(ref DiscordNET discord, ulong guildID, short page = 1)
+        {
+            SocketGuild g = discord.Client.GetGuild(guildID);
+            if (g == null)
+            {
+                return false;
+            }
+            string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
+
+
+            short max = (short)(Math.Ceiling((double)(g.CurrentUser.Roles.Count / 24)) + 1);
+            if (page > max)
+            {
+                page = max;
+            }
+            if (page < 1)
+            {
+                page = 1;
+            }
+            int index = (page * 24) - 24;
+            ScreenModal = true;
+
+
+            while (true)
+            {
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Bot's assigned Roles for Guild: {name}", page, max, ConsoleColor.White);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Role Name".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue);
+                for (int i = index; i < 22 * page; i++)//22 results per page.
+                {
+                    if (index >= g.CurrentUser.Roles.Count)
+                    {
+                        break;
+                    }
+                    string channelin = g.CurrentUser.Roles.ElementAt(i).Name;
+                    string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
+                    string p = $"{o}".PadRight(39, '\u2005');
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.CurrentUser.Roles.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", ConsoleColor.DarkGreen);
+                    index++;
+                }
+                WriteEntry($"\u2502");
+                if (page > 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page < max)
+                {
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                }
+                if (page == 1 && page == max)
+                {
+                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                }
+                if (page > 1 && page == max)
+                {
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                }
+                ConsoleKeyInfo s = Console.ReadKey();
+                if (s.Key == ConsoleKey.P)
+                {
+                    if (page > 1)
+                    {
+                        page--;
+                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                        //continue;
+                    }
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+                if (s.Key == ConsoleKey.E)
+                {
+                    break;
+                }
+                if (s.Key == ConsoleKey.N)
+                {
+                    if (page < max)
+                    {
+                        page++;
+                    }
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                else
+                {
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+            }
+
+            ScreenModal = false;
+            return true;
+
+        }
+
+        private bool ListRoles(ref DiscordNET discord, ulong guildID, short page = 1)
+        {
+            SocketGuild g = discord.Client.GetGuild(guildID);
+            if (g == null)
+            {
+                return false;
+            }
+            string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
+
+
+            short max = (short)(Math.Ceiling((double)(g.Roles.Count / 24)) + 1);
+            if (page > max)
+            {
+                page = max;
+            }
+            if (page < 1)
+            {
+                page = 1;
+            }
+            int index = (page * 24) - 24;
+            ScreenModal = true;
+
+
+            while (true)
+            {
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Bot's assigned Roles for Guild: {name}", page, max, ConsoleColor.White);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Role Name".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue);
+                for (int i = index; i < 22 * page; i++)//22 results per page.
+                {
+                    if (index >= g.Roles.Count)
+                    {
+                        break;
+                    }
+                    string channelin = g.Roles.ElementAt(i).Name;
+                    string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
+                    string p = $"{o}".PadRight(39, '\u2005');
+                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Roles.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", ConsoleColor.DarkGreen);
                     index++;
                 }
                 WriteEntry($"\u2502");
