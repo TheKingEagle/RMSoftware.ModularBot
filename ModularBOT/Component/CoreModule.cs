@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Discord.Addons.Interactive;
 namespace ModularBOT.Component
 {
+    [Summary("Pre-installed commands for basic management | ModularBOT • CORE v2.0")]
     public class CoreModule:InteractiveBase<CommandContext>
     {
         #region Property/Construct
@@ -1265,10 +1266,10 @@ namespace ModularBOT.Component
                 {
                     if(Context.User is SocketGuildUser sgu)
                     {
-                        if(!sgu.GuildPermissions.Has(GuildPermission.ManageMessages))
+                        if(!sgu.GuildPermissions.Has(GuildPermission.ManageGuild))
                         {
                             await ReplyAsync("", false, GetEmbeddedMessage("DENIED!", 
-                                "You must have `AccessLevels.CommandManager` AND have permission to manage messages.", Color.DarkRed));
+                                "You must have `AccessLevels.CommandManager` AND have permission to manage the server.", Color.DarkRed));
                             return;
                         }
                     }
