@@ -721,6 +721,23 @@ namespace ModularBOT.Component
                                     CSEmbed.WithFooter(output);
                                     break;
 
+                                case ("EMBED_FOOTER_I")://embed footer text
+
+                                    //Get the line removing echo.
+                                    output = line.Remove(0, 14);
+                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+
+                                    CSEmbed.Footer.IconUrl = output;
+                                    break;
+
                                 case ("EMBED_COLOR")://embed footer text
 
                                     //Get the line removing echo.
