@@ -89,12 +89,18 @@ namespace ModularBOT.Component
         [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command. (NOTE: Creating a global commands requires AccessLevels.Administrator)"), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_Add(string cmdname, bool restricted, [Remainder]string action)
         {
+            
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
-            if(action == "{params}" || action == "{0}")
+            if (string.IsNullOrWhiteSpace(cmdname))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's illegal.", $"Please give a valid command name.", Color.DarkRed));
+                return;
+            }
+            if (action == "{params}" || action == "{0}")
             {
                 if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
                 {
@@ -121,9 +127,15 @@ namespace ModularBOT.Component
         [Command("addcmd"), Summary("Add a command to your bot. If you run this via DM, it will create a global command. (NOTE: Creating a global commands requires AccessLevels.Administrator)"), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_Add(string cmdname, AccessLevels CommandAccessLevel, [Remainder]string action)
         {
+            
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(cmdname))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's illegal.", $"Please give a valid command name.", Color.DarkRed));
                 return;
             }
             if (action == "{params}" || action == "{0}")
@@ -165,21 +177,32 @@ namespace ModularBOT.Component
         [Command("addgcmd"), Summary("Add a global command to your bot"),Remarks("AccessLevels.Administrator")]
         public async Task CMD_AddGlobal(string cmdname, bool restricted, [Remainder]string action)
         {
+            
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context,AccessLevels.Administrator));
                 return;
             }
-
+            if (string.IsNullOrWhiteSpace(cmdname))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's illegal.", $"Please give a valid command name.", Color.DarkRed));
+                return;
+            }
             await _DiscordNet.CustomCMDMgr.AddCmd(Context.Message, cmdname, action, restricted);
         }
 
         [Command("addgcmd"), Summary("Add a global command to your bot"), Remarks("AccessLevels.Administrator")]
         public async Task CMD_AddGlobal(string cmdname, AccessLevels CommandAccessLevel, [Remainder]string action)
         {
+            
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(cmdname))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's illegal.", $"Please give a valid command name.", Color.DarkRed));
                 return;
             }
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < CommandAccessLevel)
@@ -200,9 +223,15 @@ namespace ModularBOT.Component
         [Command("delcmd"), Summary("delete a command from your bot. If you run this via DM, it will delete a global command (AccessLevels.Administrator)."), Remarks("AccessLevels.CommandManager")]
         public async Task CMD_Delete(string cmdname)
         {
+            
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(cmdname))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's illegal.", $"Please give a valid command name.", Color.DarkRed));
                 return;
             }
             ulong gid = 0;
@@ -224,6 +253,11 @@ namespace ModularBOT.Component
         [Command("delgcmd"), Summary("delete a global command from your bot."), Remarks("AccessLevels.Administrator")]
         public async Task CMD_DeleteGlobal(string cmdname)
         {
+            if (string.IsNullOrWhiteSpace(cmdname))
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Wait... That's illegal.", $"Please give a valid command name.", Color.DarkRed));
+                return;
+            }
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
