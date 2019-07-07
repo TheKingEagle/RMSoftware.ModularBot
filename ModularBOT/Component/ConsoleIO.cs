@@ -509,6 +509,92 @@ namespace ModularBOT.Component
         }
 
         /// <summary>
+        /// Write a color coordinated log message to console. Function is intended for full mode.
+        /// </summary>
+        /// <param name="message">The Discord.NET Log message</param>
+        /// <param name="Entrycolor">An optional entry color. If none (or black), the message.LogSeverity is used for color instead.</param>
+        public void WriteEntry(string message, bool SELECTED, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true)
+        {
+
+
+            SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
+
+
+            Writing = true;
+            PrvTop = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
+
+            string[] lines = WordWrap(message, 1).Split('\n');
+            ConsoleColor bglast = ConsoleBackgroundColor;
+
+            Writing = true;
+            PrvTop = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
+            for (int i = 0; i < lines.Length; i++)
+            {
+
+                if (lines[i].Length == 0)
+                {
+                    continue;
+                }
+                ConsoleColor bg = ConsoleColor.Black;
+                ConsoleColor fg = ConsoleColor.Black;
+
+
+
+                bg = Entrycolor;
+                fg = Entrycolor;
+                Console.BackgroundColor = bg;
+                Console.ForegroundColor = fg;
+                //Thread.Sleep(1);//safe.
+                Console.Write((char)9617);//Write the colored space.
+                Console.BackgroundColor = bglast;                   //restore previous color.
+                Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
+                Console.Write("\u2502");                            //uileft-single │
+
+                if (i == 0)
+                {
+                    if(SELECTED)
+                    {
+
+                        Console.BackgroundColor = GetInvertedColor(Console.BackgroundColor);
+                        Console.ForegroundColor = GetInvertedColor(Console.ForegroundColor);
+                        
+                    }
+                    Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2, '\u2000')); //write current line in queue.
+                    if(SELECTED)
+                    {
+                        Console.BackgroundColor = bglast;                   //restore previous color.
+                        Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
+                    }
+                    Console.CursorTop = Console.CursorTop - 1;
+                }
+                if (i > 0)
+                {
+                    //write current line in queue, padded by 21 enQuads to preserve line format.
+                    Console.WriteLine(lines[i].PadLeft(lines[i].Length, '\u2000').PadRight(Console.BufferWidth - 2));
+                    Console.CursorTop = Console.CursorTop - 1;
+                }
+
+            }
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
+            //Thread.Sleep(1);//safe.
+            if (showCursor)
+            {
+                Console.Write(">");//Write the input indicator.
+
+            }
+            //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
+            //Thread.Sleep(1);//safe.
+            Console.BackgroundColor = ConsoleBackgroundColor;
+            Console.ForegroundColor = ConsoleForegroundColor;
+            Console.CursorVisible = showCursor;
+            CurTop = Console.CursorTop;
+            Writing = false;
+        }
+
+        /// <summary>
         /// ConsoleGUIReset - Title decoration (TOP)
         /// </summary>
         private void DecorateTop()
@@ -1449,6 +1535,9 @@ namespace ModularBOT.Component
 
         private bool ListUsers(ref DiscordNET discord,ulong guildID, short page=1)
         {
+            int selectionIndex = 0;
+            int countOnPage = 0;
+            int ppg = 0;
             SocketGuild g = discord.Client.GetGuild(guildID);
             if(g == null)
             {
@@ -1470,51 +1559,64 @@ namespace ModularBOT.Component
             }
             int index = (page * 22) - 22;
             ScreenModal = true;
-            
 
+            
             while (true)
             {
-                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all users for Guild: {name}", page, max, ConsoleColor.White);
+                if(ppg != page)//is page changing?
+                {
+                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all users for Guild: {name}", page, max, ConsoleColor.White);
+                    ppg = page;
+                }
+                
+                countOnPage = 0;
+                if(ppg == page)
+                {
+                    Console.SetCursorPosition(0, 5);
+                }
+
                 WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
                 WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')}", ConsoleColor.Blue);
                 for (int i = index; i < 22 * page; i++)//22 results per page.
                 {
+
                     if (index >= guildusers.Count)
                     {
                         break;
                     }
-                    string userinput = guildusers.ElementAt(i).Username;
-                    string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ','\u2005').Replace("??","?");
-                    string p = $"{o}#{guildusers.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20,'0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18,'\u2005')}", ConsoleColor.DarkGreen);
+                    countOnPage++;
+                    WriteUser(discord, selectionIndex, countOnPage, guildusers, i);
                     index++;
                 }
                 WriteEntry($"\u2502");
+                string UDPROMPT = "| UP/DOWN: Move Selection | ENTER: Properties...";
                 if (page > 1 && page < max)
                 {
-                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page == 1 && page < max)
                 {
-                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page == 1 && page == max)
                 {
-                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page > 1 && page == max)
                 {
-                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 ConsoleKeyInfo s = Console.ReadKey();
                 if (s.Key == ConsoleKey.P)
                 {
+                    ppg = page;
                     if (page > 1)
                     {
                         page--;
                         index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
+                    selectionIndex = 0;
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
@@ -1524,11 +1626,39 @@ namespace ModularBOT.Component
                 }
                 if (s.Key == ConsoleKey.N)
                 {
+                    ppg = page;
                     if (page < max)
                     {
+                        
                         page++;
                     }
+                    selectionIndex = 0;
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
 
+                if(s.Key == ConsoleKey.UpArrow)
+                {
+                   
+                    selectionIndex--;
+                    if(selectionIndex <0)
+                    {
+                        selectionIndex = countOnPage - 1;
+                    }
+                    
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+                if (s.Key == ConsoleKey.DownArrow)
+                {
+                    
+                    selectionIndex++;
+                    if (selectionIndex > countOnPage-1)
+                    {
+                        selectionIndex = 0;
+                    }
+                    
+                    
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
@@ -1543,6 +1673,14 @@ namespace ModularBOT.Component
             ScreenModal = false;
             return true;
 
+        }
+
+        private void WriteUser(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuildUser> guildusers, int i)
+        {
+            string userinput = guildusers.ElementAt(i).Username;
+            string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
+            string p = $"{o}#{guildusers.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
+            WriteEntry($"\u2502\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18, '\u2005')}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
         }
 
         private bool ListUsers(ref DiscordNET discord, ulong guildID, string query)
@@ -2013,7 +2151,10 @@ namespace ModularBOT.Component
         }
         #endregion
 
-
+        ConsoleColor GetInvertedColor(ConsoleColor Color)//I realize this is not accurate.
+        {
+            return (ConsoleColor) (Math.Abs((Color - ConsoleColor.White)));
+        }
 
         #region Screen buffer
         public class LogEntry
