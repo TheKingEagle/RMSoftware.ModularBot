@@ -467,7 +467,7 @@ namespace ModularBOT.Component
                                     if (OutputCount > 4)
                                     {
                                         error = true;
-                                        errorEmbed.WithDescription($"`ECHO` Function Error: Preemptive rate limit reached."+
+                                        errorEmbed.WithDescription($"`ECHO` Function Error: Preemptive rate limit reached." +
                                             " Please slow down your script with `WAIT`\r\n```{line}```");
 
                                         errorEmbed.AddField("Line", LineInScript, true);
@@ -499,7 +499,17 @@ namespace ModularBOT.Component
                                     break;
 
                                 case ("ROLE_ADD"):
-
+                                    if(!client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult()
+                                        .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
+                                        .GuildPermissions.Has(GuildPermission.ManageRoles))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: I Don't have the proper permissions to assign roles.");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     OutputCount++;
                                     if (OutputCount > 4)
                                     {
@@ -512,7 +522,7 @@ namespace ModularBOT.Component
                                     output = line.Remove(0, 9);
                                     output = ProcessVariableString(gobj, output, cmd, client, message);
                                     string[] arguments = output.Split(' ');
-                                    if (string.IsNullOrWhiteSpace(output) || arguments.Length<2)
+                                    if (string.IsNullOrWhiteSpace(output) || arguments.Length < 2)
                                     {
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
@@ -523,16 +533,16 @@ namespace ModularBOT.Component
                                         break;
                                     }
                                     string arg1 = arguments[0];
-                                    string arg2 = output.Remove(0,arg1.Length).Trim();
-                                    if(ulong.TryParse(arg1, out ulong ulo))
+                                    string arg2 = output.Remove(0, arg1.Length).Trim();
+                                    if (ulong.TryParse(arg1, out ulong ulo))
                                     {
                                         IRole role = (await client.GetGuildAsync(gobj.ID)).GetRole(ulo);
-                                        if(message.Author is SocketGuildUser sgu)
+                                        if (message.Author is SocketGuildUser sgu)
                                         {
-                                            
+
                                             await sgu.AddRoleAsync(role);
                                             await Task.Delay(100);
-                                            if(sgu.Roles.FirstOrDefault(rf=>rf.Id == role.Id) != null)
+                                            if (sgu.Roles.FirstOrDefault(rf => rf.Id == role.Id) != null)
                                             {
                                                 EmbedBuilder bz = new EmbedBuilder();
                                                 bz.WithTitle("Role Added!");
@@ -562,12 +572,127 @@ namespace ModularBOT.Component
                                         errorEmbed.AddField("Execution Context", cmd, true);
                                         break;
                                     }
-                                    
+
+
+                                    break;
+
+                                case ("ROLE_ASSIGN"):
+                                    if (cmd.CommandAccessLevel < AccessLevels.CommandManager || !cmd.RequirePermission)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: This requires `AccessLevels.CommandManager`");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    if (!client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult()
+                                        .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
+                                        .GuildPermissions.Has(GuildPermission.ManageRoles))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: I don't have permission to manage roles.");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    OutputCount++;
+                                    if (OutputCount > 4)
+                                    {
+                                        error = true;
+                                        errorEmbed.WithDescription($"`ROLE_ASSIGN` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    output = line.Remove(0, 12);
+                                    output = ProcessVariableString(gobj, output, cmd, client, message);
+                                    string[] aarguments = output.Split(' ');
+                                    if (string.IsNullOrWhiteSpace(output) || aarguments.Length < 3)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Syntax is not correct ```{line}```");
+                                        errorEmbed.AddField("Usage", "`ROLE_ASSIGN <ulong roleID> <User Mention> <string message>`");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd, true);
+                                        break;
+                                    }
+                                    string aarg1 = aarguments[0];
+                                    string aarg2 = aarguments[1];
+                                    string aarg3 = output.Remove(0, $"{aarg1} {aarg2}".Length).Trim();
+                                    UserTypeReader<SocketGuildUser> SF = new UserTypeReader<SocketGuildUser>();
+                                    CommandContext cde = new CommandContext(client, (IUserMessage)message);
+                                    TypeReaderResult s = SF.ReadAsync(cde, aarg2, services).GetAwaiter().GetResult();
+                                    if (!ulong.TryParse(aarg1, out ulong aulo))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"A ulong ID was expected for Argument 1. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd.Name, true);
+                                        break;
+                                    }
+                                    if (!s.IsSuccess)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"A Guild User was expected in Argument 2 ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd, true);
+                                        break;
+                                    }
+                                    if (string.IsNullOrWhiteSpace(aarg3))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Argument 3 cannot be empty. Please specify a message ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd, true);
+                                        break;
+                                    }
+                                    IRole arole = (await client.GetGuildAsync(gobj.ID)).GetRole(aulo);
+                                    if (s.BestMatch is SocketGuildUser asgu)
+                                    {
+
+                                        await asgu.AddRoleAsync(arole);
+                                        await Task.Delay(100);
+                                        if (asgu.Roles.FirstOrDefault(rf => rf.Id == arole.Id) != null)
+                                        {
+                                            EmbedBuilder bz = new EmbedBuilder();
+                                            bz.WithTitle("Role Assigned!");
+                                            bz.WithAuthor(client.CurrentUser);
+                                            bz.WithColor(Color.Green);
+                                            bz.WithDescription($"{aarg3}");
+                                            await message.Channel.SendMessageAsync("", false, bz.Build());
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"The role was not added. Please make sure bot has proper permission to add the role. ```{line}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd, true);
+                                            break;
+                                        }
+                                    }
 
                                     break;
 
                                 case ("ROLE_DEL"):
-
+                                    if (!client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult()
+                                        .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
+                                        .GuildPermissions.Has(GuildPermission.ManageRoles))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Function error: I don't have permission to manage roles.");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     OutputCount++;
                                     if (OutputCount > 4)
                                     {
@@ -614,7 +739,7 @@ namespace ModularBOT.Component
                                             {
                                                 error = true;
                                                 //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
-                                                errorEmbed.WithDescription($"The role was not added. Please make sure bot has proper permission to remove the role. ```{line}```");
+                                                errorEmbed.WithDescription($"The role could not be removed ```{line}```");
                                                 errorEmbed.AddField("Line", LineInScript, true);
                                                 errorEmbed.AddField("Execution Context", cmd, true);
                                                 break;
@@ -953,7 +1078,8 @@ namespace ModularBOT.Component
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
-                                    if (cmd.CommandAccessLevel < AccessLevels.CommandManager)
+
+                                    if (cmd.CommandAccessLevel < AccessLevels.CommandManager || !cmd.RequirePermission)
                                     {
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
