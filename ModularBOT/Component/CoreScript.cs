@@ -65,7 +65,7 @@ namespace ModularBOT.Component
 
             #endregion
      
-            #region Statistics
+            #region Statistics/Guild Info
             "command",
             "command_count",
             "latency",
@@ -75,9 +75,13 @@ namespace ModularBOT.Component
             "os_bit",
             "os_ver",
             "bot_mem",
+            "guild",
+            "guild_id",
             "guild_count",
-            "context",
-            "context_image",
+            "guild_usercount",
+            "guild_icon",
+            "channel",
+            "channel_id",
             "counter",
             #endregion
             
@@ -203,7 +207,7 @@ namespace ModularBOT.Component
 
             #endregion
 
-            #region Statistics
+            #region Statistics/Guild info
             if (Processed.Contains("%command%"))
             {
                 Processed = Processed.Replace("%command%", cmd.Name);
@@ -257,28 +261,69 @@ namespace ModularBOT.Component
             {
                 Processed = Processed.Replace("%bot_mem%", SystemInfo.SizeSuffix(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64));
             }
+            if (Processed.Contains("%guild%"))
+            {
+                string Context = message.Author.Mention;
+                if (message.Channel is IGuildChannel IGC)
+                {
+                    Context = IGC.Guild.Name;
+                }
+                Processed = Processed.Replace("%guild%", Context);
+            }
+            if (Processed.Contains("%guild_id%"))
+            {
+                string Context = message.Author.Id.ToString();
+                if(message.Channel is IGuildChannel IGC)
+                {
+                    Context = IGC.GuildId.ToString();
+                }
+                Processed = Processed.Replace("%guild_id%", Context);
+            }
             if (Processed.Contains("%guild_count%"))
             {
                 DiscordShardedClient cl = client as DiscordShardedClient;
                 Processed = Processed.Replace("%guild_count%", cl.Guilds.Count.ToString());
             }
-            if (Processed.Contains("%context%"))
+            if (Processed.Contains("%guild_usercount%"))
             {
-                string Context = message.Author.Mention;
-                if (gobj != null || gobj.ID != 0)
+                if (message.Channel is IGuildChannel IGC)
                 {
-                    Context = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult().Name;
+                    Task.Run(() => IGC.Guild.DownloadUsersAsync());
+                    var ul = client.GetGuildAsync(IGC.Guild.Id, CacheMode.AllowDownload)
+                        .GetAwaiter().GetResult().GetUsersAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
+                    Processed = Processed.Replace("%guild_usercount%", ul.Count.ToString());
                 }
-                Processed = Processed.Replace("%context%", Context);
+                else
+                {
+                    Processed = Processed.Replace("%guild_usercount%", "2");//assume this is a DM. in which case it will always be two... (Groups aren't supported)
+                }
             }
-            if (Processed.Contains("%context_image%"))
+            if (Processed.Contains("%guild_icon%"))
             {
                 string Context = message.Author.GetAvatarUrl(ImageFormat.Auto,512);
-                if (gobj != null || gobj.ID != 0)
+                if (message.Channel is IGuildChannel IGC)
                 {
-                    Context = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult().IconUrl;
+                    Context = client.GetGuildAsync(IGC.GuildId).GetAwaiter().GetResult().IconUrl;
                 }
-                Processed = Processed.Replace("%context_image%", Context);
+                Processed = Processed.Replace("%guild_icon%", Context);
+            }
+            if (Processed.Contains("%channel%"))
+            {
+                string Context = message.Author.Mention;
+                if (message.Channel is IGuildChannel IGC)
+                {
+                    Context = "#"+IGC.Name;
+                }
+                Processed = Processed.Replace("%channel%", Context);
+            }
+            if (Processed.Contains("%channel_id%"))
+            {
+                string Context = message.Author.Id.ToString();
+                if (message.Channel is IGuildChannel IGC)
+                {
+                    Context = IGC.Id.ToString();
+                }
+                Processed = Processed.Replace("%channel_id%", Context);
             }
             if (cmd != null)
             {
