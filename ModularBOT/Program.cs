@@ -46,10 +46,7 @@ namespace ModularBOT
             #region DEBUG
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Warning:", "This program may not be in a finished state!"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE editcmd & getcmd"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE Task manager"));
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TODO:", "WRITE External Module Loader"));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Warning:", "This program is not intended for the production environment."));
             AppDomain.CurrentDomain.FirstChanceException += CurrentDomain_FirstChanceException;
 #endif
             #endregion
@@ -88,7 +85,7 @@ namespace ModularBOT
         {
             //Thread.Sleep(300);
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", e.Exception.Message), ConsoleColor.DarkRed, true, false, true);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", "DETAILS in Errors.log"), ConsoleColor.DarkRed, true, false, true);
+            //consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", "DETAILS in Errors.log"), ConsoleColor.DarkRed, true, false, true);
             //Thread.Sleep(300);
             consoleIO.WriteErrorsLog(e.Exception);
         }
