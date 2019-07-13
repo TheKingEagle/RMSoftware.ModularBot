@@ -18,7 +18,7 @@ namespace ModularBOT.Component
 {
     public class ConsoleIO
     {
-        #region Private/Internal DECLARE
+        #region PRIVATE | INTERNAL Fields
         
         internal const int VK_RETURN = 0x0D;
         internal const int WM_KEYDOWN = 0x100;
@@ -31,7 +31,7 @@ namespace ModularBOT.Component
         private List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
         #endregion
 
-        #region Public DECLARE
+        #region PUBLIC Properties
         public static bool Writing { get; private set; }
         public static bool QueueProcessStarted { get; private set; } = false;
         public static bool ScreenBusy { get; private set; }//If console is resetting or rendering new ui.
