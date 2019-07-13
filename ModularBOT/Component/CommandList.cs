@@ -88,7 +88,7 @@ namespace ModularBOT.Component
             }
             if (CmdType == CommandTypes.Module)
             {
-                CoreNote = "<b class='SourceNote'>MODULE</b><b class='BetaNote'>GLOBAL</b>";//TODO: Make module commands subject to guild availability.
+                CoreNote = "<b class='SourceNote'>MODULE</b>";
             }
             if (CmdType == CommandTypes.GCustom)
             {
