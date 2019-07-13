@@ -32,7 +32,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region PUBLIC Properties
-        public static bool Writing { get; private set; }
+        public static bool Writing { get; private set; } = false;
         public static bool QueueProcessStarted { get; private set; } = false;
         public static bool ScreenBusy { get; private set; }//If console is resetting or rendering new ui.
         public static bool ScreenModal { get; private set; }//If there is a screen showing above discord logs
@@ -44,12 +44,7 @@ namespace ModularBOT.Component
 
         public LogEntry LatestEntry { get; private set; }
         #endregion
-
-        public ConsoleIO()
-        {
-            Writing = false;
-        }
-
+        
         #region PRIVATE Methods
 
         private void DecorateTop()
