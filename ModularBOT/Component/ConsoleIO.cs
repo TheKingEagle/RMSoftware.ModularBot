@@ -2183,7 +2183,7 @@ namespace ModularBOT.Component
 
         #endregion PUBLIC Methods
 
-        #region CLASS Screen buffer
+        #region SUBCLASS Screen buffer
         public class LogEntry
         {
             public LogMessage LogMessage { get; set; }
