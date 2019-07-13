@@ -346,7 +346,9 @@ namespace ModularBOT.Component
                 LogConnected = true;
             }
             await Task.Delay(0);
+#pragma warning disable 4014
             Task.Run(() => SyncGuild(guild));//don't really care about result in this case. just want a new thread.
+#pragma warning restore 4014
         }
 
         private Task Client_ShardDisconnected(Exception arg1, DiscordSocketClient arg2)
@@ -616,7 +618,9 @@ namespace ModularBOT.Component
             {
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
                 await Task.Delay(1);
+#pragma warning disable 4014
                 Task.Run(() => SyncGuild(arg));//don't really care about result in this case. just want a new thread.
+#pragma warning restore
             }
 
 
