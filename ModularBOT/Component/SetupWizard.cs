@@ -99,12 +99,6 @@ namespace ModularBOT.Component
                 string auth = "";
                 while (true)
                 {
-                    //ConsoleColor b = Console.BackgroundColor;
-                    //ConsoleColor f = Console.ForegroundColor;
-                    //Console.BackgroundColor = ConsoleColor.Black;
-                    //Console.ForegroundColor = ConsoleColor.Black;
-
-                    //auth = Console.ReadLine().Replace("\r\n", "");
                     string pass = "";
                     do
                     {
@@ -129,8 +123,6 @@ namespace ModularBOT.Component
                         }
                     } while (true);
                     auth = pass;
-                    // Console.BackgroundColor = b;
-                    //Console.ForegroundColor = f;
 
                     if (string.IsNullOrWhiteSpace(auth))
                     {
