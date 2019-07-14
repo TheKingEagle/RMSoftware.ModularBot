@@ -992,15 +992,19 @@ namespace ModularBOT.Component
             while (true)
             {
 
+                if (ScreenBusy)
+                {
+                    continue;
+                }
+                if (ScreenModal)
+                {
+                    continue;
+                }
                 string input = Console.ReadLine();
                 string unproc = input;
                 if (InputCanceled)
                 {
                     return Task.Delay(0);
-                }
-                if (ScreenBusy)
-                {
-                    continue;
                 }
                 Console.CursorTop = CurTop;
 
@@ -1935,11 +1939,11 @@ namespace ModularBOT.Component
                // Thread.Sleep(1);//safe.
                 if (i == 0)
                 {
-                    Console.WriteLine(lines[i]);//write current line in queue.
+                    Console.WriteLine("\u2502 "+lines[i]);//write current line in queue.
                 }
                 if (i > 0)
                 {
-                    Console.WriteLine(lines[i]);//write current line in queue, padded by 21 enQuads to preserve line format.
+                    Console.WriteLine("\u2502 " + lines[i]);//write current line in queue, padded by 21 enQuads to preserve line format.
                 }
 
             }
@@ -2137,16 +2141,16 @@ namespace ModularBOT.Component
         /// <param name="ex"></param>
         public void WriteErrorsLog(Exception ex)
         {
-            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
-                    sw.Flush();
-                    sw.Close();
-                    Thread.Sleep(150);
-                }
-            }
+            //using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            //{
+            //    using (StreamWriter sw = new StreamWriter(fs))
+            //    {
+            //        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
+            //        sw.Flush();
+            //        sw.Close();
+            //        Thread.Sleep(150);
+            //    }
+            //}
         }
 
         /// <summary>
@@ -2172,6 +2176,120 @@ namespace ModularBOT.Component
                     Thread.Sleep(150);
                 }
             }
+        }
+
+        public string GetStringPrompt(string message, string title, bool IsPW, ConsoleColor FG, ConsoleColor BG, short Step, short MaxStep)
+        {
+            
+            string ct = ConsoleTitle;
+            ScreenModal = true;
+            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);//pause input
+            ConsoleGUIReset(FG, BG, title, Step, MaxStep, FG);
+            WriteEntry(message);
+            List<LogEntry> v = new List<LogEntry>();
+            string auth = "";
+
+            if (IsPW)
+            {
+                Console.Write("\u2502 > ");
+                auth = "";
+                while (true)
+                {
+                    string pass = "";
+                    do
+                    {
+                        ConsoleKeyInfo key = Console.ReadKey(true);
+                        // Backspace Should Not Work
+
+                        if (!char.IsControl(key.KeyChar))
+                        {
+                            pass += key.KeyChar;
+                            Console.Write("*");
+                        }
+                        else
+                        {
+                            if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+                            {
+                                pass = pass.Substring(0, (pass.Length - 1));
+                                Console.Write("\b \b");
+                            }
+                            else if (key.Key == ConsoleKey.Enter)
+                            {
+                                break;
+                            }
+                        }
+                    } while (true);
+                    auth = pass;
+
+                    if (string.IsNullOrWhiteSpace(auth))
+                    {
+                        WriteEntry("You cannot leave this blank. Try again.", ConsoleColor.DarkRed);
+                        Console.Write("\u2502 > ");
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if(!IsPW)
+            {
+                Console.Write("\u2502 > ");
+                auth = "";
+                while (true)
+                {
+                    string pass = "";
+                    do
+                    {
+                        ConsoleKeyInfo key = Console.ReadKey(true);
+                        // Backspace Should Not Work
+                        if (!char.IsControl(key.KeyChar))
+                        {
+                            pass += key.KeyChar;
+                            Console.Write(key.KeyChar.ToString());
+                        }
+                        else
+                        {
+                            if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+                            {
+                                pass = pass.Substring(0, (pass.Length - 1));
+                                Console.Write("\b \b");
+                            }
+                            else if (key.Key == ConsoleKey.Enter)
+                            {
+                                break;
+                            }
+                        }
+                    } while (true);
+                    auth = pass;
+
+                    if (string.IsNullOrWhiteSpace(auth))
+                    {
+                        WriteEntry("You cannot leave this blank. Try again.", ConsoleColor.DarkRed);
+                        Console.Write("\u2502 > ");
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                        Program.configMGR.CurrentConfig.ConsoleBackgroundColor, ct);
+
+            ScreenModal = false;
+
+            v.AddRange(LogEntries);
+            LogEntries.Clear();//clear buffer.
+                               //output previous logEntry.
+            foreach (var item in v)
+            {
+                WriteEntry(item.LogMessage, item.EntryColor);
+            }
+
+            return auth;
         }
 
         #endregion
