@@ -30,4 +30,4 @@ using System.Windows;
 [assembly: AssemblyFileVersion("2.0.883.2074")]
 [assembly: ComVisible(false)]
 
-[assembly: AssemblyInformationalVersion("2.0.0-beta-57")]
+[assembly: AssemblyInformationalVersion("2.0.0-beta-58")]
