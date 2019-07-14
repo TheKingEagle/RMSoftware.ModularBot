@@ -261,17 +261,27 @@ namespace ModularBOT.Component
                 WarnIfBlacklisted = true,
                 AccessLevel = level
             };
-            RegisteredEntity c = _entities.FirstOrDefault(x => x.EntityID == r.EntityID);
-            if (c != null)
+            if (IsEntityRegistered(role))
             {
-                if (c.AccessLevel == level)
+                RegisteredEntity c = _entities.FirstOrDefault(x => x.EntityID == r.EntityID);
+                if (c != null)
                 {
-                    return 0;
-                }
-                c.AccessLevel = level;
-                SaveJson();
+                    if (c.AccessLevel == level)
+                    {
+                        return 0;
+                    }
+                    c.AccessLevel = level;
+                    SaveJson();
 
-                return 2;
+                    return 2;
+                }
+                else
+                {
+                    _entities.Add(r);
+                    SaveJson();
+
+                    return 1;
+                }
             }
             else
             {
