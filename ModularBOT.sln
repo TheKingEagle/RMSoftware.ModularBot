@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestModule", "TestModule\Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Addons.Interactive", "Discord.Addons.Interactive\Discord.Addons.Interactive.csproj", "{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Moddblapi100", "C:\Users\Ryan\source\repos\Moddblapi100\Moddblapi100\Moddblapi100.csproj", "{F8A324AF-44AC-40F5-A9DF-B81945508674}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiscordBotsList.Api", "C:\Users\Ryan\source\repos\DBL-dotnet-Library\DiscordBotsList.Api\DiscordBotsList.Api.csproj", "{7869D2F1-56F5-4329-972B-E78E87522D7D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8A324AF-44AC-40F5-A9DF-B81945508674}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8A324AF-44AC-40F5-A9DF-B81945508674}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8A324AF-44AC-40F5-A9DF-B81945508674}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8A324AF-44AC-40F5-A9DF-B81945508674}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7869D2F1-56F5-4329-972B-E78E87522D7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7869D2F1-56F5-4329-972B-E78E87522D7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7869D2F1-56F5-4329-972B-E78E87522D7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7869D2F1-56F5-4329-972B-E78E87522D7D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
