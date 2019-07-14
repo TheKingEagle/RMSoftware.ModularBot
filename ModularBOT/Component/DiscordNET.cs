@@ -25,6 +25,7 @@ namespace ModularBOT.Component
         private static bool init_start = false;                                //DiscordNET Conditional Initialization
         private bool Initialized = false;                                      //Conditional Completed Initialization
         private bool LogConnected = false;                                     //Conditional Log channel found & connected
+        private bool LoginEventsCalled = false;                                //yet another thread locker for offload ready... this is infuriating.
         private List<SocketMessage> messageQueue = new List<SocketMessage>();  //DiscordNET Message Queue
         
         #endregion
@@ -41,11 +42,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region Methods
-
-        private readonly Func<bool> ReadyForInit = delegate ()
-        {
-            return init_start;
-        };
+        
 
         public void Start(ref ConsoleIO consoleIO, ref Configuration AppConfig, ref bool ShutdownRequest, ref bool RestartRequested,ref bool FromCrash)
         {
@@ -91,7 +88,9 @@ namespace ModularBOT.Component
                 cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 Task.Run(async () => await Client.StartAsync());
-                SpinWait.SpinUntil(ReadyForInit);//Hold thread until needed shard is ready.
+                SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);
+                SpinWait.SpinUntil(() => init_start);//Hold thread until needed shard is ready.
+                SpinWait.SpinUntil(() => LoginEventsCalled);
                 OffloadReady(ref FromCrash, ref ShutdownRequest, ref RestartRequested);
                 
             }
@@ -141,6 +140,7 @@ namespace ModularBOT.Component
             services.AddSingleton(CustomCMDMgr);
             serviceProvider = services.BuildServiceProvider();
             Updater = new UpdateManager(serviceProvider);
+            LoginEventsCalled = true;
             return Task.Delay(1);
         }
 
@@ -590,6 +590,7 @@ namespace ModularBOT.Component
             if (arg.GetChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel) is SocketTextChannel ch && !Initialized)
             {
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", $"Executing OnStart.CORE"));
+
                 init_start = true;//Signal SpinWait to run task.
                
             }
