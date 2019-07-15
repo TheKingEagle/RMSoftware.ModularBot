@@ -18,21 +18,21 @@ namespace TestModule
         public ConsoleIO _writer { get; set; }
         public TestModuleService _jservice { get; set; }
 
-        public PermissionManager PermissionsManager { get; set; }
+        public PermissionManager _permissions { get; set; }
         public TestModule(DiscordShardedClient discord, TestModuleService joinservice, ConsoleIO writer, PermissionManager manager)
         {
             _client = discord;
             _jservice = joinservice;
             _writer = writer;
-            PermissionsManager = manager;
+            _permissions = manager;
             _writer.WriteEntry(new LogMessage(LogSeverity.Critical, "TestMOD", "Constructor called!!!!!!!!!"));
         }
         [Command("tpmgr"),Remarks("AccessLevels.Administrator")]
         public async Task Showtest()
         {
-            if(PermissionsManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            if(_permissions.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
-                await ReplyAsync("", false, PermissionsManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await ReplyAsync("", false, _permissions.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
             await ReplyAsync("You have the correct access level!");
@@ -389,6 +389,79 @@ namespace TestModule
             
         }
 
+        [Command("bindDelete", RunMode = RunMode.Async), Summary("Creates a Reaction event for specified server & emote to act as a self-delete button")]
+        public async Task StartDelReact(string emote, ulong guildID = 0)
+        {
+            
+            LogMessage ER3R = new LogMessage(LogSeverity.Info, "Binding", "Reaction event binder called");
+            _writer.WriteEntry(ER3R);
+            //if (Context.User != Context.Client.CurrentUser)
+            //{
+            //    await ReplyAsync(Context.User.Mention + ": `This command is not intended to be run by users, only bot's Startup.CORE script.`");
+            //    return;
+            //}
+            if (_permissions.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Restricted",
+                    "This command is undergoing testing. Only administrators can use it. After testing, it will be restricted to `STARTUP.CORE`", Color.Red));
+                return;
+            }
+            if (!Emote.TryParse(emote, out Emote ZS))
+            {
+
+                await ReplyAsync("", false, GetEmbeddedMessage("Invalid Emote",
+                    "You must have a valid emote specified. Try using one of your server emotes.", Color.Red));
+                return;
+            }
+            //_jservice.WelcomeMessage = WelcomeMessage;
+            if(guildID == 0)
+            {
+                if(Context.Guild == null)
+                {
+                    await ReplyAsync("",false,GetEmbeddedMessage("Wait... That's Illegal.", "You gotta be in a guild for this", Color.Red));return;
+                }
+                else
+                {
+                    guildID = Context.Guild.Id;
+                }
+            }
+            await _jservice.BindReaction(Context, ZS,guildID);
+
+        }
+
+        [Command("unbindDelete", RunMode = RunMode.Async), Summary("Deletes a Reaction event for specified server & emote to act as a self-delete button")]
+        public async Task DelDelReact(ulong guildID = 0)
+        {
+
+            LogMessage ER3R = new LogMessage(LogSeverity.Info, "Binding", "Reaction event binder called");
+            _writer.WriteEntry(ER3R);
+            //if (Context.User != Context.Client.CurrentUser)
+            //{
+            //    await ReplyAsync(Context.User.Mention + ": `This command is not intended to be run by users, only bot's Startup.CORE script.`");
+            //    return;
+            //}
+            if (_permissions.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Restricted",
+                    "This command is undergoing testing. Only administrators can use it. After testing, it will be restricted to `STARTUP.CORE`", Color.Red));
+                return;
+            }
+            //_jservice.WelcomeMessage = WelcomeMessage;
+            if (guildID == 0)
+            {
+                if (Context.Guild == null)
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's Illegal.", "You gotta be in a guild for this", Color.Red)); return;
+                }
+                else
+                {
+                    guildID = Context.Guild.Id;
+                }
+            }
+            await _jservice.UnBindReaction(Context, guildID);
+
+        }
+
         [Command("ml-bind"), Remarks("AccessLevels.Normal"), 
             Summary("Creates a log channel binding. Requires user permission to 'Manage Channels'. "+
             "Call the command in the channel you want to use as moderator log.")]
@@ -470,16 +543,30 @@ namespace TestModule
         DiscordShardedClient ShardedClient { get; set; }
         ConsoleIO Writer { get; set; }
 
+        PermissionManager PermissionsManager { get; set; }
+
+        #region Configuration Bindings
+
         string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
+        string TrashcanBindingsConfig = "Modules/TestModule/trash-can.json";
+
+        #endregion
+
+        IEmote Reaction = null;
+        bool doonce = false;
 
         [DontInject]
         public Dictionary<ulong, GuildQueryItem> BoundItems { get; set; }//This contains <guildID,role> value pairs to check user's join event.
-
+        
+        [DontInject]
+        public Dictionary<ulong,string> Trashcans { get; set; }
         
         public List<ModLogBinding> MLbindings = new List<ModLogBinding>();
+        
 
-        public TestModuleService(DiscordShardedClient _client, ConsoleIO _consoleIO)
+        public TestModuleService(DiscordShardedClient _client, ConsoleIO _consoleIO, PermissionManager _permissions)
         {
+            PermissionsManager = _permissions;
             ShardedClient = _client;
             Writer = _consoleIO;
             LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "Greetings", "TestModuleService constructor called.");
@@ -489,27 +576,71 @@ namespace TestModule
                 LogMessage ERR = new LogMessage(LogSeverity.Critical, "Greetings", "Client is null! You should be ashamed.");
                 _consoleIO.WriteEntry(ERR);
             }
-            if(!Directory.Exists(Path.GetDirectoryName(ModLogBindingsConfig)))
+            if (!Directory.Exists(Path.GetDirectoryName(ModLogBindingsConfig)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(ModLogBindingsConfig));
                 MLbindings = new List<ModLogBinding>();
                 using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
                 {
-                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings,Formatting.Indented));
+                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
                 }
             }
+            else
+            {
+                if (!File.Exists(ModLogBindingsConfig))
+                {
+                    var fs = File.Create(ModLogBindingsConfig);
+                    fs.WriteByte(0);
+                    fs.Close();
+                }
+            }
+
+            if (!Directory.Exists(Path.GetDirectoryName(TrashcanBindingsConfig)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(TrashcanBindingsConfig));
+                Trashcans = new Dictionary<ulong, string>();
+                using (StreamWriter sw = new StreamWriter(TrashcanBindingsConfig))
+                {
+                    sw.WriteLine(JsonConvert.SerializeObject(Trashcans, Formatting.Indented));
+                }
+            }
+            else
+            {
+                if (!File.Exists(TrashcanBindingsConfig))
+                {
+                    var fs = File.Create(TrashcanBindingsConfig);
+                    fs.WriteByte(0);
+                    fs.Close();
+                }
+            }
+
             using (StreamReader sr = new StreamReader(ModLogBindingsConfig))
             {
                 MLbindings = JsonConvert.DeserializeObject<List<ModLogBinding>>(sr.ReadToEnd());
             }
-            if(MLbindings == null)
+
+            using (StreamReader sr = new StreamReader(TrashcanBindingsConfig))
+            {
+                Trashcans = JsonConvert.DeserializeObject<Dictionary<ulong,string>>(sr.ReadToEnd());
+            }
+
+            if (MLbindings == null)
             {
                 MLbindings = new List<ModLogBinding>();
             }
-                BoundItems = new Dictionary<ulong, GuildQueryItem>();
+
+            if (Trashcans == null)
+            {
+                Trashcans = new Dictionary<ulong, string>();
+            }
+
+            BoundItems = new Dictionary<ulong, GuildQueryItem>();
             ShardedClient.UserJoined += ShardedClient_UserJoined;
+            ShardedClient.ReactionAdded += Dsc_ReactionAdded;
+            LogMessage Log2 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionAdded event handler to client.");
             LogMessage Log = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
             _consoleIO.WriteEntry(Log);
+            _consoleIO.WriteEntry(Log2);
 
 
         }
@@ -554,6 +685,112 @@ namespace TestModule
             var Log = new LogMessage(LogSeverity.Info, "Greetings", $"Created a Join Event listener using the channel `{roletoadd.DefaultChannel.Name}` located in guild `{roletoadd.DefaultChannel.Guild.Name}`. Using Welcome message: {roletoadd.WelcomeMessage}");//debuglul
             Writer.WriteEntry(Log);
             return Task.Delay(0);
+        }
+
+        public async Task BindReaction(ICommandContext Context, Emote emote, ulong GuildID)
+        {
+
+            if (Trashcans.ContainsKey(GuildID))
+            {
+                Trashcans[GuildID] = emote.ToString();
+                using (StreamWriter SW = new StreamWriter(TrashcanBindingsConfig))
+                {
+                    Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Saving Config..."));
+                    await SW.WriteLineAsync(JsonConvert.SerializeObject(Trashcans));
+                }
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"UPDATED: Now Listening for {emote.ToString()} Reactions",
+                $"Any of **MY** messages in `{ShardedClient.GetGuild(GuildID).Name}` that receive the reaction {emote.ToString()} will be deleted.", Color.Green));
+                return;
+            }
+            else
+            {
+                Trashcans.Add(GuildID, emote.ToString());
+                using (StreamWriter SW = new StreamWriter(TrashcanBindingsConfig))
+                {
+                    Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Saving Config..."));
+                    await SW.WriteLineAsync(JsonConvert.SerializeObject(Trashcans));
+                }
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"ADDED: Now Listening for {emote.ToString()} Reactions",
+                $"Any of **my** messages in `{ShardedClient.GetGuild(GuildID).Name}` that receive the reaction {emote.ToString()} will be deleted.", Color.Green));
+                return;
+            }
+            
+            
+        }
+        public async Task UnBindReaction(ICommandContext Context, ulong GuildID)
+        {
+            if (Trashcans.ContainsKey(GuildID))
+            {
+                Emote S = Emote.Parse(Trashcans[GuildID]);
+                Trashcans.Remove(GuildID);
+                using (StreamWriter SW = new StreamWriter(TrashcanBindingsConfig))
+                {
+                    Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Saving Config..."));
+                    await SW.WriteLineAsync(JsonConvert.SerializeObject(Trashcans));
+                }
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"Removed: {S.ToString()} Reaction Event",
+                $"Messages will no longer be deleted with {S.ToString()}", Color.LightOrange));
+                
+                return;
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"Hmmm... ???",
+                $"There was no binding found here. Are you in the right place?", Color.Red));
+                return;
+            }
+
+
+        }
+
+        private async Task Dsc_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        {
+            Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "REACTION FOUND!!!!!!!!!!"));
+            SocketTextChannel STC = null;
+            if ((arg2 is SocketTextChannel))
+            {
+                STC = arg2 as SocketTextChannel;
+            }
+            else
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Channel wasn't a guild channel... RIP"));
+                return;
+            }
+
+            if(!Trashcans.TryGetValue(STC.Guild.Id,out string Reac))
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Guild not bound... RIP"));
+                return;
+            }
+
+            if ((await arg1.GetOrDownloadAsync()).Author.Id != ShardedClient.CurrentUser.Id && arg3.Emote.ToString() == Reac)
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Someone reacted to a message with the trigger, but it wasn't mine."));
+                return;
+            }
+            else
+            {
+                
+                if(arg3.Emote.ToString() == Reac.ToString())
+                {
+                    if (arg3.User.Value is SocketGuildUser SGU)
+                    {
+                        AccessLevels L = PermissionsManager.GetAccessLevel(SGU);
+                        if (L < AccessLevels.Administrator)
+                        {
+                            if (!SGU.GuildPermissions.Has(GuildPermission.ManageMessages))
+                            {
+                                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction",
+                                    "Someone reacted to a message with the trigger, but they didn't have the proper permissions..."));
+                                return;
+                            }
+                        }
+                    }
+                    Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Someone reacted to my message with the trigger. let's delete it"));
+
+                    await (await arg1.GetOrDownloadAsync()).DeleteAsync();
+                }
+            }
         }
 
         public async Task SendModLog(ulong GuildID, Embed embed)
