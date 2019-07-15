@@ -2141,16 +2141,16 @@ namespace ModularBOT.Component
         /// <param name="ex"></param>
         public void WriteErrorsLog(Exception ex)
         {
-            //using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
-            //{
-            //    using (StreamWriter sw = new StreamWriter(fs))
-            //    {
-            //        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
-            //        sw.Flush();
-            //        sw.Close();
-            //        Thread.Sleep(150);
-            //    }
-            //}
+            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            {
+                using (StreamWriter sw = new StreamWriter(fs))
+                {
+                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
+                    sw.Flush();
+                    sw.Close();
+                    Thread.Sleep(150);
+                }
+            }
         }
 
         /// <summary>
