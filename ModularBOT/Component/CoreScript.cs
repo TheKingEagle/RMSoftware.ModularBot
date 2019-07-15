@@ -16,7 +16,7 @@ namespace ModularBOT.Component
     internal class CoreScript
     {
         private CustomCommandManager ccmgr;
-        private Dictionary<string, object> Variables { get; set; }
+        internal Dictionary<string, object> Variables { get; set; }
         private CommandService cmdsvr;
         private IServiceProvider services;
         private short OutputCount = 0;
@@ -41,7 +41,7 @@ namespace ModularBOT.Component
         /// These are variable names that are defined by the custom commands class.
         /// They are not managed by the CoreScript in any way, therefore must be protected.
         /// </summary>
-        private readonly string[] SystemVars =
+        internal readonly string[] SystemVars =
         {
             #region Bot Instance
             "self",
@@ -97,6 +97,10 @@ namespace ModularBOT.Component
         #region Public Methods
         public void Set(string var, object value)
         {
+            if(var.Length > 20)
+            {
+                throw (new ArgumentException("Variable name limit exceeded! Keep variable names 20 characters or less"));
+            }
             if (string.IsNullOrEmpty((string)value))
             {
                 throw (new ArgumentException($"You cannot set `{var}` to a value of `null`"));
