@@ -396,7 +396,7 @@ namespace ModularBOT.Component
             }
         }
 
-        [Command("listcmd"), Summary("Lists all available commands for current context."), Remarks("AccessLevels.Normal")]
+        [Command("listcmd",RunMode = RunMode.Async), Summary("Lists all available commands for current context."), Remarks("AccessLevels.Normal")]
         public async Task CMD_ListPaginator()
         {
 
@@ -1552,6 +1552,76 @@ namespace ModularBOT.Component
                 await ReplyAsync("", false, GetEmbeddedMessage("Error", "There was a problem setting my username.", Color.Red, ex));
                 return;
             }
+        }
+
+        [Command("printvars"), Summary("Output all variables and their values."),Remarks("AccessLevels.Administrator")]
+        public async Task PrintVars()
+        {
+            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User)< AccessLevels.Administrator)
+            {
+                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                return;
+            }
+            GuildObject gobj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild?.Id) ?? _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
+            List<PaginatedMessage.Page> Pages = new List<PaginatedMessage.Page>();
+
+            PaginatedMessage.Page pageItem = new PaginatedMessage.Page();
+            string dsc = "";
+            foreach (var item in _DiscordNet.CustomCMDMgr.coreScript.SystemVars)
+            {
+                int flen = dsc.Length + $"• {item.PadRight(20)} :: [System Defined]\r\n".Length;
+                if (flen > 768)
+                {
+
+                    pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                    Pages.Add(pageItem);
+                    pageItem = new PaginatedMessage.Page();
+                    dsc = "";
+
+                }
+                dsc += $"• {item.PadRight(20)} :: [System Defined]\r\n";
+            }
+            foreach (var item in _DiscordNet.CustomCMDMgr.coreScript.Variables)
+            {
+                int flen = dsc.Length + $"• {item.Key.PadRight(20)} :: [Custom Defined] :: {item.Value}\r\n".Length;
+                if(flen > 768)
+                {
+
+                    pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                    Pages.Add(pageItem);
+                    pageItem = new PaginatedMessage.Page();
+                    dsc = "";
+                    
+                }
+                dsc += $"• {item.Key.PadRight(20)} :: {item.Value}\r\n";
+            }
+
+            pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+            Pages.Add(pageItem);
+            pageItem = new PaginatedMessage.Page();
+            dsc = "";
+            var pager = new PaginatedMessage
+            {
+                Pages = Pages,
+                Author = new EmbedAuthorBuilder
+                {
+                    IconUrl = Context.Client.CurrentUser.GetAvatarUrl(),
+                    Name = Context.Client.CurrentUser.ToString(),
+                    Url = Context.Client.CurrentUser.GetAvatarUrl()
+                },
+                Color = Color.DarkGreen,
+                Options = PaginatedAppearanceOptions.Default,
+                TimeStamp = DateTimeOffset.UtcNow
+            };
+
+
+            await PagedReplyAsync(pager, new ReactionList
+            {
+                Forward = true,
+                Backward = true,
+                Jump = false,
+                Trash = true
+            });
         }
 
         #endregion
