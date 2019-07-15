@@ -659,6 +659,22 @@ namespace ModularBOT.Component
                         aliases += "• " + g_prefix + item.ToString() + "\r\n";
                     }
                     if (string.IsNullOrWhiteSpace(aliases)) { aliases = "`No aliases.`"; }
+                    string module = c.Module.Name;
+                    if(c.Module.Name !="CoreModule")
+                    {
+                        var m = serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleGroups.Contains(module));
+                        string adj = $"`{Context.Guild?.Name ?? Context.User.Username}`";
+                        if (m.GuildsAvailable.Count - 1 > 0)
+                        {
+                            adj = m.GuildsAvailable.Count - 1 > 1 ? $"`{Context.Guild?.Name ?? Context.User.Username}` and `{m.GuildsAvailable.Count - 1}` other places" : $"`{Context.Guild?.Name ?? Context.User.Username}` and `{m.GuildsAvailable.Count - 1}` other place";
+                        }
+                        if (m.GuildsAvailable.Count - 1 < 0)
+                        {
+                            adj = "`Everywhere`";
+                        }
+                        builder.AddField("Availability", adj);
+                    }
+                    
                     builder.AddField("Aliases", aliases, true);
                     builder.AddField("Remarks", $"`{c.Remarks ?? "Not specified"}`", true);
                     builder.AddField("From Module", $"`{c.Module.Name ?? "Unknown module"}`");
