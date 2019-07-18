@@ -1524,10 +1524,8 @@ namespace ModularBOT.Component
         {
             try
             {
-                var user = Context.Guild.GetUserAsync(Client.CurrentUser.Id).GetAwaiter().GetResult();
-                await user.ModifyAsync(x => {
-                    x.Nickname = nick;
-                });
+                var u = await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload);
+                await u.ModifyAsync(x=>x.Nickname = nick);
                 await ReplyAsync("", false, GetEmbeddedMessage("Success!", "My nickname was successfully changed! Note: It may take a minute for updates to appear.", Color.Green));
             }
             catch (Exception ex)
@@ -1536,7 +1534,58 @@ namespace ModularBOT.Component
                 return;
             }
         }
+        [Command("listperms"), Summary("Print ALL permissions bot has"), Remarks("AccessLevels.Administrator"), RequireContext(ContextType.Guild, ErrorMessage = "You can only use this in a guild.")]
+        public async Task ListPerms()
+        {
+            
+            List<PaginatedMessage.Page> Pages = new List<PaginatedMessage.Page>();
 
+            PaginatedMessage.Page pageItem = new PaginatedMessage.Page();
+            string dsc = "";
+            var self = await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload);
+            foreach (var item in self.GuildPermissions.ToList())
+            {
+                int flen = dsc.Length + $"• {item.ToString().PadRight(24)}:: {((int)item).ToString()}\r\n".Length;
+                if (flen > 768)
+                {
+
+                    pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                    Pages.Add(pageItem);
+                    pageItem = new PaginatedMessage.Page();
+                    dsc = "";
+
+                }
+                dsc += $"• {item.ToString().PadRight(24)}:: {((int)item).ToString()}\r\n";
+            }
+            
+
+            pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+            Pages.Add(pageItem);
+            pageItem = new PaginatedMessage.Page();
+            dsc = "";
+            var pager = new PaginatedMessage
+            {
+                Pages = Pages,
+                Author = new EmbedAuthorBuilder
+                {
+                    IconUrl = Context.Client.CurrentUser.GetAvatarUrl(),
+                    Name = Context.Client.CurrentUser.ToString(),
+                    Url = Context.Client.CurrentUser.GetAvatarUrl()
+                },
+                Color = Color.DarkGreen,
+                Options = PaginatedAppearanceOptions.Default,
+                TimeStamp = DateTimeOffset.UtcNow
+            };
+
+
+            await PagedReplyAsync(pager, new ReactionList
+            {
+                Forward = true,
+                Backward = true,
+                Jump = false,
+                Trash = true
+            });
+        }
         [Command("setusername"), Summary("Set the bot's username."), Remarks("AccessLevels.Administrator")]
         public async Task SetUserName([Remainder]string username)
         {
