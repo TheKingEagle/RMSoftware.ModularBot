@@ -22,7 +22,7 @@ namespace ModularBOT.Component
         
         internal const int VK_RETURN = 0x0D;
         internal const int WM_KEYDOWN = 0x100;
-
+        private bool errorLogWrite = false;
         private ConsoleColor ConsoleForegroundColor = ConsoleColor.Gray;
         private ConsoleColor ConsoleBackgroundColor = ConsoleColor.Black;
 
@@ -974,7 +974,7 @@ namespace ModularBOT.Component
             if (lines.Count > 1)
             {
 
-                returnstring += "\u00a0";
+                returnstring += "\u2005";
             }
             return returnstring;
         }
@@ -1939,11 +1939,11 @@ namespace ModularBOT.Component
                // Thread.Sleep(1);//safe.
                 if (i == 0)
                 {
-                    Console.WriteLine("\u2502 "+lines[i]);//write current line in queue.
+                    Console.WriteLine(lines[i]);//write current line in queue.
                 }
                 if (i > 0)
                 {
-                    Console.WriteLine("\u2502 " + lines[i]);//write current line in queue, padded by 21 enQuads to preserve line format.
+                    Console.WriteLine(lines[i]);//write current line in queue, padded by 21 enQuads to preserve line format.
                 }
 
             }
@@ -2141,6 +2141,8 @@ namespace ModularBOT.Component
         /// <param name="ex"></param>
         public void WriteErrorsLog(Exception ex)
         {
+            SpinWait.SpinUntil(() => !errorLogWrite);
+            errorLogWrite = true;
             using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
             {
                 using (StreamWriter sw = new StreamWriter(fs))
@@ -2151,6 +2153,7 @@ namespace ModularBOT.Component
                     Thread.Sleep(150);
                 }
             }
+            errorLogWrite = false;
         }
 
         /// <summary>
