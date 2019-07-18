@@ -402,7 +402,7 @@ namespace ModularBOT.Component
                     sw.Flush();
                     sw.Close();
                     _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Write success!"),ConsoleColor.Green);
-                    writingToDisk = false;
+                    
                 }
             }
             catch (Exception ex)
@@ -410,6 +410,8 @@ namespace ModularBOT.Component
                 _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Permissions", "Write failed!",ex));
                 writingToDisk = false;
             }
+            Thread.Sleep(100);
+            writingToDisk = false;
         }
 
         public Embed GetAccessDeniedMessage(ICommandContext Context,AccessLevels requestedAccessLevel)
