@@ -48,6 +48,7 @@ namespace ModularBOT.Component
         {
             try
             {
+                DisableMessages = true;//Do not allow messages until bot is fully logged in.
                 Initialized = false;
                 string token = AppConfig.AuthToken;
 
@@ -85,12 +86,14 @@ namespace ModularBOT.Component
                 
                 
                 
-                cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(),serviceProvider);//ADD CORE.
+                
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 Task.Run(async () => await Client.StartAsync());
                 SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);
+                Client.SetStatusAsync(UserStatus.DoNotDisturb);//go into DND mode.
                 SpinWait.SpinUntil(() => init_start);//Hold thread until needed shard is ready.
                 SpinWait.SpinUntil(() => LoginEventsCalled);
+                cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);//ADD CORE.
                 OffloadReady(ref FromCrash, ref ShutdownRequest, ref RestartRequested);
                 
             }
@@ -180,7 +183,7 @@ namespace ModularBOT.Component
             {
                 if (!Initialized)
                 {
-                    Client.SetStatusAsync(UserStatus.DoNotDisturb);
+                    //Client.SetStatusAsync(UserStatus.DoNotDisturb);
                     ulong id = serviceProvider.GetRequiredService<Configuration>().LogChannel;
                     if (recovered)
                     {
@@ -252,23 +255,25 @@ namespace ModularBOT.Component
                             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"You are running the most recent version."),ConsoleColor.Black);
                         }
                     }
-                    
+
 
                     #endregion
-
+                    Initialized = true;
+                    DisableMessages = false;
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Processing Message Queue."));
+                    foreach (var item in messageQueue)
+                    {
+                        Client_MessageReceived(item).GetAwaiter().GetResult();
+                        Task.Delay(500);
+                    }
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Client Status update!"));
                     //Finished task manager.
                     Client.SetStatusAsync(serviceProvider.GetRequiredService<Configuration>().ReadyStatus);
                     Client.SetGameAsync(serviceProvider.GetRequiredService<Configuration>().ReadyText,null,serviceProvider.GetRequiredService<Configuration>().ReadyActivity);
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
 
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Processing Message Queue."));
-                    foreach (var item in messageQueue)
-                    {
-
-                         Client_MessageReceived(item).GetAwaiter().GetResult();
-                         Task.Delay(500);
-                    }
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
+                    
                 }
             }
             catch (Discord.Net.HttpException httx)
@@ -365,6 +370,11 @@ namespace ModularBOT.Component
 
         private async Task Client_MessageReceived(SocketMessage arg)
         {
+            if(!Initialized)
+            {
+                messageQueue.Add(arg);
+                return;
+            }
             if (DisableMessages) return;
 
             if (!(arg is SocketUserMessage message)) return;
