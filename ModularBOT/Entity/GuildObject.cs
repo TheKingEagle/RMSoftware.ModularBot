@@ -12,6 +12,8 @@ namespace ModularBOT.Entity
     public class GuildObject
     {
         public string CommandPrefix { get; set; }
+
+        public bool LockPFChanges { get; set; }
         public ulong ID { get; set; }
         public List<GuildCommand> GuildCommands { get; set; }
 
