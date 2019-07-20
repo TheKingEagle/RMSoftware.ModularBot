@@ -439,6 +439,7 @@ namespace ModularBOT.Component
 
     public enum AccessLevels
     {
+       NotSpecified = -127,
        /// <summary>
        /// Users with this access level CANNOT use the bot at all.
        /// </summary>
