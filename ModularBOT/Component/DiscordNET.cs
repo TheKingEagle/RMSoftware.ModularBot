@@ -12,6 +12,7 @@ using Discord.Net.WebSockets;
 using Discord.WebSocket;
 using System.IO;
 using Microsoft.Extensions.DependencyInjection;
+using ModularBOT.Entity;
 
 namespace ModularBOT.Component
 {
@@ -42,8 +43,6 @@ namespace ModularBOT.Component
         #endregion
 
         #region Methods
-        
-
         public void Start(ref ConsoleIO consoleIO, ref Configuration AppConfig, ref bool ShutdownRequest, ref bool RestartRequested,ref bool FromCrash)
         {
             try

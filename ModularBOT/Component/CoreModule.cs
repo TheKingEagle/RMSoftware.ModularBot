@@ -11,6 +11,8 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Discord.Addons.Interactive;
+using ModularBOT.Entity;
+
 namespace ModularBOT.Component
 {
     [Summary("Pre-installed commands for basic management | ModularBOT • CORE v2.0")]

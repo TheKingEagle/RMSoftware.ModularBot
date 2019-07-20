@@ -222,7 +222,7 @@
     <Compile Include="Component\ModuleProperties.cs" />
     <Compile Include="Component\OS_SystemInfo.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
-    <Compile Include="Component\PseudoMessage.cs" />
+    <Compile Include="Entity\PseudoMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Component\CoreScript.cs" />
@@ -231,6 +231,9 @@
     <Compile Include="Component\SetupWizard.cs" />
     <Compile Include="Component\UpdateManager.cs" />
     <Compile Include="Configuration.cs" />
+    <Compile Include="Entity\GuildCommand.cs" />
+    <Compile Include="Entity\GuildObject.cs" />
+    <Compile Include="Entity\ModulePropertyItem.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>

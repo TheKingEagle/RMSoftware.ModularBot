@@ -9,18 +9,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using ModularBOT.Entity;
 
 namespace ModularBOT.Component
 {
-    public class ModulePropertyItem
-    {
-        public string ModuleName { get; set; }
-        public string ServiceClass { get;  set; }
-        public List<ulong> GuildsAvailable { get;  set; }
-
-        public List<string> ModuleGroups { get; set; }
-    }
-
     public class ModuleManager
     {
         List<ModulePropertyItem> _modules;

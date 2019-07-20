@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-namespace ModularBOT.Component
+namespace ModularBOT.Entity
 {
     internal class PseudoMessage : IMessage, IUserMessage
     {

@@ -11,6 +11,7 @@ using Discord.WebSocket;
 using System.Text.RegularExpressions;
 using Discord.Commands;
 using System.Reflection;
+using ModularBOT.Entity;
 
 namespace ModularBOT.Component
 {
@@ -898,31 +899,6 @@ namespace ModularBOT.Component
         #endregion
     }
 
-    public class GuildCommand
-    {
-        public string Name { get; set; }
-        public string Action { get; set; }
-        public bool RequirePermission { get; set; }
-        public AccessLevels CommandAccessLevel { get; set; } = AccessLevels.CommandManager;
-        //access level, by default, won't be enforced unless RequirePermission = true
-        public int? Counter { get; set; }
-    }
 
-    public class GuildObject
-    {
-        public string CommandPrefix { get; set; }
-        public ulong ID { get; set; }
-        public List<GuildCommand> GuildCommands { get; set; }
 
-        public void SaveJson()
-        {
-            using (StreamWriter sw = new StreamWriter($"guilds/{ID}.guild"))
-            {
-               
-                sw.WriteLine(JsonConvert.SerializeObject(this,Formatting.Indented));
-                sw.Flush();
-                sw.Close();
-            }
-        }
-    }
 }
