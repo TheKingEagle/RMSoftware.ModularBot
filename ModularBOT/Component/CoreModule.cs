@@ -1298,15 +1298,19 @@ namespace ModularBOT.Component
                     await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                     return;
                 }
-                if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) == AccessLevels.CommandManager)
+                GuildObject pobj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                if (pobj.LockPFChanges)
                 {
-                    if(Context.User is SocketGuildUser sgu)
+                    if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) == AccessLevels.CommandManager)
                     {
-                        if(!sgu.GuildPermissions.Has(GuildPermission.ManageGuild))
+                        if (Context.User is SocketGuildUser sgu)
                         {
-                            await ReplyAsync("", false, GetEmbeddedMessage("DENIED!", 
-                                "You must have `AccessLevels.CommandManager` AND have permission to manage the server.", Color.DarkRed));
-                            return;
+                            if (!sgu.GuildPermissions.Has(GuildPermission.ManageGuild))
+                            {
+                                await ReplyAsync("", false, GetEmbeddedMessage("DENIED!",
+                                    "This guild has their prefix locked. You must have `AccessLevels.Administrator`. Otherwise, you must have `AccessLevels.CommandManager` AND `Manage Server` Permissions.", Color.DarkRed));
+                                return;
+                            }
                         }
                     }
                 }
@@ -1673,6 +1677,142 @@ namespace ModularBOT.Component
                 Jump = false,
                 Trash = true
             });
+        }
+
+        [Command("config"),Summary("Modify various configuration settings. NOTE: Access Level depends on item executed."),Remarks("AccessLevels.NotSpecified"),RequireContext(ContextType.Guild,ErrorMessage ="YoU MuST Be iN a GuILd To uSe ThIs CoMmAnD!1!111!!!1")]
+        public async Task Configure(string subcommand="",string setting="",[Remainder]string value="")
+        {
+            switch (subcommand.ToUpper())
+            {
+                case ("VIEW"):
+                    if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                    {
+                        await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                        break;
+                    }
+                    GuildObject g = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                    if (g == null)
+                    {
+                        await ReplyAsync("", false, GetEmbeddedMessage("No guild object...",
+                            "There was no guild object found for this guild! That should be impossible, unless your guild was added while the bot was offline." +
+                            " Adding a command will fix this problem", Color.DarkRed));
+                        break;
+                    }
+                    EmbedBuilder configViewEB = new EmbedBuilder();
+                    configViewEB.WithAuthor(Context.Client.CurrentUser);
+                    configViewEB.WithColor(Color.Green);
+                    configViewEB.WithTitle("Configuration View");
+                    configViewEB.AddField("LockPrefix", g.LockPFChanges ? "`Yes`" : "`No`",true);
+                    configViewEB.AddField("GuildPrefix", $"`{g.CommandPrefix}` ",true);
+                    configViewEB.AddField("GlobalInitChannel", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogChannel.ToString()}`");
+                    configViewEB.AddField("GlobalCommandPrefix", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix}`");
+                    configViewEB.AddField("LoadCoreModule", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LoadCoreModule ? "`Yes`":"`No`",true);
+                    configViewEB.AddField("ShardCount", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().ShardCount}`",true);
+                    configViewEB.AddField("StartLogoPath", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogoPath}`");
+                    configViewEB.AddField("DiscordEventLogLevel", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel.ToString()}`");
+                    configViewEB.AddField("MassDeploymentMode", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value ? "`Yes`":"`No`",true);
+                    configViewEB.AddField("CheckForUpdates", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value ? "`Yes`":"`No`",true);
+                    configViewEB.AddField("UsePreReleaseChannel", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value ? "`Yes`":"`No`",true);
+                    await ReplyAsync("", false, configViewEB.Build());
+
+                    break;
+                case ("SET"):
+                    g = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
+                    switch (setting.ToUpper())
+                    {
+                        case ("LOCKPREFIX"):
+                            if(Context.User is SocketGuildUser SGU)
+                            {
+                                if(!SGU.GuildPermissions.Has(GuildPermission.ManageGuild))
+                                {
+                                    if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                                    {
+                                        await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!", $"You must either have permission to `Manage Server`, " +
+                                            $"or be registered to the bot permission system with `AccessLevels.{AccessLevels.Administrator.ToString()}`",Color.DarkRed));
+                                        break;
+                                    }
+                                }
+                                if (!bool.TryParse(value, out bool configvalue))
+                                {
+                                    await ReplyAsync("", false, GetEmbeddedMessage("Invalid Value!", $"This item must be a BOOLEAN value. `True` or `False`.", Color.DarkRed));
+                                    break;
+                                }
+                                else
+                                {
+                                    g.LockPFChanges = configvalue;
+                                    g.SaveJson();
+                                    await ReplyAsync("", false, GetEmbeddedMessage("Config Updated", $"`LockPrefix` updated to `{value}` for {Context.Guild.Name}", Color.Green));
+
+                                }
+                            }
+                            
+                            break;
+
+                        case ("GLOBALCOMMANDPREFIX"):
+
+                            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                            {
+                                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                                break;
+                            }
+                            if (string.IsNullOrWhiteSpace(value) || value.Contains('`'))
+                            {
+                                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Invalid prefix", "Your prefix must not start with whitespace, or contain invalid characters!", Color.Red));
+                                break; 
+                            }
+                            _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix = value;
+                            await ReplyAsync("", false, GetEmbeddedMessage("Config Updated", $"`GlobalCommandPrefix` updated to `{value}`", Color.Green));
+                            break;
+
+                        case ("GLOBALINITCHANNEL"):
+
+                            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                            {
+                                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                                break;
+                            }
+                            if (!ulong.TryParse(value, out ulong ulchid))
+                            {
+                                if(Client.GetChannel(ulchid)!= null)
+                                {
+                                    if(Client.GetChannel(ulchid) is SocketTextChannel stc)
+                                    {
+                                        _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogChannel = ulchid;
+                                        _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+                                        await ReplyAsync("", false, GetEmbeddedMessage("Config Updated", $"`GlobalInitChannel` updated to `{ulchid}`", Color.Green));
+                                    }
+                                    else
+                                    {
+                                        await ReplyAsync("", false, GetEmbeddedMessage("Invalid Channel", $"`{ulchid}` is not a valid Text Channel.", Color.Green));
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    await ReplyAsync("", false, GetEmbeddedMessage("Channel Not Found", $"`{ulchid}` did not match any available guild channels.", Color.Green));
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                await ReplyAsync("", false, GetEmbeddedMessage("Invalid Format", $"`{ulchid}` is not a valid `ulong` value.", Color.Green));
+                                break;
+                            }
+                            break;
+
+                        default:
+                            await ReplyAsync("", false, GetEmbeddedMessage("Invalid Setting!", "Please try one of the following\r\n" +
+                                "\r\n• `LockPrefix`" +
+                                "\r\n• `GlobalCommandPrefix`" +
+                                "\r\n• `GlobalInitChannel`", Color.Red));
+                            break;
+                    }
+                    break;
+
+                default:
+                    await ReplyAsync("", false, GetEmbeddedMessage("Invalid Sub-command!!", "Available sub commands are\r\n\r\n• `SET`\r\n• `VIEW`", Color.Red));
+                    break;
+            }
         }
 
         #endregion
