@@ -1702,113 +1702,53 @@ namespace ModularBOT.Component
                     configViewEB.WithAuthor(Context.Client.CurrentUser);
                     configViewEB.WithColor(Color.Green);
                     configViewEB.WithTitle("Configuration View");
-                    configViewEB.AddField("LockPrefix", g.LockPFChanges ? "`Yes`" : "`No`",true);
-                    configViewEB.AddField("GuildPrefix", $"`{g.CommandPrefix}` ",true);
-                    configViewEB.AddField("GlobalInitChannel", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogChannel.ToString()}`");
-                    configViewEB.AddField("GlobalCommandPrefix", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix}`");
-                    configViewEB.AddField("LoadCoreModule", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LoadCoreModule ? "`Yes`":"`No`",true);
-                    configViewEB.AddField("ShardCount", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().ShardCount}`",true);
-                    configViewEB.AddField("StartLogoPath", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogoPath}`");
-                    configViewEB.AddField("DiscordEventLogLevel", $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel.ToString()}`");
-                    configViewEB.AddField("MassDeploymentMode", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value ? "`Yes`":"`No`",true);
-                    configViewEB.AddField("CheckForUpdates", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value ? "`Yes`":"`No`",true);
-                    configViewEB.AddField("UsePreReleaseChannel", _DiscordNet.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value ? "`Yes`":"`No`",true);
+                    foreach (ConfigEntity item in _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().GuildConfigEntities)
+                    {
+                        configViewEB.AddField(item.ExecuteView(_DiscordNet, Context, true));
+                    }
+                    foreach (ConfigEntity item in _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities)
+                    {
+                        configViewEB.AddField(item.ExecuteView(_DiscordNet, Context, true));
+                    }
                     await ReplyAsync("", false, configViewEB.Build());
 
                     break;
                 case ("SET"):
                     g = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
-                    switch (setting.ToUpper())
+                    List<ConfigEntity> All = new List<ConfigEntity>();
+                    All.AddRange(_DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().GuildConfigEntities);
+                    All.AddRange(_DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities);
+                    ConfigEntity c = All.FirstOrDefault(x => x.ConfigIdentifier.ToUpper() == setting.ToUpper());
+                    if(c== null)
                     {
-                        case ("LOCKPREFIX"):
-                            if(Context.User is SocketGuildUser SGU)
+                        string settingIDs = "";
+                        foreach (var item in All)
+                        {
+                            if(!item.ReadOnly)
                             {
-                                if(!SGU.GuildPermissions.Has(GuildPermission.ManageGuild))
-                                {
-                                    if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
-                                    {
-                                        await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!", $"You must either have permission to `Manage Server`, " +
-                                            $"or be registered to the bot permission system with `AccessLevels.{AccessLevels.Administrator.ToString()}`",Color.DarkRed));
-                                        break;
-                                    }
-                                }
-                                if (!bool.TryParse(value, out bool configvalue))
-                                {
-                                    await ReplyAsync("", false, GetEmbeddedMessage("Invalid Value!", $"This item must be a BOOLEAN value. `True` or `False`.", Color.DarkRed));
-                                    break;
-                                }
-                                else
-                                {
-                                    g.LockPFChanges = configvalue;
-                                    g.SaveJson();
-                                    await ReplyAsync("", false, GetEmbeddedMessage("Config Updated", $"`LockPrefix` updated to `{value}` for {Context.Guild.Name}", Color.Green));
-
-                                }
+                                settingIDs += $"\u2005\u2005\u2005 • `{item.ConfigIdentifier}`\r\n";
                             }
-                            
-                            break;
+                        }
+                        await ReplyAsync("", false, GetEmbeddedMessage("Invalid Setting!!", $"You can edit the following settings with this command:\r\n\r\n{settingIDs}", Color.Red));
 
-                        case ("GLOBALCOMMANDPREFIX"):
-
-                            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
-                            {
-                                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
-                                break;
-                            }
-                            if (string.IsNullOrWhiteSpace(value) || value.Contains('`'))
-                            {
-                                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Invalid prefix", "Your prefix must not start with whitespace, or contain invalid characters!", Color.Red));
-                                break; 
-                            }
-                            _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix = value;
-                            await ReplyAsync("", false, GetEmbeddedMessage("Config Updated", $"`GlobalCommandPrefix` updated to `{value}`", Color.Green));
-                            break;
-
-                        case ("GLOBALINITCHANNEL"):
-
-                            if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
-                            {
-                                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
-                                break;
-                            }
-                            if (!ulong.TryParse(value, out ulong ulchid))
-                            {
-                                if(Client.GetChannel(ulchid)!= null)
-                                {
-                                    if(Client.GetChannel(ulchid) is SocketTextChannel stc)
-                                    {
-                                        _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogChannel = ulchid;
-                                        _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
-                                        await ReplyAsync("", false, GetEmbeddedMessage("Config Updated", $"`GlobalInitChannel` updated to `{ulchid}`", Color.Green));
-                                    }
-                                    else
-                                    {
-                                        await ReplyAsync("", false, GetEmbeddedMessage("Invalid Channel", $"`{ulchid}` is not a valid Text Channel.", Color.Green));
-                                        break;
-                                    }
-                                }
-                                else
-                                {
-                                    await ReplyAsync("", false, GetEmbeddedMessage("Channel Not Found", $"`{ulchid}` did not match any available guild channels.", Color.Green));
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                await ReplyAsync("", false, GetEmbeddedMessage("Invalid Format", $"`{ulchid}` is not a valid `ulong` value.", Color.Green));
-                                break;
-                            }
-                            break;
-
-                        default:
-                            await ReplyAsync("", false, GetEmbeddedMessage("Invalid Setting!", "Please try one of the following\r\n" +
-                                "\r\n• `LockPrefix`" +
-                                "\r\n• `GlobalCommandPrefix`" +
-                                "\r\n• `GlobalInitChannel`", Color.Red));
-                            break;
+                        break;
                     }
-                    break;
+                    if (c.ReadOnly)
+                    {
+                        string settingIDs = "";
+                        foreach (var item in All)
+                        {
+                            if (!item.ReadOnly)
+                            {
+                                settingIDs += $"\u2005\u2005\u2005 • `{item.ConfigIdentifier}`\r\n";
+                            }
+                        }
+                        await ReplyAsync("", false, GetEmbeddedMessage("Invalid Setting!!", $"You can edit the following settings with this command:\r\n\r\n{settingIDs}", Color.Red));
 
+                        break;
+                    }
+                    await c.ExecuteSet(Client, _DiscordNet, Context, value);
+                    break;
                 default:
                     await ReplyAsync("", false, GetEmbeddedMessage("Invalid Sub-command!!", "Available sub commands are\r\n\r\n• `SET`\r\n• `VIEW`", Color.Red));
                     break;
