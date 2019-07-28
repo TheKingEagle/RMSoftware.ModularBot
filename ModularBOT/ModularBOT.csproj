@@ -217,11 +217,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Component\CommandList.cs" />
+    <Compile Include="Component\ConfigEntities\MassDeploymentMode.cs" />
+    <Compile Include="Component\ConfigEntities\UsePreReleaseChannel.cs" />
+    <Compile Include="Component\ConfigEntities\GuildPrefix.cs" />
+    <Compile Include="Component\ConfigEntities\EventLogLevel.cs" />
+    <Compile Include="Component\ConfigEntities\CheckForUpdates.cs" />
+    <Compile Include="Component\ConfigEntities\StartLogoPath.cs" />
+    <Compile Include="Component\ConfigEntities\ShardCount.cs" />
+    <Compile Include="Component\ConfigEntities\LoadCoreModule.cs" />
+    <Compile Include="Component\ConfigEntities\GlobalCommandPrefix.cs" />
+    <Compile Include="Component\ConfigEntities\LockPrefix.cs" />
+    <Compile Include="Component\ConfigEntities\GlobalInitChannel.cs" />
     <Compile Include="Component\ConsoleIO.cs" />
     <Compile Include="Component\CoreModule.cs" />
     <Compile Include="Component\ModuleProperties.cs" />
     <Compile Include="Component\OS_SystemInfo.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
+    <Compile Include="Entity\ConfigEntity.cs" />
     <Compile Include="Entity\PseudoMessage.cs" />
   </ItemGroup>
   <ItemGroup>
