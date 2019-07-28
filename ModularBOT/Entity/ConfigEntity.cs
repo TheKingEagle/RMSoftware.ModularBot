@@ -34,6 +34,21 @@ namespace ModularBOT.Entity
             };
             return ef;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="_DiscordNet"></param>
+        /// <param name="Context"></param>
+        /// <param name="inline"></param>
+        /// <returns></returns>
+        public virtual string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
+        {
+            string np = ConfigIdentifier.PadRight(28, ' ');
+            return np;
+        }
+
+
         /// <summary>
         /// Override in derived class.
         /// </summary>
