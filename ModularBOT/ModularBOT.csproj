@@ -218,10 +218,10 @@
   <ItemGroup>
     <Compile Include="Component\CommandList.cs" />
     <Compile Include="Component\ConfigEntities\MassDeploymentMode.cs" />
-    <Compile Include="Component\ConfigEntities\UsePreReleaseChannel.cs" />
+    <Compile Include="Component\ConfigEntities\CheckForUpdates.cs" />
     <Compile Include="Component\ConfigEntities\GuildPrefix.cs" />
     <Compile Include="Component\ConfigEntities\EventLogLevel.cs" />
-    <Compile Include="Component\ConfigEntities\CheckForUpdates.cs" />
+    <Compile Include="Component\ConfigEntities\UsePreReleaseChannel.cs" />
     <Compile Include="Component\ConfigEntities\StartLogoPath.cs" />
     <Compile Include="Component\ConfigEntities\ShardCount.cs" />
     <Compile Include="Component\ConfigEntities\LoadCoreModule.cs" />

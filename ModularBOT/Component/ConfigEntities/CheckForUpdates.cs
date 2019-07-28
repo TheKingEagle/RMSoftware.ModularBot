@@ -12,29 +12,23 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ModularBOT.Component.ConfigEntities
 {
-    internal class UsePreReleaseChannel : ConfigEntity
+    internal class CheckForUpdates : ConfigEntity
     {
-        public UsePreReleaseChannel()
+        public CheckForUpdates()
         {
             ReadOnly = true;
-            ConfigIdentifier = "UsePreReleaseChannel";
+            ConfigIdentifier = "CheckForUpdates";
         }
 
         public override EmbedFieldBuilder ExecuteView(DiscordNET _DiscordNet, ICommandContext Context, bool inline)
         {
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value ? "`Yes`" : "`No`",
+                Value = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value ? "`Yes`" : "`No`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
             return efb;
-        }
-
-        public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
-        {
-            return base.ExecuteView(_DiscordNet, Context, 
-                _DiscordNet.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value ? "Yes" : "No");
         }
     }
 }
