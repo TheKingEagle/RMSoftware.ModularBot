@@ -42,9 +42,17 @@ namespace ModularBOT.Entity
         /// <param name="Context"></param>
         /// <param name="inline"></param>
         /// <returns></returns>
+        public virtual string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context,string value)
+        {
+            string np = ConfigIdentifier.PadRight(28, ' ') + " :: "+value;
+
+            return np;
+        }
+
         public virtual string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            string np = ConfigIdentifier.PadRight(28, ' ');
+            string np = ConfigIdentifier.PadRight(28, ' ') + " :: NOT SPECIFIED";
+
             return np;
         }
 
