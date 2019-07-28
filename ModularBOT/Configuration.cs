@@ -7,6 +7,8 @@ using Discord;
 using Newtonsoft.Json;
 using System.IO;
 using ModularBOT.Component;
+using ModularBOT.Component.ConfigEntities;
+using ModularBOT.Entity;
 namespace ModularBOT
 {
     /// <summary>
@@ -85,6 +87,29 @@ namespace ModularBOT
     {
         public Configuration CurrentConfig;
         internal SetupWizard setup;
+
+        private List<ConfigEntity> _GuildConfigEntities = new List<ConfigEntity>();
+        private List<ConfigEntity> _ModularCnfgEntities = new List<ConfigEntity>();
+
+        public IReadOnlyCollection<ConfigEntity> GuildConfigEntities { get { return _GuildConfigEntities.AsReadOnly(); } }
+        public IReadOnlyCollection<ConfigEntity> ModularCnfgEntities { get { return _ModularCnfgEntities.AsReadOnly(); } }
+
+        public void RegisterGuildConfigEntity(ConfigEntity entity)
+        {
+            if(!_GuildConfigEntities.Contains(entity))
+            {
+                _GuildConfigEntities.Add(entity);
+            }
+        }
+
+        public void RegisterModularCnfgEntity(ConfigEntity entity)
+        {
+            if (!_ModularCnfgEntities.Contains(entity))
+            {
+                _ModularCnfgEntities.Add(entity);
+            }
+        }
+
         string FileName = "";
         public ConfigurationManager(string jsonFilename, ref ConsoleIO consoleIO)
         {
@@ -113,6 +138,19 @@ namespace ModularBOT
             {
                 CurrentConfig.SaveConfig(jsonFilename);
             }
+
+            _GuildConfigEntities.Add(new GuildPrefix());
+            _GuildConfigEntities.Add(new LockPrefix());
+            _ModularCnfgEntities.Add(new CheckForUpdates());
+            _ModularCnfgEntities.Add(new UsePreReleaseChannel());
+            _ModularCnfgEntities.Add(new GlobalInitChannel());
+            _ModularCnfgEntities.Add(new GlobalCommandPrefix());
+            _ModularCnfgEntities.Add(new ShardCount());
+            _ModularCnfgEntities.Add(new StartLogoPath());
+            _ModularCnfgEntities.Add(new EventLogLevel());
+            _ModularCnfgEntities.Add(new MassDeploymentMode());
+            _ModularCnfgEntities.Add(new LoadCoreModule());
+
         }
         public void Save()
         {
