@@ -30,5 +30,10 @@ namespace ModularBOT.Component.ConfigEntities
             };
             return efb;
         }
+
+        public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
+        {
+            return base.ExecuteView(_DiscordNet, Context, _DiscordNet.serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value ? "Yes" : "No");
+        }
     }
 }
