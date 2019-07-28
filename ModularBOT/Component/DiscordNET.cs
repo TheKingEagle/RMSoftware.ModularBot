@@ -53,6 +53,7 @@ namespace ModularBOT.Component
 
                 services = new ServiceCollection();
                 services.AddSingleton(AppConfig);
+                services.AddSingleton(Program.configMGR);
                 services.AddSingleton(consoleIO);
                 services.AddSingleton(cmdsvr);
                 services.AddSingleton(this);
