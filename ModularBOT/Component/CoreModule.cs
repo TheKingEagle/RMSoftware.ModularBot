@@ -1702,15 +1702,92 @@ namespace ModularBOT.Component
                     configViewEB.WithAuthor(Context.Client.CurrentUser);
                     configViewEB.WithColor(Color.Green);
                     configViewEB.WithTitle("Configuration View");
+                    bool DoOncePerPageGC = false;
+                    bool DoOncePerPageSC = false;
+                    
+                    List<PaginatedMessage.Page> Pages = new List<PaginatedMessage.Page>();
+
+                    PaginatedMessage.Page pageItem = new PaginatedMessage.Page();
+                    string dsc = "";
                     foreach (ConfigEntity item in _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().GuildConfigEntities)
                     {
-                        configViewEB.AddField(item.ExecuteView(_DiscordNet, Context, true));
+                        if(!DoOncePerPageGC)
+                        {
+                            dsc += "== Guild Configuration ==\r\n";
+                            DoOncePerPageGC = true;
+                        }
+                        int flen = dsc.Length + $"{item.ExecuteView(_DiscordNet,Context)}\r\n".Length;
+                        if (flen > 2000)
+                        {
+
+                            pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                            Pages.Add(pageItem);
+                            pageItem = new PaginatedMessage.Page();
+                            dsc = "";
+                            DoOncePerPageGC = false;
+
+                        }
+                        dsc += $"{item.ExecuteView(_DiscordNet, Context)}\r\n";
                     }
                     foreach (ConfigEntity item in _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities)
                     {
-                        configViewEB.AddField(item.ExecuteView(_DiscordNet, Context, true));
+                        if (!DoOncePerPageSC)
+                        {
+                            dsc += "\r\n== System Configuration ==\r\n";
+                            DoOncePerPageSC = true;
+                        }
+                        int flen = dsc.Length + $"{item.ExecuteView(_DiscordNet, Context)}\r\n".Length;
+                        if (flen > 2000)
+                        {
+
+                            pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                            Pages.Add(pageItem);
+                            pageItem = new PaginatedMessage.Page();
+                            dsc = "";
+                            DoOncePerPageSC = false;
+
+                        }
+                        dsc += $"{item.ExecuteView(_DiscordNet, Context)}\r\n";
                     }
-                    await ReplyAsync("", false, configViewEB.Build());
+
+                    pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                    Pages.Add(pageItem);
+                    pageItem = new PaginatedMessage.Page();
+                    dsc = "";
+                    var pager = new PaginatedMessage
+                    {
+                        Pages = Pages,
+                        Author = new EmbedAuthorBuilder
+                        {
+                            IconUrl = Context.Client.CurrentUser.GetAvatarUrl(),
+                            Name = Context.Client.CurrentUser.ToString(),
+                            Url = Context.Client.CurrentUser.GetAvatarUrl()
+                        },
+                        Color = Color.DarkGreen,
+                        Options = PaginatedAppearanceOptions.Default,
+                        TimeStamp = DateTimeOffset.UtcNow
+                    };
+
+                    if(Pages.Count > 1)
+                    {
+                        await PagedReplyAsync(pager, new ReactionList
+                        {
+                            Forward = true,
+                            Backward = true,
+                            Jump = false,
+                            Trash = true
+                        });
+                    }
+                    if (Pages.Count == 1)
+                    {
+                        await PagedReplyAsync(pager, new ReactionList
+                        {
+                            Forward = false,
+                            Backward = false,
+                            Jump = false,
+                            Trash = true
+                        });
+                    }
 
                     break;
                 case ("SET"):
