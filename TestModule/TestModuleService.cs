@@ -679,7 +679,7 @@ namespace TestModule
             {
                 Log = new LogMessage(LogSeverity.Verbose, "Greetings", $"What is the default channel? {item.DefaultChannel.Name}");//debuglul
                 Writer.WriteEntry(Log);
-                await item.DefaultChannel.SendMessageAsync($"Hello {arg.Mention}, Welcome to `{arg.Guild.Name}`! {item.WelcomeMessage}");
+                await item.DefaultChannel.SendMessageAsync($"Hello `{arg.Username}#{arg.Discriminator}`, Welcome to `{arg.Guild.Name}`! {item.WelcomeMessage}");
                 if (item.RoleToAssign == null)
                 {
                     Log = new LogMessage(LogSeverity.Warning, "Greetings", $"A role was not specified. Playing welcome message only.");//debuglul
