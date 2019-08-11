@@ -9,6 +9,7 @@ using ModularBOT.Component;
 using Discord.Commands;
 using System.IO;
 using Newtonsoft.Json;
+using ModularBOT;
 namespace TestModule
 {
     [Summary("A Basic moderation toolkit for ModularBOT")]
@@ -19,12 +20,15 @@ namespace TestModule
         public TestModuleService _jservice { get; set; }
 
         public PermissionManager _permissions { get; set; }
-        public TestModule(DiscordShardedClient discord, TestModuleService joinservice, ConsoleIO writer, PermissionManager manager)
+
+        public ConfigurationManager _configmgr { get; set; }
+        public TestModule(DiscordShardedClient discord, TestModuleService joinservice, ConsoleIO writer, PermissionManager manager, ConfigurationManager cnfgmgr)
         {
             _client = discord;
             _jservice = joinservice;
             _writer = writer;
             _permissions = manager;
+            _configmgr = cnfgmgr;
             _writer.WriteEntry(new LogMessage(LogSeverity.Critical, "TestMOD", "Constructor called!!!!!!!!!"));
         }
         [Command("tpmgr"),Remarks("AccessLevels.Administrator")]
@@ -160,7 +164,7 @@ namespace TestModule
 
             try
             {
-                ModLogBinding ml = _jservice.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
+                ModLogBinding ml = TestModuleService.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
                 if (ml != null)
                 {
                     await user.AddRoleAsync(Context.Guild.GetRole(ml.MuteRoleID));
@@ -239,7 +243,7 @@ namespace TestModule
 
             try
             {
-                ModLogBinding ml = _jservice.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
+                ModLogBinding ml = TestModuleService.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
                 if(ml!= null)
                 {
                     await user.RemoveRoleAsync(Context.Guild.GetRole(ml.MuteRoleID));
@@ -545,102 +549,123 @@ namespace TestModule
 
         PermissionManager PermissionsManager { get; set; }
 
+        ConfigurationManager CfgMgr { get; set; }
+
         #region Configuration Bindings
 
         string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
         string TrashcanBindingsConfig = "Modules/TestModule/trash-can.json";
 
         #endregion
-
-        IEmote Reaction = null;
-        bool doonce = false;
+        
+        static bool doonce = false;
 
         [DontInject]
-        public Dictionary<ulong, GuildQueryItem> BoundItems { get; set; }//This contains <guildID,role> value pairs to check user's join event.
+        public static Dictionary<ulong, GuildQueryItem> BoundItems { get; set; }//This contains <guildID,role> value pairs to check user's join event.
         
         [DontInject]
-        public Dictionary<ulong,string> Trashcans { get; set; }
+        public static Dictionary<ulong,string> Trashcans { get; set; }
         
-        public List<ModLogBinding> MLbindings = new List<ModLogBinding>();
+        public static List<ModLogBinding> MLbindings = new List<ModLogBinding>();
         
 
-        public TestModuleService(DiscordShardedClient _client, ConsoleIO _consoleIO, PermissionManager _permissions)
+        public TestModuleService(DiscordShardedClient _client, ConsoleIO _consoleIO, PermissionManager _permissions, ConfigurationManager _cfgMgr)
         {
-            PermissionsManager = _permissions;
-            ShardedClient = _client;
-            Writer = _consoleIO;
-            LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "Greetings", "TestModuleService constructor called.");
-            Writer.WriteEntry(constructorLOG);
-            if (ShardedClient == null)
+            if (doonce)
             {
-                LogMessage ERR = new LogMessage(LogSeverity.Critical, "Greetings", "Client is null! You should be ashamed.");
-                _consoleIO.WriteEntry(ERR);
+                _consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TestMod", "Constructor called again!!!! Why the hell are you doing this again?????????"));
+
             }
-            if (!Directory.Exists(Path.GetDirectoryName(ModLogBindingsConfig)))
+            if (!doonce)
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(ModLogBindingsConfig));
-                MLbindings = new List<ModLogBinding>();
-                using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+                PermissionsManager = _permissions;
+                CfgMgr = _cfgMgr;
+                ShardedClient = _client;
+                Writer = _consoleIO;
+                LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "Greetings", "TestModuleService constructor called.");
+                Writer.WriteEntry(constructorLOG);
+                if (ShardedClient == null)
                 {
-                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+                    LogMessage ERR = new LogMessage(LogSeverity.Critical, "Greetings", "Client is null! You should be ashamed.");
+                    _consoleIO.WriteEntry(ERR);
                 }
-            }
-            else
-            {
-                if (!File.Exists(ModLogBindingsConfig))
+                if (!Directory.Exists(Path.GetDirectoryName(ModLogBindingsConfig)))
                 {
-                    var fs = File.Create(ModLogBindingsConfig);
-                    fs.WriteByte(0);
-                    fs.Close();
+                    Directory.CreateDirectory(Path.GetDirectoryName(ModLogBindingsConfig));
+                    MLbindings = new List<ModLogBinding>();
+                    using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+                    {
+                        sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+                    }
                 }
-            }
-
-            if (!Directory.Exists(Path.GetDirectoryName(TrashcanBindingsConfig)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(TrashcanBindingsConfig));
-                Trashcans = new Dictionary<ulong, string>();
-                using (StreamWriter sw = new StreamWriter(TrashcanBindingsConfig))
+                else
                 {
-                    sw.WriteLine(JsonConvert.SerializeObject(Trashcans, Formatting.Indented));
+                    if (!File.Exists(ModLogBindingsConfig))
+                    {
+                        var fs = File.Create(ModLogBindingsConfig);
+                        fs.WriteByte(0);
+                        fs.Close();
+                    }
                 }
-            }
-            else
-            {
-                if (!File.Exists(TrashcanBindingsConfig))
+
+                if (!Directory.Exists(Path.GetDirectoryName(TrashcanBindingsConfig)))
                 {
-                    var fs = File.Create(TrashcanBindingsConfig);
-                    fs.WriteByte(0);
-                    fs.Close();
+                    Directory.CreateDirectory(Path.GetDirectoryName(TrashcanBindingsConfig));
+                    Trashcans = new Dictionary<ulong, string>();
+                    using (StreamWriter sw = new StreamWriter(TrashcanBindingsConfig))
+                    {
+                        sw.WriteLine(JsonConvert.SerializeObject(Trashcans, Formatting.Indented));
+                    }
                 }
-            }
+                else
+                {
+                    if (!File.Exists(TrashcanBindingsConfig))
+                    {
+                        var fs = File.Create(TrashcanBindingsConfig);
+                        fs.WriteByte(0);
+                        fs.Close();
+                    }
+                }
 
-            using (StreamReader sr = new StreamReader(ModLogBindingsConfig))
-            {
-                MLbindings = JsonConvert.DeserializeObject<List<ModLogBinding>>(sr.ReadToEnd());
-            }
+                using (StreamReader sr = new StreamReader(ModLogBindingsConfig))
+                {
+                    MLbindings = JsonConvert.DeserializeObject<List<ModLogBinding>>(sr.ReadToEnd());
+                }
 
-            using (StreamReader sr = new StreamReader(TrashcanBindingsConfig))
-            {
-                Trashcans = JsonConvert.DeserializeObject<Dictionary<ulong,string>>(sr.ReadToEnd());
-            }
+                using (StreamReader sr = new StreamReader(TrashcanBindingsConfig))
+                {
+                    Trashcans = JsonConvert.DeserializeObject<Dictionary<ulong, string>>(sr.ReadToEnd());
+                }
 
-            if (MLbindings == null)
-            {
-                MLbindings = new List<ModLogBinding>();
-            }
+                if (MLbindings == null)
+                {
+                    MLbindings = new List<ModLogBinding>();
+                }
 
-            if (Trashcans == null)
-            {
-                Trashcans = new Dictionary<ulong, string>();
-            }
+                if (Trashcans == null)
+                {
+                    Trashcans = new Dictionary<ulong, string>();
+                }
 
-            BoundItems = new Dictionary<ulong, GuildQueryItem>();
-            ShardedClient.UserJoined += ShardedClient_UserJoined;
-            ShardedClient.ReactionAdded += Dsc_ReactionAdded;
-            LogMessage Log2 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionAdded event handler to client.");
-            LogMessage Log = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
-            _consoleIO.WriteEntry(Log);
-            _consoleIO.WriteEntry(Log2);
+                BoundItems = new Dictionary<ulong, GuildQueryItem>();
+                ShardedClient.UserJoined += ShardedClient_UserJoined;
+                ShardedClient.ReactionAdded += Dsc_ReactionAdded;
+                LogMessage Log2 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionAdded event handler to client.");
+                LogMessage Log = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
+                _consoleIO.WriteEntry(Log);
+                _consoleIO.WriteEntry(Log2);
+
+
+
+                _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Adding entities to the configuration manager"));
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.TrashCanEmote());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.ModLogChannel());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeChannel());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeMessage());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeRole());
+                _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Success!! Config entities registered."));
+                doonce = true;
+            }
 
 
         }

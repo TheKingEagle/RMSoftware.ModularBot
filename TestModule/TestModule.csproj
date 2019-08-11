@@ -128,8 +128,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigEntities\ModLogChannel.cs" />
+    <Compile Include="ConfigEntities\WelcomeChannel.cs" />
+    <Compile Include="ConfigEntities\WelcomeMessage.cs" />
+    <Compile Include="ConfigEntities\WelcomeRole.cs" />
     <Compile Include="TestModuleService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ConfigEntities\TrashCanEmote.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
