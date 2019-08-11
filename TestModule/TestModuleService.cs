@@ -571,6 +571,12 @@ namespace TestModule
 
         public TestModuleService(DiscordShardedClient _client, ConsoleIO _consoleIO, PermissionManager _permissions, ConfigurationManager _cfgMgr)
         {
+            PermissionsManager = _permissions;
+            CfgMgr = _cfgMgr;
+            ShardedClient = _client;
+            Writer = _consoleIO;
+            LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "Greetings", "TestModuleService constructor called.");
+            Writer.WriteEntry(constructorLOG);
             if (doonce)
             {
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TestMod", "Constructor called again!!!! Why the hell are you doing this again?????????"));
@@ -578,12 +584,7 @@ namespace TestModule
             }
             if (!doonce)
             {
-                PermissionsManager = _permissions;
-                CfgMgr = _cfgMgr;
-                ShardedClient = _client;
-                Writer = _consoleIO;
-                LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "Greetings", "TestModuleService constructor called.");
-                Writer.WriteEntry(constructorLOG);
+                
                 if (ShardedClient == null)
                 {
                     LogMessage ERR = new LogMessage(LogSeverity.Critical, "Greetings", "Client is null! You should be ashamed.");
@@ -714,7 +715,11 @@ namespace TestModule
 
         public async Task BindReaction(ICommandContext Context, Emote emote, ulong GuildID)
         {
-
+            if (Trashcans == null)
+            {
+                await Context.Channel.SendMessageAsync("DEB: New trashcan config generated");
+                Trashcans = new Dictionary<ulong, string>();
+            }
             if (Trashcans.ContainsKey(GuildID))
             {
                 Trashcans[GuildID] = emote.ToString();
@@ -729,6 +734,7 @@ namespace TestModule
             }
             else
             {
+               
                 Trashcans.Add(GuildID, emote.ToString());
                 using (StreamWriter SW = new StreamWriter(TrashcanBindingsConfig))
                 {
