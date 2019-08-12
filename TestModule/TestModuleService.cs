@@ -575,11 +575,11 @@ namespace TestModule
             CfgMgr = _cfgMgr;
             ShardedClient = _client;
             Writer = _consoleIO;
-            LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "Greetings", "TestModuleService constructor called.");
+            LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "TMS_Main", "TestModuleService constructor called.");
             Writer.WriteEntry(constructorLOG);
             if (doonce)
             {
-                _consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TestMod", "Constructor called again!!!! Why the hell are you doing this again?????????"));
+                _consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TMS_Main", "TestModuleService Constructor called again!!!! Why Tho???"));
 
             }
             if (!doonce)
@@ -587,7 +587,7 @@ namespace TestModule
                 
                 if (ShardedClient == null)
                 {
-                    LogMessage ERR = new LogMessage(LogSeverity.Critical, "Greetings", "Client is null! You should be ashamed.");
+                    LogMessage ERR = new LogMessage(LogSeverity.Critical, "TMS_Main", "Client is null! You should be ashamed.");
                     _consoleIO.WriteEntry(ERR);
                 }
                 if (!Directory.Exists(Path.GetDirectoryName(ModLogBindingsConfig)))
