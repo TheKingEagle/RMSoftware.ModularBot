@@ -89,13 +89,21 @@ namespace ModularBOT.Component
                 
                 
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
-                SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);
+                SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);//wait for the client to login before starting...
                 Task.Run(async () => await Client.StartAsync());
                 
                 Client.SetStatusAsync(UserStatus.DoNotDisturb);//go into DND mode.
                 SpinWait.SpinUntil(() => init_start);//Hold thread until needed shard is ready.
-                SpinWait.SpinUntil(() => LoginEventsCalled);
-                cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);//ADD CORE.
+                SpinWait.SpinUntil(() => LoginEventsCalled);//Don't instruct core to init until client finished login event.
+                if(AppConfig.LoadCoreModule)
+                {
+                    cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);//ADD CORE.
+                }
+                if(!AppConfig.LoadCoreModule)
+                {
+                    consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Modules", "You have disabled CoreModule! " +
+                        "You will not be able to manage commands or view system stats, unless you have your own implementations!"));
+                }
                 OffloadReady(ref FromCrash, ref ShutdownRequest, ref RestartRequested);
                 
             }
