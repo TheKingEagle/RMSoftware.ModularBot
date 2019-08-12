@@ -1102,7 +1102,7 @@ namespace ModularBOT.Component
                     discordNET.CustomCMDMgr.coreScript.Set(varname, input);
                 }
 
-                if (input.ToLower().StartsWith("config.loglevel"))
+                if (input.ToLower().StartsWith("config.discordeventloglevel"))
                 {
                     if (input.Split(' ').Length > 2)
                     {
@@ -1114,7 +1114,7 @@ namespace ModularBOT.Component
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
                         continue;
                     }
-                    input = input.Remove(0, 16).Trim();
+                    input = input.Remove(0, 28).Trim();
                     if (Enum.TryParse(input, true, out LogSeverity result))
                     {
                         Program.configMGR.CurrentConfig.DiscordEventLogLevel = result;
@@ -1122,7 +1122,7 @@ namespace ModularBOT.Component
                         ScreenModal = true;
                         while (true)
                         {
-                            WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Saved logging level. Changes will take place when bot is restarted. Do you want to restart now? [Y/N]"), null, true, true, true);
+                            WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Changes will take place next time the program is started. Do you want to restart now? [Y/N]"), null, true, true, true);
                             ConsoleKeyInfo k = Console.ReadKey();
                             if (k.Key == ConsoleKey.Y)
                             {
@@ -1145,7 +1145,7 @@ namespace ModularBOT.Component
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", $"Invalid parameter. Try a log severity level: {string.Join(", ", Enum.GetNames(typeof(LogSeverity)))}"));
                 }
 
-                if (input.ToLower().StartsWith("config.setupdates"))
+                if (input.ToLower().StartsWith("config.loadcoremodule"))
                 {
                     if (input.Split(' ').Length > 2)
                     {
@@ -1157,7 +1157,50 @@ namespace ModularBOT.Component
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
                         continue;
                     }
-                    input = input.Remove(0, 18).Trim();
+                    input = input.Remove(0, 22).Trim();
+                    if (bool.TryParse(input,out bool result))
+                    {
+                        Program.configMGR.CurrentConfig.LoadCoreModule = result;
+                        Program.configMGR.Save();
+                        ScreenModal = true;
+                        while (true)
+                        {
+                            WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Changes will take place next time the program is started. Do you want to restart now? [Y/N]"), null, true, true, true);
+                            ConsoleKeyInfo k = Console.ReadKey();
+                            if (k.Key == ConsoleKey.Y)
+                            {
+
+                                discordNET.Stop(ref ShutdownCalled);
+                                RestartRequested = true;
+                                Thread.Sleep(1000);
+                                return Task.Delay(1);
+                            }
+                            if (k.Key == ConsoleKey.N)
+                            {
+                                break;
+                            }
+                        }
+                        ScreenModal = false;
+
+                    }
+
+                    else
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", $"Invalid parameter. Try TRUE or FALSE."));
+                }
+
+                if (input.ToLower().StartsWith("config.checkforupdates"))
+                {
+                    if (input.Split(' ').Length > 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    input = input.Remove(0, 23).Trim();
                     if (bool.TryParse(input, out bool result))
                     {
                         Program.configMGR.CurrentConfig.CheckForUpdates = result;
@@ -1172,7 +1215,7 @@ namespace ModularBOT.Component
                     }
                 }
 
-                if (input.ToLower().StartsWith("config.update.prerelease"))
+                if (input.ToLower().StartsWith("config.useprereleasechannel"))
                 {
                     if (input.Split(' ').Length > 1)
                     {
@@ -1184,7 +1227,7 @@ namespace ModularBOT.Component
                         WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
                         continue;
                     }
-                    input = input.Remove(0, 25).Trim();
+                    input = input.Remove(0, 28).Trim();
                     if (bool.TryParse(input, out bool result))
                     {
                         Program.configMGR.CurrentConfig.UsePreReleaseChannel = result;
