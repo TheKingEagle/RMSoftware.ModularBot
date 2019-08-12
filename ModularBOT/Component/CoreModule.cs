@@ -26,6 +26,12 @@ namespace ModularBOT.Component
 
         public CoreModule(DiscordShardedClient client, CommandService cmdservice, ConsoleIO consoleIO, DiscordNET dnet)
         {
+            if(client.LoginState != LoginState.LoggedIn)
+            {
+                this.ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "CoreMOD", "That there client isn't logged in yet."));
+                System.Threading.SpinWait.SpinUntil(() => client.LoginState == LoginState.LoggedIn);
+
+            }
             Client = client;
             Cmdsvr = cmdservice;
             this.ConsoleIO = consoleIO;
