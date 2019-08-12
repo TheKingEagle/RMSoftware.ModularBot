@@ -69,10 +69,11 @@ namespace ModularBOT.Component
                     TotalShards = AppConfig.ShardCount
                 });
 
-                services.AddSingleton(new Discord.Addons.Interactive.InteractiveService(Client));
                 services.AddSingleton(Client);
+
+                services.AddSingleton(new Discord.Addons.Interactive.InteractiveService(Client));
+
                 serviceProvider = services.BuildServiceProvider();
-               
                 Client.Log += Client_Log;
 
                 Client.LoggedIn += Client_LoggedIn;
@@ -88,8 +89,9 @@ namespace ModularBOT.Component
                 
                 
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
-                Task.Run(async () => await Client.StartAsync());
                 SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);
+                Task.Run(async () => await Client.StartAsync());
+                
                 Client.SetStatusAsync(UserStatus.DoNotDisturb);//go into DND mode.
                 SpinWait.SpinUntil(() => init_start);//Hold thread until needed shard is ready.
                 SpinWait.SpinUntil(() => LoginEventsCalled);
@@ -134,6 +136,7 @@ namespace ModularBOT.Component
 
         private Task Client_LoggedIn()
         {
+            SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Client", "Client is logged in! We can now start permissions system."));
             PermissionManager = new PermissionManager(serviceProvider);
             services.AddSingleton(PermissionManager);
