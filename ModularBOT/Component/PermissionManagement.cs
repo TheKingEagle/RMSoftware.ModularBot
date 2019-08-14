@@ -395,14 +395,17 @@ namespace ModularBOT.Component
             writingToDisk = true;
             try
             {
-                using (StreamWriter sw = new StreamWriter("Permissions.cnf"))
+                using (FileStream fs = new FileStream("Permissions.cnf", File.Exists("Permissions.cnf") ? FileMode.OpenOrCreate : FileMode.Truncate))
                 {
-                    _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Saving entities. Permissions.cnf"));
-                    sw.WriteLine(JsonConvert.SerializeObject(RegisteredEntities,Formatting.Indented));
-                    sw.Flush();
-                    sw.Close();
-                    _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Write success!"),ConsoleColor.Green);
-                    
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {
+                        _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Saving entities. Permissions.cnf"));
+                        sw.WriteLine(JsonConvert.SerializeObject(RegisteredEntities, Formatting.Indented));
+                        sw.Flush();
+                        sw.Close();
+                        _services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Permissions", "Write success!"), ConsoleColor.Green);
+
+                    }
                 }
             }
             catch (Exception ex)
