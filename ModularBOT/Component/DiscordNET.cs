@@ -83,6 +83,7 @@ namespace ModularBOT.Component
                 Client.ShardDisconnected += Client_ShardDisconnected;
                 Client.GuildAvailable += Client_GuildAvailable;
                 Client.GuildUnavailable += Client_GuildUnavailable;
+                Client.GuildUpdated += Client_GuildUpdated;
                 Client.JoinedGuild += Client_JoinedGuild;
                 
                 
@@ -142,6 +143,12 @@ namespace ModularBOT.Component
             }
         }
 
+        private Task Client_GuildUpdated(SocketGuild arg1, SocketGuild arg2)
+        {
+            Task.Run(()=> SyncGuild(arg2));
+            return Task.Delay(0);
+        }
+
         private Task Client_LoggedIn()
         {
             SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);
@@ -158,8 +165,10 @@ namespace ModularBOT.Component
             return Task.Delay(1);
         }
 
+        int synccall = 0;
         public void SyncGuild(SocketGuild arg)
         {
+            synccall++;
             foreach (SocketRole item in arg.Roles)
             {
                 if (item.Permissions.ManageGuild)
@@ -172,8 +181,9 @@ namespace ModularBOT.Component
                     }
                 }
             }
+            SpinWait.SpinUntil(() => synccall > 9, 30000);//save after 10 sync calls OR 30 seconds
+            synccall = 0;
             PermissionManager.SaveJson();
-            Thread.Sleep(300);
         }
 
         public void Stop(ref bool ShutdownRequest)
