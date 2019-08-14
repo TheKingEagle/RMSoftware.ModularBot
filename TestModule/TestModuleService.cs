@@ -10,6 +10,8 @@ using Discord.Commands;
 using System.IO;
 using Newtonsoft.Json;
 using ModularBOT;
+using Discord.Rest;
+
 namespace TestModule
 {
     [Summary("A Basic moderation toolkit for ModularBOT")]
@@ -351,6 +353,82 @@ namespace TestModule
             }
         }
 
+        [Command("unban", RunMode = RunMode.Async)]
+        public async Task unBan(IGuildUser user, [Remainder]string reason = "Ban Successfully appealed")
+        {
+
+            #region ERRORS
+            if (Context.Guild == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Not Supported",
+                    "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
+                return;
+            }
+            SocketGuildUser SGUuser = Context.User as SocketGuildUser;
+            if (!SGUuser.GuildPermissions.Has(GuildPermission.BanMembers))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
+                    "You must have permission to ban members.", Color.Red));
+                return;
+            }
+            if (!(await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload))
+                .GuildPermissions.Has(GuildPermission.BanMembers))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("I'm Sorry, but I can't!",
+                    "I must have permission to ban members.", Color.Red));
+                return;
+            }
+
+            if (user.Id == _client.CurrentUser.Id)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to ban myself...", Color.Red));
+                return;
+            }
+            if (user == SGUuser)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't force me to ban you...", Color.Red));
+                return;
+            }
+            if (user == await Context.Guild.GetOwnerAsync())
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
+                    "You can't ban the server owner...", Color.Red));
+                return;
+            }
+            #endregion
+
+            try
+            {
+                await Context.Guild.RemoveBanAsync(user);
+                EmbedBuilder b = new EmbedBuilder
+                {
+                    Title = $"Unban | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
+                    Timestamp = DateTimeOffset.Now
+                };
+                b.WithColor(new Color(18, 225, 12));
+                string ut = user.IsBot ? "Bot" : "User";
+                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
+                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+                b.AddField("Reason", reason);
+                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                await ReplyAsync("", false, GetEmbeddedMessage($"unbanned {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 18, 12)));
+            }
+            catch (Discord.Net.HttpException ex)
+            {
+                if (ex.HttpCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", "Server responded with a 403.", Color.DarkRed, ex));
+                }
+                else
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage("Critical Failure", $"{ex.Message}", Color.DarkRed, ex));
+
+                }
+            }
+        }
+
         [Command("cpurge", RunMode = RunMode.Async), RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task Clear(int amount = 90)
         {
@@ -651,10 +729,16 @@ namespace TestModule
                 BoundItems = new Dictionary<ulong, GuildQueryItem>();
                 ShardedClient.UserJoined += ShardedClient_UserJoined;
                 ShardedClient.ReactionAdded += Dsc_ReactionAdded;
-                LogMessage Log2 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionAdded event handler to client.");
-                LogMessage Log = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
-                _consoleIO.WriteEntry(Log);
+                ShardedClient.UserBanned += ShardedClient_UserBanned;
+                ShardedClient.UserUnbanned += ShardedClient_UserUnbanned;
+                LogMessage Log1 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionAdded event handler to client.");
+                LogMessage Log2 = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
+                LogMessage Log4 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserBanned event handler to client.");
+                LogMessage Log5 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserUnbanned event handler to client.");
+                _consoleIO.WriteEntry(Log1);
                 _consoleIO.WriteEntry(Log2);
+                _consoleIO.WriteEntry(Log4);
+                _consoleIO.WriteEntry(Log5);
 
 
 
@@ -666,6 +750,63 @@ namespace TestModule
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeRole());
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Success!! Config entities registered."));
                 doonce = true;
+            }
+
+
+        }
+
+        private async Task ShardedClient_UserUnbanned(SocketUser arg1, SocketGuild arg2)
+        {
+            Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was unbanned from: {arg2.Name}."));
+            EmbedBuilder b = new EmbedBuilder
+            {
+                Title = $"Unban",
+                Timestamp = DateTimeOffset.Now
+            };
+            b.WithColor(new Color(18, 225, 12));
+            string ut = arg1.IsBot ? "Bot" : "User";
+            b.AddField(ut, $"{arg1.Username}#{arg1.Discriminator} ({arg1.Mention})", true);
+            //b.AddField("Staff Responsible", $"{rb.}", true);
+            var audits = await arg2.GetAuditLogsAsync(1).Flatten().ToList();
+            var u = audits.FirstOrDefault(x => x.Action == ActionType.Unban)?.User;
+            var r = audits.FirstOrDefault(x => x.Action == ActionType.Unban)?.Reason;
+            if (u != null)
+            {
+                b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}",true);
+            }
+            b.AddField("Reason", r != null ? r : "Ban successfully appealed");
+            if (u.Id != ShardedClient.CurrentUser.Id)
+            {
+                await SendModLog(arg2.Id, b.Build());
+            }
+        }
+
+
+        private async Task ShardedClient_UserBanned(SocketUser arg1, SocketGuild arg2)
+        {
+            Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was banned from guild: {arg2.Name}."));
+            Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"BAN Reason: {arg2.GetBanAsync(arg1).GetAwaiter().GetResult().Reason}"));
+            var rb = await arg2.GetBanAsync(arg1);
+
+            EmbedBuilder b = new EmbedBuilder
+            {
+                Title = $"Ban | Case #{GetCaseCount(arg2.Id)}",
+                Timestamp = DateTimeOffset.Now
+            };
+            b.WithColor(new Color(225, 18, 12));
+            string ut = arg1.IsBot ? "Bot" : "User";
+            b.AddField(ut, $"{arg1.Username}#{arg1.Discriminator} ({arg1.Mention})", true);
+            //b.AddField("Staff Responsible", $"{rb.}", true);
+            var audits =  await arg2.GetAuditLogsAsync(1).Flatten().ToList();
+            var u = audits.FirstOrDefault(x => x.Action == ActionType.Ban)?.User;
+            if(u != null)
+            {
+                b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}",true);
+            }
+            b.AddField("Reason", rb.Reason);
+            if(u.Id != ShardedClient.CurrentUser.Id)
+            {
+                await SendModLog(arg2.Id, b.Build());
             }
 
 
