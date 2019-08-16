@@ -757,6 +757,13 @@ namespace TestModule
 
         private async Task ShardedClient_UserUnbanned(SocketUser arg1, SocketGuild arg2)
         {
+
+            if (!arg2.CurrentUser.GuildPermissions.Has(GuildPermission.BanMembers | GuildPermission.ViewAuditLog))
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was unbanned from guild: {arg2.Name}."));
+                Writer.WriteEntry(new LogMessage(LogSeverity.Warning, "TMS_Events", $"unban event detected, but I don't have permission to get the details."));
+                return;
+            }
             Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was unbanned from: {arg2.Name}."));
             EmbedBuilder b = new EmbedBuilder
             {
@@ -784,6 +791,16 @@ namespace TestModule
 
         private async Task ShardedClient_UserBanned(SocketUser arg1, SocketGuild arg2)
         {
+            if(!ModLogBound(arg2.Id))
+            {
+                return;
+            }
+            if(!arg2.CurrentUser.GuildPermissions.Has(GuildPermission.BanMembers | GuildPermission.ViewAuditLog))
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was banned from guild: {arg2.Name}."));
+                Writer.WriteEntry(new LogMessage(LogSeverity.Warning, "TMS_Events", $"Ban event detected, but I don't have permission to get the details."));
+                return;
+            }
             Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was banned from guild: {arg2.Name}."));
             Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"BAN Reason: {arg2.GetBanAsync(arg1).GetAwaiter().GetResult().Reason}"));
             var rb = await arg2.GetBanAsync(arg1);
@@ -977,6 +994,12 @@ namespace TestModule
             }
         }
 
+        public bool ModLogBound(ulong guildID)
+        {
+            ModLogBinding mb = MLbindings.FirstOrDefault(x => x.GuildID == guildID);
+            return mb != null;
+        }
+
         public ulong GetCaseCount(ulong guildID)
         {
             ModLogBinding mb = MLbindings.FirstOrDefault(x => x.GuildID == guildID);
@@ -998,6 +1021,17 @@ namespace TestModule
 
         public async Task BindModLog(ICommandContext context, IRole role)
         {
+            var z = await context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload);
+            if (!z.GuildPermissions.Has(GuildPermission.KickMembers | GuildPermission.BanMembers | GuildPermission.ViewAuditLog))
+            {
+                string hasKick = !z.GuildPermissions.Has(GuildPermission.KickMembers) ? "• `KICK MEMBERS`\r\n" : "";
+                string hasBan = !z.GuildPermissions.Has(GuildPermission.BanMembers) ? "• `BAN MEMBERS`\r\n" : "";
+                string hasAudit = !z.GuildPermissions.Has(GuildPermission.ViewAuditLog) ? "• `VIEW AUDIT LOG`" : "";
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Nope!",
+               $"In order to set this channel up for ModLog, you must give me the following permissions:\r\n\r\n" +
+               $"{hasKick}{hasBan}{hasAudit}", Color.Red));
+                return;
+            }
             if(MLbindings.FirstOrDefault(x=>x.GuildID == context.Guild.Id) != null)
             {
                 await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Nope!",
