@@ -171,8 +171,10 @@ namespace ModularBOT.Component
             synccall++;
             foreach (SocketRole item in arg.Roles)
             {
-                if (item.Permissions.ManageGuild)
+                if (item.Permissions.Has(GuildPermission.Administrator) || item.Permissions.Has(GuildPermission.ManageGuild) || item.Permissions.Has(GuildPermission.ManageChannels))
                 {
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Role {item.Name} has met the criteria."));
+
                     if (PermissionManager.GetAccessLevel(item) < AccessLevels.CommandManager)
                     {
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a role that can manage guilds: " +
