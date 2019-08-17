@@ -757,11 +757,14 @@ namespace TestModule
 
         private async Task ShardedClient_UserUnbanned(SocketUser arg1, SocketGuild arg2)
         {
-
+            if (!ModLogBound(arg2.Id))
+            {
+                return;
+            }
             if (!arg2.CurrentUser.GuildPermissions.Has(GuildPermission.BanMembers | GuildPermission.ViewAuditLog))
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was unbanned from guild: {arg2.Name}."));
-                Writer.WriteEntry(new LogMessage(LogSeverity.Warning, "TMS_Events", $"unban event detected, but I don't have permission to get the details."));
+                Writer.WriteEntry(new LogMessage(LogSeverity.Warning, "TMS_Events", $"unban event detected, but I don't have permission to get the details. Guild: {arg2.Name}"));
                 return;
             }
             Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was unbanned from: {arg2.Name}."));
