@@ -87,6 +87,13 @@ namespace TestModule
                     "You can't kick the server owner...", Color.Red));
                 return;
             }
+
+            if (SGUuser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
+                    "You can't kick this user.", Color.Red));
+                return;
+            }
             #endregion
 
             try
@@ -319,6 +326,13 @@ namespace TestModule
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
                     "You can't ban the server owner...", Color.Red));
+                return;
+            }
+
+            if (SGUuser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
+                    "You can't ban this user.", Color.Red));
                 return;
             }
             #endregion
