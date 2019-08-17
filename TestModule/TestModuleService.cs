@@ -745,6 +745,7 @@ namespace TestModule
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Adding entities to the configuration manager"));
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.TrashCanEmote());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.ModLogChannel());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.ServerMuteRole());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeChannel());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeMessage());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeRole());
