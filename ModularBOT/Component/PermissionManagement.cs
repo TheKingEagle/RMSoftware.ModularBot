@@ -445,7 +445,11 @@ namespace ModularBOT.Component
             writingToDisk = true;
             try
             {
-                using (FileStream fs = new FileStream("Permissions.cnf", File.Exists("Permissions.cnf") ? FileMode.OpenOrCreate : FileMode.Truncate))
+                if(File.Exists("Permissions.cnf"))
+                {
+                    File.Delete("Permissions.cnf");
+                }
+                using (FileStream fs = new FileStream("Permissions.cnf", FileMode.CreateNew))
                 {
                     using (StreamWriter sw = new StreamWriter(fs))
                     {
