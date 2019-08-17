@@ -168,7 +168,6 @@ namespace ModularBOT.Component
         int synccall = 0;
         public void SyncGuild(SocketGuild arg)
         {
-            synccall++;
             foreach (SocketRole item in arg.Roles)
             {
                 if (item.Permissions.Has(GuildPermission.Administrator) || item.Permissions.Has(GuildPermission.ManageGuild) || item.Permissions.Has(GuildPermission.ManageChannels))
@@ -179,17 +178,17 @@ namespace ModularBOT.Component
                     {
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a role that can manage guilds: " +
                         $"{item.Name} <@&{item.Id}>. Registering role as CommandManager!"));
-                        PermissionManager.RegisterEntity(item, AccessLevels.CommandManager);
+                        PermissionManager.RegisterEntityNS(item, AccessLevels.CommandManager);
                     }
                 }
             }
-            SpinWait.SpinUntil(() => synccall > 9, 30000);//save after 10 sync calls OR 30 seconds
-            synccall = 0;
-            PermissionManager.SaveJson();
         }
 
         public void Stop(ref bool ShutdownRequest)
         {
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Permissions", $"Saving permissions @ Stop"));
+
+            PermissionManager.SaveJson();
             if(Client != null)
             {
                 Client.SetStatusAsync(UserStatus.Invisible);
