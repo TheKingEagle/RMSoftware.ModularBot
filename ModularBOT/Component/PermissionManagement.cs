@@ -296,6 +296,60 @@ namespace ModularBOT.Component
         /// <summary>
         /// Register a new role, or modify an existing.
         /// </summary>
+        /// <param name="user"></param>
+        /// <param name="level"></param>
+        /// <returns>0: if nothing changed. 1: if new user created; 2: if user edited; </returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        internal int RegisterEntityNS(IRole role, AccessLevels level)
+        {
+            if (level == AccessLevels.Blacklisted)
+            {
+                throw new InvalidOperationException("You can't blacklist an entire role.");
+                //Unfortunately this would cause the warning system to work incorrectly.
+                //Example: One user with BL role interacts with bot, gets the warning -> Warning flag resets.
+                //         Another user with same BL role (who never got warned before) would NOT get warning.
+            }
+            RegisteredEntity r = new RegisteredEntity
+            {
+                EntityID = role.Id,
+                WarnIfBlacklisted = true,
+                AccessLevel = level
+            };
+            if (IsEntityRegistered(role))
+            {
+                RegisteredEntity c = _entities.FirstOrDefault(x => x.EntityID == r.EntityID);
+                if (c != null)
+                {
+                    if (c.AccessLevel == level)
+                    {
+                        return 0;
+                    }
+                    c.AccessLevel = level;
+                    //SaveJson();
+
+                    return 2;
+                }
+                else
+                {
+                    _entities.Add(r);
+                    //SaveJson();
+
+                    return 1;
+                }
+            }
+            else
+            {
+                _entities.Add(r);
+                //SaveJson();
+
+                return 1;
+            }
+
+        }
+
+        /// <summary>
+        /// Register a new role, or modify an existing.
+        /// </summary>
         /// <param name="Context">Context for this registration</param>
         /// <param name="genericID">ID this registration</param>
         /// <param name="level">Level for this registration</param>
@@ -388,10 +442,6 @@ namespace ModularBOT.Component
         public void SaveJson()
         {
             SpinWait.SpinUntil(() => !writingToDisk);//wait until we are done here.
-            if(writingToDisk)
-            {
-                return;//if something causes it to start writing again, just ignore it.
-            }
             writingToDisk = true;
             try
             {
