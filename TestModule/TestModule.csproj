@@ -128,6 +128,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigEntities\ServerMuteRole.cs" />
     <Compile Include="ConfigEntities\ModLogChannel.cs" />
     <Compile Include="ConfigEntities\WelcomeChannel.cs" />
     <Compile Include="ConfigEntities\WelcomeMessage.cs" />
