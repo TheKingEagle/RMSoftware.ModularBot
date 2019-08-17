@@ -8,6 +8,8 @@ using System.Threading;
 using System.Diagnostics;
 using Discord;
 using System.IO;
+using System.Runtime.InteropServices;
+
 namespace ModularBOT
 {
     class Program
@@ -20,12 +22,29 @@ namespace ModularBOT
         public static bool RestartRequested = false;
         private static ConsoleIO consoleIO;
         private static bool recoveredFromCrash = false;
-        
+        private delegate bool ConsoleCtrlHandlerDelegate(int sig);
+
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandlerDelegate handler, bool add);
+
+        private static ConsoleCtrlHandlerDelegate _consoleCtrlHandler;
+
         /// <summary>
         /// Application Entry Point.
         /// </summary>
         public static int Main(string[] ARGS = null)
         {
+            _consoleCtrlHandler += s =>
+            {
+                if(discord!=null)
+                {
+                    discord.Stop(ref ShutdownCalled);
+                    
+                    Thread.Sleep(3000);
+                }
+                return false;
+            };
+            SetConsoleCtrlHandler(_consoleCtrlHandler, true);
             if (ARGS != null)
             {
                 AppArguments.AddRange(ARGS);
