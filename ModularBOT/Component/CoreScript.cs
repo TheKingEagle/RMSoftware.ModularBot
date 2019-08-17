@@ -518,7 +518,7 @@ namespace ModularBOT.Component
                                     {
                                         error = true;
                                         errorEmbed.WithDescription($"`ECHO` Function Error: Preemptive rate limit reached." +
-                                            " Please slow down your script with `WAIT`\r\n```{line}```");
+                                            $" Please slow down your script with `WAIT`\r\n```{line}```");
 
                                         errorEmbed.AddField("Line", LineInScript, true);
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
