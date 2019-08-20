@@ -549,7 +549,7 @@ namespace ModularBOT.Component
                                     break;
 
                                 case ("ROLE_ADD"):
-                                    if(!client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult()
+                                    if (!client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult()
                                         .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
                                         .GuildPermissions.Has(GuildPermission.ManageRoles))
                                     {
@@ -766,7 +766,7 @@ namespace ModularBOT.Component
                                         break;
                                     }
                                     string arg01 = arguments1[0];
-                                    string arg02 = output.Remove(0,arg01.Length).Trim();
+                                    string arg02 = output.Remove(0, arg01.Length).Trim();
                                     if (ulong.TryParse(arg01, out ulong ulo1))
                                     {
                                         IRole role = (await client.GetGuildAsync(gobj.ID)).GetRole(ulo1);
@@ -897,7 +897,15 @@ namespace ModularBOT.Component
                                     break;
 
                                 case ("EMBED_FOOTER_I")://embed footer text
-
+                                    if (CSEmbed.Footer == null)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"You must use `EMBED_FOOTER` first. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     //Get the line removing echo.
                                     output = line.Remove(0, 14);
                                     if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
@@ -909,8 +917,20 @@ namespace ModularBOT.Component
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
+                                    try
+                                    {
+                                        CSEmbed.Footer.IconUrl = output;
+                                    }
+                                    catch (ArgumentException ex)
+                                    {
 
-                                    CSEmbed.Footer.IconUrl = output;
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Argument Exception: `{ex.Message}` ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
                                     break;
 
                                 case ("EMBED_COLOR")://embed footer text
