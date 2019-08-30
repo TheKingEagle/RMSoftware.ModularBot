@@ -223,7 +223,7 @@ namespace ModularBOT.Component
                     Console.SetCursorPosition(0, 5);
                 }
 
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
                 WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')}", ConsoleColor.Blue);
                 for (int i = index; i < 22 * page; i++)//22 results per page.
                 {
@@ -238,6 +238,7 @@ namespace ModularBOT.Component
                 }
                 WriteEntry($"\u2502");
                 string UDPROMPT = "| UP/DOWN: Move Selection | ENTER: Properties...";
+                //string UDPROMPT_T = discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id ? "| UP/DOWN: Move Selection" : UDPROMPT;
                 if (page > 1 && page < max)
                 {
                     WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
@@ -254,7 +255,7 @@ namespace ModularBOT.Component
                 {
                     WriteEntry($"\u2502 P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
-                ConsoleKeyInfo s = Console.ReadKey();
+                ConsoleKeyInfo s = Console.ReadKey(true);
                 if (s.Key == ConsoleKey.P)
                 {
                     ppg = page;
@@ -295,6 +296,7 @@ namespace ModularBOT.Component
                     }
 
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+
                     continue;
                 }
                 if (s.Key == ConsoleKey.DownArrow)
@@ -308,6 +310,54 @@ namespace ModularBOT.Component
 
 
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                if (s.Key == ConsoleKey.Enter)
+                {
+                    
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+
+                    if (discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id)
+                    {
+                        continue;
+                    }
+                    #region SubScreen
+                    string username = SafeUserName(guildusers, index+selectionIndex);
+                    //int left = 71-20;
+                    //int top = 16 - 7;
+                    //Console.CursorLeft = left;
+                    //Console.CursorTop = top;
+                    ConsoleColor PRVBG = Console.BackgroundColor;
+                    ConsoleColor PRVFG = Console.ForegroundColor;
+                    int rr = -1;
+                    rr = ShowOptionSubScreen($"Editing: {username}", "Please select a new access level", "BlackListed", "Normal", "Command Manager", "Administrator");
+
+                    switch (rr)
+                    {
+                        case (1):
+                            discord.PermissionManager.RegisterEntity(guildusers[selectionIndex + index], AccessLevels.Blacklisted);
+                            break;
+                        case (2):
+                            if(discord.PermissionManager.IsEntityRegistered(guildusers[selectionIndex+index]))
+                            {
+                                discord.PermissionManager.DeleteEntity(guildusers[selectionIndex + index]);
+                            }
+                            break;
+                        case (3):
+                            discord.PermissionManager.RegisterEntity(guildusers[selectionIndex + index], AccessLevels.CommandManager);
+                            break;
+                        case (4):
+                            discord.PermissionManager.RegisterEntity(guildusers[selectionIndex + index], AccessLevels.Administrator);
+                            break;
+                        default:
+                            break;
+                    }
+                    #endregion
+
+
+                    Console.ForegroundColor = PRVFG;
+                    Console.BackgroundColor = PRVBG;
                     continue;
                 }
 
@@ -329,6 +379,14 @@ namespace ModularBOT.Component
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
             string p = $"{o}#{guildusers.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
             WriteEntry($"\u2502\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18, '\u2005')}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
+        }
+
+        private string SafeUserName(List<SocketGuildUser> guildusers, int i)
+        {
+            string userinput = guildusers.ElementAt(i).Username;
+            string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
+            string p = $"{o}#{guildusers.ElementAt(i).Discriminator}";
+            return p;
         }
 
         private bool ListUsers(ref DiscordNET discord, ulong guildID, string query)
@@ -779,6 +837,56 @@ namespace ModularBOT.Component
         private ConsoleColor GetInvertedColor(ConsoleColor Color)//I realize this is not accurate.
         {
             return (ConsoleColor)(Math.Abs((Color - ConsoleColor.White)));
+        }
+
+        private void _OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct)
+        {
+            #region Option Trimming
+            if(option1.Length > 37)
+            {
+                option1 = option1.Remove(34)+"...";
+            }
+            if (option2.Length > 37)
+            {
+                option2 = option2.Remove(34) + "...";
+            }
+            if (option3.Length > 37)
+            {
+                option3 = option3.Remove(34) + "...";
+            }
+            if (option4.Length > 37)
+            {
+                option4 = option4.Remove(34) + "...";
+            }
+            #endregion
+            string[] options = { "- " + option1, "- " + option2, "- " + option3, "- " + option4 };
+            int curleft = cl;
+            int curtop = ct;
+
+            for (int i = 0; i < 4; i++)
+            {
+
+                Console.CursorLeft = curleft;
+                Console.CursorTop = curtop + i;
+                ConsoleColor bg = Console.BackgroundColor;
+                ConsoleColor fg = Console.ForegroundColor;
+                Console.Write("\u2502 ");
+                if(i == selectionindex)
+                {
+
+                    Console.BackgroundColor = ConsoleColor.White;
+                    Console.ForegroundColor = ConsoleColor.DarkBlue;
+                }
+                Console.Write(options[i].PadRight(38));
+                
+                Console.ForegroundColor = fg;
+                Console.BackgroundColor = bg;
+                Console.Write(" \u2502");
+
+            }
+            Console.CursorTop = curtop;
+            Console.CursorLeft = curleft;
+
         }
 
         #endregion PRIVATE Methods
@@ -1650,6 +1758,44 @@ namespace ModularBOT.Component
                     }
                 }
 
+                if (input.ToLower().StartsWith("leave"))
+                {
+
+                    #region Parse Checking
+
+                    if (input.Split(' ').Length > 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+                    
+                    if (input.Split(' ').Length == 2)
+                    {
+                        input = input.Split(' ')[1];
+                    }
+                    if (!ulong.TryParse(input, out ulong id))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "Invalid Guild ID format"));
+                        continue;
+                    }
+
+                    #endregion Parse Checking
+                    var G = discordNET.Client.GetGuild(id);
+                    if(G == null)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "This guild isn't valid."));
+                        continue;
+                    }
+                    WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", $"Attempting to leave guild: {G.Name}"));
+
+                    G.LeaveAsync();
+                }
+
                 if (input.ToLower().StartsWith("roles"))
                 {
                     string page = "1";
@@ -2338,6 +2484,135 @@ namespace ModularBOT.Component
             return auth;
         }
 
+        public int ShowOptionSubScreen (string title, string prompt, string Option1, string Option2, string Option3, string Option4)
+        {
+            Console.CursorVisible = false;
+            int result = -1;
+            int SelIndex = 0;
+            int left = 71 - 20;
+            int top = 16 - 7;
+            Console.CursorLeft = left;
+            Console.CursorTop = top;
+            ConsoleColor PRVBG = Console.BackgroundColor;
+            ConsoleColor PRVFG = Console.ForegroundColor;
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
+            Console.ForegroundColor = ConsoleColor.White;
+
+            #region TOP
+            if(title.Length > 38)
+            {
+                title = title.Remove(36) + "...";
+            }
+
+            string WTitle = " " + title + " ";
+            string pTitle = WTitle.PadLeft(((40 / 2)) + WTitle.Length / 2, '\u2550');
+            pTitle += "".PadRight(((40 / 2)) - WTitle.Length / 2, '\u2550');
+            Console.Write("\u2552{0}\u2555", pTitle);
+            #endregion
+
+            #region Prompt
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 1;
+            if(prompt.Length > 40)
+            {
+                prompt = prompt.Remove(36) + "...";
+            }
+           
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 2;
+            Console.Write("\u2502 " + prompt.PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 3;
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+
+            #endregion
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 4;
+            _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelIndex, left, top+4);
+            Console.CursorLeft = left;
+            Console.CursorTop = top+8;
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 9;
+            Console.Write("\u2502 " + "[UP/DOWN]: Move Selection".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 10;
+            Console.Write("\u2502 " + "[ENTER]: Confirm Edit | [ESC]: Cancel".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 11;
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 12;
+            Console.Write("\u2514" + "".PadRight(40, '\u2500') + "\u2518");
+            int minLeft = left;
+            int maxleft = Console.CursorLeft;
+            int mintop = top;
+            int maxtop = top+13;
+            
+            #region Control handler
+            while (true)
+            {
+                ConsoleKeyInfo c = Console.ReadKey(true);
+
+                
+                if (c.Key == ConsoleKey.UpArrow || c.Key == ConsoleKey.PageUp)
+                {
+                    
+                    SelIndex--;
+                    if (SelIndex < 0)
+                    {
+                        SelIndex = 0;
+                    }
+                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelIndex, left, top+4);
+
+                }
+
+                if (c.Key == ConsoleKey.DownArrow || c.Key == ConsoleKey.PageDown)
+                {
+
+                    SelIndex++;
+                    if (SelIndex > 3)
+                    {
+                        SelIndex = 3;
+                    }
+                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelIndex, left, top+4);
+
+                }
+                if (c.Key == ConsoleKey.Enter)
+                {
+                    result = SelIndex + 1;
+                    for (int i = mintop; i < maxtop + 1; i++)
+                    {
+                        Console.BackgroundColor = PRVBG;
+                        Console.ForegroundColor = PRVFG;
+                        Console.CursorLeft = minLeft;
+                        Console.Write("".PadRight(maxleft + 1));
+                        Console.CursorTop = i;
+                    }
+                    break;
+                }
+                if (c.Key == ConsoleKey.Escape)
+                {
+                    result = 0;//NON-SEL
+                    for (int i = mintop; i < maxtop + 1; i++)
+                    {
+                        Console.BackgroundColor = PRVBG;
+                        Console.ForegroundColor = PRVFG;
+                        Console.CursorLeft = minLeft;
+                        Console.Write("".PadRight(maxleft + 1));
+                        Console.CursorTop = i;
+                    }
+                    break;
+                }
+                
+            }
+            #endregion
+
+            return result;
+        }
+
+        
         #endregion
 
         #endregion PUBLIC Methods
