@@ -2586,8 +2586,8 @@ namespace ModularBOT.Component
                     {
                         Console.BackgroundColor = PRVBG;
                         Console.ForegroundColor = PRVFG;
-                        Console.CursorLeft = minLeft;
-                        Console.Write("".PadRight(maxleft + 1));
+                        Console.CursorLeft = minLeft-1;
+                        Console.Write("".PadRight(maxleft + 2));
                         Console.CursorTop = i;
                     }
                     break;
@@ -2599,8 +2599,8 @@ namespace ModularBOT.Component
                     {
                         Console.BackgroundColor = PRVBG;
                         Console.ForegroundColor = PRVFG;
-                        Console.CursorLeft = minLeft;
-                        Console.Write("".PadRight(maxleft + 1));
+                        Console.CursorLeft = minLeft - 1;
+                        Console.Write("".PadRight(maxleft + 2));
                         Console.CursorTop = i;
                     }
                     break;
