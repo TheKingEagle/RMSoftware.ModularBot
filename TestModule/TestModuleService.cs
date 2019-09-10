@@ -54,8 +54,9 @@ namespace TestModule
                     "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
                 return;
             }
-            SocketGuildUser SGUuser = Context.User as SocketGuildUser;
-            if(!SGUuser.GuildPermissions.Has(GuildPermission.KickMembers))
+            SocketGuildUser SGUuser = user as SocketGuildUser;
+            SocketGuildUser SGUInvoker = Context.User as SocketGuildUser;
+            if(!SGUInvoker.GuildPermissions.Has(GuildPermission.KickMembers))
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
                     "You must have permission to kick members.", Color.Red));
@@ -75,7 +76,7 @@ namespace TestModule
                     "You can't force me to kick myself...", Color.Red));
                 return;
             }
-            if (user == SGUuser)
+            if (user == SGUInvoker)
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
                     "You can't force me to kick you...", Color.Red));
@@ -88,7 +89,7 @@ namespace TestModule
                 return;
             }
 
-            if (SGUuser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
+            if (SGUuser.Hierarchy >= SGUInvoker.Hierarchy)
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
                     "You can't kick this user.", Color.Red));
@@ -295,8 +296,10 @@ namespace TestModule
                     "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
                 return;
             }
-            SocketGuildUser SGUuser = Context.User as SocketGuildUser;
-            if (!SGUuser.GuildPermissions.Has(GuildPermission.BanMembers))
+            SocketGuildUser SGUuser = user as SocketGuildUser;
+            SocketGuildUser SGUInvoker = Context.User as SocketGuildUser;
+
+            if (!SGUInvoker.GuildPermissions.Has(GuildPermission.BanMembers))
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
                     "You must have permission to ban members.", Color.Red));
@@ -305,7 +308,7 @@ namespace TestModule
             if (!(await Context.Guild.GetCurrentUserAsync(CacheMode.AllowDownload))
                 .GuildPermissions.Has(GuildPermission.BanMembers))
             {
-                await ReplyAsync("", false, GetEmbeddedMessage("I'm Sorry, but I can't!",
+                await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
                     "I must have permission to ban members.", Color.Red));
                 return;
             }
@@ -316,7 +319,7 @@ namespace TestModule
                     "You can't force me to ban myself...", Color.Red));
                 return;
             }
-            if (user == SGUuser)
+            if (SGUuser == SGUInvoker)
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("Wait... That's illegal...",
                     "You can't force me to ban you...", Color.Red));
@@ -329,7 +332,7 @@ namespace TestModule
                 return;
             }
 
-            if (SGUuser.Hierarchy >= ((SocketGuildUser)Context.User).Hierarchy)
+            if (SGUuser.Hierarchy >= SGUInvoker.Hierarchy)
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("Access Denied!",
                     "You can't ban this user.", Color.Red));
