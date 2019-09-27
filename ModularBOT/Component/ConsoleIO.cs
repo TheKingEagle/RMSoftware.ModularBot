@@ -1796,6 +1796,42 @@ namespace ModularBOT.Component
                     G.LeaveAsync();
                 }
 
+                if (input.ToLower().StartsWith("guildname"))
+                {
+
+                    #region Parse Checking
+
+                    if (input.Split(' ').Length > 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                        continue;
+                    }
+                    if (input.Split(' ').Length < 2)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                        continue;
+                    }
+
+                    if (input.Split(' ').Length == 2)
+                    {
+                        input = input.Split(' ')[1];
+                    }
+                    if (!ulong.TryParse(input, out ulong id))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "Invalid Guild ID format"));
+                        continue;
+                    }
+
+                    #endregion Parse Checking
+                    var G = discordNET.Client.GetGuild(id);
+                    if (G == null)
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Critical, "GuildName", "This guild isn't valid."));
+                        continue;
+                    }
+                    WriteEntry(new LogMessage(LogSeverity.Critical, "GuildName", $"Full Guild Name: {G.Name}"));
+                }
+
                 if (input.ToLower().StartsWith("roles"))
                 {
                     string page = "1";
