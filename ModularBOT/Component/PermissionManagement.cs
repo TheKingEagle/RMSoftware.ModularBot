@@ -239,6 +239,47 @@ namespace ModularBOT.Component
             }
         }
 
+        internal int RegisterEntity(IUser user, AccessLevels level,bool warnIfBL)
+        {
+            if (user.Id == DefaultAdmin.EntityID)
+            {
+                throw new InvalidOperationException("You can't add or modify the bot owner's user permissions!");
+            }
+            RegisteredEntity r = new RegisteredEntity
+            {
+                EntityID = user.Id,
+                WarnIfBlacklisted = warnIfBL,
+                AccessLevel = level
+            };
+            RegisteredEntity c = _entities.FirstOrDefault(x => x.EntityID == r.EntityID);
+            if (c != null)
+            {
+                if (c.AccessLevel == level)
+                {
+                    return 0;
+                }
+                if (c.AccessLevel == level)
+                {
+                    return 0;
+                }
+                c.AccessLevel = level;
+                if(level == AccessLevels.Blacklisted)
+                {
+                    c.WarnIfBlacklisted = warnIfBL;
+                }
+                SaveJson();
+
+                return 2;
+            }
+            else
+            {
+                _entities.Add(r);
+                SaveJson();
+
+                return 1;
+            }
+        }
+
         /// <summary>
         /// Register a new role, or modify an existing.
         /// </summary>
