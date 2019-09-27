@@ -217,6 +217,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Component\CommandList.cs" />
+    <Compile Include="Component\ConfigEntities\BlacklistMode.cs" />
     <Compile Include="Component\ConfigEntities\MassDeploymentMode.cs" />
     <Compile Include="Component\ConfigEntities\CheckForUpdates.cs" />
     <Compile Include="Component\ConfigEntities\GuildPrefix.cs" />
