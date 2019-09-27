@@ -15,6 +15,8 @@ namespace ModularBOT.Entity
 
         public bool LockPFChanges { get; set; }
         public ulong ID { get; set; }
+
+        public AutoBlacklistModes? BlacklistMode { get; set; }
         public List<GuildCommand> GuildCommands { get; set; }
 
         public void SaveJson()
@@ -27,5 +29,12 @@ namespace ModularBOT.Entity
                 sw.Close();
             }
         }
+    }
+
+    public enum AutoBlacklistModes
+    {
+        Disabled=0,
+        Standard=1,
+        Silent=2,
     }
 }
