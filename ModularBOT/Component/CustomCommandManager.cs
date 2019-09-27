@@ -54,6 +54,13 @@ namespace ModularBOT.Component
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
                             new LogMessage(LogSeverity.Warning, "CmdMgr", $"Warning: Command prefix had invalid character! reset to configured default."), ConsoleColor.DarkGreen);
                     }
+                    if(!ob.BlacklistMode.HasValue)
+                    {
+                        ob.BlacklistMode = AutoBlacklistModes.Standard;//by default, set new missing value...
+                        ob.SaveJson();
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
+                            new LogMessage(LogSeverity.Warning, "CmdMgr", $"Warning: Auto-Blacklist option was not present. set it to STANDARD"), ConsoleColor.DarkGreen);
+                    }
                     guilds.Add(ob);
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
                             new LogMessage(LogSeverity.Debug, "CmdMgr", $"SUCCESS: Added new GuildObject to list!"), ConsoleColor.DarkGreen);
