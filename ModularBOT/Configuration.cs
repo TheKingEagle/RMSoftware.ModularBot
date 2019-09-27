@@ -141,6 +141,7 @@ namespace ModularBOT
 
             _GuildConfigEntities.Add(new GuildPrefix());
             _GuildConfigEntities.Add(new LockPrefix());
+            _GuildConfigEntities.Add(new BlacklistMode());
             _ModularCnfgEntities.Add(new CheckForUpdates());
             _ModularCnfgEntities.Add(new UsePreReleaseChannel());
             _ModularCnfgEntities.Add(new GlobalInitChannel());
