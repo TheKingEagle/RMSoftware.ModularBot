@@ -19,16 +19,17 @@ namespace ModularBOT.Component
     public class DiscordNET
     {
         #region Fields
-        public CommandService cmdsvr = new Discord.Commands.CommandService();  //Discord Command Service
-        public IServiceCollection services;                                    //Discord Service collection
-        public IServiceProvider serviceProvider;                               //Discord Service provider
-        public bool InputCanceled = false;                                     //ModularBOT Console Read Operation
-        private static bool init_start = false;                                //DiscordNET Conditional Initialization
-        private bool Initialized = false;                                      //Conditional Completed Initialization
-        private bool LogConnected = false;                                     //Conditional Log channel found & connected
-        private bool LoginEventsCalled = false;                                //yet another thread locker for offload ready... this is infuriating.
-        private List<SocketMessage> messageQueue = new List<SocketMessage>();  //DiscordNET Message Queue
-        
+        public CommandService cmdsvr = new Discord.Commands.CommandService();          //Discord Command Service
+        public IServiceCollection services;                                            //Discord Service collection
+        public IServiceProvider serviceProvider;                                       //Discord Service provider
+        public bool InputCanceled = false;                                             //ModularBOT Console Read Operation
+        private static bool init_start = false;                                        //DiscordNET Conditional Initialization
+        private bool Initialized = false;                                              //Conditional Completed Initialization
+        private bool LogConnected = false;                                             //Conditional Log channel found & connected
+        private bool LoginEventsCalled = false;                                        //yet another thread locker for offload ready... this is infuriating.
+        private List<SocketMessage> messageQueue = new List<SocketMessage>();          //DiscordNET Message Queue
+        private Dictionary<ulong, short> userBL = new Dictionary<ulong, short>();      //Auto Blacklisting dictionary for users who like to spam...
+        private string lastrecieved = "";
         #endregion
 
         #region Properties
@@ -96,7 +97,8 @@ namespace ModularBOT.Component
                 Client.SetStatusAsync(UserStatus.DoNotDisturb);//go into DND mode.
                 SpinWait.SpinUntil(() => init_start);//Hold thread until needed shard is ready.
                 SpinWait.SpinUntil(() => LoginEventsCalled);//Don't instruct core to init until client finished login event.
-                if(AppConfig.LoadCoreModule)
+                Task.Run(() => ResetUserCom());//Start auto-blacklist timer reset system...
+                if (AppConfig.LoadCoreModule)
                 {
                     cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);//ADD CORE.
                 }
@@ -106,6 +108,7 @@ namespace ModularBOT.Component
                         "You will not be able to manage commands or view system stats, unless you have your own implementations!"));
                 }
                 OffloadReady(ref FromCrash, ref ShutdownRequest, ref RestartRequested);
+               
                 
             }
             catch (Discord.Net.HttpException httex)
@@ -338,6 +341,33 @@ namespace ModularBOT.Component
 
         }
 
+        private void SetUserCom(ulong userID, short count)
+        {
+            if(PermissionManager.GetAccessLevel(Client.GetUser(userID)) > AccessLevels.Normal)
+            {
+                return;//ignore cmdmgr+ rank...
+            }
+            if(userBL.ContainsKey(userID))
+            {
+                
+                userBL[userID] = count;
+            }
+            else
+            {
+                userBL.Add(userID, count);
+            }
+
+        }
+
+        private void ResetUserCom()
+        {
+            while (true)
+            {
+                Thread.Sleep(12000);
+                userBL.Clear();
+            }
+        }
+
         #endregion
 
         #region Events
@@ -399,6 +429,7 @@ namespace ModularBOT.Component
             }
             if (DisableMessages) return;
 
+            lastrecieved = arg.Content;
             if (!(arg is SocketUserMessage message)) return;
             ulong gid = 0;//global by default
             string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
@@ -535,11 +566,54 @@ namespace ModularBOT.Component
             await Task.Run(() => result = CustomCMDMgr.ProcessMessage(arg));
             if (result != "SCRIPT" && result != "EXEC" && result != "" && result != "CLI_EXEC" && result != null)
             {
+                var blm = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.BlacklistMode;
+                if (blm > AutoBlacklistModes.Disabled && arg.Content.ToLower() == lastrecieved.ToLower())
+                {
+                    if(userBL.ContainsKey(arg.Author.Id))
+                    {
+                        SetUserCom(arg.Author.Id, (short)(userBL[arg.Author.Id] + 1));
+                        if(userBL[arg.Author.Id] > 8)
+                        {
+                            serviceProvider.GetRequiredService<ConsoleIO>()
+                                .WriteEntry(new LogMessage(LogSeverity.Critical, "AutoBL",
+                                $"User {message.Author.Username}  was just blacklisted for command abuse!"));
+                            PermissionManager.RegisterEntity(arg.Author, AccessLevels.Blacklisted,blm == AutoBlacklistModes.Standard);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        SetUserCom(arg.Author.Id, 1);
+                        lastrecieved = arg.Content;
+                    }
+                }
                 await arg.Channel.SendMessageAsync(result);
                 return;
             }
             if ((result == "SCRIPT" || result == "EXEC" || result == "" || result == "CLI_EXEC") && result != null)
             {
+                var blm = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.BlacklistMode;
+                if (blm > AutoBlacklistModes.Disabled && arg.Content.ToLower() == lastrecieved.ToLower())
+                {
+                    if (userBL.ContainsKey(arg.Author.Id))
+                    {
+                        SetUserCom(arg.Author.Id, (short)(userBL[arg.Author.Id] + 1));
+                        if (userBL[arg.Author.Id] > 8)
+                        {
+                            serviceProvider.GetRequiredService<ConsoleIO>()
+                                .WriteEntry(new LogMessage(LogSeverity.Critical, "AutoBL",
+                                $"User {message.Author.Username}  was just blacklisted for command abuse!"));
+                            PermissionManager.RegisterEntity(arg.Author, AccessLevels.Blacklisted, blm == AutoBlacklistModes.Standard);
+                            return;
+                        }
+
+                    }
+
+                    else
+                    {
+                        SetUserCom(arg.Author.Id, 1);
+                    }
+                }
                 return;
             }
             await ExecuteModuleCMD(message, prefix);
@@ -577,7 +651,38 @@ namespace ModularBOT.Component
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
             var cmdres = await cmdsvr.ExecuteAsync(context, prefix.Length, serviceProvider);
-            //If the result is unsuccessful AND not unknown command, send the error details.
+
+            if (cmdres.IsSuccess)
+            {
+                ulong gid = 0;
+                if(message.Channel is SocketGuildChannel sgc)
+                {
+                    gid = sgc.Guild.Id;
+                }
+                var blm = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid)?.BlacklistMode;
+                if (blm > AutoBlacklistModes.Disabled && message.Content.ToLower() == lastrecieved.ToLower())
+                {
+                    if (userBL.ContainsKey(message.Author.Id))
+                    {
+                        SetUserCom(message.Author.Id, (short)(userBL[message.Author.Id] + 1));
+                        if (userBL[message.Author.Id] > 8)
+                        {
+                            serviceProvider.GetRequiredService<ConsoleIO>()
+                                .WriteEntry(new LogMessage(LogSeverity.Critical, "AutoBL", 
+                                $"User {message.Author.Username}  was just blacklisted for command abuse!"));
+                            PermissionManager.RegisterEntity(message.Author, AccessLevels.Blacklisted, blm == AutoBlacklistModes.Standard);
+                            return;
+                        }
+                    }
+
+                    else
+                    {
+                        SetUserCom(message.Author.Id, 1);
+                        lastrecieved = message.Content;
+                    }
+                }
+            }//on successful execution, check for abuse.
+
             if (cmdres.Error.HasValue)
             {
                 if (!cmdres.Error.Value.HasFlag(CommandError.UnknownCommand) && !cmdres.IsSuccess)
@@ -644,6 +749,8 @@ namespace ModularBOT.Component
             {
                 ID = arg.Id,
                 CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                LockPFChanges = false,
+                BlacklistMode = AutoBlacklistModes.Standard,
                 GuildCommands = new List<GuildCommand>(),
             };
             CustomCMDMgr.AddGuildObject(g);
