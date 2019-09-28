@@ -86,10 +86,10 @@ namespace ModularBOT.Component
                 Client.GuildUnavailable += Client_GuildUnavailable;
                 Client.GuildUpdated += Client_GuildUpdated;
                 Client.JoinedGuild += Client_JoinedGuild;
-                
-                
-                
-                
+
+
+
+                Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord INIT attempt"));
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
                 SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);//wait for the client to login before starting...
                 Task.Run(async () => await Client.StartAsync());
