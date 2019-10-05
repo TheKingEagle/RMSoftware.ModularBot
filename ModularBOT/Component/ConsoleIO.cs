@@ -13,6 +13,7 @@ using Discord.WebSocket;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Globalization;
+using System.Windows;
 
 namespace ModularBOT.Component
 {
@@ -97,61 +98,76 @@ namespace ModularBOT.Component
             WriteEntry("\u2502\u2005\u2005\u2005 3. Custom logo", ConsoleColor.DarkGreen);
             WriteEntry("\u2502\u2005");
         }
-
+        
         private void ListGuilds(ref DiscordNET discord)
         {
             short page = 1;
 
             short max = (short)(Math.Ceiling((double)(discord.Client.Guilds.Count / 22)) + 1);
             int index = 0;
+            int selectionIndex = 0;
+            int countOnPage = 0;
+            int ppg = 0;
             ScreenModal = true;
-
+            List<SocketGuild> guilds = discord.Client.Guilds.ToList();
+                
             while (true)
             {
-                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+                if (ppg != page)//is page changing?
+                {
+                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+
+                    ppg = page;
+                }
+
+                countOnPage = 0;
+                if (ppg == page)
+                {
+                    Console.SetCursorPosition(0, 5);
+                }
                 WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')}", ConsoleColor.Blue);
                 WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue);
                 for (int i = index; i < 22 * page; i++)//28 results per page.
                 {
-                    if (index >= discord.Client.Guilds.Count)
+                    if (index >= guilds.Count)
                     {
                         break;
                     }
-                    string name = discord.Client.Guilds.ElementAt(i).Name;
-                    if (name.Length > 36)
-                    {
-                        name = name.Remove(36) + "...";
-                    }
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {name.PadRight(39, '\u2005')} [{discord.Client.Guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", ConsoleColor.DarkGreen);
+                    countOnPage++;
+                    WriteGuild(discord, selectionIndex, countOnPage, guilds, i);
 
                     index++;
                 }
                 WriteEntry($"\u2502");
+                string UDPROMPT = "| UP/DOWN: Move Selection | ENTER: Properties...";
+                //string UDPROMPT_T = discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id ? "| UP/DOWN: Move Selection" : UDPROMPT;
                 if (page > 1 && page < max)
                 {
-                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page == 1 && page < max)
                 {
-                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page == 1 && page == max)
                 {
-                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page > 1 && page == max)
                 {
-                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
-                ConsoleKeyInfo s = Console.ReadKey();
+                ConsoleKeyInfo s = Console.ReadKey(true);
                 if (s.Key == ConsoleKey.P)
                 {
+                    ppg = page;
                     if (page > 1)
                     {
                         page--;
                         index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
+                    selectionIndex = 0;
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
@@ -161,12 +177,120 @@ namespace ModularBOT.Component
                 }
                 if (s.Key == ConsoleKey.N)
                 {
+                    ppg = page;
                     if (page < max)
                     {
+
                         page++;
+                    }
+                    selectionIndex = 0;
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                if (s.Key == ConsoleKey.UpArrow)
+                {
+
+                    selectionIndex--;
+                    if (selectionIndex < 0)
+                    {
+                        selectionIndex = countOnPage - 1;
                     }
 
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+
+                    continue;
+                }
+                if (s.Key == ConsoleKey.DownArrow)
+                {
+
+                    selectionIndex++;
+                    if (selectionIndex > countOnPage - 1)
+                    {
+                        selectionIndex = 0;
+                    }
+
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                if (s.Key == ConsoleKey.Enter)
+                {
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+
+                    if (discord.PermissionManager.DefaultAdmin.EntityID == guilds[selectionIndex + index].Id)
+                    {
+                        continue;
+                    }
+                    #region SubScreen
+                    string guildname = SafeName(guilds, index + selectionIndex);
+                    //int left = 71-20;
+                    //int top = 16 - 7;
+                    //Console.CursorLeft = left;
+                    //Console.CursorTop = top;
+                    ConsoleColor PRVBG = Console.BackgroundColor;
+                    ConsoleColor PRVFG = Console.ForegroundColor;
+                    int rr = -1;
+                    rr = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View Users...", "View Channels...", "View Roles...", "More Actions...");
+
+                    switch (rr)
+                    {
+                        case (1):
+                            //ScreenModal = false;
+                            ListUsers(ref discord, guilds[selectionIndex + index].Id);
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+
+                            break;
+                        case (2):
+                            //ScreenModal = false;
+                            ListChannels(ref discord, guilds[selectionIndex + index].Id);
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+
+                            break;
+                        case (3):
+                            //ScreenModal = false;
+                            ListRoles(ref discord, guilds[selectionIndex + index].Id);
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+
+                            break;
+                        case (4):
+                            int ss = -1;
+                            ss = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View My Roles...", "Copy ID...", "-", "Leave Guild...");
+                            switch (ss)
+                            {
+                                case (1):
+                                    ListCURoles(ref discord, guilds[selectionIndex + index].Id);
+                                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+                                    break;
+                                case (2):
+                                    Thread thread = new Thread(() => Clipboard.SetText(guilds[selectionIndex + index].Id.ToString()));
+                                    thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
+                                    thread.Start();
+                                    thread.Join(); //Wait for the thread to end
+                                    //TODO: If success or fail, Display a message prompt
+                                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+                                    break;
+                                case (4):
+
+                                    //TODO: Add confirmation prompt.
+                                    //guilds[selectionIndex + index].LeaveAsync();
+                                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    #endregion
+
+
+                    Console.ForegroundColor = PRVFG;
+                    Console.BackgroundColor = PRVBG;
                     continue;
                 }
 
@@ -178,6 +302,7 @@ namespace ModularBOT.Component
             }
 
             ScreenModal = false;
+            return;
 
         }
 
@@ -323,7 +448,7 @@ namespace ModularBOT.Component
                         continue;
                     }
                     #region SubScreen
-                    string username = SafeUserName(guildusers, index+selectionIndex);
+                    string username = SafeName(guildusers, index+selectionIndex);
                     //int left = 71-20;
                     //int top = 16 - 7;
                     //Console.CursorLeft = left;
@@ -381,7 +506,19 @@ namespace ModularBOT.Component
             WriteEntry($"\u2502\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18, '\u2005')}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
         }
 
-        private string SafeUserName(List<SocketGuildUser> guildusers, int i)
+        private void WriteGuild(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuild> guilds, int i)
+        {
+            string name = guilds[i].Name;
+            if (name.Length > 36)
+            {
+                name = name.Remove(36) + "...";
+            }
+            string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
+            string p = $"{name}".PadRight(39, '\u2005');
+            WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
+        }
+
+        private string SafeName(List<SocketGuildUser> guildusers, int i)
         {
             string userinput = guildusers.ElementAt(i).Username;
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
@@ -389,8 +526,23 @@ namespace ModularBOT.Component
             return p;
         }
 
+        private string SafeName(List<SocketGuild> guilds, int i)
+        {
+            string userinput = guilds.ElementAt(i).Name;
+            string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
+            if(o.Length > 17)
+            {
+                o = o.Remove(13) + "...";
+            }
+            string p = $"{o}";
+            return p;
+        }
+
         private bool ListUsers(ref DiscordNET discord, ulong guildID, string query)
         {
+            int selectionIndex = 0;
+            int countOnPage = 0;
+            int ppg = 0;
             short page = 1;
             string[] array = query.Split('#');
             string userquery = "";
@@ -435,8 +587,19 @@ namespace ModularBOT.Component
 
             while (true)
             {
-                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Searching for '{query}' in Guild: {name}", page, max, ConsoleColor.White);
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
+                if (ppg != page)//is page changing?
+                {
+                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Searching for '{query}' in {name}", page, max, ConsoleColor.White);
+                    ppg = page;
+                }
+
+                countOnPage = 0;
+                if (ppg == page)
+                {
+                    Console.SetCursorPosition(0, 5);
+                }
+
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
                 WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')}", ConsoleColor.Blue);
                 if (guildusers.Count == 0)
                 {
@@ -444,42 +607,49 @@ namespace ModularBOT.Component
                 }
                 for (int i = index; i < 22 * page; i++)//22 results per page.
                 {
+
                     if (index >= guildusers.Count)
                     {
                         break;
                     }
-                    string userinput = guildusers.ElementAt(i).Username;
-                    string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
-                    string p = $"{o}#{guildusers.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18, '\u2005')}", ConsoleColor.DarkGreen);
+                    countOnPage++;
+                    WriteUser(discord, selectionIndex, countOnPage, guildusers, i);
                     index++;
                 }
                 WriteEntry($"\u2502");
+                string UDPROMPT = "| UP/DOWN: Move Selection | ENTER: Properties...";
+                if (guildusers.Count == 0)
+                {
+                    UDPROMPT = "| NO SELECTION AVAILABLE";
+                }
+                //string UDPROMPT_T = discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id ? "| UP/DOWN: Move Selection" : UDPROMPT;
                 if (page > 1 && page < max)
                 {
-                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page == 1 && page < max)
                 {
-                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 N: Next Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page == 1 && page == max)
                 {
-                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
                 if (page > 1 && page == max)
                 {
-                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
+                    WriteEntry($"\u2502 P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
                 }
-                ConsoleKeyInfo s = Console.ReadKey();
+                ConsoleKeyInfo s = Console.ReadKey(true);
                 if (s.Key == ConsoleKey.P)
                 {
+                    ppg = page;
                     if (page > 1)
                     {
                         page--;
                         index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
+                    selectionIndex = 0;
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
@@ -489,12 +659,89 @@ namespace ModularBOT.Component
                 }
                 if (s.Key == ConsoleKey.N)
                 {
+                    ppg = page;
                     if (page < max)
                     {
+
                         page++;
+                    }
+                    selectionIndex = 0;
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                if (s.Key == ConsoleKey.UpArrow)
+                {
+
+                    selectionIndex--;
+                    if (selectionIndex < 0)
+                    {
+                        selectionIndex = countOnPage - 1;
                     }
 
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+
+                    continue;
+                }
+                if (s.Key == ConsoleKey.DownArrow)
+                {
+
+                    selectionIndex++;
+                    if (selectionIndex > countOnPage - 1)
+                    {
+                        selectionIndex = 0;
+                    }
+
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                if (s.Key == ConsoleKey.Enter)
+                {
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+
+                    if (discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id)
+                    {
+                        continue;
+                    }
+                    #region SubScreen
+                    string username = SafeName(guildusers, index + selectionIndex);
+                    //int left = 71-20;
+                    //int top = 16 - 7;
+                    //Console.CursorLeft = left;
+                    //Console.CursorTop = top;
+                    ConsoleColor PRVBG = Console.BackgroundColor;
+                    ConsoleColor PRVFG = Console.ForegroundColor;
+                    int rr = -1;
+                    rr = ShowOptionSubScreen($"Editing: {username}", "Please select a new access level", "BlackListed", "Normal", "Command Manager", "Administrator");
+
+                    switch (rr)
+                    {
+                        case (1):
+                            discord.PermissionManager.RegisterEntity(guildusers[selectionIndex + index], AccessLevels.Blacklisted);
+                            break;
+                        case (2):
+                            if (discord.PermissionManager.IsEntityRegistered(guildusers[selectionIndex + index]))
+                            {
+                                discord.PermissionManager.DeleteEntity(guildusers[selectionIndex + index]);
+                            }
+                            break;
+                        case (3):
+                            discord.PermissionManager.RegisterEntity(guildusers[selectionIndex + index], AccessLevels.CommandManager);
+                            break;
+                        case (4):
+                            discord.PermissionManager.RegisterEntity(guildusers[selectionIndex + index], AccessLevels.Administrator);
+                            break;
+                        default:
+                            break;
+                    }
+                    #endregion
+
+
+                    Console.ForegroundColor = PRVFG;
+                    Console.BackgroundColor = PRVBG;
                     continue;
                 }
 
@@ -871,13 +1118,23 @@ namespace ModularBOT.Component
                 ConsoleColor bg = Console.BackgroundColor;
                 ConsoleColor fg = Console.ForegroundColor;
                 Console.Write("\u2502 ");
-                if(i == selectionindex)
+                
+                if (i == selectionindex)
                 {
 
                     Console.BackgroundColor = ConsoleColor.White;
                     Console.ForegroundColor = ConsoleColor.DarkBlue;
                 }
-                Console.Write(options[i].PadRight(38));
+                if (options[i] == "- -")
+                {
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.Write("\u2550".PadRight(38,'\u2550').PadRight(38));
+                    Console.ForegroundColor = ConsoleColor.White;
+                }
+                else
+                {
+                    Console.Write(options[i].PadRight(38));
+                }
                 
                 Console.ForegroundColor = fg;
                 Console.BackgroundColor = bg;
@@ -892,7 +1149,7 @@ namespace ModularBOT.Component
         #endregion PRIVATE Methods
 
         #region INTERNAL Methods
-
+        
         internal void ProcessQueue()
         {
 
@@ -1091,7 +1348,7 @@ namespace ModularBOT.Component
         internal static extern IntPtr GetConsoleWindow();
         [DllImport("User32.Dll", EntryPoint = "PostMessageA")]
         internal static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
-
+        
         internal Task GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET) //TODO: Re-write for "Snap-in" commands. (additional Console commands from modules)
         {
             ulong chID = 0;
@@ -2239,7 +2496,6 @@ namespace ModularBOT.Component
                 {
                     if(SELECTED)
                     {
-
                         Console.BackgroundColor = GetInvertedColor(Console.BackgroundColor);
                         Console.ForegroundColor = GetInvertedColor(Console.ForegroundColor);
                         
@@ -2519,7 +2775,7 @@ namespace ModularBOT.Component
 
             return auth;
         }
-
+        
         public int ShowOptionSubScreen (string title, string prompt, string Option1, string Option2, string Option3, string Option4)
         {
             Console.CursorVisible = false;
@@ -2527,6 +2783,8 @@ namespace ModularBOT.Component
             int SelIndex = 0;
             int left = 71 - 20;
             int top = 16 - 7;
+
+            List<int> SelectableIndicies = new List<int>();
             Console.CursorLeft = left;
             Console.CursorTop = top;
             ConsoleColor PRVBG = Console.BackgroundColor;
@@ -2546,6 +2804,26 @@ namespace ModularBOT.Component
             Console.Write("\u2552{0}\u2555", pTitle);
             #endregion
 
+            if(Option1 != "-")
+            {
+                SelectableIndicies.Add(0);
+            }
+            if (Option2 != "-")
+            {
+                SelectableIndicies.Add(1);
+            }
+            if (Option3 != "-")
+            {
+                SelectableIndicies.Add(2);
+            }
+            if (Option4 != "-")
+            {
+                SelectableIndicies.Add(3);
+            }
+            if(SelectableIndicies.Count < 1)
+            {
+                throw (new ArgumentException("You must have at least ONE selectable option"));
+            }
             #region Prompt
             Console.CursorLeft = left;
             Console.CursorTop = top + 1;
@@ -2565,7 +2843,7 @@ namespace ModularBOT.Component
             #endregion
             Console.CursorLeft = left;
             Console.CursorTop = top + 4;
-            _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelIndex, left, top+4);
+            _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top+4);
             Console.CursorLeft = left;
             Console.CursorTop = top+8;
             Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
@@ -2598,9 +2876,9 @@ namespace ModularBOT.Component
                     SelIndex--;
                     if (SelIndex < 0)
                     {
-                        SelIndex = 0;
+                        SelIndex = SelectableIndicies.Count-1;
                     }
-                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelIndex, left, top+4);
+                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top+4);
 
                 }
 
@@ -2608,16 +2886,16 @@ namespace ModularBOT.Component
                 {
 
                     SelIndex++;
-                    if (SelIndex > 3)
+                    if (SelIndex >= SelectableIndicies.Count)
                     {
-                        SelIndex = 3;
+                        SelIndex = 0;
                     }
-                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelIndex, left, top+4);
+                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top+4);
 
                 }
                 if (c.Key == ConsoleKey.Enter)
                 {
-                    result = SelIndex + 1;
+                    result = SelectableIndicies[SelIndex] + 1;
                     for (int i = mintop; i < maxtop + 1; i++)
                     {
                         Console.BackgroundColor = PRVBG;
