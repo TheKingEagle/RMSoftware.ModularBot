@@ -31,7 +31,7 @@ namespace ModularBOT
 
         /// <summary>
         /// Application Entry Point.
-        /// </summary>
+        /// </summary>        
         public static int Main(string[] ARGS = null)
         {
             _consoleCtrlHandler += s =>
