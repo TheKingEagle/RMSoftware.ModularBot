@@ -113,50 +113,7 @@ namespace ModularBOT.Component
                 
             while (true)
             {
-                if (ppg != page)//is page changing?
-                {
-                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
-
-                    ppg = page;
-                }
-
-                countOnPage = 0;
-                if (ppg == page)
-                {
-                    Console.SetCursorPosition(0, 5);
-                }
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')}", ConsoleColor.Blue);
-                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue);
-                for (int i = index; i < 22 * page; i++)//28 results per page.
-                {
-                    if (index >= guilds.Count)
-                    {
-                        break;
-                    }
-                    countOnPage++;
-                    WriteGuild(discord, selectionIndex, countOnPage, guilds, i);
-
-                    index++;
-                }
-                WriteEntry($"\u2502");
-                string UDPROMPT = "| UP/DOWN: Move Selection | ENTER: Properties...";
-                //string UDPROMPT_T = discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id ? "| UP/DOWN: Move Selection" : UDPROMPT;
-                if (page > 1 && page < max)
-                {
-                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
-                }
-                if (page == 1 && page < max)
-                {
-                    WriteEntry($"\u2502 N: Next Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
-                }
-                if (page == 1 && page == max)
-                {
-                    WriteEntry($"\u2502 E: Exit list {UDPROMPT}", ConsoleColor.White);
-                }
-                if (page > 1 && page == max)
-                {
-                    WriteEntry($"\u2502 P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
-                }
+                countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
                 ConsoleKeyInfo s = Console.ReadKey(true);
                 if (s.Key == ConsoleKey.P)
                 {
@@ -257,6 +214,9 @@ namespace ModularBOT.Component
                             break;
                         case (4):
                             int ss = -1;
+                            
+                            countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
+                            index = 0;
                             ss = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View My Roles...", "Copy ID...", "-", "Leave Guild...");
                             switch (ss)
                             {
@@ -280,12 +240,17 @@ namespace ModularBOT.Component
                                     break;
 
                                 default:
+                                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+
                                     break;
                             }
+
                             break;
                         default:
                             break;
+
                     }
+                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
                     #endregion
 
 
@@ -304,6 +269,57 @@ namespace ModularBOT.Component
             ScreenModal = false;
             return;
 
+        }
+
+        private int PopulateGuildList(DiscordNET discord, short page, short max, ref int index, int selectionIndex, ref int ppg, ref List<SocketGuild> guilds)
+        {
+            int countOnPage;
+            if (ppg != page)//is page changing?
+            {
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
+
+                ppg = page;
+            }
+
+            countOnPage = 0;
+            if (ppg == page)
+            {
+                Console.SetCursorPosition(0, 5);
+            }
+            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')}", ConsoleColor.Blue);
+            WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue);
+            for (int i = index; i < 22 * page; i++)//28 results per page.
+            {
+                if (index >= guilds.Count)
+                {
+                    break;
+                }
+                countOnPage++;
+                WriteGuild(discord, selectionIndex, countOnPage, guilds, i);
+
+                index++;
+            }
+            WriteEntry($"\u2502");
+            string UDPROMPT = "| UP/DOWN: Move Selection | ENTER: Properties...";
+            //string UDPROMPT_T = discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id ? "| UP/DOWN: Move Selection" : UDPROMPT;
+            if (page > 1 && page < max)
+            {
+                WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+            if (page == 1 && page < max)
+            {
+                WriteEntry($"\u2502 N: Next Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+            if (page == 1 && page == max)
+            {
+                WriteEntry($"\u2502 E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+            if (page > 1 && page == max)
+            {
+                WriteEntry($"\u2502 P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+
+            return countOnPage;
         }
 
         private bool ListUsers(ref DiscordNET discord, ulong guildID, short page = 1)
@@ -1127,7 +1143,7 @@ namespace ModularBOT.Component
                 }
                 if (options[i] == "- -")
                 {
-                    Console.ForegroundColor = ConsoleColor.Gray;
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
                     Console.Write("\u2550".PadRight(38,'\u2550').PadRight(38));
                     Console.ForegroundColor = ConsoleColor.White;
                 }
