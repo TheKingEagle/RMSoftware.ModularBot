@@ -177,6 +177,10 @@ namespace ModularBOT.Component
                     Console.Write("\u2550".PadRight(38, '\u2550').PadRight(38));
                     Console.ForegroundColor = fg;
                 }
+                if (options[i] == "- ")
+                {
+                    Console.Write("\u2005".PadRight(38, '\u2005').PadRight(38));
+                }
                 else
                 {
                     Console.Write(options[i].PadRight(38));
@@ -2856,19 +2860,19 @@ namespace ModularBOT.Component
             Console.Write("\u2552{0}\u2555", pTitle);
             #endregion
 
-            if (Option1 != "-")
+            if (Option1 != "-" && Option1 != "")
             {
                 SelectableIndicies.Add(0);
             }
-            if (Option2 != "-")
+            if (Option2 != "-" && Option2 != "")
             {
                 SelectableIndicies.Add(1);
             }
-            if (Option3 != "-")
+            if (Option3 != "-" && Option3 != "")
             {
                 SelectableIndicies.Add(2);
             }
-            if (Option4 != "-")
+            if (Option4 != "-" && Option4 != "")
             {
                 SelectableIndicies.Add(3);
             }
