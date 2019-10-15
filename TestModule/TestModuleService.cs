@@ -561,6 +561,20 @@ namespace TestModule
 
         }
 
+        [Command("reason",RunMode = RunMode.Async), Summary("Modify MODLOG reason for a case id.")]
+        public async Task ModifyReason(ulong caseID, [Remainder]string REASON)
+        {
+            Tuple<bool , string > StatusCode = await _jservice.EditReason(Context.Guild.Id, caseID, REASON);
+            if(!StatusCode.Item1)
+            {
+                await ReplyAsync("",false,GetEmbeddedMessage("Reason Edit Failed", StatusCode.Item2, Color.DarkRed));
+            }
+            if (StatusCode.Item1)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Reason Edited", StatusCode.Item2, Color.Green));
+            }
+        }
+
         [Command("ml-bind"), Remarks("AccessLevels.Normal"), 
             Summary("Creates a log channel binding. Requires user permission to 'Manage Channels'. "+
             "Call the command in the channel you want to use as moderator log.")]
@@ -641,6 +655,7 @@ namespace TestModule
     {
         DiscordShardedClient ShardedClient { get; set; }
         ConsoleIO Writer { get; set; }
+        
 
         PermissionManager PermissionsManager { get; set; }
 
@@ -662,11 +677,14 @@ namespace TestModule
         public static Dictionary<ulong,string> Trashcans { get; set; }
         
         public static List<ModLogBinding> MLbindings = new List<ModLogBinding>();
-        
+
+        public static Dictionary<Tuple<ulong,ulong>, ulong> MessageCaseIDs = new Dictionary<Tuple<ulong, ulong>, ulong>();
+
 
         public TestModuleService(DiscordShardedClient _client, ConsoleIO _consoleIO, PermissionManager _permissions, ConfigurationManager _cfgMgr)
         {
             PermissionsManager = _permissions;
+            
             CfgMgr = _cfgMgr;
             ShardedClient = _client;
             Writer = _consoleIO;
@@ -826,9 +844,10 @@ namespace TestModule
             Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"BAN Reason: {arg2.GetBanAsync(arg1).GetAwaiter().GetResult().Reason}"));
             var rb = await arg2.GetBanAsync(arg1);
 
+            ulong caseid = GetCaseCount(arg2.Id);
             EmbedBuilder b = new EmbedBuilder
             {
-                Title = $"Ban | Case #{GetCaseCount(arg2.Id)}",
+                Title = $"Ban | Case #{caseid}",
                 Timestamp = DateTimeOffset.Now
             };
             b.WithColor(new Color(225, 18, 12));
@@ -841,13 +860,70 @@ namespace TestModule
             {
                 b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}",true);
             }
-            b.AddField("Reason", rb.Reason);
+            string BR = rb.Reason;
+            if(string.IsNullOrWhiteSpace(BR))
+            {
+                BR = $"Ban reason not specified! Please execute the `reason {caseid} <Reason>` command.";
+            }
+            b.AddField("Reason", BR);
             if(u.Id != ShardedClient.CurrentUser.Id)
             {
-                await SendModLog(arg2.Id, b.Build());
+                RestUserMessage r = await SendModLog(arg2.Id, b.Build());
+                MessageCaseIDs.Add(Tuple.Create(arg2.Id,caseid), r.Id);
             }
 
 
+        }
+
+        public async Task<Tuple<bool,string>> EditReason(ulong guild, ulong caseID, string REASON)
+        {
+            if(string.IsNullOrWhiteSpace(REASON))
+            {
+                return new Tuple<bool, string>(false, "You did not specify a reason!");
+            }
+            if(MessageCaseIDs.TryGetValue(Tuple.Create(guild, caseID), out ulong MessageID))
+            {
+                SocketGuild gguild = ShardedClient.GetGuild(guild);
+                if(gguild == null)
+                {
+                    return new Tuple<bool, string>(false, "Specified GuildID is not valid!");
+                }
+                SocketTextChannel ch = (SocketTextChannel)gguild.GetChannel(MLbindings.FirstOrDefault(x => x.GuildID == guild).ChannelID);
+                if (ch == null)
+                {
+                    return new Tuple<bool, string>(false, "Specified channel is not valid!");
+                }
+                var message = await ch.GetMessageAsync(MessageID) as IUserMessage;
+                if(message == null)
+                {
+                    return new Tuple<bool, string>(false, "The message could not be found!");
+                    
+                }
+                Embed oldembed = (Embed)message.Embeds.ToList()[0];
+                EmbedBuilder b = new EmbedBuilder
+                {
+                    Title = oldembed.Title,
+                    Timestamp = oldembed.Timestamp
+                };
+                b.WithColor(new Color(225, 18, 12));
+                foreach (EmbedField item in oldembed.Fields)
+                {
+                    if(item.Name !="Reason")
+                    {
+                        b.AddField(item.Name, item.Value, item.Inline);
+                    }
+                    else
+                    {
+                        b.AddField(item.Name, REASON, item.Inline);
+                    }
+                }
+                await message.ModifyAsync(x => x.Embed = b.Build());
+                return new Tuple<bool, string>(true,"Successfully edited");
+            }
+            else
+            {
+                return new Tuple<bool, string>(false, "Case ID was not found!!");
+            }
         }
 
         private async Task ShardedClient_UserJoined(SocketGuildUser arg)
@@ -1003,16 +1079,17 @@ namespace TestModule
             }
         }
 
-        public async Task SendModLog(ulong GuildID, Embed embed)
+        public async Task<RestUserMessage> SendModLog(ulong GuildID, Embed embed)
         {
             ModLogBinding mb = MLbindings.FirstOrDefault(x => x.GuildID == GuildID);
             if(mb != null)
             {
                 if (ShardedClient.GetGuild(GuildID).GetChannel(mb.ChannelID) is SocketTextChannel sfl)
                 {
-                    await sfl.SendMessageAsync("", false, embed);
+                    return await sfl.SendMessageAsync("", false, embed);
                 }
             }
+            return null;
         }
 
         public bool ModLogBound(ulong guildID)
@@ -1129,5 +1206,11 @@ namespace TestModule
         public ulong ChannelID { get; set; }
         public ulong CaseCount { get; set; }
         public ulong MuteRoleID { get; set; }
+    }
+
+    public class MLentry
+    {
+        public ulong CaseID { get; set; }
+        public ulong GuildID { get; set; }
     }
 }
