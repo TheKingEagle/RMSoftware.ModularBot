@@ -66,7 +66,7 @@ namespace ModularBOT.Component
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
             eb.WithDescription("NOTE: This application is not finished. Some features are not currently implemented.");
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT Remastered™ - System Updates",
-                $"• MOVED to Discord.NET v2.0.1\r\n" +
+                $"• MOVED to Discord.NET v2.1.0\r\n" +
                 $"• Supports more guilds! - Shard connections\r\n" +
                 $"• RE-WROTE ConsoleIO & REDESINED Console UI\r\n" +
                 $"• RE-WROTE Command manager to use a cleaner, more-modular format\r\n" +
