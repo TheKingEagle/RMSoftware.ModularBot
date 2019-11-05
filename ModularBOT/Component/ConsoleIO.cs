@@ -517,8 +517,8 @@ namespace ModularBOT.Component
                     Console.SetCursorPosition(0, 5);
                 }
 
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
-                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')} {"G.Owner".PadRight(7, '\u2005')} {"G.admin".PadRight(7, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')} {"".PadLeft(7, '\u2500')} {"".PadLeft(7, '\u2500')}", ConsoleColor.Blue);
                 for (int i = index; i < 22 * page; i++)//22 results per page.
                 {
 
@@ -728,8 +728,8 @@ namespace ModularBOT.Component
                     Console.SetCursorPosition(0, 5);
                 }
 
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')}", ConsoleColor.Blue);
-                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')} {"G.Owner".PadRight(7, '\u2005')} {"G.Admin".PadRight(7, '\u2005')}", ConsoleColor.Blue);
+                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')} {"".PadLeft(7, '\u2500')} {"".PadLeft(7, '\u2500')}", ConsoleColor.Blue);
                 if (guildusers.Count == 0)
                 {
                     WriteEntry($"\u2502\u2005\u2005\u2005 - No users found... :(", ConsoleColor.DarkRed);
@@ -891,7 +891,9 @@ namespace ModularBOT.Component
             string userinput = guildusers.ElementAt(i).Username;
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
             string p = $"{o}#{guildusers.ElementAt(i).Discriminator}".PadRight(39, '\u2005');
-            WriteEntry($"\u2502\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18, '\u2005')}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
+            string igo = guildusers.ElementAt(i).Id == guildusers.ElementAt(i).Guild.OwnerId ? "X" : "";
+            string iga = guildusers.ElementAt(i).GuildPermissions.Has(GuildPermission.Administrator) ? "X" : "";
+            WriteEntry($"\u2502\u2005\u2005 - {p} [{guildusers.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {discord.PermissionManager.GetAccessLevel(guildusers.ElementAt(i)).ToString().PadRight(18, '\u2005')} {igo.PadRight(7, '\u2005')} {iga.PadRight(7, '\u2005')}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
         }
 
         private string SafeName(List<SocketGuildUser> guildusers, int i)
