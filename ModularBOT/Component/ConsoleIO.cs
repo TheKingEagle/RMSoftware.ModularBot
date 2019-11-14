@@ -177,10 +177,10 @@ namespace ModularBOT.Component
                     Console.Write("\u2550".PadRight(38, '\u2550').PadRight(38));
                     Console.ForegroundColor = fg;
                 }
-                if (options[i] == "- ")
-                {
-                    Console.Write("\u2005".PadRight(38, '\u2005').PadRight(38));
-                }
+                //if (options[i] == "-")
+                //{
+                //    Console.Write("\u2005".PadRight(38, '\u2005').PadRight(38));
+                //}
                 else
                 {
                     Console.Write(options[i].PadRight(38));
@@ -2849,6 +2849,11 @@ namespace ModularBOT.Component
             ConsoleColor PRVFG = Console.ForegroundColor;
             Console.BackgroundColor = SBG;
             Console.ForegroundColor = SFG;
+
+            if(string.IsNullOrWhiteSpace(Option1) || string.IsNullOrWhiteSpace(Option2)|| string.IsNullOrWhiteSpace(Option3)|| string.IsNullOrWhiteSpace(Option4))
+            {
+                throw (new ArgumentException("We cannot support empty text at this time."));
+            }
 
             #region TOP
             if (title.Length > 38)
