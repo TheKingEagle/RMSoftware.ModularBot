@@ -416,6 +416,7 @@ namespace ModularBOT.Component
             EmbedBuilder errorEmbed = new EmbedBuilder();
             EmbedBuilder CSEmbed = new EmbedBuilder();
             CSEmbed.WithAuthor(client.CurrentUser);
+            string attachmentpath = "";
             if (!response.EndsWith("```"))
             {
                 error = true;
@@ -843,6 +844,76 @@ namespace ModularBOT.Component
                                     }
 
                                     CSEmbed.WithDescription(ProcessVariableString(gobj, output, cmd, client, message));
+                                    break;
+
+                                case ("DELMSG")://embed_desc <text>
+
+                                    if(message.Channel is SocketTextChannel)
+                                    {
+                                        IMessage m = message;
+                                        SocketTextChannel msgsoc = message.Channel as SocketTextChannel;
+                                        if(msgsoc.Guild != null)
+                                        {
+                                            if ((await (await client.GetGuildAsync(msgsoc.Guild.Id)).GetCurrentUserAsync(CacheMode.AllowDownload)).GuildPermissions.Has(GuildPermission.ManageMessages))
+                                            {
+                                                await message.DeleteAsync();
+                                            }
+                                        }
+                                        message = m;//keep it in reference.
+                                    }
+                                    break;
+
+                                case ("ATTACH")://embed_desc <text>
+
+                                    //Get the line removing ATTACH.
+                                    output = line.Remove(0, 7);
+                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Attachment path cannot be empty. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    if(!File.Exists(@"attachments\" + output))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Attachment could not be found. ```{line}```");
+                                        errorEmbed.AddField("Path", "`../attachments/" + output+"`", false);
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+
+                                    attachmentpath = @"attachments\" + output;
+                                    if (contextToDM)
+                                    {
+                                        try
+                                        {
+                                            await message.Author.SendFileAsync(attachmentpath);
+                                        }
+                                        catch (Exception ex)
+                                        {
+
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"The script failed due to an exception ```{line}```");
+
+                                            errorEmbed.AddField("details", $"```{ex.Message}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+
+                                    }
+                                    else
+                                    {
+
+                                        await message.Channel.SendFileAsync(attachmentpath);
+
+                                    }
                                     break;
 
                                 case ("EMBED_IMAGE")://embed_image <url>
