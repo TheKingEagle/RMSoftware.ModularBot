@@ -1177,8 +1177,8 @@ namespace ModularBOT.Component
                                     }
                                     #endregion
 
-                                    string emtitle = r.Matches(output)[0].Value.Replace("&q", "\"").Replace("&nl;", "\r\n");
-                                    string content = r.Matches(output)[1].Value.Replace("&q", "\"").Replace("&nl;", "\r\n");
+                                    string emtitle = r.Matches(output)[0].Value.Replace("\"", "").Replace("&q", "\"").Replace("&nl;", "\r\n");
+                                    string content = r.Matches(output)[1].Value.Replace("\"", "").Replace("&q", "\"").Replace("&nl;", "\r\n");
 
                                     #region MORE ERROR HANDLES
                                     if (string.IsNullOrWhiteSpace(emtitle))
