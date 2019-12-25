@@ -413,6 +413,7 @@ namespace ModularBOT.Component
             int LineInScript = 0;
             bool error = false;
             bool contextToDM = false;
+            ulong channelTarget = 0;
             EmbedBuilder errorEmbed = new EmbedBuilder();
             EmbedBuilder CSEmbed = new EmbedBuilder();
             CSEmbed.WithAuthor(client.CurrentUser);
@@ -420,18 +421,15 @@ namespace ModularBOT.Component
             if (!response.EndsWith("```"))
             {
                 error = true;
-                //errorMessage = $"SCRIPT ERROR:```The codeblock was not closed.\r\nCoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                 errorEmbed.WithDescription("The codeblock was not closed.");
-                //errorEmbed.AddInlineField("Line", LineInScript);
                 errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
             }
             errorEmbed.WithAuthor(client.CurrentUser);
             errorEmbed.WithTitle("CoreScript Error");
             errorEmbed.WithColor(Color.Red);
-            errorEmbed.WithFooter("CoreScript Engine • RMSoftware.ModularBOT");
+            errorEmbed.WithFooter("CoreScript Engine • ModularBOT");
             bool terminated = false;
             //For the sake of in-chat scripts, they should be smaller.
-            //otherwise they will be saved as a file.
             using (StringReader sr = new StringReader(response))
             {
                 try
@@ -542,9 +540,15 @@ namespace ModularBOT.Component
                                     }
                                     else
                                     {
-
-                                        await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
-
+                                        if(channelTarget == 0)
+                                        {
+                                            await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+                                        }
+                                        else
+                                        {
+                                            SocketTextChannel channelfromid = await client.GetChannelAsync(channelTarget) as SocketTextChannel;
+                                            await channelfromid.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+                                        }
                                     }
 
                                     break;
@@ -843,7 +847,7 @@ namespace ModularBOT.Component
                                         break;
                                     }
 
-                                    CSEmbed.WithDescription(ProcessVariableString(gobj, output, cmd, client, message));
+                                    CSEmbed.WithDescription(ProcessVariableString(gobj, output, cmd, client, message).Replace("&q", "\"").Replace("&nl;", "\r\n"));
                                     break;
 
                                 case ("DELMSG")://embed_desc <text>
@@ -1023,7 +1027,7 @@ namespace ModularBOT.Component
                                     CSEmbed.WithColor(c);
                                     break;
 
-                                case ("SET_TARGET")://embed footer text
+                                case ("SET_TARGET"):
 
                                     //Get the line removing echo.
                                     output = line.Remove(0, 11);
@@ -1038,9 +1042,57 @@ namespace ModularBOT.Component
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
-                                    if (output.ToUpper() == "CHANNEL")
+                                    if (output.ToUpper().StartsWith("CHANNEL"))
                                     {
                                         contextToDM = false;
+                                        ulong tempid = 0;
+                                        if(output.ToUpper() != "CHANNEL")
+                                        {
+                                            string ulparse = output.Split(' ')[1];
+                                            if(!ulong.TryParse(ulparse, out tempid))
+                                            {
+                                                error = true;
+                                                //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                                errorEmbed.WithDescription($"Invalid Channel ID format. ```{line}```");
+
+                                                errorEmbed.AddField("Available targets", "• `CHANNEL [Optional Channel ID]`\r\n• `DIRECT`");
+                                                errorEmbed.AddField("Line", LineInScript, true);
+                                                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                if(await client.GetChannelAsync(tempid) == null)
+                                                {
+                                                    error = true;
+                                                    //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                                    errorEmbed.WithDescription($"The channel with specified ID did not exist ```{line}```");
+
+                                                    errorEmbed.AddField("Available targets", "• `CHANNEL [Optional Channel ID]`\r\n• `DIRECT`");
+                                                    errorEmbed.AddField("Line", LineInScript, true);
+                                                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                                    break;
+                                                }
+                                                else
+                                                {
+                                                    if((await client.GetChannelAsync(tempid)) is SocketTextChannel)
+                                                    {
+                                                        channelTarget = tempid;
+                                                    }
+                                                    else
+                                                    {
+                                                        error = true;
+                                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                                        errorEmbed.WithDescription($"The provided ID was for a valid text channel. ```{line}```");
+
+                                                        errorEmbed.AddField("Available targets", "• `CHANNEL [Optional Channel ID]`\r\n• `DIRECT`");
+                                                        errorEmbed.AddField("Line", LineInScript, true);
+                                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                     if (output.ToUpper() == "DIRECT")
                                     {
@@ -1081,8 +1133,15 @@ namespace ModularBOT.Component
                                     }
                                     else
                                     {
-
-                                        await message.Channel.SendMessageAsync("", false, CSEmbed.Build());
+                                        if(channelTarget == 0)
+                                        {
+                                            await message.Channel.SendMessageAsync("", false, CSEmbed.Build());
+                                        }
+                                        else
+                                        {
+                                            SocketTextChannel channelfromid = await client.GetChannelAsync(channelTarget) as SocketTextChannel;
+                                            await channelfromid.SendMessageAsync("", false, CSEmbed.Build());
+                                        }
 
                                     }
 
@@ -1118,8 +1177,8 @@ namespace ModularBOT.Component
                                     }
                                     #endregion
 
-                                    string emtitle = r.Matches(output)[0].Value.Replace("\"", "").Replace("&q", "\"");
-                                    string content = r.Matches(output)[1].Value.Replace("\"", "").Replace("&q", "\"").Replace("&nl;", "\r\n");
+                                    string emtitle = r.Matches(output)[0].Value.Replace("&q", "\"").Replace("&nl;", "\r\n");
+                                    string content = r.Matches(output)[1].Value.Replace("&q", "\"").Replace("&nl;", "\r\n");
 
                                     #region MORE ERROR HANDLES
                                     if (string.IsNullOrWhiteSpace(emtitle))
