@@ -21,6 +21,8 @@ namespace ModularBOT.Component
         private CommandService cmdsvr;
         private IServiceProvider services;
         private short OutputCount = 0;
+        private bool ClMRHandlerBound = false;
+        private Dictionary<ulong, int> MessageCounter = new Dictionary<ulong, int>(); //MessageCounter<Channel,Count>
         public CoreScript(CustomCommandManager ccmgr,
             ref IServiceProvider _services, Dictionary<string, object> dict = null)
         {
@@ -84,6 +86,7 @@ namespace ModularBOT.Component
             "channel",
             "channel_id",
             "counter",
+            "msgcount",
             #endregion
             
             #region Guild Owner
@@ -330,6 +333,15 @@ namespace ModularBOT.Component
                 }
                 Processed = Processed.Replace("%channel_id%", Context);
             }
+            if (Processed.Contains("%msgcount%"))
+            {
+                string count = "0";
+                if(MessageCounter.ContainsKey(message.Channel.Id))
+                {
+                    count = MessageCounter[message.Channel.Id].ToString();
+                }
+                Processed = Processed.Replace("%msgcount%", count);
+            }
             if (cmd != null)
             {
                 if (Processed.Contains("%counter%"))
@@ -417,6 +429,11 @@ namespace ModularBOT.Component
             EmbedBuilder errorEmbed = new EmbedBuilder();
             EmbedBuilder CSEmbed = new EmbedBuilder();
             CSEmbed.WithAuthor(client.CurrentUser);
+            if (!ClMRHandlerBound)
+            {
+                ((DiscordShardedClient)client).MessageReceived += CoreScript_MessageReceived;
+                ClMRHandlerBound = true;
+            }
             string attachmentpath = "";
             if (!response.EndsWith("```"))
             {
@@ -551,6 +568,40 @@ namespace ModularBOT.Component
                                         }
                                     }
 
+                                    break;
+                                case ("COUNTER_START"):
+                                    if(message.Channel as SocketTextChannel == null)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected header:``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```\r\nAdditional info: Multi-line formatting required.";
+                                        errorEmbed.WithDescription($"This function is unavailable in DMs. ```COUNTER_START```");
+                                        errorEmbed.AddField("Additional Information", "This function can only be used in a GUILD CHANNEL.");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    if (MessageCounter.ContainsKey(message.Channel.Id))
+                                    {
+                                        MessageCounter.Remove(message.Channel.Id);
+                                    }
+                                    MessageCounter.Add(message.Channel.Id, 0);
+                                    
+                                    break;
+                                case ("COUNTER_STOP"):
+                                    if (message.Channel as SocketTextChannel == null)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected header:``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```\r\nAdditional info: Multi-line formatting required.";
+                                        errorEmbed.WithDescription($"This function is unavailable in DMs. ```COUNTER_STOP```");
+                                        errorEmbed.AddField("Additional Information", "This function can only be used in a GUILD CHANNEL.");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    if (MessageCounter.ContainsKey(message.Channel.Id))
+                                    {
+                                        MessageCounter.Remove(message.Channel.Id);
+                                    }
                                     break;
 
                                 case ("ROLE_ADD"):
@@ -1324,7 +1375,7 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("SETVAR"):
-                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd);
+                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd,ref gobj,ref client,ref message);
 
                                     break;
                                 case ("CMD"):
@@ -1493,6 +1544,17 @@ namespace ModularBOT.Component
             }
         }
 
+        private Task CoreScript_MessageReceived(SocketMessage arg)
+        {
+           
+            if(MessageCounter.ContainsKey(arg.Channel.Id))
+            {
+                MessageCounter[arg.Channel.Id]++;
+
+            }
+            return Task.Delay(0);
+        }
+
         public async Task EvaluateScriptFile(GuildObject gobj, string filename, IDiscordClient client, IMessage message, GuildCommand cmd = null)
         {
             int LineInScript = 1;
@@ -1567,7 +1629,7 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("SETVAR"):
-                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd);
+                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj,ref client,ref message);
 
                                     break;
                                 case ("CMD"):
@@ -1669,7 +1731,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region Private methods
-        private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd)
+        private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client,ref IMessage message)
         {
             string output = line;
             if (output.Split(' ').Length < 3)
@@ -1688,6 +1750,7 @@ namespace ModularBOT.Component
             string varname = output.Split(' ')[0];
             output = output.Remove(0, varname.Length);
             output = output.Trim();
+            output = ProcessVariableString(gobj, output, cmd, client, message);
             try
             {
                 Set(varname, output);
