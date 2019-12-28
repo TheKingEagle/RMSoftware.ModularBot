@@ -286,8 +286,10 @@ namespace ModularBOT.Component
             {
                 response = response.Replace(i.Value, "");
             }
-
-            response = coreScript.ProcessVariableString(gobj, response, cmd, serviceProvider.GetRequiredService<DiscordShardedClient>(), msg);
+            if(!response.StartsWith("SCRIPT"))
+            {
+                response = coreScript.ProcessVariableString(gobj, response, cmd, serviceProvider.GetRequiredService<DiscordShardedClient>(), msg);
+            }
 
             #region EXEC
             if (response.StartsWith("EXEC"))
