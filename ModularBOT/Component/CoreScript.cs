@@ -1019,7 +1019,7 @@ namespace ModularBOT.Component
                                         break;
                                     }
 
-                                    CSEmbed.WithFooter(output);
+                                    CSEmbed.WithFooter(ProcessVariableString(gobj, output, cmd, client, message));
                                     break;
 
                                 case ("EMBED_FOOTER_I")://embed footer text
@@ -1045,7 +1045,7 @@ namespace ModularBOT.Component
                                     }
                                     try
                                     {
-                                        CSEmbed.Footer.IconUrl = output;
+                                        CSEmbed.Footer.IconUrl = ProcessVariableString(gobj, output, cmd, client, message);
                                     }
                                     catch (ArgumentException ex)
                                     {
