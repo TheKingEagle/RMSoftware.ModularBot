@@ -1643,9 +1643,8 @@ namespace ModularBOT.Component
                                     await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, null, client, message), true);
 
                                     break;
-                                case ("SETVAR"):
-                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj,ref client,ref message);
-
+                                case ("SET"):
+                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
                                     break;
                                 case ("CMD"):
                                     //SocketMessage m = message as SocketMessage;
