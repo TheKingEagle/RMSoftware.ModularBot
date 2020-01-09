@@ -1374,7 +1374,13 @@ namespace ModularBOT.Component
                                     }
 
                                     break;
-                                case ("SETVAR"):
+                                case ("SET"):
+                                    if(line.Split(' ')[1] == "/P")
+                                    {
+                                        CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
+                                        break;
+                                    }
+
                                     CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd,ref gobj,ref client,ref message);
 
                                     break;
@@ -1551,6 +1557,15 @@ namespace ModularBOT.Component
             {
                 MessageCounter[arg.Channel.Id]++;
 
+            }
+            if(CSVP_Prompted)
+            {
+                if (arg.Author == CSVP_InvokM.Author && arg.Channel == CSVP_InvokM.Channel)
+                {
+                    CSVP_REPLY = arg.Content;
+                    CSVP_Replied = true;
+                    CSVP_Prompted = false;
+                }
             }
             return Task.Delay(0);
         }
@@ -1734,7 +1749,7 @@ namespace ModularBOT.Component
         private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client,ref IMessage message)
         {
             string output = line;
-            if (output.Split(' ').Length < 3)
+            if (output.Split(' ').Length < 2)
             {
                 error = true;
                 //errorMessage = $"SCRIPT ERROR:```\r\nThe syntax of this function is incorrect.```"
@@ -1746,14 +1761,62 @@ namespace ModularBOT.Component
                 errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 return;
             }
-            output = line.Remove(0, 6).Trim();
-            string varname = output.Split(' ')[0];
-            output = output.Remove(0, varname.Length);
+            output = line.Remove(0, 3).Trim();
+            string varname = output.Split('=')[0];
+            output = output.Split('=')[1];
             output = output.Trim();
             output = ProcessVariableString(gobj, output, cmd, client, message);
             try
             {
                 Set(varname, output);
+            }
+            catch (ArgumentException ex)
+            {
+                error = true;
+
+                errorEmbed.WithDescription($"{ex.Message}\r\n");
+                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
+                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
+
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+
+        }
+        bool CSVP_Replied = false;
+        bool CSVP_Prompted = false;
+        IMessage CSVP_InvokM = null;
+        string CSVP_REPLY = "";
+        private void CaseSetVarPrompt(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message)
+        {
+            string output = line;
+            if (output.Split(' ').Length < 2)
+            {
+                error = true;
+                //errorMessage = $"SCRIPT ERROR:```\r\nThe syntax of this function is incorrect.```"
+                //+ $" ```Function {line.Split(' ')[0]}```" +
+                //$"```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
+                errorEmbed.AddField("Function", line.Split(' ')[0]);
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+            output = line.Remove(0, 7).Trim();
+            string varname = output.Split('=')[0];
+            output = output.Split('=')[1];
+            output = output.Trim();
+            output = ProcessVariableString(gobj, output, cmd, client, message);
+            message.Channel.SendMessageAsync(output);
+            CSVP_Replied = false;
+            CSVP_Prompted = true;
+            CSVP_REPLY = "";
+            CSVP_InvokM = message;
+            System.Threading.SpinWait.SpinUntil(() => CSVP_Replied == true);
+            try
+            {
+                Set(varname, CSVP_REPLY);
             }
             catch (ArgumentException ex)
             {
