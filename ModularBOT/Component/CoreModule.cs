@@ -1378,6 +1378,7 @@ namespace ModularBOT.Component
             await Context.Channel.SendMessageAsync(format + " " + args);
         }
 
+
         [Command("consoleio",RunMode=RunMode.Async), Remarks("AccessLevels.Administrator"), Summary("Print consoleIO stats")]
         public async Task BOT_Consoleio([Remainder] string args = null)
         {
@@ -1838,6 +1839,67 @@ namespace ModularBOT.Component
             }
         }
 
+
+        [Command("upload"), Remarks("AccessLevels.CommandManager"), Summary("Upload a file attachment to the bot's internal attachment server (LIMIT: 8 MB).")]
+        public async Task BOT_UploadAttachment(string fileName)
+        {
+            ulong guildid = 0;
+            int ESizeTooBig = 0;
+            int attc = 0;
+            string ATTACH_LINES = "";
+            if(Context.Guild != null)
+            {
+                guildid = Context.Guild.Id;
+            }
+            if(!Directory.Exists($"attachments/{guildid}"))
+            {
+                Directory.CreateDirectory($"attachments/{guildid}");
+            }
+            if(Context.Message.Attachments.Count == 0)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("No Attachment!", 
+                    "You did not add an attachment to upload. You must add a file to upload.", Color.DarkRed));
+                return;
+            }
+            if (fileName.Any(x => Path.GetInvalidFileNameChars().Contains(x)))
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Invalid Filename!",
+               "The filename you specified contains illegal characters. \r\nIllegal Characters:\r\n `/`, `\\`, `?`, `\"`,`|`, `<`, `>`, or `*`  ", Color.DarkRed));
+                return;
+            }
+            foreach (Attachment item in Context.Message.Attachments.ToList())
+            {
+                if(item.Size > 8388608)
+                {
+                    ESizeTooBig++;
+                    continue;
+                }
+                
+                string FPATH = $"attachments/{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
+                
+                string APATH = $"{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
+                WebRequest wr = WebRequest.CreateHttp(item.Url);
+                wr.GetResponse().GetResponseStream().CopyTo(File.Create(FPATH));
+                ATTACH_LINES += $"ATTACH {APATH}\r\n";
+                attc++;
+            }
+            
+            if (!string.IsNullOrEmpty(ATTACH_LINES))
+            {
+                Color DCEC = (ESizeTooBig > 0) ? Color.LightOrange : Color.Green;
+                string Message = (ESizeTooBig > 0) ? $"Unable to upload {ESizeTooBig} file(s). Exceeded the 8 MB file limit.\r\n\r\n": $"Uploaded {attc} file(s) Successfully.\r\n\r\n";
+                string warntitle = (ESizeTooBig > 0) ? " (With errors)" : "";
+                await ReplyAsync("", false, GetEmbeddedMessage($"Upload Completed!{warntitle}",
+                    $"{Message}**The script snippet below can be copied into a command**\r\n```DOS\r\n{ATTACH_LINES}\r\n```", DCEC));
+                return;
+            }
+            if(string.IsNullOrEmpty(ATTACH_LINES))
+            {
+                string Message = (ESizeTooBig > 0) ? $"Unable to upload {ESizeTooBig} file(s). Exceeded the 8 MB file limit.\r\n\r\n" : $"Unable to upload the files due to an unknown error.";
+                await ReplyAsync("", false, GetEmbeddedMessage($"Upload Failed...", Message,Color.DarkRed));
+                return;
+            }
+        }
         #endregion
 
         #region Messages
