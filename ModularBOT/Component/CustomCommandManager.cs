@@ -724,6 +724,10 @@ namespace ModularBOT.Component
             {
                 builder.AddField("Response/Action: ", action);
             }
+            if(isglobal && serviceProvider.GetRequiredService<PermissionManager>().GetAccessLevel(Context.User) == AccessLevels.Administrator)
+            {
+                builder.AddField("Response/Action: ", action);
+            }
             return builder.Build();
             
         }
