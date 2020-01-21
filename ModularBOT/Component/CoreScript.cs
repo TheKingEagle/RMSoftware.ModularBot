@@ -1099,7 +1099,7 @@ namespace ModularBOT.Component
                                         ulong tempid = 0;
                                         if(output.ToUpper() != "CHANNEL")
                                         {
-                                            string ulparse = output.Split(' ')[1];
+                                            string ulparse = ProcessVariableString(gobj, output.Split(' ')[1],cmd,client,message);
                                             if(!ulong.TryParse(ulparse, out tempid))
                                             {
                                                 error = true;
@@ -1377,7 +1377,7 @@ namespace ModularBOT.Component
                                 case ("SET"):
                                     if(line.Split(' ')[1] == "/P")
                                     {
-                                        CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
+                                        CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message,channelTarget,contextToDM);
                                         break;
                                     }
 
@@ -1787,7 +1787,8 @@ namespace ModularBOT.Component
         bool CSVP_Prompted = false;
         IMessage CSVP_InvokM = null;
         string CSVP_REPLY = "";
-        private void CaseSetVarPrompt(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message)
+        private void CaseSetVarPrompt(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, 
+            ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message, ulong channelTarget, bool contextToDM)
         {
             string output = line;
             if (output.Split(' ').Length < 2)
@@ -1807,7 +1808,22 @@ namespace ModularBOT.Component
             output = output.Split('=')[1];
             output = output.Trim();
             output = ProcessVariableString(gobj, output, cmd, client, message);
-            message.Channel.SendMessageAsync(output);
+            if (contextToDM)
+            {
+                message.Author.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+            }
+            else
+            {
+                if (channelTarget == 0)
+                {
+                     message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+                }
+                else
+                {
+                    SocketTextChannel channelfromid =  client.GetChannelAsync(channelTarget).GetAwaiter().GetResult() as SocketTextChannel;
+                     channelfromid.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+                }
+            }
             CSVP_Replied = false;
             CSVP_Prompted = true;
             CSVP_REPLY = "";
