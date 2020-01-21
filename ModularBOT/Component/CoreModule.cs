@@ -1843,6 +1843,11 @@ namespace ModularBOT.Component
         [Command("upload"), Remarks("AccessLevels.CommandManager"), Summary("Upload a file attachment to the bot's internal attachment server (LIMIT: 8 MB).")]
         public async Task BOT_UploadAttachment(string fileName)
         {
+            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+                return;
+            }
             ulong guildid = 0;
             int ESizeTooBig = 0;
             int attc = 0;
@@ -1878,10 +1883,21 @@ namespace ModularBOT.Component
                 string FPATH = $"attachments/{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
                 
                 string APATH = $"{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
-                WebRequest wr = WebRequest.CreateHttp(item.Url);
-                wr.GetResponse().GetResponseStream().CopyTo(File.Create(FPATH));
-                ATTACH_LINES += $"ATTACH {APATH}\r\n";
-                attc++;
+                try
+                {
+                    WebRequest wr = WebRequest.CreateHttp(item.Url);
+                    wr.GetResponse().GetResponseStream().CopyTo(File.Create(FPATH));
+                    ATTACH_LINES += $"ATTACH {APATH}\r\n";
+                    attc++;
+                }
+                catch (Exception ex)
+                {
+
+                    await ReplyAsync("", false, GetEmbeddedMessage($"Upload Failed!",
+                    $"The file could not be uploaded to the attachment server.\r\n```\r\n{ex.Message}\r\n```", Color.DarkRed));
+                    return;
+                }
+                
             }
             
             if (!string.IsNullOrEmpty(ATTACH_LINES))
