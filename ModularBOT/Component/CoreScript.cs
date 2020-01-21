@@ -898,7 +898,7 @@ namespace ModularBOT.Component
                                         break;
                                     }
 
-                                    CSEmbed.WithDescription(ProcessVariableString(gobj, output, cmd, client, message).Replace("&q", "\"").Replace("&nl;", "\r\n"));
+                                    CSEmbed.WithDescription(ProcessVariableString(gobj, output, cmd, client, message).Replace("&q;", "\"").Replace("&nl;", "\r\n").Replace("&bt;", "`"));
                                     break;
 
                                 case ("DELMSG")://embed_desc <text>
@@ -1221,15 +1221,15 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                         errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q;` before and after the content you want to quote.");
                                         errorEmbed.AddField("Line", LineInScript, true);
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
                                     #endregion
 
-                                    string emtitle = r.Matches(output)[0].Value.Replace("\"", "").Replace("&q", "\"").Replace("&nl;", "\r\n");
-                                    string content = r.Matches(output)[1].Value.Replace("\"", "").Replace("&q", "\"").Replace("&nl;", "\r\n");
+                                    string emtitle = r.Matches(output)[0].Value.Replace("\"", "").Replace("&q;", "\"").Replace("&nl;", "\r\n");
+                                    string content = r.Matches(output)[1].Value.Replace("\"", "").Replace("&q;", "\"").Replace("&nl;", "\r\n");
 
                                     #region MORE ERROR HANDLES
                                     if (string.IsNullOrWhiteSpace(emtitle))
@@ -1238,7 +1238,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Title cannot be empty! ```{line}```");
                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q;` before and after the content you want to quote.");
                                         errorEmbed.AddField("Line", LineInScript, true);
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
@@ -1281,15 +1281,15 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                         errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q;` before and after the content you want to quote.");
                                         errorEmbed.AddField("Line", LineInScript, true);
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
                                     #endregion
 
-                                    string emtitlei = ri.Matches(output)[0].Value.Replace("\"", "").Replace("&q", "\"");
-                                    string contenti = ri.Matches(output)[1].Value.Replace("\"", "").Replace("&q", "\"");
+                                    string emtitlei = ri.Matches(output)[0].Value.Replace("\"", "").Replace("&q;", "\"");
+                                    string contenti = ri.Matches(output)[1].Value.Replace("\"", "").Replace("&q;", "\"");
 
                                     #region MORE ERROR HANDLES
                                     if (string.IsNullOrWhiteSpace(emtitlei))
@@ -1298,7 +1298,7 @@ namespace ModularBOT.Component
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
                                         errorEmbed.WithDescription($"Title cannot be empty! ```{line}```");
                                         errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
+                                        errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q;` before and after the content you want to quote.");
                                         errorEmbed.AddField("Line", LineInScript, true);
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
