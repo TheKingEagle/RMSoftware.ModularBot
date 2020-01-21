@@ -720,8 +720,10 @@ namespace ModularBOT.Component
             string action = "";
             if(GCMD.Action.ToUpper().StartsWith("SCRIPT ") || GCMD.Action.Contains('`')) { action = GCMD.Action; }
             else { action = $"```\r\n{GCMD.Action}\r\n```"; }
-            
-            builder.AddField("Response/Action: ",action);
+            if(!isglobal)
+            {
+                builder.AddField("Response/Action: ", action);
+            }
             return builder.Build();
             
         }
