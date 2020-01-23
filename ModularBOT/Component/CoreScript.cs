@@ -947,6 +947,7 @@ namespace ModularBOT.Component
                                     {
                                         try
                                         {
+                                            
                                             await message.Author.SendFileAsync(attachmentpath);
                                         }
                                         catch (Exception ex)
@@ -965,8 +966,9 @@ namespace ModularBOT.Component
                                     }
                                     else
                                     {
-
+                                        var z = message.Channel.EnterTypingState();
                                         await message.Channel.SendFileAsync(attachmentpath);
+                                        z.Dispose();
 
                                     }
                                     break;
