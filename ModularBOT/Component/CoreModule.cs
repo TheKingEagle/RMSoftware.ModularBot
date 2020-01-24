@@ -1616,12 +1616,12 @@ namespace ModularBOT.Component
             }
         }
 
-        [Command("printvars"), Summary("Output all variables and their values."),Remarks("AccessLevels.Administrator")]
+        [Command("printvars"), Summary("Output all variables and their values."),Remarks("AccessLevels.CommandManager")]
         public async Task PrintVars()
         {
-            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User)< AccessLevels.Administrator)
+            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User)< AccessLevels.CommandManager)
             {
-                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                await ReplyAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                 return;
             }
             GuildObject gobj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild?.Id) ?? _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
@@ -1634,7 +1634,7 @@ namespace ModularBOT.Component
                 int flen = dsc.Length + $"• {item.PadRight(20)} :: [System Defined]\r\n".Length;
                 if (flen > 768)
                 {
-
+                    
                     pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
                     Pages.Add(pageItem);
                     pageItem = new PaginatedMessage.Page();
@@ -1645,7 +1645,11 @@ namespace ModularBOT.Component
             }
             foreach (var item in _DiscordNet.CustomCMDMgr.coreScript.Variables)
             {
-                int flen = dsc.Length + $"• {item.Key.PadRight(20)} :: [Custom Defined] :: {item.Value}\r\n".Length;
+                if(item.Value.hidden)
+                {
+                    continue;
+                }
+                int flen = dsc.Length + $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n".Length;
                 if(flen > 768)
                 {
 
@@ -1657,6 +1661,26 @@ namespace ModularBOT.Component
                 }
                 dsc += $"• {item.Key.PadRight(20)} :: {item.Value}\r\n";
             }
+            if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) == AccessLevels.Administrator)
+            {
+                dsc += "\r\n== Hidden Variables (Administrator View) ==\r\n";
+                foreach (var item in _DiscordNet.CustomCMDMgr.coreScript.Variables.Where(x => x.Value.hidden == true))
+                {
+
+                    int flen = dsc.Length + $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n".Length;
+                    if (flen > 768)
+                    {
+
+                        pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                        Pages.Add(pageItem);
+                        pageItem = new PaginatedMessage.Page();
+                        dsc = "";
+
+                    }
+                    dsc += $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n";
+                }
+            }
+            
 
             pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
             Pages.Add(pageItem);
