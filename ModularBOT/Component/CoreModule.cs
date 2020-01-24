@@ -1629,10 +1629,11 @@ namespace ModularBOT.Component
 
             PaginatedMessage.Page pageItem = new PaginatedMessage.Page();
             string dsc = "";
+            dsc += "\r\n== System Variables ==\r\n";
             foreach (var item in _DiscordNet.CustomCMDMgr.coreScript.SystemVars)
             {
                 int flen = dsc.Length + $"• {item.PadRight(20)} :: [System Defined]\r\n".Length;
-                if (flen > 768)
+                if (flen > 798)
                 {
                     
                     pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
@@ -1643,6 +1644,7 @@ namespace ModularBOT.Component
                 }
                 dsc += $"• {item.PadRight(20)} :: [System Defined]\r\n";
             }
+            dsc += "\r\n== Custom Variables ==\r\n";
             foreach (var item in _DiscordNet.CustomCMDMgr.coreScript.Variables)
             {
                 if(item.Value.hidden)
@@ -1650,7 +1652,7 @@ namespace ModularBOT.Component
                     continue;
                 }
                 int flen = dsc.Length + $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n".Length;
-                if(flen > 768)
+                if(flen > 798)
                 {
 
                     pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
@@ -1659,7 +1661,7 @@ namespace ModularBOT.Component
                     dsc = "";
                     
                 }
-                dsc += $"• {item.Key.PadRight(20)} :: {item.Value}\r\n";
+                dsc += $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n";
             }
             if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) == AccessLevels.Administrator)
             {
@@ -1668,7 +1670,7 @@ namespace ModularBOT.Component
                 {
 
                     int flen = dsc.Length + $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n".Length;
-                    if (flen > 768)
+                    if (flen > 819)
                     {
 
                         pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
