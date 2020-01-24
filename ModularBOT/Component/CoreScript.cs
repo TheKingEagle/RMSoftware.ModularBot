@@ -1650,6 +1650,11 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("SET"):
+                                    if (line.Split(' ')[1] == "/H")
+                                    {
+                                        CaseSetVarH(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
+                                        break;
+                                    }
                                     CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
                                     break;
                                 case ("CMD"):
