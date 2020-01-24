@@ -17,21 +17,21 @@ namespace ModularBOT.Component
     internal class CoreScript
     {
         private CustomCommandManager ccmgr;
-        internal Dictionary<string, object> Variables { get; set; }
+        internal Dictionary<string,(object value,bool hidden)> Variables { get; set; }
         private CommandService cmdsvr;
         private IServiceProvider services;
         private short OutputCount = 0;
         private bool ClMRHandlerBound = false;
         private Dictionary<ulong, int> MessageCounter = new Dictionary<ulong, int>(); //MessageCounter<Channel,Count>
         public CoreScript(CustomCommandManager ccmgr,
-            ref IServiceProvider _services, Dictionary<string, object> dict = null)
+            ref IServiceProvider _services, Dictionary<string, (object value, bool hidden)> dict = null)
         {
             cmdsvr = _services.GetRequiredService<CommandService>();
             services = _services;
             this.ccmgr = ccmgr;
             if (dict == null)
             {
-                Variables = new Dictionary<string, object>();
+                Variables = new Dictionary<string, (object value, bool hidden)>();
             }
             else
             {
@@ -99,7 +99,7 @@ namespace ModularBOT.Component
         };
 
         #region Public Methods
-        public void Set(string var, object value)
+        public void Set(string var, object value, bool hidden = false)
         {
             if(var.Length > 20)
             {
@@ -113,34 +113,34 @@ namespace ModularBOT.Component
             {
                 throw (new ArgumentException("This variable cannot be modified."));
             }
-            bool result = Variables.TryGetValue(var, out object v);
+            bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
             if (!result)
             {
                 //add the new variable.
-                Variables.Add(var, value);
-                services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result False. Creating variable. Name:{var}; Value: {value}"));
+                Variables.Add(var, (value, hidden));
+                services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result False. Creating variable. Name:{var}; Value: {value}; Hidden: {hidden}"));
                 return;
             }
             else
             {
 
-                Variables[var] = value;
+                Variables[var] = (value, hidden);
                 Variables = Variables;
-                services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result true. modifying variable. Name:{var}; Value: {Variables[var]}"));
+                services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result true. modifying variable. Name:{var}; Value: {Variables[var].value}; Hidden: {Variables[var].hidden};"));
                 return;
             }
         }
 
         public object Get(string var)
         {
-            bool result = Variables.TryGetValue(var, out object v);
+            bool result = Variables.TryGetValue(var, out (object value,bool hidden) v);
             if (!result)
             {
                 return null;
             }
             else
             {
-                return v;
+                return v.value;
             }
 
         }
@@ -1382,7 +1382,11 @@ namespace ModularBOT.Component
                                         CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message,channelTarget,contextToDM);
                                         break;
                                     }
-
+                                    if (line.Split(' ')[1] == "/H")
+                                    {
+                                        CaseSetVarH(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
+                                        break;
+                                    }
                                     CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd,ref gobj,ref client,ref message);
 
                                     break;
@@ -1785,6 +1789,46 @@ namespace ModularBOT.Component
             }
 
         }
+
+        private void CaseSetVarH(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message)
+        {
+            string output = line;
+            if (output.Split(' ').Length < 2)
+            {
+                error = true;
+                //errorMessage = $"SCRIPT ERROR:```\r\nThe syntax of this function is incorrect.```"
+                //+ $" ```Function {line.Split(' ')[0]}```" +
+                //$"```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
+                errorEmbed.AddField("Function", line.Split(' ')[0]);
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+            output = line.Remove(0, 7).Trim();
+            string varname = output.Split('=')[0];
+            output = output.Split('=')[1];
+            output = output.Trim();
+            output = ProcessVariableString(gobj, output, cmd, client, message);
+            try
+            {
+                Set(varname, output,true);
+            }
+            catch (ArgumentException ex)
+            {
+                error = true;
+
+                errorEmbed.WithDescription($"{ex.Message}\r\n");
+                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
+                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
+
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+
+        }
+
         bool CSVP_Replied = false;
         bool CSVP_Prompted = false;
         IMessage CSVP_InvokM = null;
