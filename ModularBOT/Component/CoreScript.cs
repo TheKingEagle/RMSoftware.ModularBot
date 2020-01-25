@@ -16,15 +16,23 @@ namespace ModularBOT.Component
 {
     internal class CoreScript
     {
+        #region Private Fields & Properties
         private CustomCommandManager ccmgr;
         internal Dictionary<string,(object value,bool hidden)> Variables { get; set; }
+
+        internal Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)> ActivePrompts { get; set; }
+
         private CommandService cmdsvr;
         private IServiceProvider services;
         private short OutputCount = 0;
         private bool ClMRHandlerBound = false;
         private Dictionary<ulong, int> MessageCounter = new Dictionary<ulong, int>(); //MessageCounter<Channel,Count>
+        #endregion
+
         public CoreScript(CustomCommandManager ccmgr,
-            ref IServiceProvider _services, Dictionary<string, (object value, bool hidden)> dict = null)
+            ref IServiceProvider _services, 
+            Dictionary<string, (object value, bool hidden)> dict = null, 
+            Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)> ap= null)
         {
             cmdsvr = _services.GetRequiredService<CommandService>();
             services = _services;
@@ -36,6 +44,15 @@ namespace ModularBOT.Component
             else
             {
                 Variables = dict;
+            }
+
+            if (ap == null)
+            {
+                ActivePrompts = new Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)>();
+            }
+            else
+            {
+                ActivePrompts = ap;
             }
             Task.Run(() => OutputThrottleRS());//new thread throttle loop check.
         }
@@ -931,7 +948,7 @@ namespace ModularBOT.Component
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
-                                    if(!File.Exists(@"attachments\" + output))
+                                    if(!File.Exists(@"attachments\" + ProcessVariableString(gobj, output, cmd, client, message)))
                                     {
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
@@ -942,7 +959,7 @@ namespace ModularBOT.Component
                                         break;
                                     }
 
-                                    attachmentpath = @"attachments\" + output;
+                                    attachmentpath = @"attachments\" + ProcessVariableString(gobj, output, cmd, client, message);
                                     if (contextToDM)
                                     {
                                         try
@@ -987,7 +1004,7 @@ namespace ModularBOT.Component
                                         break;
                                     }
 
-                                    CSEmbed.WithImageUrl(output);
+                                    CSEmbed.WithImageUrl(ProcessVariableString(gobj, output, cmd, client, message));
                                     break;
 
                                 case ("EMBED_THIMAGE")://embed_thimage <url>
@@ -1074,7 +1091,7 @@ namespace ModularBOT.Component
                                         errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                                         break;
                                     }
-                                    string o = output.Replace("#", "").ToUpper().Trim();
+                                    string o = ProcessVariableString(gobj, output, cmd, client, message).Replace("#", "").ToUpper().Trim();
                                     uint c = 9;
                                     c = (uint)Convert.ToUInt32(o, 16);
                                     CSEmbed.WithColor(c);
@@ -1377,14 +1394,20 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("SET"):
+
                                     if(line.Split(' ')[1] == "/P")
                                     {
                                         CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message,channelTarget,contextToDM);
                                         break;
                                     }
+                                    if (line.Split(' ')[1] == "/HP" || line.Split(' ')[1] == "/PH")
+                                    {
+                                        CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message, channelTarget, contextToDM,true);
+                                        break;
+                                    }
                                     if (line.Split(' ')[1] == "/H")
                                     {
-                                        CaseSetVarH(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
+                                        CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message,true);
                                         break;
                                     }
                                     CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd,ref gobj,ref client,ref message);
@@ -1556,26 +1579,6 @@ namespace ModularBOT.Component
             }
         }
 
-        private Task CoreScript_MessageReceived(SocketMessage arg)
-        {
-           
-            if(MessageCounter.ContainsKey(arg.Channel.Id))
-            {
-                MessageCounter[arg.Channel.Id]++;
-
-            }
-            if(CSVP_Prompted)
-            {
-                if (arg.Author == CSVP_InvokM.Author && arg.Channel == CSVP_InvokM.Channel)
-                {
-                    CSVP_REPLY = arg.Content;
-                    CSVP_Replied = true;
-                    CSVP_Prompted = false;
-                }
-            }
-            return Task.Delay(0);
-        }
-
         public async Task EvaluateScriptFile(GuildObject gobj, string filename, IDiscordClient client, IMessage message, GuildCommand cmd = null)
         {
             int LineInScript = 1;
@@ -1650,9 +1653,10 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("SET"):
+                                   //Sadly, I cannot allow for prompts in the CoreScript File evaluation.
                                     if (line.Split(' ')[1] == "/H")
                                     {
-                                        CaseSetVarH(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
+                                        CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message, true);
                                         break;
                                     }
                                     CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
@@ -1754,9 +1758,31 @@ namespace ModularBOT.Component
             }
         }
         #endregion
+        
+        #region CORESCRIPT EVENTS
+        private Task CoreScript_MessageReceived(SocketMessage arg)
+        {
 
+            if (MessageCounter.ContainsKey(arg.Channel.Id))
+            {
+                MessageCounter[arg.Channel.Id]++;
+
+            }
+            if (ActivePrompts.TryGetValue(arg.Author.Id, out (IMessage InvokerMessage, ulong ChannelID, string PromptReply) result))
+            {
+                if (arg.Author.Id == result.InvokerMessage.Author.Id && arg.Channel.Id == result.ChannelID)
+                {
+                    ActivePrompts[arg.Author.Id] = (result.InvokerMessage, result.ChannelID, arg.Content);
+                    ActivePrompts = ActivePrompts;//Why was this here?
+                }
+            }
+            return Task.Delay(0);
+        }
+
+        #endregion ========================================================= END CORESCRIPT EVENTS =======================================================
+        
         #region Private methods
-        private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client,ref IMessage message)
+        private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client,ref IMessage message, bool hidden=false)
         {
             string output = line;
             if (output.Split(' ').Length < 2)
@@ -1771,7 +1797,14 @@ namespace ModularBOT.Component
                 errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 return;
             }
-            output = line.Remove(0, 3).Trim();
+            if (hidden)
+            {
+                output = line.Remove(0, 4).Trim();
+            }
+            if (!hidden)
+            {
+                output = line.Remove(0, 3).Trim();
+            }
             string varname = output.Split('=')[0];
             output = output.Split('=')[1];
             output = output.Trim();
@@ -1794,52 +1827,9 @@ namespace ModularBOT.Component
             }
 
         }
-
-        private void CaseSetVarH(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message)
-        {
-            string output = line;
-            if (output.Split(' ').Length < 2)
-            {
-                error = true;
-                //errorMessage = $"SCRIPT ERROR:```\r\nThe syntax of this function is incorrect.```"
-                //+ $" ```Function {line.Split(' ')[0]}```" +
-                //$"```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
-                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
-                errorEmbed.AddField("Function", line.Split(' ')[0]);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return;
-            }
-            output = line.Remove(0, 7).Trim();
-            string varname = output.Split('=')[0];
-            output = output.Split('=')[1];
-            output = output.Trim();
-            output = ProcessVariableString(gobj, output, cmd, client, message);
-            try
-            {
-                Set(varname, output,true);
-            }
-            catch (ArgumentException ex)
-            {
-                error = true;
-
-                errorEmbed.WithDescription($"{ex.Message}\r\n");
-                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
-                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
-
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return;
-            }
-
-        }
-
-        bool CSVP_Replied = false;
-        bool CSVP_Prompted = false;
-        IMessage CSVP_InvokM = null;
-        string CSVP_REPLY = "";
+        
         private void CaseSetVarPrompt(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, 
-            ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message, ulong channelTarget, bool contextToDM)
+            ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message, ulong channelTarget, bool contextToDM, bool hidden=false)
         {
             string output = line;
             if (output.Split(' ').Length < 2)
@@ -1854,7 +1844,16 @@ namespace ModularBOT.Component
                 errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 return;
             }
-            output = line.Remove(0, 7).Trim();
+            if(hidden)
+            {
+
+                output = line.Remove(0, 8).Trim();
+            }
+            if (!hidden)
+            {
+
+                output = line.Remove(0, 7).Trim();
+            }
             string varname = output.Split('=')[0];
             output = output.Split('=')[1];
             output = output.Trim();
@@ -1875,14 +1874,21 @@ namespace ModularBOT.Component
                      channelfromid.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
                 }
             }
-            CSVP_Replied = false;
-            CSVP_Prompted = true;
-            CSVP_REPLY = "";
-            CSVP_InvokM = message;
-            System.Threading.SpinWait.SpinUntil(() => CSVP_Replied == true);
+
+            ulong iprompter = message.Author.Id;
+            if (!ActivePrompts.TryGetValue(iprompter, out (IMessage invoker, ulong channelid, string reply) Prompt))
+            {
+                ActivePrompts.Add(iprompter, (message, message.Channel.Id, ""));
+            }
+            else
+            {
+                return;//One prompt per user. sorrynotsorry
+            }
+            System.Threading.SpinWait.SpinUntil(() => !string.IsNullOrWhiteSpace(ActivePrompts[iprompter].PromptReply));
             try
             {
-                Set(varname, CSVP_REPLY);
+                Set(varname, ActivePrompts[iprompter].PromptReply,hidden);
+                ActivePrompts.Remove(iprompter);
             }
             catch (ArgumentException ex)
             {
@@ -1989,5 +1995,7 @@ namespace ModularBOT.Component
         }
 
         #endregion
+
+
     }
 }
