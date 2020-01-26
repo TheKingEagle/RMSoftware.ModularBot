@@ -20,6 +20,8 @@ namespace ModularBOT.Component
         private CustomCommandManager ccmgr;
         internal Dictionary<string,(object value,bool hidden)> Variables { get; set; }
 
+        internal Dictionary<ulong, Dictionary<string, (object value, bool hidden)>> UserVariableDictionaries { get; set; }
+
         internal Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)> ActivePrompts { get; set; }
 
         private CommandService cmdsvr;
@@ -32,7 +34,8 @@ namespace ModularBOT.Component
         public CoreScript(CustomCommandManager ccmgr,
             ref IServiceProvider _services, 
             Dictionary<string, (object value, bool hidden)> dict = null, 
-            Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)> ap= null)
+            Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)> ap= null,
+            Dictionary<ulong, Dictionary<string, (object value, bool hidden)>> uv = null)
         {
             cmdsvr = _services.GetRequiredService<CommandService>();
             services = _services;
@@ -53,6 +56,14 @@ namespace ModularBOT.Component
             else
             {
                 ActivePrompts = ap;
+            }
+            if (uv == null)
+            {
+                UserVariableDictionaries = new Dictionary<ulong, Dictionary<string, (object value, bool hidden)>>();
+            }
+            else
+            {
+                UserVariableDictionaries = uv;
             }
             Task.Run(() => OutputThrottleRS());//new thread throttle loop check.
         }
@@ -148,16 +159,107 @@ namespace ModularBOT.Component
             }
         }
 
-        public object Get(string var)
+        public void SetUserVar(ulong KEY,string var, object value, bool hidden = false)
         {
-            bool result = Variables.TryGetValue(var, out (object value,bool hidden) v);
-            if (!result)
+            if(KEY == 0)
             {
-                return null;
+                throw (new ArgumentException("A User ID is required."));
             }
-            else
+            if (var.Length > 20)
             {
-                return v.value;
+                throw (new ArgumentException("Variable name limit exceeded! Keep variable names 20 characters or less"));
+            }
+            if (string.IsNullOrEmpty((string)value))
+            {
+                throw (new ArgumentException($"You cannot set `{var}` to a value of `null`"));
+            }
+            if (SystemVars.Contains(var))
+            {
+                throw (new ArgumentException("This variable cannot be modified."));
+            }
+            bool HasDictionaryResult = UserVariableDictionaries.TryGetValue(KEY, out Dictionary<string, (object value, bool hidden)> userVarDictionary);
+            
+            //WARNING: Step-by-step navigation comments are here because this may be very confusing...
+
+            if (!HasDictionaryResult)                                                       //NO DICRIONARY FOUND!
+            {
+                userVarDictionary = new Dictionary<string, (object value, bool hidden)>();      //Create new dictionary;
+                userVarDictionary.Add(var,( value, hidden));                                    //Add variable to new dictionary;
+                UserVariableDictionaries.Add(KEY, userVarDictionary);                           //Add the new dictionary to the master dictionary;
+                UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
+
+                services.GetRequiredService<ConsoleIO>()                                        //Tell Console about it.
+                    .WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", 
+                    $"User did not have a variable dictionary. " +
+                    $"Created new one with new variable. KEY: {KEY} VarName: {var} Value: {value} Hidden: {hidden}"));
+
+                return;
+            }
+            else                                                                            //DICTIONARY FOUND!
+            {
+                bool HasVariable = userVarDictionary.TryGetValue(var, out (object value, bool hidden) v);
+
+                if(!HasVariable)                                                                //NO VARIABLE FOUND!
+                {
+                    userVarDictionary.Add(var, (value, hidden));                                    //Add the variable to the dictionary.
+                    UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the user dictionary in master dictionary.
+                    UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
+
+                    services.GetRequiredService<ConsoleIO>()                                        //Tell Console about it.
+                    .WriteEntry(new LogMessage(LogSeverity.Debug, "Variables",
+                    $"User Dictionary did not have the variable. " +
+                    $"Created new variable and updated the variable list. KEY: {KEY} VarName: {var} Value: {value} Hidden: {hidden}"));
+                    return;
+                }
+                else                                                                            //VARIABLE FOUND!
+                {
+                    userVarDictionary[var] = (value, hidden);                                       //SET the variable in the dictionary
+                    UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the dictionary in the master dictionary.
+                    UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
+
+                    services.GetRequiredService<ConsoleIO>()                                        //Tell Console about it.
+                    .WriteEntry(new LogMessage(LogSeverity.Debug, "Variables",
+                    $"User Dictionary HAD the variable dictionary AND variable. " +
+                    $"Updating everything. KEY: {KEY} VarName: {var} Value: {value} Hidden: {hidden}"));
+                }
+                return;                                                                     
+            }
+        }
+
+        public object Get(string var, ulong userid = 0)
+        {
+            if(userid > 0)                                                                          //USER ID is set.
+            {
+                bool cuservar = UserVariableDictionaries[userid].TryGetValue(var,out (object value, bool hidden) uservar);
+                if(!cuservar)
+                {
+                    bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
+
+                    if (!result)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        return v.value;
+                    }
+                }
+                else
+                {
+                    return uservar.value;
+                }
+            }
+            else                                                                                    //USER ID NOT SET.
+            {
+                bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
+                if (!result)
+                {
+                    return null;
+                }
+                else
+                {
+                    return v.value;
+                }
             }
 
         }
@@ -427,9 +529,9 @@ namespace ModularBOT.Component
             foreach (Match item in Regex.Matches(Processed, @"%[^%]*%"))
             {
                 string vname = item.Value.Replace("%", "");
-                if (Get(vname) != null)
+                if (Get(vname, message.Author.Id) != null)
                 {
-                    string replacedvar = Get(vname).ToString();
+                    string replacedvar = Get(vname, message.Author.Id).ToString();
                     Processed = Processed.Replace(item.Value, replacedvar);
                 }
             }
@@ -1394,22 +1496,64 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("SET"):
+                                    if(line.Split(' ')[1].StartsWith("/"))
+                                    {
+                                        bool hidden = line.Split(' ')[1].ToUpper().Contains('H');
+                                        if(line.Split(' ')[1].Length > 4)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Syntax Error: ```Too many flags.```");
 
-                                    if(line.Split(' ')[1] == "/P")
-                                    {
-                                        CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message,channelTarget,contextToDM);
-                                        break;
+                                            errorEmbed.AddField("details", $"```Expected format: SET /UPH VarName=PromptOrValue.\r\n\r\nFlags can be any combination of U P and H.\r\n\r\nMaximum flag supported: 3```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if(line.Split(' ')[1].Length == 1)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Syntax Error: ```No Flags Specified.```");
+
+                                            errorEmbed.AddField("details", $"```Expected format: SET /UPH VarName=PromptOrValue.\r\n\r\nFlags can be any combination of U P and H.\r\n\r\nMaximum flag supported: 3.```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if(line.Split(' ')[1].ToUpper().Contains('U'))
+                                        {
+                                            if(line.Split(' ')[1].ToUpper().Contains('P'))
+                                            {
+                                                CaseSetUserVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message, channelTarget, contextToDM, hidden);
+                                                break;
+                                            }
+                                            CaseSetUserVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message, hidden);
+                                            break;
+                                        }
+                                        if (line.Split(' ')[1].ToUpper().Contains('P'))
+                                        {
+                                            CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message, channelTarget, contextToDM, hidden);
+                                            break;
+                                        }
+                                        if(line.Split(' ')[1].ToUpper().Contains('H'))
+                                        {
+                                            CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message,hidden);
+                                            break;
+                                        }
+                                        else if(!line.Split(' ')[1].ToUpper().Contains('H'))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Syntax Error: ```Unrecognized Flag```");
+
+                                            errorEmbed.AddField("details", $"```Expected format: SET /UPH VarName=PromptOrValue.\r\n\r\nFlags can be any combination of U P and H.\r\n\r\nMaximum flag supported: 3.```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
                                     }
-                                    if (line.Split(' ')[1] == "/HP" || line.Split(' ')[1] == "/PH")
-                                    {
-                                        CaseSetVarPrompt(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message, channelTarget, contextToDM,true);
-                                        break;
-                                    }
-                                    if (line.Split(' ')[1] == "/H")
-                                    {
-                                        CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message,true);
-                                        break;
-                                    }
+                                    
                                     CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd,ref gobj,ref client,ref message);
 
                                     break;
@@ -1799,11 +1943,11 @@ namespace ModularBOT.Component
             }
             if (hidden)
             {
-                output = line.Remove(0, 4).Trim();
+                output = line.Remove(0, 7).Trim();// SET /H 
             }
             if (!hidden)
             {
-                output = line.Remove(0, 3).Trim();
+                output = line.Remove(0, 4).Trim(); //SET 
             }
             string varname = output.Split('=')[0];
             output = output.Split('=')[1];
@@ -1811,7 +1955,7 @@ namespace ModularBOT.Component
             output = ProcessVariableString(gobj, output, cmd, client, message);
             try
             {
-                Set(varname, output);
+                Set(varname, output,hidden);
             }
             catch (ArgumentException ex)
             {
@@ -1827,7 +1971,53 @@ namespace ModularBOT.Component
             }
 
         }
-        
+
+        private void CaseSetUserVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message, bool hidden = false)
+        {
+            string output = line;
+            if (output.Split(' ').Length < 2)
+            {
+                error = true;
+                //errorMessage = $"SCRIPT ERROR:```\r\nThe syntax of this function is incorrect.```"
+                //+ $" ```Function {line.Split(' ')[0]}```" +
+                //$"```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
+                errorEmbed.AddField("Function", line.Split(' ')[0]);
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+            if (hidden)
+            {
+                output = line.Remove(0, 8).Trim();//SET /UH 
+            }
+            if (!hidden)
+            {
+                output = line.Remove(0, 7).Trim();//SET /U 
+            }
+            string varname = output.Split('=')[0];
+            output = output.Split('=')[1];
+            output = output.Trim();
+            output = ProcessVariableString(gobj, output, cmd, client, message);
+            try
+            {
+                SetUserVar(message.Author.Id,varname, output, hidden);
+            }
+            catch (ArgumentException ex)
+            {
+                error = true;
+
+                errorEmbed.WithDescription($"{ex.Message}\r\n");
+                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
+                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
+
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+
+        }
+
         private void CaseSetVarPrompt(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, 
             ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message, 
             ulong channelTarget, bool contextToDM, bool hidden=false)
@@ -1848,12 +2038,12 @@ namespace ModularBOT.Component
             if(hidden)
             {
 
-                output = line.Remove(0, 8).Trim();
+                output = line.Remove(0, 8).Trim();//SET /HP 
             }
             if (!hidden)
             {
 
-                output = line.Remove(0, 7).Trim();
+                output = line.Remove(0, 7).Trim();//SET /P 
             }
             string varname = output.Split('=')[0];
             output = output.Split('=')[1];
@@ -1889,6 +2079,84 @@ namespace ModularBOT.Component
             try
             {
                 Set(varname, ActivePrompts[iprompter].PromptReply,hidden);
+                ActivePrompts.Remove(iprompter);
+            }
+            catch (ArgumentException ex)
+            {
+                error = true;
+
+                errorEmbed.WithDescription($"{ex.Message}\r\n");
+                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
+                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
+
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+
+        }
+
+        private void CaseSetUserVarPrompt(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript,
+            ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message,
+            ulong channelTarget, bool contextToDM, bool hidden = false)
+        {
+            string output = line;
+            if (output.Split(' ').Length < 2)
+            {
+                error = true;
+                //errorMessage = $"SCRIPT ERROR:```\r\nThe syntax of this function is incorrect.```"
+                //+ $" ```Function {line.Split(' ')[0]}```" +
+                //$"```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
+                errorEmbed.AddField("Function", line.Split(' ')[0]);
+                errorEmbed.AddField("Line", LineInScript, true);
+                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                return;
+            }
+            if (hidden)
+            {
+
+                output = line.Remove(0, 9).Trim();//SET /UPH 
+            }
+            if (!hidden)
+            {
+
+                output = line.Remove(0, 8).Trim();//SET /UP 
+            }
+            string varname = output.Split('=')[0];
+            output = output.Split('=')[1];
+            output = output.Trim();
+            output = ProcessVariableString(gobj, output, cmd, client, message);
+            if (contextToDM)
+            {
+                message.Author.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+            }
+            else
+            {
+                if (channelTarget == 0)
+                {
+                    message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+                }
+                else
+                {
+                    SocketTextChannel channelfromid = client.GetChannelAsync(channelTarget).GetAwaiter().GetResult() as SocketTextChannel;
+                    channelfromid.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
+                }
+            }
+
+            ulong iprompter = message.Author.Id;
+            if (!ActivePrompts.TryGetValue(iprompter, out (IMessage invoker, ulong channelid, string reply) Prompt))
+            {
+                ActivePrompts.Add(iprompter, (message, message.Channel.Id, ""));
+            }
+            else
+            {
+                return;//One prompt per user. sorrynotsorry
+            }
+            System.Threading.SpinWait.SpinUntil(() => !string.IsNullOrWhiteSpace(ActivePrompts[iprompter].PromptReply));
+            try
+            {
+                SetUserVar(iprompter,varname, ActivePrompts[iprompter].PromptReply, hidden);
                 ActivePrompts.Remove(iprompter);
             }
             catch (ArgumentException ex)
