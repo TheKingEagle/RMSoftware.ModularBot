@@ -1682,7 +1682,39 @@ namespace ModularBOT.Component
                     dsc += $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n";
                 }
             }
-            
+
+            if(_DiscordNet.CustomCMDMgr.coreScript.UserVariableDictionaries.ContainsKey(Context.Message.Author.Id))
+            {
+                dsc += "\r\n== USER variables ==\r\n";
+                foreach (var item in _DiscordNet.CustomCMDMgr.coreScript.UserVariableDictionaries[Context.Message.Author.Id])
+                {
+                    int flen = dsc.Length + $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n".Length;
+                    if (item.Value.hidden)
+                    {
+                        flen = dsc.Length + $"• {("[H] " + item.Key).PadRight(20)} :: {item.Value.value}\r\n".Length;
+                    }
+                    if (flen > 796)
+                    {
+
+                        pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                        Pages.Add(pageItem);
+                        pageItem = new PaginatedMessage.Page();
+                        dsc = "";
+
+                    }
+                    if (item.Value.hidden)
+                    {
+
+                        dsc += $"• {("[H] " + item.Key).PadRight(20)} :: {item.Value.value}\r\n";
+                    }
+                    else
+                    {
+                        dsc += $"• {item.Key.PadRight(20)} :: {item.Value.value}\r\n";
+                    }
+                }
+
+            }
+
 
             pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
             Pages.Add(pageItem);
