@@ -1829,7 +1829,8 @@ namespace ModularBOT.Component
         }
         
         private void CaseSetVarPrompt(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, 
-            ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message, ulong channelTarget, bool contextToDM, bool hidden=false)
+            ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client, ref IMessage message, 
+            ulong channelTarget, bool contextToDM, bool hidden=false)
         {
             string output = line;
             if (output.Split(' ').Length < 2)
