@@ -585,7 +585,7 @@ namespace ModularBOT.Component
             {
                 try
                 {
-                    while (!error)
+                    while ((!error) && (!terminated))
                     {
 
                         if (sr.Peek() == -1)
@@ -691,7 +691,7 @@ namespace ModularBOT.Component
                                     }
                                     else
                                     {
-                                        if(channelTarget == 0)
+                                        if (channelTarget == 0)
                                         {
                                             await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, cmd, client, message), false);
                                         }
@@ -704,7 +704,7 @@ namespace ModularBOT.Component
 
                                     break;
                                 case ("COUNTER_START"):
-                                    if(message.Channel as SocketTextChannel == null)
+                                    if (message.Channel as SocketTextChannel == null)
                                     {
                                         error = true;
                                         //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected header:``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```\r\nAdditional info: Multi-line formatting required.";
@@ -719,7 +719,7 @@ namespace ModularBOT.Component
                                         MessageCounter.Remove(message.Channel.Id);
                                     }
                                     MessageCounter.Add(message.Channel.Id, 0);
-                                    
+
                                     break;
                                 case ("COUNTER_STOP"):
                                     if (message.Channel as SocketTextChannel == null)
@@ -1037,11 +1037,11 @@ namespace ModularBOT.Component
 
                                 case ("DELMSG")://embed_desc <text>
 
-                                    if(message.Channel is SocketTextChannel)
+                                    if (message.Channel is SocketTextChannel)
                                     {
                                         IMessage m = message;
                                         SocketTextChannel msgsoc = message.Channel as SocketTextChannel;
-                                        if(msgsoc.Guild != null)
+                                        if (msgsoc.Guild != null)
                                         {
                                             if ((await (await client.GetGuildAsync(msgsoc.Guild.Id)).GetCurrentUserAsync(CacheMode.AllowDownload)).GuildPermissions.Has(GuildPermission.ManageMessages))
                                             {
@@ -1050,6 +1050,278 @@ namespace ModularBOT.Component
                                         }
                                         message = m;//keep it in reference.
                                     }
+                                    break;
+
+                                case ("IF"):
+                                    LogToConsole(new LogMessage(LogSeverity.Critical, "CoreScript", "IF Statement hit."), ConsoleColor.DarkYellow);
+                                    string rs = line.Remove(0, 3);
+                                    string[] Component = rs.Split(' ');
+
+                                    #region '==' Compare
+                                    if(Component[0].Contains("=="))
+                                    {
+                                        string[] ConditionalCompare = { "==" };
+                                        LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional =="), ConsoleColor.DarkYellow);
+                                        string[] parsedCondition = Component[0].Split(ConditionalCompare, 2,StringSplitOptions.None);
+                                        if(parsedCondition.Length < 2)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (ProcessVariableString(gobj, parsedCondition[0], cmd, client, message) == ProcessVariableString(gobj, parsedCondition[1], cmd, client, message))
+                                        {
+                                            if (rs.Remove(0, Component[0].Length + 1).ToUpper() == "EXIT")
+                                            {
+                                                LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "IF STATEMENT had EXIT. Terminating"));
+                                                terminated = true;
+                                                break;
+                                            }
+                                            string SubScript = "```DOS\r\n"+rs.Remove(0, Component[0].Length + 1)+"\r\n```";
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            break;
+                                        }
+                                    }
+                                    #endregion
+
+                                    #region '!=' Compare
+                                    if (Component[0].Contains("!="))
+                                    {
+                                        string[] ConditionalCompare = { "!=" };
+                                        LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional !="), ConsoleColor.DarkYellow);
+                                        string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
+                                        if (parsedCondition.Length < 2)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (ProcessVariableString(gobj, parsedCondition[0], cmd, client, message) != ProcessVariableString(gobj, parsedCondition[1], cmd, client, message))
+                                        {
+                                            if (rs.Remove(0, Component[0].Length + 1).ToUpper() == "EXIT")
+                                            {
+                                                LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "IF STATEMENT had EXIT. Terminating"));
+                                                terminated = true;
+                                                break;
+                                            }
+                                            string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            break;
+                                        }
+                                    }
+                                    #endregion
+
+                                    #region '>=' Compare
+                                    if (Component[0].Contains(">="))
+                                    {
+                                        string[] ConditionalCompare = { ">=" };
+                                        LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional >="), ConsoleColor.DarkYellow);
+                                        string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
+                                        if (parsedCondition.Length < 2)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        string sleft = ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
+                                        string sright = ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
+                                        if (!long.TryParse(sleft,out long left))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (!long.TryParse(sright, out long right))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sright}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (left >= right)
+                                        {
+                                            if (rs.Remove(0, Component[0].Length + 1).ToUpper() == "EXIT")
+                                            {
+                                                LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "IF STATEMENT had EXIT. Terminating"));
+                                                terminated = true;
+                                                break;
+                                            }
+                                            string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            break;
+                                        }
+                                    }
+                                    #endregion
+
+                                    #region '>' Compare
+                                    if (Component[0].Contains(">"))
+                                    {
+                                        string[] ConditionalCompare = { ">" };
+                                        LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional >"), ConsoleColor.DarkYellow);
+                                        string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
+                                        if (parsedCondition.Length < 2)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        string sleft = ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
+                                        string sright = ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
+                                        if (!long.TryParse(sleft, out long left))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (!long.TryParse(sright, out long right))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sright}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (left > right)
+                                        {
+                                            if (rs.Remove(0, Component[0].Length + 1).ToUpper() == "EXIT")
+                                            {
+                                                LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "IF STATEMENT had EXIT. Terminating"));
+                                                terminated = true;
+                                                break;
+                                            }
+                                            string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            break;
+                                        }
+                                    }
+                                    #endregion
+
+                                    #region '<=' Compare
+                                    if (Component[0].Contains("<="))
+                                    {
+                                        string[] ConditionalCompare = { "<=" };
+                                        LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional <="), ConsoleColor.DarkYellow);
+                                        string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
+                                        if (parsedCondition.Length < 2)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        string sleft = ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
+                                        string sright = ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
+                                        if (!long.TryParse(sleft, out long left))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (!long.TryParse(sright, out long right))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sright}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (left <= right)
+                                        {
+                                            if (rs.Remove(0, Component[0].Length + 1).ToUpper() == "EXIT")
+                                            {
+                                                LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "IF STATEMENT had EXIT. Terminating"));
+                                                terminated = true;
+                                                break;
+                                            }
+                                            string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            break;
+                                        }
+                                    }
+                                    #endregion
+
+                                    #region '<' Compare
+                                    if (Component[0].Contains("<"))
+                                    {
+                                        string[] ConditionalCompare = { "<" };
+                                        LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional <"), ConsoleColor.DarkYellow);
+                                        string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
+                                        if (parsedCondition.Length < 2)
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        string sleft = ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
+                                        string sright = ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
+                                        if (!long.TryParse(sleft, out long left))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (!long.TryParse(sright, out long right))
+                                        {
+                                            error = true;
+                                            //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                            errorEmbed.WithDescription($"Invalid number. ```{sright}```");
+                                            errorEmbed.AddField("Line", LineInScript, true);
+                                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                            break;
+                                        }
+                                        if (left < right)
+                                        {
+                                            if(rs.Remove(0, Component[0].Length + 1).ToUpper() == "EXIT")
+                                            {
+                                                LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "IF STATEMENT had EXIT. Terminating"));
+                                                terminated = true;
+                                                break;
+                                            }
+                                            string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            break;
+                                        }
+                                    }
+                                    #endregion
+
+                                    break;
+
+                                case ("EXIT"):
+                                    terminated = true;
+                                    LogToConsole(new LogMessage(LogSeverity.Critical, "CoreScript", "Exit called. END OF SCRIPT"), ConsoleColor.Green);
                                     break;
 
                                 case ("ATTACH")://embed_desc <text>
@@ -2204,14 +2476,14 @@ namespace ModularBOT.Component
             if (cmd != null)
             {
 
-                if (ecmd == cmd.Name)
-                {
-                    error = true;
-                    errorEmbed.WithDescription($"CMD Function Error: You cannot call this command here, that's API abuse.\r\n```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", ecmd ?? "No context", true);
-                    return;
-                }
+                //if (ecmd == cmd.Name)
+                //{
+                //    error = true;
+                //    errorEmbed.WithDescription($"CMD Function Error: You cannot call this command here, that's API abuse.\r\n```{line}```");
+                //    errorEmbed.AddField("Line", LineInScript, true);
+                //    errorEmbed.AddField("Execution Context", ecmd ?? "No context", true);
+                //    return;
+                //}
             }
             string resp = ccmg.ProcessMessage(new PseudoMessage(guildObject.CommandPrefix + ecmd, ArgumentMessage.Author as SocketUser,
                 (ArgumentMessage.Channel as IGuildChannel), MessageSource.Bot));
