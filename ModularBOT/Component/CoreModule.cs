@@ -661,7 +661,7 @@ namespace ModularBOT.Component
                         }
                         //commandList.AddCommand(prefix + item.Name, item.RequirePermission ? AccessLevels.CommandManager : AccessLevels.Normal, CommandTypes.Custom);
                         cmdcount++;
-                        string perm = item.RequirePermission ? "AccessLevels.CommandManager" : "AccessLevels.Normal";
+                        string perm = item.RequirePermission ? $"AccessLevels.{item.CommandAccessLevel.ToString()}" : "AccessLevels.Normal";
                         EmbedFieldBuilder fb = new EmbedFieldBuilder()
                         {
                             Name = prefix + item.Name,
