@@ -230,11 +230,30 @@ namespace ModularBOT.Component
         {
             if(userid > 0)                                                                          //USER ID is set.
             {
-                bool cuservar = UserVariableDictionaries[userid].TryGetValue(var,out (object value, bool hidden) uservar);
-                if(!cuservar)
+                if(UserVariableDictionaries.ContainsKey(userid))
+                {
+                    bool cuservar = UserVariableDictionaries[userid].TryGetValue(var, out (object value, bool hidden) uservar);
+                    if (!cuservar)
+                    {
+                        bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
+
+                        if (!result)
+                        {
+                            return null;
+                        }
+                        else
+                        {
+                            return v.value;
+                        }
+                    }
+                    else
+                    {
+                        return uservar.value;
+                    }
+                }
+                else
                 {
                     bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
-
                     if (!result)
                     {
                         return null;
@@ -243,10 +262,6 @@ namespace ModularBOT.Component
                     {
                         return v.value;
                     }
-                }
-                else
-                {
-                    return uservar.value;
                 }
             }
             else                                                                                    //USER ID NOT SET.
