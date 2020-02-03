@@ -1017,9 +1017,16 @@ namespace ModularBOT.Component
 
                                         break;
                                     }
-                                    CSEmbed = new EmbedBuilder();
+                                    if(CSEmbed == null)
+                                    {
+                                        CSEmbed = new EmbedBuilder
+                                        {
+                                            Title = ProcessVariableString(gobj, output, cmd, client, message)
+                                        };
+                                    }
                                     CSEmbed.WithTitle(ProcessVariableString(gobj, output, cmd, client, message));
-                                    CSEmbed.WithAuthor(client.CurrentUser);
+                                    LogToConsole(new LogMessage(LogSeverity.Verbose, "CSEmbed", $"New Embed! Title: {CSEmbed.Title}"));
+                                    //CSEmbed.WithAuthor(client.CurrentUser);
                                     break;
 
                                 case ("EMBED_DESC")://embed_desc <text>
@@ -1173,7 +1180,7 @@ namespace ModularBOT.Component
                                     #endregion
 
                                     #region '>' Compare
-                                    if (Component[0].Contains(">"))
+                                    if (Component[0].Contains(">") && !Component[0].Contains(">="))
                                     {
                                         string[] ConditionalCompare = { ">" };
                                         LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional >"), ConsoleColor.DarkYellow);
@@ -1273,7 +1280,7 @@ namespace ModularBOT.Component
                                     #endregion
 
                                     #region '<' Compare
-                                    if (Component[0].Contains("<"))
+                                    if (Component[0].Contains("<") && !Component[0].Contains("<="))
                                     {
                                         string[] ConditionalCompare = { "<" };
                                         LogToConsole(new LogMessage(LogSeverity.Critical, "CSCond", "Conditional <"), ConsoleColor.DarkYellow);
@@ -1409,8 +1416,13 @@ namespace ModularBOT.Component
                                     }
 
                                     string scriptpath = @"scripts\" + ProcessVariableString(gobj, output, cmd, client, message);
-                                    string eval = "```DOS\r\n"+File.OpenText(scriptpath).ReadToEnd()+"\r\n```";
-                                    await EvaluateScript(gobj, eval, cmd, client, message,CSEmbed);
+                                    string eval = "";
+                                    using (StreamReader SR = File.OpenText(scriptpath))
+                                    {
+                                        eval = "```DOS\r\n" + SR.ReadToEnd() + "\r\n```";
+                                        SR.Close();
+                                    }
+                                    await EvaluateScript(gobj, eval, cmd, client, message, CSEmbed);
                                     break;
 
                                 case ("EMBED_IMAGE")://embed_image <url>
@@ -1517,7 +1529,7 @@ namespace ModularBOT.Component
                                     string o = ProcessVariableString(gobj, output, cmd, client, message).Replace("#", "").ToUpper().Trim();
                                     uint c = 9;
                                     c = (uint)Convert.ToUInt32(o, 16);
-                                    CSEmbed.WithColor(c);
+                                    CSEmbed.Color = new Color(c);
                                     break;
 
                                 case ("SET_TARGET"):
@@ -2023,6 +2035,10 @@ namespace ModularBOT.Component
                         await Task.Delay(20);
                         LineInScript++;
                     }
+
+                    //CLEAR embeds.
+                    CSEmbed = null;
+                    
                 }
                 catch (Exception ex)
                 {
