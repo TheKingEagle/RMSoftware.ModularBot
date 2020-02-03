@@ -1899,7 +1899,7 @@ namespace ModularBOT.Component
 
 
         [Command("upload"), Remarks("AccessLevels.CommandManager"), Summary("Upload a file attachment to the bot's internal attachment server (LIMIT: 8 MB).")]
-        public async Task BOT_UploadAttachment(string fileName)
+        public async Task BOT_UploadAttachment(string fileName, bool IsScript=false)
         {
             if(_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
             {
@@ -1918,7 +1918,11 @@ namespace ModularBOT.Component
             {
                 Directory.CreateDirectory($"attachments/{guildid}");
             }
-            if(Context.Message.Attachments.Count == 0)
+            if (!Directory.Exists($"scripts/{guildid}"))
+            {
+                Directory.CreateDirectory($"scripts/{guildid}");
+            }
+            if (Context.Message.Attachments.Count == 0)
             {
                 await ReplyAsync("", false, GetEmbeddedMessage("No Attachment!", 
                     "You did not add an attachment to upload. You must add a file to upload.", Color.DarkRed));
@@ -1937,25 +1941,48 @@ namespace ModularBOT.Component
                     ESizeTooBig++;
                     continue;
                 }
-                
-                string FPATH = $"attachments/{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
-                
-                string APATH = $"{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
-                try
+                if(!IsScript)
                 {
-                    WebRequest wr = WebRequest.CreateHttp(item.Url);
-                    wr.GetResponse().GetResponseStream().CopyTo(File.Create(FPATH));
-                    ATTACH_LINES += $"ATTACH {APATH}\r\n";
-                    attc++;
-                }
-                catch (Exception ex)
-                {
+                    string FPATH = $"attachments/{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
 
-                    await ReplyAsync("", false, GetEmbeddedMessage($"Upload Failed!",
-                    $"The file could not be uploaded to the attachment server.\r\n```\r\n{ex.Message}\r\n```", Color.DarkRed));
-                    return;
+                    string APATH = $"{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
+                    try
+                    {
+                        WebRequest wr = WebRequest.CreateHttp(item.Url);
+                        wr.GetResponse().GetResponseStream().CopyTo(File.Create(FPATH));
+                        ATTACH_LINES += $"ATTACH {APATH}\r\n";
+                        attc++;
+                    }
+                    catch (Exception ex)
+                    {
+
+                        await ReplyAsync("", false, GetEmbeddedMessage($"Upload Failed!",
+                        $"The file could not be uploaded to the attachment server.\r\n```\r\n{ex.Message}\r\n```", Color.DarkRed));
+                        return;
+                    }
                 }
-                
+                if (IsScript)
+                {
+                    string FPATH = $"scripts/{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
+
+                    string APATH = $"{guildid}/{fileName}{Path.GetExtension(item.Filename)}";
+                    try
+                    {
+                        WebRequest wr = WebRequest.CreateHttp(item.Url);
+                        wr.GetResponse().GetResponseStream().CopyTo(File.Create(FPATH));
+                        ATTACH_LINES += $"START {APATH}\r\n";
+                        attc++;
+                    }
+                    catch (Exception ex)
+                    {
+
+                        await ReplyAsync("", false, GetEmbeddedMessage($"Upload Failed!",
+                        $"The file could not be uploaded to the script server.\r\n```\r\n{ex.Message}\r\n```", Color.DarkRed));
+                        return;
+                    }
+                }
+
+
             }
             
             if (!string.IsNullOrEmpty(ATTACH_LINES))
