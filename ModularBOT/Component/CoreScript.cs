@@ -554,21 +554,25 @@ namespace ModularBOT.Component
             return Processed;
         }
 
-        public async Task EvaluateScript(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message)
+        public async Task EvaluateScript(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message, EmbedBuilder CSEmbed = null)
         {
             int LineInScript = 0;
             bool error = false;
             bool contextToDM = false;
             ulong channelTarget = 0;
             EmbedBuilder errorEmbed = new EmbedBuilder();
-            EmbedBuilder CSEmbed = new EmbedBuilder();
-            CSEmbed.WithAuthor(client.CurrentUser);
+            if(CSEmbed == null)
+            {
+
+                CSEmbed = new EmbedBuilder();
+            }
+            //CSEmbed.WithAuthor(client.CurrentUser);
             if (!ClMRHandlerBound)
             {
                 ((DiscordShardedClient)client).MessageReceived += CoreScript_MessageReceived;
                 ClMRHandlerBound = true;
             }
-            string attachmentpath = "";
+            
             if (!response.EndsWith("```"))
             {
                 error = true;
@@ -1035,7 +1039,7 @@ namespace ModularBOT.Component
                                     CSEmbed.WithDescription(ProcessVariableString(gobj, output, cmd, client, message).Replace("&q;", "\"").Replace("&nl;", "\r\n").Replace("&bt;", "`"));
                                     break;
 
-                                case ("DELMSG")://embed_desc <text>
+                                case ("DELMSG")://Delete caller message
 
                                     if (message.Channel is SocketTextChannel)
                                     {
@@ -1053,7 +1057,8 @@ namespace ModularBOT.Component
                                     break;
 
                                 case ("IF"):
-                                    LogToConsole(new LogMessage(LogSeverity.Critical, "CoreScript", "IF Statement hit."), ConsoleColor.DarkYellow);
+                                    LogToConsole(new LogMessage(LogSeverity.Critical, "CoreScript", 
+                                        "IF Statement hit."), ConsoleColor.DarkYellow);
                                     string rs = line.Remove(0, 3);
                                     string[] Component = rs.Split(' ');
 
@@ -1081,7 +1086,7 @@ namespace ModularBOT.Component
                                                 break;
                                             }
                                             string SubScript = "```DOS\r\n"+rs.Remove(0, Component[0].Length + 1)+"\r\n```";
-                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message, CSEmbed);
                                             break;
                                         }
                                     }
@@ -1111,7 +1116,7 @@ namespace ModularBOT.Component
                                                 break;
                                             }
                                             string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
-                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message, CSEmbed);
                                             break;
                                         }
                                     }
@@ -1161,7 +1166,7 @@ namespace ModularBOT.Component
                                                 break;
                                             }
                                             string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
-                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message, CSEmbed);
                                             break;
                                         }
                                     }
@@ -1211,7 +1216,7 @@ namespace ModularBOT.Component
                                                 break;
                                             }
                                             string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
-                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message, CSEmbed);
                                             break;
                                         }
                                     }
@@ -1261,7 +1266,7 @@ namespace ModularBOT.Component
                                                 break;
                                             }
                                             string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
-                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message, CSEmbed);
                                             break;
                                         }
                                     }
@@ -1311,7 +1316,7 @@ namespace ModularBOT.Component
                                                 break;
                                             }
                                             string SubScript = "```DOS\r\n" + rs.Remove(0, Component[0].Length + 1) + "\r\n```";
-                                            await EvaluateScript(gobj, SubScript, cmd, client, message);
+                                            await EvaluateScript(gobj, SubScript, cmd, client, message, CSEmbed);
                                             break;
                                         }
                                     }
@@ -1324,7 +1329,7 @@ namespace ModularBOT.Component
                                     LogToConsole(new LogMessage(LogSeverity.Critical, "CoreScript", "Exit called. END OF SCRIPT"), ConsoleColor.Green);
                                     break;
 
-                                case ("ATTACH")://embed_desc <text>
+                                case ("ATTACH")://ATTACH <AttachmentPATH>
 
                                     //Get the line removing ATTACH.
                                     output = line.Remove(0, 7);
@@ -1348,7 +1353,7 @@ namespace ModularBOT.Component
                                         break;
                                     }
 
-                                    attachmentpath = @"attachments\" + ProcessVariableString(gobj, output, cmd, client, message);
+                                    string attachmentpath = @"attachments\" + ProcessVariableString(gobj, output, cmd, client, message);
                                     if (contextToDM)
                                     {
                                         try
@@ -1377,6 +1382,35 @@ namespace ModularBOT.Component
                                         z.Dispose();
 
                                     }
+                                    break;
+
+                                case ("START")://START <Script PATH>
+
+                                    //Get the line removing ATTACH.
+                                    output = line.Remove(0, 6);
+                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"SCRIPT path cannot be empty. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    if (!File.Exists(@"scripts\" + ProcessVariableString(gobj, output, cmd, client, message)))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"script could not be found. ```{line}```");
+                                        errorEmbed.AddField("Path", "`../scripts/" + ProcessVariableString(gobj, output, cmd, client, message) + "`", false);
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+
+                                    string scriptpath = @"scripts\" + ProcessVariableString(gobj, output, cmd, client, message);
+                                    string eval = "```DOS\r\n"+File.OpenText(scriptpath).ReadToEnd()+"\r\n```";
+                                    await EvaluateScript(gobj, eval, cmd, client, message,CSEmbed);
                                     break;
 
                                 case ("EMBED_IMAGE")://embed_image <url>
