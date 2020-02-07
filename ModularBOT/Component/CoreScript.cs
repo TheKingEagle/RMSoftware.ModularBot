@@ -2032,7 +2032,7 @@ namespace ModularBOT.Component
                             }
 
                         }
-                        await Task.Delay(20);
+                        //await Task.Delay(3);
                         LineInScript++;
                     }
 
