@@ -1965,7 +1965,7 @@ namespace ModularBOT.Component
                 {
                     string FPATH = $"scripts/{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
 
-                    string APATH = $"{guildid}/{fileName}{Path.GetExtension(item.Filename)}";
+                    string APATH = $"{guildid}/{fileName}_{attc}{Path.GetExtension(item.Filename)}";
                     try
                     {
                         WebRequest wr = WebRequest.CreateHttp(item.Url);
