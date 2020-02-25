@@ -294,11 +294,6 @@ namespace ModularBOT.Component
                 {
 
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-
-                    if (discord.PermissionManager.DefaultAdmin.EntityID == guilds[selectionIndex + index].Id)
-                    {
-                        continue;
-                    }
                     #region SubScreen
                     string guildname = SafeName(guilds, index + selectionIndex);
                     //int left = 71-20;
@@ -908,17 +903,27 @@ namespace ModularBOT.Component
 
         //TODO: Make ALL screens with selection mode
 
-        private bool ListChannels(ref DiscordNET discord, ulong guildID, short page = 1)
+        #region Channel Listing
+        private bool ListChannels(ref DiscordNET discord, ulong guildID, short page=1)
         {
+            
+
             SocketGuild g = discord.Client.GetGuild(guildID);
             if (g == null)
             {
                 return false;
             }
+            List<SocketGuildChannel> channels = g.Channels.ToList();
+            short max = (short)(Math.Ceiling((double)(channels.Count / 22)) + 1);
+            int index = 0;
+            int selectionIndex = 0;
+            int countOnPage = 0;
+            int ppg = 0;
+            ScreenModal = true;
             string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
 
 
-            short max = (short)(Math.Ceiling((double)(g.Channels.Count / 24)) + 1);
+            //short max = (short)(Math.Ceiling((double)(channels.Count / 22)) + 1);
             if (page > max)
             {
                 page = max;
@@ -927,55 +932,24 @@ namespace ModularBOT.Component
             {
                 page = 1;
             }
-            int index = (page * 24) - 24;
-            ScreenModal = true;
+            index = (page * 22) - 22;
+            //ScreenModal = true;
 
 
             while (true)
             {
-                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Channels for Guild: {name}", page, max, ConsoleColor.White);
-                WriteEntry($"\u2502\u2005\u2005\u2005 - {"Channel Name".PadRight(39, '\u2005')} {"Snowflake ID".PadRight(22, '\u2005')} {"Channel Type".PadLeft(12, '\u2005')}", ConsoleColor.Blue);
-                WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(12, '\u2500')}", ConsoleColor.Blue);
-                for (int i = index; i < 22 * page; i++)//22 results per page.
-                {
-                    if (index >= g.Channels.Count)
-                    {
-                        break;
-                    }
-                    string channelin = g.Channels.ElementAt(i).Name;
-                    string chtype = g.Channels.ElementAt(i).GetType().ToString();
-                    string chltype = chtype.Remove(0, chtype.LastIndexOf('.') + 1).Replace("Socket", "").Replace("Channel", "");
-                    string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
-                    string p = $"{o}".PadRight(39, '\u2005');
-                    WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{g.Channels.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {chltype.PadRight(12, '\u2005')}", ConsoleColor.DarkGreen);
-                    index++;
-                }
-                WriteEntry($"\u2502");
-                if (page > 1 && page < max)
-                {
-                    WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list", ConsoleColor.White);
-                }
-                if (page == 1 && page < max)
-                {
-                    WriteEntry($"\u2502 N: Next Page | E: Exit list", ConsoleColor.White);
-                }
-                if (page == 1 && page == max)
-                {
-                    WriteEntry($"\u2502 E: Exit list", ConsoleColor.White);
-                }
-                if (page > 1 && page == max)
-                {
-                    WriteEntry($"\u2502 P: Previous Page | E: Exit list", ConsoleColor.White);
-                }
-                ConsoleKeyInfo s = Console.ReadKey();
+                countOnPage = PopulateChannelList(discord, page, selectionIndex, ref ppg, channels, name, max, ref index);
+                ConsoleKeyInfo s = Console.ReadKey(true);
                 if (s.Key == ConsoleKey.P)
                 {
+                    ppg = page;
                     if (page > 1)
                     {
                         page--;
                         index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
+                    selectionIndex = 0;
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
@@ -985,12 +959,104 @@ namespace ModularBOT.Component
                 }
                 if (s.Key == ConsoleKey.N)
                 {
+                    ppg = page;
                     if (page < max)
                     {
+
                         page++;
+                    }
+                    selectionIndex = 0;
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                if (s.Key == ConsoleKey.UpArrow)
+                {
+
+                    selectionIndex--;
+                    if (selectionIndex < 0)
+                    {
+                        selectionIndex = countOnPage - 1;
                     }
 
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+
+                    continue;
+                }
+                if (s.Key == ConsoleKey.DownArrow)
+                {
+
+                    selectionIndex++;
+                    if (selectionIndex > countOnPage - 1)
+                    {
+                        selectionIndex = 0;
+                    }
+
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    continue;
+                }
+
+                if (s.Key == ConsoleKey.Enter)
+                {
+
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+
+                   
+                    #region SubScreen
+                    string channelname = SafeName(channels, index + selectionIndex);
+                    //int left = 71-20;
+                    //int top = 16 - 7;
+                    //Console.CursorLeft = left;
+                    //Console.CursorTop = top;
+                    ConsoleColor PRVBG = Console.BackgroundColor;
+                    ConsoleColor PRVFG = Console.ForegroundColor;
+                    int rr = -1;
+
+                    string opt_Delete = g.CurrentUser.GetPermissions(channels[index + selectionIndex]).Has(ChannelPermission.ManageChannels) ? "Delete" : "-";
+                    rr = ShowOptionSubScreen($"Manage: {channelname}", "Select an action", "Copy ID", "-", "-", opt_Delete);
+
+                    switch (rr)
+                    {
+                        case (1):
+
+                            Thread thread = new Thread(() => Clipboard.SetText(channels[selectionIndex + index].Id.ToString()));
+                            thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
+                            thread.Start();
+                            thread.Join(); //Wait for the thread to end
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all channels for Guild: {name}", page, max, ConsoleColor.White);
+
+                            break;
+                        case (2):
+                            //TODO: View messages
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all channels for Guild: {name}", page, max, ConsoleColor.White);
+
+                            break;
+                        case (3):
+                            //TODO: SEND Channel message
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all channels for Guild: {name}", page, max, ConsoleColor.White);
+
+                            break;
+                        case (4):
+
+                            countOnPage = PopulateChannelList(discord,page,selectionIndex,ref ppg,channels,name,max,ref index);
+                            index = 0;
+                            int confirmdel = ShowOptionSubScreen($"Delete: {channelname}", "Are you sure?", "-", "NO", "YES", "-", ConsoleColor.Red);
+                            if (confirmdel == 3) { g.GetChannel(channels[index + selectionIndex].Id).DeleteAsync(); channels.Remove(channels[selectionIndex + index]); }
+                            //countOnPage = PopulateChannelList(discord, page, selectionIndex, ref ppg, channels, name, max, ref index);
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all channels for Guild: {name}", page, max, ConsoleColor.White);
+
+                            break;
+                        default:
+                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all channels for Guild: {name}", page, max, ConsoleColor.White);
+
+                            break;
+                    }
+                    #endregion
+
+
+                    Console.ForegroundColor = PRVFG;
+                    Console.BackgroundColor = PRVBG;
                     continue;
                 }
 
@@ -1004,7 +1070,79 @@ namespace ModularBOT.Component
             ScreenModal = false;
             return true;
 
+
         }
+
+        private int PopulateChannelList(DiscordNET discord, short page, int selectionIndex, ref int ppg, List<SocketGuildChannel> channels, string name, short max, ref int index)
+        {
+            int countOnPage;
+            if (ppg != page)//is page changing?
+            {
+                ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all channels for Guild: {name}", page, max, ConsoleColor.White);
+                ppg = page;
+            }
+
+            countOnPage = 0;
+            if (ppg == page)
+            {
+                Console.SetCursorPosition(0, 5);
+            }
+
+            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Channel".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Channel Type".PadRight(24, '\u2005')}", ConsoleColor.Blue);
+            WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(24, '\u2500')}", ConsoleColor.Blue);
+            for (int i = index; i < 22 * page; i++)//22 results per page.
+            {
+
+                if (index >= channels.Count)
+                {
+                    break;
+                }
+                countOnPage++;
+                WriteChannel(discord, selectionIndex, countOnPage, channels, i);
+                index++;
+            }
+            WriteEntry($"\u2502");
+            string UDPROMPT = "| UP/DOWN: Move Selection | ENTER: Properties...";
+            //string UDPROMPT_T = discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id ? "| UP/DOWN: Move Selection" : UDPROMPT;
+            if (page > 1 && page < max)
+            {
+                WriteEntry($"\u2502 N: Next Page | P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+            if (page == 1 && page < max)
+            {
+                WriteEntry($"\u2502 N: Next Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+            if (page == 1 && page == max)
+            {
+                WriteEntry($"\u2502 E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+            if (page > 1 && page == max)
+            {
+                WriteEntry($"\u2502 P: Previous Page | E: Exit list {UDPROMPT}", ConsoleColor.White);
+            }
+
+            return countOnPage;
+        }
+
+        private void WriteChannel(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuildChannel> Channels, int i)
+        {
+            string channelin = Channels.ElementAt(i).Name;
+            string chtype = Channels.ElementAt(i).GetType().ToString();
+            string chltype = chtype.Remove(0, chtype.LastIndexOf('.') + 1).Replace("Socket", "").Replace("Channel", "");
+            string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
+            string p = $"{o}".PadRight(39, '\u2005');
+            WriteEntry($"\u2502\u2005\u2005 - {p} [{Channels.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {chltype.PadRight(22, '\u2005')}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
+        }
+
+        private string SafeName(List<SocketGuildChannel> channels, int i)
+        {
+            string channelname = channels.ElementAt(i).Name;
+            string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelname))).Replace(' ', '\u2005').Replace("??", "?");
+            string p = $"{o}";
+            return p;
+        }
+
+        #endregion
 
         private bool ListCURoles(ref DiscordNET discord, ulong guildID, short page = 1)
         {
@@ -2856,9 +2994,9 @@ namespace ModularBOT.Component
             }
 
             #region TOP
-            if (title.Length > 38)
+            if (title.Length > 35)
             {
-                title = title.Remove(36) + "...";
+                title = title.Remove(32) + "...";
             }
 
             string WTitle = " " + title + " ";
@@ -2915,7 +3053,7 @@ namespace ModularBOT.Component
             Console.Write("\u2502 " + "[UP/DOWN]: Move Selection".PadRight(39) + "\u2502");
             Console.CursorLeft = left;
             Console.CursorTop = top + 10;
-            Console.Write("\u2502 " + "[ENTER]: Confirm Edit | [ESC]: Cancel".PadRight(39) + "\u2502");
+            Console.Write("\u2502 " + "[ENTER]: Confirm | [ESC]: Cancel".PadRight(39) + "\u2502");
             Console.CursorLeft = left;
             Console.CursorTop = top + 11;
             Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
