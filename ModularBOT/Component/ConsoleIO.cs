@@ -329,7 +329,7 @@ namespace ModularBOT.Component
                             int ss = -1;
 
                             countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
-                            index = 0;
+                            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                             ss = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View My Roles...", "Copy ID...", "-", "Leave Guild...");
                             switch (ss)
                             {
@@ -349,7 +349,7 @@ namespace ModularBOT.Component
 
                                     //TODO: Add an ACTUAL confirmation prompt.
                                     countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
-                                    index = 0;
+                                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                                     int confirmprompt = ShowOptionSubScreen($"Leave {guildname}?", $"Are you sure you want to leave?", "-", "NO", "YES", "-", ConsoleColor.DarkRed);
                                     if (confirmprompt == 3)
                                     {
@@ -1040,7 +1040,7 @@ namespace ModularBOT.Component
                         case (4):
 
                             countOnPage = PopulateChannelList(discord,page,selectionIndex,ref ppg,channels,name,max,ref index);
-                            index = 0;
+                            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                             int confirmdel = ShowOptionSubScreen($"Delete: {channelname}", "Are you sure?", "-", "NO", "YES", "-", ConsoleColor.Red);
                             if (confirmdel == 3) { g.GetChannel(channels[index + selectionIndex].Id).DeleteAsync(); channels.Remove(channels[selectionIndex + index]); }
                             //countOnPage = PopulateChannelList(discord, page, selectionIndex, ref ppg, channels, name, max, ref index);
