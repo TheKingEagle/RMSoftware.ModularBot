@@ -1130,6 +1130,10 @@ namespace ModularBOT.Component
             string chtype = Channels.ElementAt(i).GetType().ToString();
             string chltype = chtype.Remove(0, chtype.LastIndexOf('.') + 1).Replace("Socket", "").Replace("Channel", "");
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
+            if (o.Length > 39)
+            {
+                o = o.Remove(35) + "...";
+            }
             string p = $"{o}".PadRight(39, '\u2005');
             WriteEntry($"\u2502\u2005\u2005 - {p} [{Channels.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {chltype.PadRight(22, '\u2005')}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
         }
@@ -1138,6 +1142,10 @@ namespace ModularBOT.Component
         {
             string channelname = channels.ElementAt(i).Name;
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelname))).Replace(' ', '\u2005').Replace("??", "?");
+            if(o.Length > 39)
+            {
+                o = o.Remove(35) + "...";
+            }
             string p = $"{o}";
             return p;
         }
