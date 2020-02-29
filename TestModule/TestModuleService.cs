@@ -848,12 +848,12 @@ namespace TestModule
                     {
 
                         Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. NOT Starboard embed."));
-                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.StarredMessageID == arg1.Id);
+                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == (arg1.GetOrDownloadAsync().GetAwaiter().GetResult()).Id);
                         if (sbmessage != null)
                         {
                             //message is already in the starboard Modify the starcount.
                             sbmessage.StarCount--;
-                            binding.StarboardData[binding.StarboardData.IndexOf(sbmessage)].StarCount = sbmessage.StarCount;
+                            binding.StarboardData[binding.StarboardData.IndexOf(sbmessage)] = sbmessage;
                             SBBindings[STC.Guild.Id] = binding;
                             var StarredMessage = await STC.Guild.GetTextChannel(sbmessage.StarredMsgChannelID)
                                 .GetMessageAsync(sbmessage.StarredMessageID);
@@ -866,6 +866,7 @@ namespace TestModule
                                     Name = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator
                                 },
                                 Description = StarredMessage.Content,
+                                Color = new Color(255, 234, 119),
                                 Footer = new EmbedFooterBuilder()
                                 {
                                     Text = $"MessageID: {sbmessage.StarredMessageID}"
@@ -886,7 +887,7 @@ namespace TestModule
                                     }
                                 }
                             }
-                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is SocketUserMessage sum)
+                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
@@ -904,15 +905,15 @@ namespace TestModule
                     {
 
                         Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. Starboard embed."));
-                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == arg1.Id);
-                        if (sbmessage != null)
+                        var ebsbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == arg1.Id);
+                        if (ebsbmessage != null)
                         {
                             //message is already in the starboard Modify the starcount.
-                            sbmessage.StarCount--;
-                            binding.StarboardData[binding.StarboardData.IndexOf(sbmessage)].StarCount = sbmessage.StarCount;
+                            ebsbmessage.StarCount--;
+                            binding.StarboardData[binding.StarboardData.IndexOf(ebsbmessage)] = ebsbmessage;
                             SBBindings[STC.Guild.Id] = binding;
-                            var StarredMessage = await STC.Guild.GetTextChannel(sbmessage.StarredMsgChannelID)
-                                .GetMessageAsync(sbmessage.StarredMessageID);
+                            var StarredMessage = await STC.Guild.GetTextChannel(ebsbmessage.StarredMsgChannelID)
+                                .GetMessageAsync(ebsbmessage.StarredMessageID);
                             //modify the starboard message
                             EmbedBuilder SBEntryEmbed = new EmbedBuilder()
                             {
@@ -922,9 +923,10 @@ namespace TestModule
                                     Name = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator
                                 },
                                 Description = StarredMessage.Content,
+                                Color = new Color(255, 234, 119),
                                 Footer = new EmbedFooterBuilder()
                                 {
-                                    Text = $"MessageID: {sbmessage.StarredMessageID}"
+                                    Text = $"MessageID: {ebsbmessage.StarredMessageID}"
                                 }
 
                             };
@@ -942,12 +944,12 @@ namespace TestModule
                                     }
                                 }
                             }
-                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is SocketUserMessage sum)
+                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
                                     {
-                                        x.Content = $"🌟 **{sbmessage.StarCount}** | <#{sbmessage.StarredMsgChannelID}>";
+                                        x.Content = $"🌟 **{ebsbmessage.StarCount}** | <#{ebsbmessage.StarredMsgChannelID}>";
                                         x.Embed = SBEntryEmbed.Build();
                                     }
                                     );
@@ -1248,6 +1250,7 @@ namespace TestModule
                                     Name = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator
                                 },
                                 Description = StarredMessage.Content,
+                                Color = new Color(255, 234, 119),
                                 Footer = new EmbedFooterBuilder()
                                 {
                                     Text = $"MessageID: {sbmessage.StarredMessageID}"
@@ -1268,12 +1271,12 @@ namespace TestModule
                                     }
                                 }
                             }
-                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is SocketUserMessage sum)
+                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
                                     {
-                                        x.Content = $"🌟**{sbmessage.StarCount}** | <#{sbmessage.StarredMsgChannelID}>";
+                                        x.Content = $"🌟 **{sbmessage.StarCount}** | <#{sbmessage.StarredMsgChannelID}>";
                                         x.Embed = SBEntryEmbed.Build();
                                     }
                                     );
@@ -1292,6 +1295,7 @@ namespace TestModule
                                     Name = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator
                                 },
                                 Description = StarredMessage.Content,
+                                Color = new Color(255, 234, 119),
                                 Footer = new EmbedFooterBuilder()
                                 {
                                     Text = $"MessageID: {StarredMessage.Id}"
@@ -1335,15 +1339,15 @@ namespace TestModule
                     {
 
                         Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. Starboard embed."));
-                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == arg1.Id);
-                        if (sbmessage != null)
+                        var ebsbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == (arg1.GetOrDownloadAsync().GetAwaiter().GetResult()).Id);
+                        if (ebsbmessage != null)
                         {
                             //message is already in the starboard Modify the starcount.
-                            sbmessage.StarCount++;
-                            binding.StarboardData[binding.StarboardData.IndexOf(sbmessage)].StarCount = sbmessage.StarCount;
+                            ebsbmessage.StarCount++;
+                            binding.StarboardData[binding.StarboardData.IndexOf(ebsbmessage)] = ebsbmessage;
                             SBBindings[STC.Guild.Id] = binding;
-                            var StarredMessage = await STC.Guild.GetTextChannel(sbmessage.StarredMsgChannelID)
-                                .GetMessageAsync(sbmessage.StarredMessageID);
+                            var StarredMessage = await STC.Guild.GetTextChannel(ebsbmessage.StarredMsgChannelID)
+                                .GetMessageAsync(ebsbmessage.StarredMessageID);
                             //modify the starboard message
                             EmbedBuilder SBEntryEmbed = new EmbedBuilder()
                             {
@@ -1353,9 +1357,10 @@ namespace TestModule
                                     Name = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator
                                 },
                                 Description = StarredMessage.Content,
+                                Color = new Color(255, 234, 119),
                                 Footer = new EmbedFooterBuilder()
                                 {
-                                    Text = $"MessageID: {sbmessage.StarredMessageID}"
+                                    Text = $"MessageID: {ebsbmessage.StarredMessageID}"
                                 }
 
                             };
@@ -1373,12 +1378,13 @@ namespace TestModule
                                     }
                                 }
                             }
-                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is SocketUserMessage sum)
+                            var sum = await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) as IUserMessage;
+                            if (sum != null)
                             {
                                 await sum.ModifyAsync(
                                     x =>
                                     {
-                                        x.Content = $"🌟 **{sbmessage.StarCount}** | <#{sbmessage.StarredMsgChannelID}>";
+                                        x.Content = $"🌟 **{ebsbmessage.StarCount}** | <#{ebsbmessage.StarredMsgChannelID}>";
                                         x.Embed = SBEntryEmbed.Build();
                                     }
                                     );
