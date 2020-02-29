@@ -137,6 +137,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigEntities\StarboardAliasMode.cs" />
     <Compile Include="ConfigEntities\StarboardChannel.cs" />
     <Compile Include="ConfigEntities\ServerMuteRole.cs" />
     <Compile Include="ConfigEntities\ModLogChannel.cs" />
