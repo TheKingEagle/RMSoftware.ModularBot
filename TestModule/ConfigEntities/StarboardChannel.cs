@@ -29,10 +29,16 @@ namespace TestModule.ConfigEntities
 
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
         {
+            if(_discordNET.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator && !(Context.User as SocketGuildUser).GuildPermissions.Has(Discord.GuildPermission.ManageChannels))
+            {
+                await Context.Channel.SendMessageAsync("",false,TestModuleService.GetEmbeddedMessage(Context, "Insufficient Permission", "You need the ability to manage channels OR have `AccessLevels.Administrator`",Discord.Color.DarkRed));
+                return;
+            }
             if(!ulong.TryParse(value, out ulong channelid))
             {
                 await Context.Channel.SendMessageAsync("", false, 
                     TestModuleService.GetEmbeddedMessage(Context, "Invalid ID", "Value must be a valid number.", Discord.Color.DarkRed));
+                return;
             }
             await TestModuleService.BindStarboard(Context,channelid);
             
