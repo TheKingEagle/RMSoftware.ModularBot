@@ -903,7 +903,7 @@ namespace TestModule
         private async Task ShardedClient_ReactionAdded(Cacheable<IUserMessage, ulong> arg1,
             ISocketMessageChannel arg2, SocketReaction arg3)
         {
-            Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Reaction Event: Reaction Added!"));
+            Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Reaction Event: Reaction Added!"));
             SocketGuildChannel STC = null;
             if (arg2 is SocketGuildChannel)
             {
@@ -911,7 +911,7 @@ namespace TestModule
             }
             else
             {
-                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Channel wasn't a guild channel... RIP"));
+                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Channel wasn't a guild channel... RIP"));
                 return;
             }
 
@@ -921,13 +921,13 @@ namespace TestModule
 
             if (arg3.Emote.ToString() == "⭐")
             {
-                Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "Reaction was a STAR!"));
+                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
                 if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
                 {
                     if (arg2.Id != binding.ChannelID) // Starred message is NOT on the starboard. 
                     {
 
-                        Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. NOT Starboard embed."));
+                        Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "SBBinding found. NOT Starboard embed."));
                         var sbmessage = binding.StarboardData.FirstOrDefault(x => x.StarredMessageID == arg1.Id);
                         if (sbmessage != null)
                         {
@@ -1296,7 +1296,7 @@ namespace TestModule
         private async Task ShardedClient_ReactionRemoved(Cacheable<IUserMessage, ulong> arg1,
             ISocketMessageChannel arg2, SocketReaction arg3)
         {
-            Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Reaction Event: Reaction Removed!"));
+            Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Reaction Event: Reaction Removed!"));
             SocketGuildChannel STC = null;
             if (arg2 is SocketGuildChannel)
             {
@@ -1304,7 +1304,7 @@ namespace TestModule
             }
             else
             {
-                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Channel wasn't a guild channel... RIP"));
+                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Channel wasn't a guild channel... RIP"));
                 return;
             }
 
@@ -1312,7 +1312,7 @@ namespace TestModule
 
             if (arg3.Emote.ToString() == "⭐")
             {
-                Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "Reaction was a STAR!"));
+                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
                 if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
                 {
                     if (arg2.Id != binding.ChannelID) // Starred message is NOT on the starboard. 
