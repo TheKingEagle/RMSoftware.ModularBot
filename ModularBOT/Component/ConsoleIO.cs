@@ -473,6 +473,7 @@ namespace ModularBOT.Component
         private bool ListUsers(ref DiscordNET discord, ulong guildID, short page = 1)
         {
             int selectionIndex = 0;
+            int CursorOffset = 0;
             int countOnPage = 0;
             int ppg = 0;
             SocketGuild g = discord.Client.GetGuild(guildID);
@@ -481,11 +482,16 @@ namespace ModularBOT.Component
                 return false;
             }
             g.DownloadUsersAsync();
+
             List<SocketGuildUser> guildusers = g.Users.ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
+
+            int botCount = guildusers.Where(x => x.IsBot).Count();
+            int userCount = guildusers.Where(x => !x.IsBot).Count();
+            string meta = $"Users: {userCount} | Bots: {botCount} | Total: {botCount + userCount}";
             string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
 
 
-            short max = (short)(Math.Ceiling((double)(guildusers.Count / 22)) + 1);
+            short max = (short)(Math.Ceiling((double)(guildusers.Count / 21)) + 1);
             if (page > max)
             {
                 page = max;
@@ -494,7 +500,7 @@ namespace ModularBOT.Component
             {
                 page = 1;
             }
-            int index = (page * 22) - 22;
+            int index = (page * 21) - 21;
             ScreenModal = true;
 
 
@@ -502,19 +508,20 @@ namespace ModularBOT.Component
             {
                 if (ppg != page)//is page changing?
                 {
-                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all users for Guild: {name}", page, max, ConsoleColor.White);
+
+                    CursorOffset = ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Listing all users for Guild: {name}", page, max, ConsoleColor.White,meta);
                     ppg = page;
                 }
 
                 countOnPage = 0;
                 if (ppg == page)
                 {
-                    Console.SetCursorPosition(0, 5);
+                    Console.SetCursorPosition(0, CursorOffset);
                 }
 
                 WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(18, '\u2005')} {"G.admin".PadRight(7, '\u2005')} {"G.Owner".PadRight(7, '\u2005')}", ConsoleColor.Blue);
                 WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(18, '\u2500')} {"".PadLeft(7, '\u2500')} {"".PadLeft(7, '\u2500')}", ConsoleColor.Blue);
-                for (int i = index; i < 22 * page; i++)//22 results per page.
+                for (int i = index; i < 21 * page; i++)//21 results per page.
                 {
 
                     if (index >= guildusers.Count)
@@ -551,11 +558,11 @@ namespace ModularBOT.Component
                     if (page > 1)
                     {
                         page--;
-                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                        index = (page * 21) - 21;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
                     selectionIndex = 0;
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 21) - 21;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
                 if (s.Key == ConsoleKey.E)
@@ -571,7 +578,7 @@ namespace ModularBOT.Component
                         page++;
                     }
                     selectionIndex = 0;
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 21) - 21;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
 
@@ -584,7 +591,7 @@ namespace ModularBOT.Component
                         selectionIndex = countOnPage - 1;
                     }
 
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 21) - 21;//0 page 1 = 0; page 2 = 20; etc.
 
                     continue;
                 }
@@ -598,14 +605,14 @@ namespace ModularBOT.Component
                     }
 
 
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 21) - 21;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
 
                 if (s.Key == ConsoleKey.Enter)
                 {
 
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+                    index = (page * 21) - 21;//0 page 1 = 0; page 2 = 22; etc.
 
                     if (discord.PermissionManager.DefaultAdmin.EntityID == guildusers[selectionIndex + index].Id)
                     {
@@ -652,7 +659,7 @@ namespace ModularBOT.Component
 
                 else
                 {
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                    index = (page * 21) - 21;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
                 }
             }
@@ -665,6 +672,7 @@ namespace ModularBOT.Component
         private bool ListUsers(ref DiscordNET discord, ulong guildID, string query)
         {
             int selectionIndex = 0;
+            int CursorOffset = 1;
             int countOnPage = 0;
             int ppg = 0;
             short page = 1;
@@ -713,7 +721,7 @@ namespace ModularBOT.Component
             {
                 if (ppg != page)//is page changing?
                 {
-                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Searching for '{query}' in {name}", page, max, ConsoleColor.White);
+                    CursorOffset = ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, $"Searching for '{query}' in {name}", page, max, ConsoleColor.White);
                     ppg = page;
                 }
 
@@ -2461,8 +2469,9 @@ namespace ModularBOT.Component
         /// <param name="ProgressValue"></param>
         /// <param name="ProgressMax"></param>
         /// <param name="ProgressColor"></param>
-        public void ConsoleGUIReset(ConsoleColor fore, ConsoleColor back, string title, short ProgressValue, short ProgressMax, ConsoleColor ProgressColor)
+        public int ConsoleGUIReset(ConsoleColor fore, ConsoleColor back, string title, short ProgressValue, short ProgressMax, ConsoleColor ProgressColor,string META="")
         {
+            int linecount = 1;
             ScreenBusy = true;
             if (title.Length > 72)
             {
@@ -2480,13 +2489,15 @@ namespace ModularBOT.Component
             Console.ForegroundColor = ConsoleColor.White;
 
             DecorateTop();
-
+            linecount++;
             string WTitle = ("" + DateTime.Now.ToString("HH:mm:ss") + " " + title + " - RMSoftwareModularBot v" + Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
             string pTitle = WTitle.PadLeft(71 + WTitle.Length / 2);
             pTitle += "".PadRight(71 - WTitle.Length / 2);
             Console.Write("\u2551{0}\u2551", pTitle);
             Console.Write("\u2551{0}\u2551", "".PadLeft(142));
             string progressBAR = "";
+            linecount++;
+            
             float f = (float)(ProgressValue / (float)ProgressMax);
 
             int amt = (int)(44 * (float)f);
@@ -2511,7 +2522,24 @@ namespace ModularBOT.Component
             Console.Write("{0}", pbar);
             Console.ForegroundColor = ConsoleColor.White;
             Console.Write("\u2551");
+            linecount++;
+            if (!string.IsNullOrWhiteSpace(META))
+            {
+                string fmeta = META.PadLeft(71 + META.Length / 2);
+                fmeta += "".PadRight(71 - META.Length / 2);
+                if (META.Length > 80)
+                {
+                    throw new ArgumentException("Your meta caption can't be over 80 characters.");
+                }
+                Console.Write("\u2551");
+                Console.ForegroundColor = ProgressColor;
+                Console.Write("{0}", fmeta);
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.Write("\u2551");
+                linecount++;
+            }
             DecorateBottom();
+            linecount++;
 
 
             Console.BackgroundColor = back;
@@ -2521,6 +2549,7 @@ namespace ModularBOT.Component
             ConsoleForegroundColor = fore;
             Thread.Sleep(5);
             ScreenBusy = false;
+            return linecount;
         }
 
         /// <summary>
