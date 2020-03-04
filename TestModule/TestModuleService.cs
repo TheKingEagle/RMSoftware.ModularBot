@@ -551,7 +551,7 @@ namespace TestModule
 
         #region MISC COMMANDS
 
-        [Command("tpmgr"), Remarks("AccessLevels.Unspecified")]
+        [Command("tpmgr"), Remarks("AccessLevels.NotSpecified")]
         public async Task Showtest()
         {
             if (_permissions.GetAccessLevel(Context.User) < AccessLevels.Administrator)
@@ -575,6 +575,33 @@ namespace TestModule
                 await ReplyAsync("", false, GetEmbeddedMessage("Reason Edited", StatusCode.Item2, Color.Green));
             }
         }
+
+        [Group("TestModule")]
+        public class _TestModule:ModuleBase
+        {
+            [Command("about")]
+            public async Task DisplayAbout()
+            {
+                EmbedBuilder eb = new EmbedBuilder()
+                {
+                    Title = "About TestModule",
+                    Footer = new EmbedFooterBuilder()
+                    {
+                        IconUrl = Context.User.GetAvatarUrl(ImageFormat.Auto),
+                        Text = $"Requested By: {Context.User.Username} • TestModuleService"
+                    },
+                    Author = new EmbedAuthorBuilder()
+                    {
+                        IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto),
+                        Name = $"{Context.Client.CurrentUser.Username}#{Context.Client.CurrentUser.Discriminator}"
+                    },
+                    Description = "This is a module designed for ModularBOT. Implementing Starboard, Welcome Messages, and a moderation suite.",
+                    Color = Color.DarkBlue
+                };
+                await ReplyAsync("", false, eb.Build());
+            }
+        }
+        
 
         #endregion MISC COMMANDS
 
@@ -645,12 +672,13 @@ namespace TestModule
             PermissionManager _permissions, ConfigurationManager _cfgMgr)
         {
             PermissionsManager = _permissions;
-            
             CfgMgr = _cfgMgr;
             ShardedClient = _client;
             Writer = _consoleIO;
+
             LogMessage constructorLOG = new LogMessage(LogSeverity.Critical, "TMS_Main", "TestModuleService constructor called.");
             Writer.WriteEntry(constructorLOG);
+
             if (doonce)
             {
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "TMS_Main", "TestModuleService Constructor called again!!!! Why Tho???"));

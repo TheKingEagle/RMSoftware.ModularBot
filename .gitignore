@@ -21,3 +21,7 @@
 /TestModule/obj/MONO_RELEASE
 /Discord.Addons.Interactive/obj/MONO_RELEASE
 /Discord.Addons.Interactive/bin/MONO_RELEASE
+/CustomModuleTemplate/obj/Release
+/CustomModuleTemplate/obj/Debug
+/CustomModuleTemplate/bin/Release
+/CustomModuleTemplate
