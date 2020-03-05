@@ -1,0 +1,6 @@
+{
+  "moduleName": "QuotesDB.QuotesDB",
+  "serviceClass": "QuotesDB.QuoteDBService",
+  "guildsAvailable": [],
+  "moduleGroups": [ "QuotesDB" ]
+}

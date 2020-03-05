@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestModule", "TestModule\Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Discord.Addons.Interactive", "Discord.Addons.Interactive\Discord.Addons.Interactive.csproj", "{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuotesDB", "QuotesDB\QuotesDB.csproj", "{0BB3D22C-2887-433E-B0EF-1991FBAFC4F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDE7CCFF-E5AD-41BE-85F7-0492E335D007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BB3D22C-2887-433E-B0EF-1991FBAFC4F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BB3D22C-2887-433E-B0EF-1991FBAFC4F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BB3D22C-2887-433E-B0EF-1991FBAFC4F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BB3D22C-2887-433E-B0EF-1991FBAFC4F0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
