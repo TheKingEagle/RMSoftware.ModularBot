@@ -236,6 +236,7 @@
     <Compile Include="Component\OS_SystemInfo.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
     <Compile Include="Entity\ConfigEntity.cs" />
+    <Compile Include="Entity\ConsoleCommand.cs" />
     <Compile Include="Entity\PseudoMessage.cs" />
   </ItemGroup>
   <ItemGroup>
