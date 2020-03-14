@@ -51,7 +51,7 @@ namespace ModularBOT.Component.ConfigEntities
             _discordNET.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel = newval;
             _discordNET.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
 
-            return Context.Channel.SendMessageAsync("", false, _discordNET.CustomCMDMgr.GetEmbeddedMessage(Context,
+            return Context.Channel.SendMessageAsync("", false, this.GetEmbeddedMessage(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(),Context,
                     "Configuration Updated", $"Program uses pre-release update channel: `{newval}`.\r\n\r\nThis change will not be effective until the program is restarted.", Color.Green));
         }
     }
