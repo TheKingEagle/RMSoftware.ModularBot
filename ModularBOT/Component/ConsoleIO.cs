@@ -349,19 +349,19 @@ namespace ModularBOT.Component
                     {
                         case (1):
                             //ScreenModal = false;
-                            ListUsers(ref discord, guilds[selectionIndex + index].Id);
+                            ListUsers(ref discord, guilds[selectionIndex + index].Id,1,true);
                             ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
 
                             break;
                         case (2):
                             //ScreenModal = false;
-                            ListChannels(ref discord, guilds[selectionIndex + index].Id);
+                            ListChannels(ref discord, guilds[selectionIndex + index].Id, 1, true);
                             ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
 
                             break;
                         case (3):
                             //ScreenModal = false;
-                            ListRoles(ref discord, guilds[selectionIndex + index].Id);
+                            ListRoles(ref discord, guilds[selectionIndex + index].Id, 1, true);
                             ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
 
                             break;
@@ -374,7 +374,7 @@ namespace ModularBOT.Component
                             switch (ss)
                             {
                                 case (1):
-                                    ListCURoles(ref discord, guilds[selectionIndex + index].Id);
+                                    ListCURoles(ref discord, guilds[selectionIndex + index].Id, 1, true);
                                     ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Guilds", page, max, ConsoleColor.White);
                                     break;
                                 case (2):
@@ -510,7 +510,7 @@ namespace ModularBOT.Component
 
         #region User Listing
 
-        internal bool ListUsers(ref DiscordNET discord, ulong guildID, short page = 1)
+        internal bool ListUsers(ref DiscordNET discord, ulong guildID, short page = 1, bool FromModal=false)
         {
             int selectionIndex = 0;
             int CursorOffset = 0;
@@ -541,8 +541,8 @@ namespace ModularBOT.Component
                 page = 1;
             }
             int index = (page * 21) - 21;
-            ScreenModal = true;
 
+            if(!FromModal) ScreenModal = true;
 
             while (true)
             {
@@ -704,12 +704,12 @@ namespace ModularBOT.Component
                 }
             }
 
-            ScreenModal = false;
+            if (!FromModal) ScreenModal = false;
             return true;
 
         } //User List Screen
 
-        internal bool ListUsers(ref DiscordNET discord, ulong guildID, string query)
+        internal bool ListUsers(ref DiscordNET discord, ulong guildID, string query, bool FromModal=false)
         {
             int selectionIndex = 0;
             int CursorOffset = 1;
@@ -754,7 +754,7 @@ namespace ModularBOT.Component
                 page = 1;
             }
             int index = (page * 22) - 22;
-            ScreenModal = true;
+            if (!FromModal) ScreenModal = true;
 
 
             while (true)
@@ -924,7 +924,7 @@ namespace ModularBOT.Component
                 }
             }
 
-            ScreenModal = false;
+            if (!FromModal) ScreenModal = false;
             return true;
 
         }  //User Search Screen
@@ -952,7 +952,7 @@ namespace ModularBOT.Component
         //TODO: Make ALL screens with selection mode
 
         #region Channel Listing
-        internal bool ListChannels(ref DiscordNET discord, ulong guildID, short page=1)
+        internal bool ListChannels(ref DiscordNET discord, ulong guildID, short page=1,bool FromModal=false)
         {
             
 
@@ -967,7 +967,7 @@ namespace ModularBOT.Component
             int selectionIndex = 0;
             int countOnPage = 0;
             int ppg = 0;
-            ScreenModal = true;
+            if (!FromModal) ScreenModal = true;
             string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
 
 
@@ -1115,7 +1115,7 @@ namespace ModularBOT.Component
                 }
             }
 
-            ScreenModal = false;
+            if (!FromModal) ScreenModal = false;
             return true;
 
 
@@ -1200,7 +1200,7 @@ namespace ModularBOT.Component
 
         #endregion
 
-        internal bool ListCURoles(ref DiscordNET discord, ulong guildID, short page = 1)
+        internal bool ListCURoles(ref DiscordNET discord, ulong guildID, short page = 1, bool FromModal=false)
         {
             SocketGuild g = discord.Client.GetGuild(guildID);
             if (g == null)
@@ -1220,7 +1220,7 @@ namespace ModularBOT.Component
                 page = 1;
             }
             int index = (page * 24) - 24;
-            ScreenModal = true;
+            if (!FromModal) ScreenModal = true;
 
 
             while (true)
@@ -1291,12 +1291,12 @@ namespace ModularBOT.Component
                 }
             }
 
-            ScreenModal = false;
+            if (!FromModal) ScreenModal = false;
             return true;
 
         }
 
-        internal bool ListRoles(ref DiscordNET discord, ulong guildID, short page = 1)
+        internal bool ListRoles(ref DiscordNET discord, ulong guildID, short page = 1, bool FromModal=false)
         {
             SocketGuild g = discord.Client.GetGuild(guildID);
             if (g == null)
@@ -1316,7 +1316,7 @@ namespace ModularBOT.Component
                 page = 1;
             }
             int index = (page * 24) - 24;
-            ScreenModal = true;
+            if (!FromModal) ScreenModal = true;
 
 
             while (true)
@@ -1387,7 +1387,7 @@ namespace ModularBOT.Component
                 }
             }
 
-            ScreenModal = false;
+            if (!FromModal) ScreenModal = false;
             return true;
 
         }
