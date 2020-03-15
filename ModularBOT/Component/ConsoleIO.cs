@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Windows;
+using ModularBOT.Entity;
 
 namespace ModularBOT.Component
 {
@@ -23,9 +24,11 @@ namespace ModularBOT.Component
 
         internal const int VK_RETURN = 0x0D;
         internal const int WM_KEYDOWN = 0x100;
+        internal ulong chID = 0;
+
         private bool errorLogWrite = false;
-        private ConsoleColor ConsoleForegroundColor = ConsoleColor.Gray;
-        private ConsoleColor ConsoleBackgroundColor = ConsoleColor.Black;
+        internal ConsoleColor ConsoleForegroundColor = ConsoleColor.Gray;
+        internal ConsoleColor ConsoleBackgroundColor = ConsoleColor.Black;
 
         private int[] cColors =
             {
@@ -33,22 +36,59 @@ namespace ModularBOT.Component
             0x808080, 0x0000FF, 0x00FF00, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFFFF00, 0xFFFFFF
         };
 
-        private List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
+        internal List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
+
+
         #endregion
 
         #region PUBLIC Properties
-        public static bool Writing { get; private set; } = false;
-        public static bool QueueProcessStarted { get; private set; } = false;
-        public static bool ScreenBusy { get; private set; }//If console is resetting or rendering new ui.
-        public static bool ScreenModal { get; private set; }//If there is a screen showing above discord logs
+        public static bool Writing { get; set; } = false;
+        public static bool QueueProcessStarted { get; set; } = false;
+        public static bool ScreenBusy { get; set; }//If console is resetting or rendering new ui.
+        public static bool ScreenModal { get; set; }//If there is a screen showing above discord logs
         public IReadOnlyCollection<LogEntry> LogEntriesBuffer { get { return LogEntries.AsReadOnly(); } }
-        public static Queue<LogEntry> Backlog { get; private set; } = new Queue<LogEntry>();
-        public int CurTop { get; private set; }
-        public int PrvTop { get; private set; }
-        public string ConsoleTitle { get; private set; } = "";
+        public static Queue<LogEntry> Backlog { get; set; } = new Queue<LogEntry>();
+        public int CurTop { get; set; }
+        public int PrvTop { get; set; }
+        public string ConsoleTitle { get; set; } = "";
 
-        public LogEntry LatestEntry { get; private set; }
+        public List<ConsoleCommand> ConsoleCommands { get; internal set; } = new List<ConsoleCommand>();
+
+        public LogEntry LatestEntry { get; set; }
         #endregion
+
+        public ConsoleIO()
+        {
+            //Populate command list.
+            ConsoleCommands.Add(new ConsoleCommands.AboutCommand());            //about
+            ConsoleCommands.Add(new ConsoleCommands.CfgLCMCommand());           //config.loadcoremodule
+            ConsoleCommands.Add(new ConsoleCommands.ChannelsCommand());         //channels
+            ConsoleCommands.Add(new ConsoleCommands.CLSCommand());              //cls
+            ConsoleCommands.Add(new ConsoleCommands.ConfigCFUCommand());        //config.checkforupdates
+            ConsoleCommands.Add(new ConsoleCommands.ConfigDCEvtLLCommand());    //config.discordeventloglevel
+            ConsoleCommands.Add(new ConsoleCommands.ConfigSCCommand());         //config.setcolors
+            ConsoleCommands.Add(new ConsoleCommands.ConfigSLPCommand());        //config.setlogo
+            ConsoleCommands.Add(new ConsoleCommands.ConfigUPRCCommand());       //config.useprereleasechannel
+            ConsoleCommands.Add(new ConsoleCommands.ConmsgCommand());           //conmsg
+            ConsoleCommands.Add(new ConsoleCommands.DisableCMDCommand());       //disablecmd
+            ConsoleCommands.Add(new ConsoleCommands.EnableCMDCommand());        //enablecmd
+            ConsoleCommands.Add(new ConsoleCommands.GuildNameCommand());        //guildname
+            ConsoleCommands.Add(new ConsoleCommands.GuildsCommand());           //guilds
+            ConsoleCommands.Add(new ConsoleCommands.LeaveCommand());            //leave
+            ConsoleCommands.Add(new ConsoleCommands.MBotDataCommand());         //mbotdata
+            ConsoleCommands.Add(new ConsoleCommands.MyRolesCommand());          //myroles
+            ConsoleCommands.Add(new ConsoleCommands.RolesCommand());            //roles
+            ConsoleCommands.Add(new ConsoleCommands.RSKillCommand());           //rskill
+            ConsoleCommands.Add(new ConsoleCommands.SearchCommand());           //search
+            ConsoleCommands.Add(new ConsoleCommands.SetgchCommand());           //setgch
+            ConsoleCommands.Add(new ConsoleCommands.SetvarCommand());           //setvar
+            ConsoleCommands.Add(new ConsoleCommands.StatusCommand());           //status
+            ConsoleCommands.Add(new ConsoleCommands.StopCommand());             //stopbot
+            ConsoleCommands.Add(new ConsoleCommands.TSKillCommand());           //tskill
+            ConsoleCommands.Add(new ConsoleCommands.UsersCommand());            //users
+            ConsoleCommands.Add(new ConsoleCommands.ListCommand());             //list
+
+        }
 
         #region PRIVATE Methods
 
@@ -199,7 +239,7 @@ namespace ModularBOT.Component
         #endregion
 
         #region SETUP WIZARD
-        private void SetLogo_Choices()
+        internal void SetLogo_Choices()
         {
             WriteEntry("\u2502 Have you ever seen those old DOS programs that have the fancy ASCII art @ startup?");
             WriteEntry("\u2502 Yea? Well great! This bot can do that! Why? (You may be asking) WHY NOT?!");
@@ -217,7 +257,7 @@ namespace ModularBOT.Component
 
         #region Guild Listing
 
-        private void ListGuilds(ref DiscordNET discord)
+        internal void ListGuilds(ref DiscordNET discord)
         {
             short page = 1;
 
@@ -470,7 +510,7 @@ namespace ModularBOT.Component
 
         #region User Listing
 
-        private bool ListUsers(ref DiscordNET discord, ulong guildID, short page = 1)
+        internal bool ListUsers(ref DiscordNET discord, ulong guildID, short page = 1)
         {
             int selectionIndex = 0;
             int CursorOffset = 0;
@@ -669,7 +709,7 @@ namespace ModularBOT.Component
 
         } //User List Screen
 
-        private bool ListUsers(ref DiscordNET discord, ulong guildID, string query)
+        internal bool ListUsers(ref DiscordNET discord, ulong guildID, string query)
         {
             int selectionIndex = 0;
             int CursorOffset = 1;
@@ -912,7 +952,7 @@ namespace ModularBOT.Component
         //TODO: Make ALL screens with selection mode
 
         #region Channel Listing
-        private bool ListChannels(ref DiscordNET discord, ulong guildID, short page=1)
+        internal bool ListChannels(ref DiscordNET discord, ulong guildID, short page=1)
         {
             
 
@@ -1160,7 +1200,7 @@ namespace ModularBOT.Component
 
         #endregion
 
-        private bool ListCURoles(ref DiscordNET discord, ulong guildID, short page = 1)
+        internal bool ListCURoles(ref DiscordNET discord, ulong guildID, short page = 1)
         {
             SocketGuild g = discord.Client.GetGuild(guildID);
             if (g == null)
@@ -1256,7 +1296,7 @@ namespace ModularBOT.Component
 
         }
 
-        private bool ListRoles(ref DiscordNET discord, ulong guildID, short page = 1)
+        internal bool ListRoles(ref DiscordNET discord, ulong guildID, short page = 1)
         {
             SocketGuild g = discord.Client.GetGuild(guildID);
             if (g == null)
@@ -1562,7 +1602,7 @@ namespace ModularBOT.Component
 
         internal Task GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET) //TODO: Re-write for "Snap-in" commands. (additional Console commands from modules)
         {
-            ulong chID = 0;
+            
 
             //Process Loop
             while (true)
@@ -1586,782 +1626,19 @@ namespace ModularBOT.Component
 
                 #region Console Command Statements
 
-                if (input.ToLower() == "stopbot")
+                ConsoleCommand cm = ConsoleCommands.FirstOrDefault(x => x.CommandName == input.Split(' ')[0]);
+                if(cm == null)
                 {
-                    WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "Console session called STOPBOT."));
-
-                    discordNET.Stop(ref ShutdownCalled);
-                    RestartRequested = false;
-                    break;
+                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "unknown command"), null, true, false, true);
+                    continue;
                 }
-
-                if (input.ToLower() == "rskill")
+                else
                 {
-                    RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will auto restart the program.", true, ref ShutdownCalled, ref RestartRequested, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
-                    break;
-                }
-
-                if (input.ToLower() == "cls" || input.ToLower() == "clear")
-                {
-                    LogEntries.Clear();//remove buffer.
-                    ConsoleGUIReset(ConsoleForegroundColor, ConsoleBackgroundColor, ConsoleTitle);
-                    SpinWait.SpinUntil(() => !ScreenBusy);
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Console cleared!"), null, true, false, true);
-                }
-
-                if (input.ToLower() == "tskill")
-                {
-                    RestartRequested = ShowKillScreen("Test KS", "The program was instructed to run a test killscreen. This will prompt you to terminate the program.", false, ref ShutdownCalled, ref RestartRequested, 5, new ApplicationException("Command rskill triggered kill screen. USER INITIATED CRASH SCREEN.")).GetAwaiter().GetResult();
-                    break;
-                }
-
-                if (input.ToLower() == "disablecmd")
-                {
-                    WriteEntry(new LogMessage(LogSeverity.Warning, "Console", "Command processing disabled!"));
-
-                    discordNET.Client.SetStatusAsync(UserStatus.DoNotDisturb);
-                    discordNET.Client.SetGameAsync("");
-                    discordNET.DisableMessages = true;
-                }
-
-                if (input.ToLower() == "enablecmd")
-                {
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Command processing enabled."));
-
-                    discordNET.Client.SetStatusAsync(UserStatus.Online);
-                    discordNET.Client.SetGameAsync("for commands!", null, ActivityType.Watching);
-                    discordNET.DisableMessages = false;
-                }
-
-                if (input.ToLower() == "mbotdata")
-                {
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Opening ModularBOT's installation directory."));
-                    Process.Start(Path.GetDirectoryName(Assembly.GetCallingAssembly().Location));
-                }
-
-                if (input.ToLower().StartsWith("status"))
-                {
-                    string status = input.Remove(0, 7).Trim();
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Client", "client status changed."));
-                    discordNET.Client.SetGameAsync(status);
-                }
-
-                if (input.ToLower().StartsWith("setgch"))
-                {
-                    input = input.Remove(0, 6).Trim();
-                    if (!ulong.TryParse(input, out chID))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Error, "Console", "Invalid ULONG."));
-                        continue;
-                    }
-                    WriteEntry(new LogMessage(LogSeverity.Error, "Console", "Set guild channel id."));
-
-                }
-
-                if (input.ToLower().StartsWith("conmsg"))
-                {
-                    input = input.Remove(0, 6).Trim();
-                    if (!(discordNET.Client.GetChannel(chID) is SocketTextChannel Channel))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Error, "Console", "Invalid channel."));
-                        continue;
-                    }
-                    Channel.SendMessageAsync(input);
-                }
-
-                if (input.ToLower().StartsWith("setvar"))
-                {
-                    input = input.Remove(0, 6).Trim();
-                    string varname = input.Split(' ')[0];
-                    input = input.Remove(0, varname.Length);
-                    input = input.Trim();
-                    discordNET.CustomCMDMgr.coreScript.Set(varname, input);
-                }
-
-                if (input.ToLower().StartsWith("config.discordeventloglevel"))
-                {
-                    if (input.Split(' ').Length > 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    input = input.Remove(0, 28).Trim();
-                    if (Enum.TryParse(input, true, out LogSeverity result))
-                    {
-                        Program.configMGR.CurrentConfig.DiscordEventLogLevel = result;
-                        Program.configMGR.Save();
-                        ScreenModal = true;
-                        while (true)
-                        {
-                            WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Changes will take place next time the program is started. Do you want to restart now? [Y/N]"), null, true, true, true);
-                            ConsoleKeyInfo k = Console.ReadKey();
-                            if (k.Key == ConsoleKey.Y)
-                            {
-
-                                discordNET.Stop(ref ShutdownCalled);
-                                RestartRequested = true;
-                                Thread.Sleep(1000);
-                                return Task.Delay(1);
-                            }
-                            if (k.Key == ConsoleKey.N)
-                            {
-                                break;
-                            }
-                        }
-                        ScreenModal = false;
-
-                    }
-
-                    else
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", $"Invalid parameter. Try a log severity level: {string.Join(", ", Enum.GetNames(typeof(LogSeverity)))}"));
-                }
-
-                if (input.ToLower().StartsWith("config.loadcoremodule"))
-                {
-                    if (input.Split(' ').Length > 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    input = input.Remove(0, 22).Trim();
-                    if (bool.TryParse(input, out bool result))
-                    {
-                        Program.configMGR.CurrentConfig.LoadCoreModule = result;
-                        Program.configMGR.Save();
-                        ScreenModal = true;
-                        while (true)
-                        {
-                            WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Changes will take place next time the program is started. Do you want to restart now? [Y/N]"), null, true, true, true);
-                            ConsoleKeyInfo k = Console.ReadKey();
-                            if (k.Key == ConsoleKey.Y)
-                            {
-
-                                discordNET.Stop(ref ShutdownCalled);
-                                RestartRequested = true;
-                                Thread.Sleep(1000);
-                                return Task.Delay(1);
-                            }
-                            if (k.Key == ConsoleKey.N)
-                            {
-                                break;
-                            }
-                        }
-                        ScreenModal = false;
-
-                    }
-
-                    else
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", $"Invalid parameter. Try TRUE or FALSE."));
-                }
-
-                if (input.ToLower().StartsWith("config.checkforupdates"))
-                {
-                    if (input.Split(' ').Length > 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    input = input.Remove(0, 23).Trim();
-                    if (bool.TryParse(input, out bool result))
-                    {
-                        Program.configMGR.CurrentConfig.CheckForUpdates = result;
-                        string pr = result ? "will" : "will not";
-                        Program.configMGR.Save();
-                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", $"Program {pr} check for updates on startup."), null, true, false, true);
-                    }
-                    else
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Unexpected argument."));
-                        continue;
-                    }
-                }
-
-                if (input.ToLower().StartsWith("config.useprereleasechannel"))
-                {
-                    if (input.Split(' ').Length > 1)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 1)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    input = input.Remove(0, 28).Trim();
-                    if (bool.TryParse(input, out bool result))
-                    {
-                        Program.configMGR.CurrentConfig.UsePreReleaseChannel = result;
-                        Program.configMGR.Save();
-                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", "You've switched update channels."), null, true, false, true);
-                    }
-                    else
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Unexpected argument."));
-                        continue;
-                    }
-                }
-
-                if (input.ToLower().StartsWith("config.setlogo"))
-                {
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-
-                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
-
-                    SetLogo_Choices();
-                    ConsoleKeyInfo k;
-                    string path = "";
-                    ScreenModal = true;
-                    while (true)
-                    {
-                        WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
-                        Console.Write("\u2502 > ");
-                        k = Console.ReadKey();
-                        if (k.KeyChar == '1')
-                        {
-                            path = "NONE";
-                            break;
-                        }
-                        if (k.KeyChar == '2')
-                        {
-                            path = "INTERNAL";
-                            WriteEntry("\u2502 Previewing action... One second please...");
-                            Thread.Sleep(600);
-                            ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
-                            Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
-                            Thread.Sleep(800);
-                            ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
-                            Thread.Sleep(3000);
-                            ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 6, ConsoleColor.Green);
-                            break;
-                        }
-                        if (k.KeyChar == '3')
-                        {
-                            WriteEntry("\u2502 Please enter the path to a valid image file...", ConsoleColor.DarkBlue);
-                            Console.Write("\u2502 > ");
-                            path = Console.ReadLine();
-                            WriteEntry("\u2502 Previewing action... One second please...");
-                            Thread.Sleep(600);
-                            ConsoleGUIReset(ConsoleColor.Green, ConsoleColor.Black, "Welcome", 79, 45);
-                            Console.WriteLine("Oh, Hello! Greetings! Salutations! Stuff is about to happen... Please wait...");
-                            Thread.Sleep(800);
-                            try
-                            {
-                                ConsoleWriteImage(new System.Drawing.Bitmap(path.Replace("\"", "")));
-                            }
-                            catch (Exception ex)
-                            {
-
-                                WriteEntry("\u2502 Something went wrong. Make sure you specified a valid image.", ConsoleColor.Red);
-                                WriteEntry("\u2502 " + ex.Message, ConsoleColor.Red);
-                                WriteEntry("\u2502");
-                                SetLogo_Choices();
-                                continue;
-                            }
-                            Thread.Sleep(3000);
-                            break;
-                        }
-                    }
-
-                    Program.configMGR.CurrentConfig.LogoPath = path.Replace("\"", "");
-                    Program.configMGR.Save();
-                    ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkBlue, PRV_TITLE);
-                    ScreenModal = false;
-                    v.AddRange(LogEntries);
-                    LogEntries.Clear();//clear buffer.
-                    //output previous logEntry.
-                    foreach (var item in v)
-                    {
-                        WriteEntry(item.LogMessage, item.EntryColor);
-                    }
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Config", "Startup logo saved successfully!"), null, true, false, true);
-                    v = null;
-                }
-
-                if (input.ToLower().StartsWith("config.setcolors"))
-                {
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-
-                    #region Background Color
-                    ScreenModal = true;
-                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 1, 2, ConsoleColor.Green);
-                    WriteEntry("\u2502 Please select a background color.");
-                    WriteEntry("\u2502");
-                    for (int i = 0; i < 16; i++)
-                    {
-                        WriteEntry($"\u2502\u2005\u2005\u2005 {i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
-                    }
-                    WriteEntry("\u2502");
-                    ConsoleKeyInfo k;
-                    ScreenModal = true;
-                    while (true)
-                    {
-                        WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
-                        Console.Write("\u2502 > ");
-                        k = Console.ReadKey();
-                        Thread.Sleep(100);
-                        char c = k.KeyChar;
-                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int i))
-                        {
-                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor = (ConsoleColor)i;
-                            break;
-                        }
-                    }
-                    #endregion
-
-                    #region Foreground Color
-                    ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Console Colors", 2, 2, ConsoleColor.Green);
-                    WriteEntry("\u2502 Please select a foreground color.");
-                    WriteEntry("\u2502");
-                    for (int i = 0; i < 16; i++)
-                    {
-                        WriteEntry($"\u2502\u2005\u2005\u2005 {i.ToString("X")}. {((ConsoleColor)i).ToString()}", (ConsoleColor)i);
-                    }
-                    WriteEntry("\u2502");
-                    ConsoleKeyInfo k1;
-                    ScreenModal = true;
-                    while (true)
-                    {
-                        WriteEntry("\u2502 Please enter a choice below...", ConsoleColor.DarkBlue, true);
-                        Console.Write("\u2502 > ");
-                        k1 = Console.ReadKey();
-                        Thread.Sleep(100);
-                        char c = k1.KeyChar;
-                        if (int.TryParse(c.ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int ie))
-                        {
-                            Program.configMGR.CurrentConfig.ConsoleForegroundColor = (ConsoleColor)ie;
-                            break;
-                        }
-                    }
-                    #endregion
-
-                    Program.configMGR.Save();
-                    ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                        Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                    ScreenModal = false;
-                    v.AddRange(LogEntries);
-                    LogEntries.Clear();//clear buffer.
-                    //output previous logEntry.
-                    foreach (var item in v)
-                    {
-                        WriteEntry(item.LogMessage, item.EntryColor);
-                    }
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Config", "Console colors were changed successfully."), null, true, false, true);
-                    v = null;
-                }
-
-                if (input.ToLower().StartsWith("guilds"))
-                {
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-                    //---------------start modal---------------
-                    ListGuilds(ref discordNET);
-                    //----------------End modal----------------
-                    ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                        Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                    ScreenModal = false;
-                    v.AddRange(LogEntries);
-                    LogEntries.Clear();//clear buffer.
-                    //output previous logEntry.
-                    foreach (var item in v)
-                    {
-                        WriteEntry(item.LogMessage, item.EntryColor);
-                    }
-                }
-
-                if (input.ToLower().StartsWith("users"))
-                {
-                    string page = "1";
-
-                    #region Parse Checking
-
-                    if (input.Split(' ').Length > 3)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 3)
-                    {
-                        input = input.Remove(0, 6).Trim();
-                    }
-                    if (input.Split(' ').Length == 3)
-                    {
-                        page = input.Split(' ')[2];
-                        input = input.Split(' ')[1];
-                    }
-                    if (!short.TryParse(page, out short numpage))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Page number"));
-                        continue;
-                    }
-                    if (!ulong.TryParse(input, out ulong id))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Guild ID format"));
-                        continue;
-                    }
-                    #endregion
-
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-                    //---------------start modal---------------
-                    bool ModalResult = ListUsers(ref discordNET, id, numpage);
-                    if (!ModalResult)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "The guild was not found..."));
-
-                        continue;
-                    }
-                    //----------------End modal----------------
-                    if (ModalResult)
-                    {
-                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                        ScreenModal = false;
-                        v.AddRange(LogEntries);
-                        LogEntries.Clear();//clear buffer.
-                                           //output previous logEntry.
-                        foreach (var item in v)
-                        {
-                            WriteEntry(item.LogMessage, item.EntryColor);
-                        }
-                    }
-                }
-
-                if (input.ToLower().StartsWith("search"))
-                {
-                    input = input.Remove(0, 7);
-
-                    #region Parse Checking
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-
-                    string rl = input.Split(' ')[0];
-
-                    if (!ulong.TryParse(rl, out ulong guild))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "SEARCH", "Invalid guild ID"));
-                        continue;
-                    }
-
-                    #endregion
-
-                    string query = input.Remove(0, rl.Length + 1);//guildID length + space
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-                    //---------------start modal---------------
-                    bool ModalResult = ListUsers(ref discordNET, guild, query);
-                    if (!ModalResult)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "SEARCH", "The guild was not found..."));
-
-                        continue;
-                    }
-                    //----------------End modal----------------
-                    if (ModalResult)
-                    {
-
-                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                        ScreenModal = false;
-                        v.AddRange(LogEntries);
-                        LogEntries.Clear();//clear buffer.
-                                           //output previous logEntry.
-                        foreach (var item in v)
-                        {
-                            WriteEntry(item.LogMessage, item.EntryColor);
-                        }
-                    }
-                }
-
-                if (input.ToLower().StartsWith("channels"))
-                {
-                    string page = "1";
-
-                    #region Parse Checking
-
-                    if (input.Split(' ').Length > 3)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 3)
-                    {
-                        input = input.Remove(0, 9).Trim();
-                    }
-                    if (input.Split(' ').Length == 3)
-                    {
-                        page = input.Split(' ')[2];
-                        input = input.Split(' ')[1];
-                    }
-                    if (!short.TryParse(page, out short numpage))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Channels", "Invalid Page number"));
-                        continue;
-                    }
-                    if (!ulong.TryParse(input, out ulong id))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Channels", "Invalid Guild ID format"));
-                        continue;
-                    }
-                    #endregion Parse Checking
-
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-                    //---------------start modal---------------
-                    bool ModalResult = ListChannels(ref discordNET, id, numpage);
-                    if (!ModalResult)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Channels", "The guild was not found..."));
-
-                        continue;
-                    }
-                    //----------------End modal----------------
-                    if (ModalResult)
-                    {
-
-                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                        ScreenModal = false;
-                        v.AddRange(LogEntries);
-                        LogEntries.Clear();//clear buffer.
-                                           //output previous logEntry.
-                        foreach (var item in v)
-                        {
-                            WriteEntry(item.LogMessage, item.EntryColor);
-                        }
-                    }
-                }
-
-                if (input.ToLower().StartsWith("myroles"))
-                {
-                    string page = "1";
-
-                    #region Parse Checking
-
-                    if (input.Split(' ').Length > 3)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 3)
-                    {
-                        input = input.Remove(0, 8).Trim();
-                    }
-                    if (input.Split(' ').Length == 3)
-                    {
-                        page = input.Split(' ')[2];
-                        input = input.Split(' ')[1];
-                    }
-                    if (!short.TryParse(page, out short numpage))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "Invalid Page number"));
-                        continue;
-                    }
-                    if (!ulong.TryParse(input, out ulong id))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "Invalid Guild ID format"));
-                        continue;
-                    }
-
-                    #endregion Parse Checking
-
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-                    //---------------start modal---------------
-                    bool ModalResult = ListCURoles(ref discordNET, id, numpage);
-                    if (!ModalResult)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "The guild was not found..."));
-
-                        continue;
-                    }
-                    //----------------End modal----------------
-                    if (ModalResult)
-                    {
-                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                        ScreenModal = false;
-                        v.AddRange(LogEntries);
-                        LogEntries.Clear();//clear buffer.
-                                           //output previous logEntry.
-                        foreach (var item in v)
-                        {
-                            WriteEntry(item.LogMessage, item.EntryColor);
-                        }
-                    }
-                }
-
-                if (input.ToLower().StartsWith("leave"))
-                {
-
-                    #region Parse Checking
-
-                    if (input.Split(' ').Length > 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-
-                    if (input.Split(' ').Length == 2)
-                    {
-                        input = input.Split(' ')[1];
-                    }
-                    if (!ulong.TryParse(input, out ulong id))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "Invalid Guild ID format"));
-                        continue;
-                    }
-
-                    #endregion Parse Checking
-                    var G = discordNET.Client.GetGuild(id);
-                    if (G == null)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "This guild isn't valid."));
-                        continue;
-                    }
-                    WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", $"Attempting to leave guild: {G.Name}"));
-
-                    G.LeaveAsync();
-                }
-
-                if (input.ToLower().StartsWith("guildname"))
-                {
-
-                    #region Parse Checking
-
-                    if (input.Split(' ').Length > 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-
-                    if (input.Split(' ').Length == 2)
-                    {
-                        input = input.Split(' ')[1];
-                    }
-                    if (!ulong.TryParse(input, out ulong id))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "Invalid Guild ID format"));
-                        continue;
-                    }
-
-                    #endregion Parse Checking
-                    var G = discordNET.Client.GetGuild(id);
-                    if (G == null)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "GuildName", "This guild isn't valid."));
-                        continue;
-                    }
-                    WriteEntry(new LogMessage(LogSeverity.Critical, "GuildName", $"Full Guild Name: {G.Name}"));
-                }
-
-                if (input.ToLower().StartsWith("roles"))
-                {
-                    string page = "1";
-
-                    #region Parse Checking
-
-                    if (input.Split(' ').Length > 3)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        continue;
-                    }
-                    if (input.Split(' ').Length < 3)
-                    {
-                        input = input.Remove(0, 6).Trim();
-                    }
-                    if (input.Split(' ').Length == 3)
-                    {
-                        page = input.Split(' ')[2];
-                        input = input.Split(' ')[1];
-                    }
-                    if (!short.TryParse(page, out short numpage))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Roles", "Invalid Page number"));
-                        continue;
-                    }
-                    if (!ulong.TryParse(input, out ulong id))
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Roles", "Invalid Guild ID format"));
-                        continue;
-                    }
-
-                    #endregion Parse Checking
-
-                    string PRV_TITLE = ConsoleTitle;
-                    List<LogEntry> v = new List<LogEntry>();
-                    //---------------start modal---------------
-                    bool ModalResult = ListRoles(ref discordNET, id, numpage);
-                    if (!ModalResult)
-                    {
-                        WriteEntry(new LogMessage(LogSeverity.Critical, "Roles", "The guild was not found..."));
-
-                        continue;
-                    }
-                    //----------------End modal----------------
-                    if (ModalResult)
-                    {
-
-                        ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                            Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                        ScreenModal = false;
-                        v.AddRange(LogEntries);
-                        LogEntries.Clear();//clear buffer.
-                                           //output previous logEntry.
-                        foreach (var item in v)
-                        {
-                            WriteEntry(item.LogMessage, item.EntryColor);
-                        }
+                    ConsoleIO c = this;
+                    bool r = cm.Execute(input, ref ShutdownCalled, ref RestartRequested, ref InputCanceled, ref discordNET, ref c);
+                    if(!r)
+                    {
+                        break;
                     }
                 }
 
@@ -2372,6 +1649,7 @@ namespace ModularBOT.Component
                     WriteEntry(new LogMessage(LogSeverity.Info, "Console", unproc), null, true, false, true);
                 }
             }
+            WriteEntry(new LogMessage(LogSeverity.Info, "Console", "ConsoleInput closed"), null, true, false, true);
 
             return Task.Delay(1);
         }
