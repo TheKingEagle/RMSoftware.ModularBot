@@ -12,10 +12,10 @@ namespace ModularBOT.Entity
     {
         public string CommandName { get; set; }
 
-        public virtual void ExecuteAsync(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET)
+        public virtual bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET,ref ConsoleIO console)
         {
-            //override
-            return;
+            //RETURNING FALSE will terminate the input caller.
+            return true;
         }
     }
 }
