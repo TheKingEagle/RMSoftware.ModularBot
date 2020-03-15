@@ -269,6 +269,7 @@ namespace ModularBOT.Component
             ScreenModal = true;
             List<SocketGuild> guilds = discord.Client.Guilds.ToList();
 
+           
             while (true)
             {
                 countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
@@ -336,6 +337,10 @@ namespace ModularBOT.Component
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
                     #region SubScreen
                     string guildname = SafeName(guilds, index + selectionIndex);
+                    if(!guilds[index+selectionIndex].IsConnected)
+                    {
+                        continue;
+                    }
                     //int left = 71-20;
                     //int top = 16 - 7;
                     //Console.CursorLeft = left;
@@ -484,19 +489,37 @@ namespace ModularBOT.Component
 
         private void WriteGuild(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuild> guilds, int i)
         {
-            string name = guilds[i].Name;
-            if (name.Length > 36)
+            if(guilds[i].IsConnected)
             {
-                name = name.Remove(36) + "...";
+                string name = guilds[i]?.Name ?? "[Pending...]";
+
+                if (name.Length > 36)
+                {
+                    name = name.Remove(36) + "...";
+                }
+                string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
+                string p = $"{name}".PadRight(39, '\u2005');
+                WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
+
             }
-            string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
-            string p = $"{name}".PadRight(39, '\u2005');
-            WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
+            else
+            {
+                string name = "[Guild Unavailable]";
+
+                if (name.Length > 36)
+                {
+                    name = name.Remove(36) + "...";
+                }
+                string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
+                string p = $"{name}".PadRight(39, '\u2005');
+                WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex,true, ConsoleColor.DarkGreen);
+
+            }
         }
 
         private string SafeName(List<SocketGuild> guilds, int i)
         {
-            string userinput = guilds.ElementAt(i).Name;
+            string userinput = guilds.ElementAt(i).Name ?? "[Pending...]";
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
             if (o.Length > 17)
             {
@@ -528,7 +551,11 @@ namespace ModularBOT.Component
             int botCount = guildusers.Where(x => x.IsBot).Count();
             int userCount = guildusers.Where(x => !x.IsBot).Count();
             string meta = $"Users: {userCount} | Bots: {botCount} | Total: {botCount + userCount}";
-            string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
+            string name = "GuildNameUnavailable";
+            if(!string.IsNullOrEmpty(g.Name))
+            {
+                name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
+            }
 
 
             short max = (short)(Math.Ceiling((double)(guildusers.Count / 21)) + 1);
@@ -2012,6 +2039,96 @@ namespace ModularBOT.Component
 
                     }
                     Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2, '\u2000')); //write current line in queue.
+                    if (SELECTED)
+                    {
+                        Console.BackgroundColor = bglast;                   //restore previous color.
+                        Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
+                    }
+                    Console.CursorTop = Console.CursorTop - 1;
+                }
+                if (i > 0)
+                {
+                    //write current line in queue, padded by 21 enQuads to preserve line format.
+                    Console.WriteLine(lines[i].PadLeft(lines[i].Length, '\u2000').PadRight(Console.BufferWidth - 2));
+                    Console.CursorTop = Console.CursorTop - 1;
+                }
+
+            }
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
+            //Thread.Sleep(1);//safe.
+            if (showCursor)
+            {
+                Console.Write(">");//Write the input indicator.
+
+            }
+            //Program.CursorPTop = Console.CursorTop;//Set the cursor position, this will delete ALL displayed input from console when it is eventually reset.
+            //Thread.Sleep(1);//safe.
+            Console.BackgroundColor = ConsoleBackgroundColor;
+            Console.ForegroundColor = ConsoleForegroundColor;
+            Console.CursorVisible = showCursor;
+            CurTop = Console.CursorTop;
+            Writing = false;
+        }
+
+        /// <summary>
+        /// Write a "Selectable" color-coordinated text message to console.
+        /// </summary>
+        /// <param name="message">Text to write</param>
+        /// <param name="SELECTED">If true, the text/background colors will be "inverted"</param>
+        /// <param name="Entrycolor">Left margin color.</param>
+        /// <param name="showCursor">If false the '&gt;' will not be shown after the output.</param>
+        public void WriteEntry(string message, bool SELECTED, bool Disabled, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true)
+        {
+
+
+            SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
+
+
+            Writing = true;
+            PrvTop = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
+
+            string[] lines = WordWrap(message, 1).Split('\n');
+            ConsoleColor bglast = ConsoleBackgroundColor;
+
+            Writing = true;
+            PrvTop = Console.CursorTop;
+            Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
+            for (int i = 0; i < lines.Length; i++)
+            {
+
+                if (lines[i].Length == 0)
+                {
+                    continue;
+                }
+                ConsoleColor bg = ConsoleColor.Black;
+                ConsoleColor fg = ConsoleColor.Black;
+
+
+
+                bg = Entrycolor;
+                fg = Entrycolor;
+                Console.BackgroundColor = bg;
+                Console.ForegroundColor = fg;
+                //Thread.Sleep(1);//safe.
+                Console.Write((char)9617);//Write the colored space.
+                Console.BackgroundColor = bglast;                   //restore previous color.
+                Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
+                Console.Write("\u2502");                            //uileft-single │
+
+                if (i == 0)
+                {
+                    if (SELECTED)
+                    {
+                        Console.BackgroundColor = GetInvertedColor(Console.BackgroundColor);
+                        Console.ForegroundColor = GetInvertedColor(Console.ForegroundColor);
+
+                    }
+                    if (Disabled) Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2, '\u2000')); //write current line in queue.
+                    if (Disabled) Console.ForegroundColor = ConsoleForegroundColor;
+
                     if (SELECTED)
                     {
                         Console.BackgroundColor = bglast;                   //restore previous color.
