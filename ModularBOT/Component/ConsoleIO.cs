@@ -57,39 +57,6 @@ namespace ModularBOT.Component
         public LogEntry LatestEntry { get; set; }
         #endregion
 
-        public ConsoleIO()
-        {
-            //Populate command list.
-            ConsoleCommands.Add(new ConsoleCommands.AboutCommand());            //about
-            ConsoleCommands.Add(new ConsoleCommands.CfgLCMCommand());           //config.loadcoremodule
-            ConsoleCommands.Add(new ConsoleCommands.ChannelsCommand());         //channels
-            ConsoleCommands.Add(new ConsoleCommands.CLSCommand());              //cls
-            ConsoleCommands.Add(new ConsoleCommands.ConfigCFUCommand());        //config.checkforupdates
-            ConsoleCommands.Add(new ConsoleCommands.ConfigDCEvtLLCommand());    //config.discordeventloglevel
-            ConsoleCommands.Add(new ConsoleCommands.ConfigSCCommand());         //config.setcolors
-            ConsoleCommands.Add(new ConsoleCommands.ConfigSLPCommand());        //config.setlogo
-            ConsoleCommands.Add(new ConsoleCommands.ConfigUPRCCommand());       //config.useprereleasechannel
-            ConsoleCommands.Add(new ConsoleCommands.ConmsgCommand());           //conmsg
-            ConsoleCommands.Add(new ConsoleCommands.DisableCMDCommand());       //disablecmd
-            ConsoleCommands.Add(new ConsoleCommands.EnableCMDCommand());        //enablecmd
-            ConsoleCommands.Add(new ConsoleCommands.GuildNameCommand());        //guildname
-            ConsoleCommands.Add(new ConsoleCommands.GuildsCommand());           //guilds
-            ConsoleCommands.Add(new ConsoleCommands.LeaveCommand());            //leave
-            ConsoleCommands.Add(new ConsoleCommands.MBotDataCommand());         //mbotdata
-            ConsoleCommands.Add(new ConsoleCommands.MyRolesCommand());          //myroles
-            ConsoleCommands.Add(new ConsoleCommands.RolesCommand());            //roles
-            ConsoleCommands.Add(new ConsoleCommands.RSKillCommand());           //rskill
-            ConsoleCommands.Add(new ConsoleCommands.SearchCommand());           //search
-            ConsoleCommands.Add(new ConsoleCommands.SetgchCommand());           //setgch
-            ConsoleCommands.Add(new ConsoleCommands.SetvarCommand());           //setvar
-            ConsoleCommands.Add(new ConsoleCommands.StatusCommand());           //status
-            ConsoleCommands.Add(new ConsoleCommands.StopCommand());             //stopbot
-            ConsoleCommands.Add(new ConsoleCommands.TSKillCommand());           //tskill
-            ConsoleCommands.Add(new ConsoleCommands.UsersCommand());            //users
-            ConsoleCommands.Add(new ConsoleCommands.ListCommand());             //list
-
-        }
-
         #region PRIVATE Methods
 
         #region Misc Component
@@ -1438,6 +1405,8 @@ namespace ModularBOT.Component
             QueueProcessStarted = true;
             WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO",
                 "Console Queue has initialized. Processing any incoming log events."));
+
+
 
             while (true)
             {
