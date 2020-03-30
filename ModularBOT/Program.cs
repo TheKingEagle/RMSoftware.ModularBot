@@ -81,6 +81,7 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new TSKillCommand());           //tskill
             consoleIO.ConsoleCommands.Add(new UsersCommand());            //users
             consoleIO.ConsoleCommands.Add(new ListCommand());             //list
+            consoleIO.ConsoleCommands.Add(new TestScreenCommand());       //testscreen
             #endregion
 
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
