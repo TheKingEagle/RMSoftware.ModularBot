@@ -23,6 +23,7 @@ namespace ModularBOT.Component.ConsoleCommands
         {
             string PRV_TITLE = console.ConsoleTitle;
             List<LogEntry> v = new List<LogEntry>();
+            ScreenModal = true;
             //---------------start modal---------------
             console.ListGuilds(ref discordNET);
             //----------------End modal----------------
