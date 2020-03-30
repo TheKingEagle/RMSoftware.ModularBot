@@ -255,15 +255,18 @@
     <Compile Include="Component\ConsoleCommands\SetvarCommand.cs" />
     <Compile Include="Component\ConsoleCommands\StatusCommand.cs" />
     <Compile Include="Component\ConsoleCommands\StopCommand.cs" />
+    <Compile Include="Component\ConsoleCommands\TestScreenCommand.cs" />
     <Compile Include="Component\ConsoleCommands\TSKillCommand.cs" />
     <Compile Include="Component\ConsoleCommands\UsersCommand.cs" />
     <Compile Include="Component\ConsoleIO.cs" />
+    <Compile Include="Component\ConsoleScreens\GuildsScreen.cs" />
     <Compile Include="Component\CoreModule.cs" />
     <Compile Include="Component\ModuleProperties.cs" />
     <Compile Include="Component\OS_SystemInfo.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
     <Compile Include="Entity\ConfigEntity.cs" />
     <Compile Include="Entity\ConsoleCommand.cs" />
+    <Compile Include="Entity\ConsoleScreen.cs" />
     <Compile Include="Entity\PseudoMessage.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -325,6 +328,7 @@
       <Name>Discord.Addons.Interactive</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>REM Move assembly references to LIB.
