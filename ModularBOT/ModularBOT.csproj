@@ -260,6 +260,7 @@
     <Compile Include="Component\ConsoleCommands\UsersCommand.cs" />
     <Compile Include="Component\ConsoleIO.cs" />
     <Compile Include="Component\ConsoleScreens\GuildsScreen.cs" />
+    <Compile Include="Component\ConsoleScreens\TestConsoleScreen.cs" />
     <Compile Include="Component\CoreModule.cs" />
     <Compile Include="Component\ModuleProperties.cs" />
     <Compile Include="Component\OS_SystemInfo.cs" />
