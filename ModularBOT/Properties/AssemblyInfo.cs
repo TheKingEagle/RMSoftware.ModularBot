@@ -8,11 +8,11 @@ using System.Windows;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ModularBOT")]
-[assembly: AssemblyDescription("RMSoftware Modular Bot implementing Discord.NET v2.1.0")]
+[assembly: AssemblyDescription("RMSoftware Modular Bot implementing Discord.NET v2.1.1")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("RMSoftware Development")]
 [assembly: AssemblyProduct("ModularBOT")]
-[assembly: AssemblyCopyright("Copyright © 2019 RMSoftware Development")]
+[assembly: AssemblyCopyright("Copyright © 2017-2020 RMSoftware Development")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -29,4 +29,4 @@ using System.Windows;
 [assembly: AssemblyVersion("2.0.1400.2591")]
 [assembly: AssemblyFileVersion("2.0.1400.2591")]
 [assembly: ComVisible(false)]
-[assembly: AssemblyInformationalVersion("2.0.0-beta-80")]
+[assembly: AssemblyInformationalVersion("2.0.0-beta-81")]
