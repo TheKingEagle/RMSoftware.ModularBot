@@ -44,6 +44,8 @@ namespace ModularBOT.Entity
         public int BufferWidth { get; set; } = 144;
         public int BufferHeight { get; set; } = 32;
 
+        protected int ContentTop { get; private set; }
+
         public ConsoleColor ScreenFontColor { get; set; } = ConsoleColor.Cyan;
         public ConsoleColor ScreenBackColor { get; set; } = ConsoleColor.Black;
 
@@ -75,7 +77,9 @@ namespace ModularBOT.Entity
         /// <summary>
         /// Are screen components being updated? [Progress bars, titles, meta, borders, etc.]
         /// </summary>
-        public bool LayoutUpdating { get; private set; }
+        public bool LayoutUpdating { get; protected set; }
+
+        public bool ActivePrompt { get; protected set; }
 
         public bool ShowProgressBar { get; set; }
 
@@ -272,7 +276,7 @@ namespace ModularBOT.Entity
         /// <param name="SELECTED">If true, the text/background colors will be "inverted"</param>
         /// <param name="Entrycolor">Left margin color.</param>
         /// <param name="showCursor">If false the '&gt;' will not be shown after the output.</param>
-        protected void WriteEntry(string message, bool SELECTED, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true)
+        protected void WriteEntry(string message, bool SELECTED, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true, ConsoleColor BorderColor = ConsoleColor.White, ConsoleColor? SEntrycolor = null)
         {
             SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             Writing = true;
@@ -295,14 +299,15 @@ namespace ModularBOT.Entity
                 ConsoleColor fg = ConsoleColor.Black;
 
                 bg = Entrycolor;
-                fg = Entrycolor;
+                fg = SEntrycolor ?? Entrycolor;
                 Console.BackgroundColor = bg;
                 Console.ForegroundColor = fg;
                 //Thread.Sleep(1);//safe.
                 Console.Write((char)9617);//Write the colored space.
                 Console.BackgroundColor = bglast;                   //restore previous color.
+                Console.ForegroundColor = BorderColor;   //previous FG.
+                Console.Write("\u2551");                            //uileft-double ║
                 Console.ForegroundColor = ScreenFontColor;   //previous FG.
-                Console.Write("\u2502");                            //uileft-single │
 
                 if (i == 0)
                 {
@@ -351,7 +356,7 @@ namespace ModularBOT.Entity
         /// <param name="SELECTED">If true, the text/background colors will be "inverted"</param>
         /// <param name="Entrycolor">Left margin color.</param>
         /// <param name="showCursor">If false the '&gt;' will not be shown after the output.</param>
-        protected void WriteEntry(string message, bool SELECTED, bool Disabled, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true)
+        protected void WriteEntry(string message, bool SELECTED, bool Disabled, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true, ConsoleColor BorderColor = ConsoleColor.White, ConsoleColor? SEntrycolor = null)
         {
             SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             Writing = true;
@@ -374,13 +379,15 @@ namespace ModularBOT.Entity
                 ConsoleColor fg = ConsoleColor.Black;
 
                 bg = Entrycolor;
-                fg = Entrycolor;
+                fg = SEntrycolor ?? Entrycolor;
                 Console.BackgroundColor = bg;
                 Console.ForegroundColor = fg;
-                Console.Write((char)9617);                          //Write the colored space.
+                //Thread.Sleep(1);//safe.
+                Console.Write((char)9617);//Write the colored space.
                 Console.BackgroundColor = bglast;                   //restore previous color.
-                Console.ForegroundColor = ScreenFontColor;          //previous FG.
-                Console.Write("\u2502");                            //uileft-single │
+                Console.ForegroundColor = BorderColor;   //previous FG.
+                Console.Write("\u2551");                            //uileft-double ║
+                Console.ForegroundColor = ScreenFontColor;   //previous FG.
 
                 if (i == 0)
                 {
@@ -572,6 +579,47 @@ namespace ModularBOT.Entity
 
         }
 
+        protected int UpdateProgressBar(int linecount)
+        {
+            linecount = 2;
+            if (ShowProgressBar)
+            {
+                Console.ForegroundColor = TitlesFontColor;
+                Console.BackgroundColor = TitlesBackColor;
+                Console.Write("\u2551{0}\u2551", "".PadLeft(142));
+
+                linecount++;//3
+                string progressBAR = "";
+                float f = (float)(ProgressVal / (float)ProgressMax);
+
+                int amt = (int)(44 * (float)f);
+
+                for (int i = 0; i < 44; i++)
+                {
+                    if (i <= amt)
+                    {
+
+                        progressBAR += "\u2588";
+                    }
+                    else
+                    {
+                        progressBAR += "\u2591";
+                    }
+                }
+                progressBAR += $" PAGE {ProgressVal} OF {ProgressMax}";
+                string pbar = progressBAR.PadLeft(71 + progressBAR.Length / 2);
+                pbar += "".PadRight(71 - progressBAR.Length / 2);
+                Console.Write("\u2551");
+                Console.ForegroundColor = ProgressColor;
+                Console.Write("{0}", pbar);
+                Console.ForegroundColor = TitlesFontColor;
+                Console.Write("\u2551");
+
+                linecount++;//4
+            }
+
+            return linecount;
+        }
         #endregion
 
         #region overridden methods.
@@ -580,6 +628,69 @@ namespace ModularBOT.Entity
         {
             //Derive and Override.
             Console.WriteLine("test");
+        }
+        private void _OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct) //Sub-screen options...
+        {
+            #region Option Trimming
+            if (option1.Length > 37)
+            {
+                option1 = option1.Remove(34) + "...";
+            }
+            if (option2.Length > 37)
+            {
+                option2 = option2.Remove(34) + "...";
+            }
+            if (option3.Length > 37)
+            {
+                option3 = option3.Remove(34) + "...";
+            }
+            if (option4.Length > 37)
+            {
+                option4 = option4.Remove(34) + "...";
+            }
+            #endregion
+            string[] options = { "- " + option1, "- " + option2, "- " + option3, "- " + option4 };
+            int curleft = cl;
+            int curtop = ct;
+
+            for (int i = 0; i < 4; i++)
+            {
+
+                Console.CursorLeft = curleft;
+                Console.CursorTop = curtop + i;
+                ConsoleColor bg = Console.BackgroundColor;
+                ConsoleColor fg = Console.ForegroundColor;
+                Console.Write("\u2502 ");
+
+                if (i == selectionindex)
+                {
+
+                    Console.BackgroundColor = fg;
+                    Console.ForegroundColor = bg;
+                }
+                if (options[i] == "- -")
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.Write("\u2550".PadRight(38, '\u2550').PadRight(38));
+                    Console.ForegroundColor = fg;
+                }
+                //if (options[i] == "-")
+                //{
+                //    Console.Write("\u2005".PadRight(38, '\u2005').PadRight(38));
+                //}
+                else
+                {
+                    Console.Write(options[i].PadRight(38));
+                }
+
+                Console.ForegroundColor = fg;
+                Console.BackgroundColor = bg;
+                Console.Write(" \u2502");
+
+            }
+            Console.CursorTop = curtop;
+            Console.CursorLeft = curleft;
+
         }
 
         #endregion
@@ -591,8 +702,9 @@ namespace ModularBOT.Entity
         /// </summary>
         public void RenderScreen()
         {
+            
             LayoutUpdating = true;
-            int linecount = 1;
+            int linecount = 0;
 
             #region Primary Clear
             Console.Clear();
@@ -624,46 +736,15 @@ namespace ModularBOT.Entity
 
             DecorateTop();
 
-            linecount++;
+            linecount++;//1
 
             string WTitle = Title;
             string pTitle = WTitle.PadLeft(71 + WTitle.Length / 2);
             pTitle += "".PadRight(71 - WTitle.Length / 2);
             Console.Write("\u2551{0}\u2551", pTitle);
-            Console.Write("\u2551{0}\u2551", "".PadLeft(142));
+            linecount++;//2
 
-            linecount++;
-
-            if (ShowProgressBar)
-            {
-                string progressBAR = "";
-                float f = (float)(ProgressVal / (float)ProgressMax);
-
-                int amt = (int)(44 * (float)f);
-
-                for (int i = 0; i < 44; i++)
-                {
-                    if (i <= amt)
-                    {
-
-                        progressBAR += "\u2588";
-                    }
-                    else
-                    {
-                        progressBAR += "\u2591";
-                    }
-                }
-                progressBAR += $" PAGE {ProgressVal} OF {ProgressMax}";
-                string pbar = progressBAR.PadLeft(71 + progressBAR.Length / 2);
-                pbar += "".PadRight(71 - progressBAR.Length / 2);
-                Console.Write("\u2551");
-                Console.ForegroundColor = ProgressColor;
-                Console.Write("{0}", pbar);
-                Console.ForegroundColor = TitlesFontColor;
-                Console.Write("\u2551");
-
-                linecount++;
-            }
+            linecount = UpdateProgressBar(linecount);
 
             if (ShowMeta && !string.IsNullOrWhiteSpace(Meta))
             {
@@ -679,11 +760,12 @@ namespace ModularBOT.Entity
                 Console.Write("{0}", fmeta);
                 Console.ForegroundColor = TitlesFontColor;
                 Console.Write("\u2551");
-                linecount++;
+                linecount++;//5
             }
 
             DecorateBottom();
-            linecount++;
+            linecount++;//6
+            ContentTop = linecount;
             Console.ForegroundColor = ScreenFontColor;
 
             #endregion
@@ -715,7 +797,8 @@ namespace ModularBOT.Entity
             LayoutUpdating = false;
             RenderContents();
         }
-        
+
+
         public virtual bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
             if (keyinfo.Key == ConsoleKey.Escape)
@@ -725,6 +808,158 @@ namespace ModularBOT.Entity
             return keyinfo.Key == ConsoleKey.Escape;
             //Derive and Override.
         }
+
+        public int ShowOptionSubScreen(string title, string prompt, string Option1, string Option2, string Option3, string Option4, ConsoleColor SBG = ConsoleColor.DarkBlue, ConsoleColor SFG = ConsoleColor.White)
+        {
+            ActivePrompt = true;
+            Console.CursorVisible = false;
+            int result = -1;
+            int SelIndex = 0;
+            int left = 71 - 20;
+            int top = 16 - 7;
+
+            List<int> SelectableIndicies = new List<int>();
+            Console.CursorLeft = left;
+            Console.CursorTop = top;
+            ConsoleColor PRVBG = Console.BackgroundColor;
+            ConsoleColor PRVFG = Console.ForegroundColor;
+            Console.BackgroundColor = SBG;
+            Console.ForegroundColor = SFG;
+
+            if (string.IsNullOrWhiteSpace(Option1) || string.IsNullOrWhiteSpace(Option2) || string.IsNullOrWhiteSpace(Option3) || string.IsNullOrWhiteSpace(Option4))
+            {
+                throw (new ArgumentException("We cannot support empty text at this time."));
+            }
+
+            #region TOP
+            if (title.Length > 35)
+            {
+                title = title.Remove(32) + "...";
+            }
+
+            string WTitle = " " + title + " ";
+            string pTitle = WTitle.PadLeft(((40 / 2)) + WTitle.Length / 2, '\u2550');
+            pTitle += "".PadRight(((40 / 2)) - WTitle.Length / 2, '\u2550');
+            Console.Write("\u2552{0}\u2555", pTitle);
+            #endregion
+
+            #region Option Filtering
+            if (Option1 != "-" && Option1 != "")
+            {
+                SelectableIndicies.Add(0);
+            }
+            if (Option2 != "-" && Option2 != "")
+            {
+                SelectableIndicies.Add(1);
+            }
+            if (Option3 != "-" && Option3 != "")
+            {
+                SelectableIndicies.Add(2);
+            }
+            if (Option4 != "-" && Option4 != "")
+            {
+                SelectableIndicies.Add(3);
+            }
+            if (SelectableIndicies.Count < 1)
+            {
+                throw (new ArgumentException("You must have at least ONE selectable option"));
+            }
+            #endregion
+
+            #region Prompt
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 1;
+            if (prompt.Length > 40)
+            {
+                prompt = prompt.Remove(36) + "...";
+            }
+
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 2;
+            Console.Write("\u2502 " + prompt.PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 3;
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+
+            #endregion
+
+            #region Options and status
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 4;
+            _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 8;
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 9;
+            Console.Write("\u2502 " + "[UP/DOWN]: Move Selection".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 10;
+            Console.Write("\u2502 " + "[ENTER]: Confirm | [ESC]: Cancel".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 11;
+            Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 12;
+            Console.Write("\u2514" + "".PadRight(40, '\u2500') + "\u2518");
+            int minLeft = left;
+            int maxleft = Console.CursorLeft;
+            int mintop = top;
+            int maxtop = top + 13;
+            #endregion
+
+            #region Control handler
+            while (true)
+            {
+                ConsoleKeyInfo c = Console.ReadKey(true);
+
+
+                if (c.Key == ConsoleKey.UpArrow || c.Key == ConsoleKey.PageUp)
+                {
+
+                    SelIndex--;
+                    if (SelIndex < 0)
+                    {
+                        SelIndex = SelectableIndicies.Count - 1;
+                    }
+                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+
+                }
+
+                if (c.Key == ConsoleKey.DownArrow || c.Key == ConsoleKey.PageDown)
+                {
+
+                    SelIndex++;
+                    if (SelIndex >= SelectableIndicies.Count)
+                    {
+                        SelIndex = 0;
+                    }
+                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+
+                }
+                if (c.Key == ConsoleKey.Enter)
+                {
+                    result = SelectableIndicies[SelIndex] + 1;
+
+                    //RenderScreen();
+                    break;
+                }
+                if (c.Key == ConsoleKey.Escape)
+                {
+                    result = 0;//NON-SEL
+                    //RenderScreen();
+                    break;
+                }
+
+            }
+            #endregion
+
+            ActivePrompt = false;
+            RenderScreen();
+            return result;
+        }
+
 
         #endregion
 
