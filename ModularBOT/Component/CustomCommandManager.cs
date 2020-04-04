@@ -859,7 +859,8 @@ namespace ModularBOT.Component
         {
             if(guilds.FirstOrDefault(x=>x.ID == obj.ID) != null)
             {
-                throw new InvalidOperationException("A guild object with this ID is already in the loaded list!");
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", "Guild was already in loaded list"));
+                return;
             }
             guilds.Add(obj);
             obj.SaveJson();
