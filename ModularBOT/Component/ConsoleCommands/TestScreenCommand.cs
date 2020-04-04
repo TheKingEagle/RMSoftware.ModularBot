@@ -27,7 +27,7 @@ namespace ModularBOT.Component.ConsoleCommands
             List<LogEntry> v = new List<LogEntry>();
             ScreenModal = true;
             //---------------start modal---------------
-            var NGScreen = new GuildsScreen(discordNET.Client.Guilds.ToList(),discordNET.Client)
+            var NGScreen = new GuildsScreen(discordNET.Client.Guilds.ToList(),discordNET)
             {
                 ActiveScreen = true
             };
