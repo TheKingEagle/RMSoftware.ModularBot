@@ -420,7 +420,7 @@ namespace ModularBOT.Component
             }
             WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')}", ConsoleColor.Blue);
             WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue);
-            for (int i = index; i < 22 * page; i++)//28 results per page.
+            for (int i = index; i < 22 * page; i++)//22 results per page.
             {
                 if (index >= guilds.Count)
                 {
@@ -948,14 +948,12 @@ namespace ModularBOT.Component
         #region Channel Listing
         internal bool ListChannels(ref DiscordNET discord, ulong guildID, short page=1,bool FromModal=false)
         {
-            
-
             SocketGuild g = discord.Client.GetGuild(guildID);
             if (g == null)
             {
                 return false;
             }
-            List<SocketGuildChannel> channels = g.Channels.ToList();
+            List<SocketGuildChannel> channels = g.Channels.Where(x => !string.IsNullOrWhiteSpace(x.Name)).ToList();//ignore unknown/invalid channels.
             short max = (short)(Math.Ceiling((double)(channels.Count / 22)) + 1);
             int index = 0;
             int selectionIndex = 0;
@@ -964,8 +962,6 @@ namespace ModularBOT.Component
             if (!FromModal) ScreenModal = true;
             string name = g.Name.Length > 17 ? g.Name.Remove(17) : g.Name;
 
-
-            //short max = (short)(Math.Ceiling((double)(channels.Count / 22)) + 1);
             if (page > max)
             {
                 page = max;
@@ -975,8 +971,6 @@ namespace ModularBOT.Component
                 page = 1;
             }
             index = (page * 22) - 22;
-            //ScreenModal = true;
-
 
             while (true)
             {
@@ -1047,10 +1041,7 @@ namespace ModularBOT.Component
                    
                     #region SubScreen
                     string channelname = SafeName(channels, index + selectionIndex);
-                    //int left = 71-20;
-                    //int top = 16 - 7;
-                    //Console.CursorLeft = left;
-                    //Console.CursorTop = top;
+
                     ConsoleColor PRVBG = Console.BackgroundColor;
                     ConsoleColor PRVFG = Console.ForegroundColor;
                     int rr = -1;
@@ -1168,7 +1159,8 @@ namespace ModularBOT.Component
 
         private void WriteChannel(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuildChannel> Channels, int i)
         {
-            string channelin = Channels.ElementAt(i).Name;
+            
+            string channelin = Channels.ElementAt(i).Name ?? "Unsupported channel";
             string chtype = Channels.ElementAt(i).GetType().ToString();
             string chltype = chtype.Remove(0, chtype.LastIndexOf('.') + 1).Replace("Socket", "").Replace("Channel", "");
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelin))).Replace(' ', '\u2005').Replace("??", "?");
@@ -1182,7 +1174,8 @@ namespace ModularBOT.Component
 
         private string SafeName(List<SocketGuildChannel> channels, int i)
         {
-            string channelname = channels.ElementAt(i).Name;
+            string channelname = channels.ElementAt(i).Name ?? "Unsupported Channel";
+
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(channelname))).Replace(' ', '\u2005').Replace("??", "?");
             if(o.Length > 39)
             {
