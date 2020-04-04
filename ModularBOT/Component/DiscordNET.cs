@@ -742,6 +742,7 @@ namespace ModularBOT.Component
 
         private async Task Client_JoinedGuild(SocketGuild arg)
         {
+            
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
                 $"Creating {arg.Name}'s {arg.Id}.guild file!"));
@@ -759,7 +760,7 @@ namespace ModularBOT.Component
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
                 await Task.Delay(1);
 #pragma warning disable 4014
-                Task.Run(() => SyncGuild(arg));//don't really care about result in this case. just want a new thread.
+                //Task.Run(() => SyncGuild(arg));//don't really care about result in this case. just want a new thread.
 #pragma warning restore
             }
 
