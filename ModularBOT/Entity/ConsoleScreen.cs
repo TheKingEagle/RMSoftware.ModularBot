@@ -579,9 +579,9 @@ namespace ModularBOT.Entity
 
         }
 
-        protected int UpdateProgressBar(int linecount)
+        protected int UpdateProgressBar()
         {
-            linecount = 2;
+            int linecount = 2;
             if (ShowProgressBar)
             {
                 Console.ForegroundColor = TitlesFontColor;
@@ -702,9 +702,8 @@ namespace ModularBOT.Entity
         /// </summary>
         public void RenderScreen()
         {
-            
+
             LayoutUpdating = true;
-            int linecount = 0;
 
             #region Primary Clear
             Console.Clear();
@@ -736,32 +735,12 @@ namespace ModularBOT.Entity
 
             DecorateTop();
 
-            linecount++;//1
-
             string WTitle = Title;
             string pTitle = WTitle.PadLeft(71 + WTitle.Length / 2);
             pTitle += "".PadRight(71 - WTitle.Length / 2);
             Console.Write("\u2551{0}\u2551", pTitle);
-            linecount++;//2
-
-            linecount = UpdateProgressBar(linecount);
-
-            if (ShowMeta && !string.IsNullOrWhiteSpace(Meta))
-            {
-                string fmeta = Meta.PadLeft(71 + Meta.Length / 2);
-                fmeta += "".PadRight(71 - Meta.Length / 2);
-                if (Meta.Length > 120)
-                {
-                    throw new ArgumentException("Your meta caption can't be over 120 characters.");
-                }
-                Console.ForegroundColor = TitlesFontColor;
-                Console.Write("\u2551");
-                Console.ForegroundColor = MetaFontColor;
-                Console.Write("{0}", fmeta);
-                Console.ForegroundColor = TitlesFontColor;
-                Console.Write("\u2551");
-                linecount++;//5
-            }
+            _ = UpdateProgressBar();//2
+            int linecount = UpdateMeta();//4
 
             DecorateBottom();
             linecount++;//6
@@ -798,6 +777,28 @@ namespace ModularBOT.Entity
             RenderContents();
         }
 
+        protected int UpdateMeta()
+        {
+            int linecount = 4;
+            if (ShowMeta && !string.IsNullOrWhiteSpace(Meta))
+            {
+                string fmeta = Meta.PadLeft(71 + Meta.Length / 2);
+                fmeta += "".PadRight(71 - Meta.Length / 2);
+                if (Meta.Length > 120)
+                {
+                    throw new ArgumentException("Your meta caption can't be over 120 characters.");
+                }
+                Console.ForegroundColor = TitlesFontColor;
+                Console.Write("\u2551");
+                Console.ForegroundColor = MetaFontColor;
+                Console.Write("{0}", fmeta);
+                Console.ForegroundColor = TitlesFontColor;
+                Console.Write("\u2551");
+                linecount++;//5
+            }
+
+            return linecount;
+        }
 
         public virtual bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
