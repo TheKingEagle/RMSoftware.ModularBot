@@ -168,7 +168,7 @@ namespace ModularBOT.Component
             return Task.Delay(1);
         }
 
-        int synccall = 0;
+        
         public void SyncGuild(SocketGuild arg)
         {
             foreach (SocketRole item in arg.Roles)
@@ -760,7 +760,7 @@ namespace ModularBOT.Component
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
                 await Task.Delay(1);
 #pragma warning disable 4014
-                //Task.Run(() => SyncGuild(arg));//don't really care about result in this case. just want a new thread.
+                Task.Run(() => SyncGuild(arg));//don't really care about result in this case. just want a new thread.
 #pragma warning restore
             }
 
