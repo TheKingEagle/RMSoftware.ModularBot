@@ -41,7 +41,7 @@ namespace ModularBOT.Component.ConsoleScreens
             ProgressColor = ConsoleColor.Cyan;
 
             Title = $"Guilds | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version.ToString()}";
-            Meta = $"Present in {Guildlist.Count} guild(s). Connected to {Guildlist.Where(x=>x.IsConnected).LongCount()} guild(s)";
+            RefreshMeta();
             ShowProgressBar = true;
             ShowMeta = true;
 
@@ -51,7 +51,12 @@ namespace ModularBOT.Component.ConsoleScreens
             WindowHeight = 32;
 
         }
-        
+
+        private void RefreshMeta()
+        {
+            Meta = $"Present in {Guildlist.Count} guild(s). Connected to {Guildlist.Where(x => x.IsConnected).LongCount()} guild(s)";
+        }
+
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
             //TODO: Custom input handling: NOTE -- Base adds exit handler [E] key.
@@ -173,6 +178,7 @@ namespace ModularBOT.Component.ConsoleScreens
                                     index = (page * 22) - 22;
                                     Guildlist[selectionIndex + index].LeaveAsync();
                                     Guildlist.Remove(Guildlist[selectionIndex + index]);
+                                    RefreshMeta();
                                     RenderScreen();//re-renderr
                                 }
                                 break;
@@ -207,7 +213,7 @@ namespace ModularBOT.Component.ConsoleScreens
             ScreenFontColor = ConsoleColor.Black;
             int CT = Console.CursorTop;
             Console.CursorTop = 31;
-            WriteEntry($"\u2502 {footer} \u2502".PadRight(141, '\u2005') + "\u2502", ConsoleColor.DarkGray, false, ConsoleColor.Gray);
+            WriteEntry($"\u2502 {footer} \u2502".PadRight(141, '\u2005') + "\u2502", ConsoleColor.Gray, false, ConsoleColor.Gray);
             Console.CursorTop = 0;
             Console.CursorTop = CT;
             ScreenFontColor = ConsoleColor.Cyan;
@@ -220,9 +226,9 @@ namespace ModularBOT.Component.ConsoleScreens
             if (ppg != page)//is page changing?
             {
                 LayoutUpdating = true;
-                int ct = Console.CursorTop;
+                _ = Console.CursorTop;
                 Console.CursorTop = 2;
-                UpdateProgressBar(2);
+                UpdateProgressBar();
                 Console.CursorTop = 2;
                 ppg = page;
 
@@ -235,8 +241,8 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 Console.SetCursorPosition(0, ContentTop);
             }
-            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')}", ConsoleColor.Blue,false);
-            WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')}", ConsoleColor.Blue,false);
+            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')} {"G. Admin".PadLeft(10, '\u2005')}", ConsoleColor.Blue,false);
+            WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(10, '\u2500')}", ConsoleColor.Blue,false);
             for (int i = index; i < 22 * page; i++)//22 results per page.
             {
                 if (index >= guilds.Count)
@@ -244,7 +250,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     break;
                 }
                 countOnPage++;
-                WriteGuild(discord, selectionIndex, countOnPage, guilds, i);
+                WriteGuild(selectionIndex, countOnPage, guilds, i);
 
                 index++;
             }
@@ -271,7 +277,7 @@ namespace ModularBOT.Component.ConsoleScreens
             LayoutUpdating = false;
             return countOnPage;
         }
-        private void WriteGuild(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuild> guilds, int i)
+        private void WriteGuild(int selectionIndex, int countOnPage, List<SocketGuild> guilds, int i)
         {
             if (guilds[i].IsConnected)
             {
@@ -282,8 +288,9 @@ namespace ModularBOT.Component.ConsoleScreens
                     name = name.Remove(36) + "...";
                 }
                 string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
-                string p = $"{name}".PadRight(39, '\u2005');
-                WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen,false);
+                string p = $"{o}".PadRight(39, '\u2005');
+                string admin = guilds[i].CurrentUser.GuildPermissions.Administrator ? "Yes".PadLeft(10, '\u2005') : "No".PadLeft(10, '\u2005');
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {admin}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen,false);
 
             }
             else
@@ -294,9 +301,8 @@ namespace ModularBOT.Component.ConsoleScreens
                 {
                     name = name.Remove(36) + "...";
                 }
-                string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
                 string p = $"{name}".PadRight(39, '\u2005');
-                WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex, true, ConsoleColor.DarkGreen);
+                WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex, true, ConsoleColor.DarkGreen);
 
             }
         }
