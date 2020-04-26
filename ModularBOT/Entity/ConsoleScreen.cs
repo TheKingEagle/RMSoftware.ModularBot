@@ -582,8 +582,11 @@ namespace ModularBOT.Entity
         protected int UpdateProgressBar()
         {
             int linecount = 2;
+            
             if (ShowProgressBar)
             {
+                Console.CursorLeft = 0;
+                Console.CursorTop = linecount;
                 Console.ForegroundColor = TitlesFontColor;
                 Console.BackgroundColor = TitlesBackColor;
                 Console.Write("\u2551{0}\u2551", "".PadLeft(142));
@@ -782,6 +785,8 @@ namespace ModularBOT.Entity
             int linecount = 4;
             if (ShowMeta && !string.IsNullOrWhiteSpace(Meta))
             {
+                Console.CursorLeft = 0;
+                Console.CursorTop = linecount;
                 string fmeta = Meta.PadLeft(71 + Meta.Length / 2);
                 fmeta += "".PadRight(71 - Meta.Length / 2);
                 if (Meta.Length > 120)
@@ -961,7 +966,42 @@ namespace ModularBOT.Entity
             return result;
         }
 
+        public void ClearContents()
+        {
+            Console.CursorVisible = false;
+            Console.CursorLeft = 0;
+            Console.CursorTop = ContentTop;
+            for (int i = ContentTop; i < BufferHeight; i++)
+            {
+                
+                Console.Write("".PadRight(BufferWidth, '\u2005'));
 
+                Console.CursorLeft = 0;
+                Console.CursorTop = i;
+            }
+            Console.CursorLeft = 0;
+            Console.CursorTop = ContentTop;
+          
+            for (int i = ContentTop; i < BufferHeight; i++)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.Black;
+                //Thread.Sleep(1);
+                Console.Write((char)9617);//Write the colored space.
+                                          //Thread.Sleep(1);
+                Console.BackgroundColor = ScreenBackColor;//restore previous color.
+                Console.ForegroundColor = ConsoleColor.White;
+                //Thread.Sleep(1);
+                Console.Write("\u2551");//uileft
+                                        //Thread.Sleep(1);
+                Console.CursorTop = i;
+                Console.CursorLeft = 0;
+            }
+            Console.CursorTop = 0; 
+            Console.CursorLeft = 0;
+            Console.CursorVisible = true;
+
+        }
         #endregion
 
         public class LogEntry
