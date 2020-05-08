@@ -2,29 +2,31 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using ModularBOT.Entity;
 using System.Reflection;
 using System.Threading;
 using Discord.WebSocket;
 using System.Windows;
-using Discord;
 
 namespace ModularBOT.Component.ConsoleScreens
 {
     public class GuildsScreen : ConsoleScreen
     {
+        #region --- DECLARE ---
+        private short page = 1;
+        private readonly short max = 1;
+        private int index = 0;
+        private int selectionIndex = 0;
+        private int countOnPage = 0;
+        private int ppg = 0;
+        private readonly DiscordNET DNet;
         private List<SocketGuild> Guildlist = new List<SocketGuild>();
-        short page = 1;
-        short max = 1;
-        int index = 0;
-        int selectionIndex = 0;
-        int countOnPage = 0;
-        int ppg = 0;
-        DiscordNET d;
+
+        #endregion
+
         public GuildsScreen(List<SocketGuild> guilds, DiscordNET discord, short startpage=1)
         {
-            d = discord;
+            DNet = discord;
             Guildlist = guilds;
             page = startpage;
 
@@ -49,32 +51,26 @@ namespace ModularBOT.Component.ConsoleScreens
             ProgressMax = max;
             BufferHeight = 34;
             WindowHeight = 32;
-
         }
 
-        private void RefreshMeta()
-        {
-            Meta = $"Present in {Guildlist.Count} guild(s). Connected to {Guildlist.Where(x => x.IsConnected).LongCount()} guild(s)";
-        }
+        #region Screen Methods
 
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
             Console.CursorVisible = false;
-            //TODO: Custom input handling: NOTE -- Base adds exit handler [E] key.
+
             if(ActivePrompt) { return false; }
+            
             if (keyinfo.Key == ConsoleKey.P || keyinfo.Key == ConsoleKey.LeftArrow)
             {
-                
-                
                 if (page > 1)
                 {
                     page--;
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                                             //continue;
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
                 }
-                selectionIndex = 0;
-                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
 
+                selectionIndex = 0;
+                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
 
                 if (ppg != page)
                 {
@@ -84,12 +80,12 @@ namespace ModularBOT.Component.ConsoleScreens
                     UpdateProgressBar();
                     ClearContents();
                     //RenderContents();
-                    countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+                    countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
                 }
                     
                 ppg = page;
-
             }
+            
             if (keyinfo.Key == ConsoleKey.N || keyinfo.Key == ConsoleKey.RightArrow)
             {
                 
@@ -99,171 +95,84 @@ namespace ModularBOT.Component.ConsoleScreens
                     page++;
                 }
                 selectionIndex = 0;
-                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
                 if (ppg != page)
                 {
                     ProgressVal = page;
                     UpdateMeta();
                     UpdateProgressBar();
                     ClearContents();
-                    //RenderContents();
-                    countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
-
+                    countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
                 }
                 ppg = page;
-
             }
 
             if (keyinfo.Key == ConsoleKey.UpArrow)
             {
                 selectionIndex--;
+
                 if (selectionIndex < 0)
                 {
                     selectionIndex = countOnPage - 1;
                 }
-                
 
-                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+                countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
             }
+            
             if (keyinfo.Key == ConsoleKey.DownArrow)
             {
-
-               
                 selectionIndex++;
+
                 if (selectionIndex > countOnPage - 1)
                 {
                     selectionIndex = 0;
                 }
 
-               
-                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+                countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
             }
 
             if (keyinfo.Key == ConsoleKey.Enter)
             {
-
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-                #region SubScreen
-                string guildname = SafeName(Guildlist, index + selectionIndex);
+                
+                string guildname = GetSafeName(Guildlist, index + selectionIndex);
                 if (!(Guildlist[index + selectionIndex].IsConnected))
                 {
                     return false;
                 }
-                //int left = 71-20;
-                //int top = 16 - 7;
-                //Console.CursorLeft = left;
-                //Console.CursorTop = top;
+
                 ConsoleColor PRVBG = Console.BackgroundColor;
                 ConsoleColor PRVFG = Console.ForegroundColor;
-                int rr = -1;
-                UpdateFooter(page, max, true);
-                rr = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View Users...", "View Channels...", "View Roles...", "More Actions...");
-                
+
+                #region -------------- [Guild Manager Sub-Screen] --------------
+                UpdateFooter(page, max, true);          //Prompt footer
+
+                int rr = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", 
+                    "View Users...", "View Channels...", "View Roles...", "More Actions...");
 
                 switch (rr)
                 {
                     case (1):
-                        //Console.Beep(440, 50);
-                        //Console.Beep(880, 50);
-                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-
-                        //---------------start modal---------------
-                        var NGScreen = new UsersScreen(Guildlist[index+selectionIndex],d)
-                        {
-                            ActiveScreen = true
-                        };
-                        NGScreen.RenderScreen();
-                        while (true)
-                        {
-                            if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                            {
-                                break;
-                            }
-                        }
-                        //----------------End modal----------------
-                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                        RenderScreen();
-                        RefreshMeta();
-                        UpdateMeta();
-                        countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
-                        
-                        UpdateFooter(page, max);
+                        SS_ViewUserScreen();
                         break;
                     case (2):
-                        //RefreshMeta();
-                        //UpdateMeta();
-                        //countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
-                        //index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                        UpdateFooter(page, max);
+                        //SS_ViewChannelsScreen();
                         break;
                     case (3):
-                        //RefreshMeta();
-                        //UpdateMeta();
-                        //countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
-                        //index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                        UpdateFooter(page, max);
+                        //SS_ViewRoles();
                         break;
                     case (4):
-                        int ss = -1;
-
-                        countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
-                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                        UpdateFooter(page, max,true);
-
-                        ss = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View My Roles...", "Copy ID...", "-", "Leave Guild...");
-                        
-
-                        switch (ss)
-                        {
-                            case (1):
-                                RefreshMeta();
-                                UpdateMeta();
-                                RenderScreen();//re-renderr
-                                UpdateFooter(page, max);
-                                break;
-                            case (2):
-                                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-                                Thread thread = new Thread(() => Clipboard.SetText(Guildlist[selectionIndex + index].Id.ToString()));
-                                thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
-                                thread.Start();
-                                thread.Join(); //Wait for the thread to end
-                                               //TODO: If success or fail, Display a message prompt
-                                UpdateFooter(page, max);
-
-
-                                break;
-                            case (4):
-                                UpdateFooter(page, max,true);
-
-                                Console.Beep(440, 50);
-                                Console.Beep(880, 50);
-                                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-                                int confirmprompt = ShowOptionSubScreen($"Leave {guildname}?", $"Are you sure you want to leave?", "-", "NO", "YES", "-", ConsoleColor.DarkRed);
-                                if (confirmprompt == 3)
-                                {
-                                    index = (page * 22) - 22;
-                                    Guildlist[selectionIndex + index].LeaveAsync();
-                                    Guildlist.Remove(Guildlist[selectionIndex + index]);
-                                    RefreshMeta();
-                                    UpdateMeta();
-                                    RenderScreen();//re-renderr
-                                    UpdateFooter(page, max);
-                                }
-                                UpdateFooter(page, max);
-                                break;
-                        }
-
+                        SS_MoreActions(guildname);
                         break;
                     default:
                         break;
 
                 }
 
-                UpdateFooter(page, max);//update footer after all said and done.
+                UpdateFooter(page, max);                //Restore footer 
                 #endregion
-
 
                 Console.ForegroundColor = PRVFG;
                 Console.BackgroundColor = PRVBG;
@@ -276,7 +185,40 @@ namespace ModularBOT.Component.ConsoleScreens
         {
             SpinWait.SpinUntil(() => !LayoutUpdating);
             SpinWait.SpinUntil(() => !ActivePrompt);
-            countOnPage = PopulateGuildList(d, page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+            countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+        }
+
+        private void RefreshMeta()
+        {
+            Meta = $"Present in {Guildlist.Count} guild(s). Connected to {Guildlist.Where(x => x.IsConnected).LongCount()} guild(s)";
+        }
+
+        private void UpdateFooter(short page, short max, bool prompt = false)
+        {
+            LayoutUpdating = true;
+
+            if (page > 1 && page < max)
+            {
+                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+            }
+            if (page == 1 && page < max)
+            {
+                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+            }
+            if (page == 1 && page == max)
+            {
+                WriteFooter("[ESC] Exit \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+            }
+            if (page > 1 && page == max)
+            {
+                WriteFooter("[ESC] Exit \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+            }
+            if (prompt)
+            {
+                WriteFooter("[Prompt] Please follow on-prompt instruction");
+            }
+
+            LayoutUpdating = false;
         }
 
         private void WriteFooter(string footer)
@@ -294,9 +236,88 @@ namespace ModularBOT.Component.ConsoleScreens
             LayoutUpdating = false;
         }
 
-        private int PopulateGuildList(DiscordNET discord, short page, short max, ref int index, int selectionIndex, ref int ppg, ref List<SocketGuild> guilds)
+        #endregion
+
+        #region Guild Manager Sub-Screen Methods
+        private void SS_MoreActions(string guildname)
+        {
+            countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+            UpdateFooter(page, max, true);            //PROMPT FOOTER
+
+            int ss = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View My Roles...", "Copy ID...", "-", "Leave Guild...");
+
+            switch (ss)
+            {
+                case (1):
+                    RefreshMeta();
+                    UpdateMeta();
+                    RenderScreen();
+                    break;
+                case (2):
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+                    Thread thread = new Thread(() => Clipboard.SetText(Guildlist[selectionIndex + index].Id.ToString()));
+                    thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
+                    thread.Start();
+                    thread.Join(); //Wait for the thread to end
+                                   //TODO: If success or fail, Display a message prompt
+                    break;
+                case (4):
+                    UpdateFooter(page, max, true);     //PROMPT FOOTER
+
+                    Console.Beep(440, 50);
+                    Console.Beep(880, 50);
+                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+                    int confirmprompt = ShowOptionSubScreen($"Leave {guildname}?", $"Are you sure you want to leave?", "-", "NO", "YES", "-", ConsoleColor.DarkRed);
+                    if (confirmprompt == 3)
+                    {
+                        index = (page * 22) - 22;
+                        Guildlist[selectionIndex + index].LeaveAsync();
+                        Guildlist.Remove(Guildlist[selectionIndex + index]);
+                        RefreshMeta();
+                        UpdateMeta();
+                        RenderScreen();
+                    }
+                    
+                    break;
+            }
+
+            UpdateFooter(page, max);                    //RESTORE FOOTER
+        }
+
+        private void SS_ViewUserScreen()
+        {
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+
+            //---------------start modal---------------
+            var NGScreen = new UsersScreen(Guildlist[index + selectionIndex], DNet)
+            {
+                ActiveScreen = true
+            };
+            NGScreen.RenderScreen();
+            while (true)
+            {
+                if (NGScreen.ProcessInput(Console.ReadKey(true)))
+                {
+                    break;
+                }
+            }
+            //----------------End modal----------------
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+            RenderScreen();
+            RefreshMeta();
+            UpdateMeta();
+            countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+        }
+
+        #endregion
+
+        #region GuildList Methods
+
+        private int PopulateGuildList(short page, short max, ref int index, int selectionIndex, ref int ppg, ref List<SocketGuild> guilds)
         {
             int countOnPage;
+
             if (ppg != page)//is page changing?
             {
                 LayoutUpdating = true;
@@ -308,16 +329,18 @@ namespace ModularBOT.Component.ConsoleScreens
 
                 LayoutUpdating = false;
                 UpdateFooter(page, max);
-
             }
 
             countOnPage = 0;
+
             if (ppg == page)
             {
                 Console.SetCursorPosition(0, ContentTop);
             }
+
             WriteEntry($"\u2502\u2005\u2005\u2005 - {"Guild Name".PadRight(39, '\u2005')} {"Guild ID".PadRight(22, '\u2005')} {"G. Admin".PadLeft(10, '\u2005')}", ConsoleColor.Blue,false);
             WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(10, '\u2500')}", ConsoleColor.Blue,false);
+            
             for (int i = index; i < 22 * page; i++)//22 results per page.
             {
                 if (i >= guilds.Count)
@@ -326,41 +349,10 @@ namespace ModularBOT.Component.ConsoleScreens
                 }
                 countOnPage++;
                 WriteGuild(selectionIndex, countOnPage, guilds, i);
-
             }
 
-            
             Console.SetCursorPosition(0, 0);
             return countOnPage;
-        }
-
-        private void UpdateFooter(short page, short max, bool prompt=false)
-        {
-            LayoutUpdating = true;
-            if (page > 1 && page < max)
-            {
-
-                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
-
-            }
-            if (page == 1 && page < max)
-            {
-                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
-            }
-            if (page == 1 && page == max)
-            {
-                WriteFooter("[ESC] Exit \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
-            }
-            if (page > 1 && page == max)
-            {
-                WriteFooter("[ESC] Exit \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
-            }
-            if(prompt)
-            {
-                WriteFooter("[Prompt] Please follow on-prompt instruction");
-
-            }
-            LayoutUpdating = false;
         }
 
         private void WriteGuild(int selectionIndex, int countOnPage, List<SocketGuild> guilds, int i)
@@ -377,7 +369,6 @@ namespace ModularBOT.Component.ConsoleScreens
                 string p = $"{o}".PadRight(39, '\u2005');
                 string admin = guilds[i].CurrentUser.GuildPermissions.Administrator ? "Yes".PadLeft(10, '\u2005') : "No".PadLeft(10, '\u2005');
                 WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {admin}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen,false);
-
             }
             else
             {
@@ -393,17 +384,21 @@ namespace ModularBOT.Component.ConsoleScreens
             }
         }
 
-        private string SafeName(List<SocketGuild> guilds, int i)
+        private string GetSafeName(List<SocketGuild> guilds, int i)
         {
-            
             string userinput = guilds.ElementAt(i).Name ?? "[Pending...]";
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(userinput))).Replace(' ', '\u2005').Replace("??", "?");
+            
             if (o.Length > 17)
             {
                 o = o.Remove(13) + "...";
             }
+            
             string p = $"{o}";
+            
             return p;
         }
+
+        #endregion
     }
 }
