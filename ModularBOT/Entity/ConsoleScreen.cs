@@ -11,9 +11,7 @@ namespace ModularBOT.Entity
     {
         #region Private Values
         private int _prgVal = 0;
-        private int CurTop;
         private bool Writing;
-        private int PrvTop;
         private bool QueueProcessStarted;
 
         #endregion
@@ -220,7 +218,6 @@ namespace ModularBOT.Entity
         {
             SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             Writing = true;
-            PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
             string[] lines = WordWrap(message, 1).Split('\n');
             ConsoleColor bglast = ScreenBackColor;
@@ -265,7 +262,6 @@ namespace ModularBOT.Entity
             Console.BackgroundColor = ScreenBackColor;
             Console.ForegroundColor = ScreenFontColor;
             Console.CursorVisible = showCursor;
-            CurTop = Console.CursorTop;
             Writing = false;
         }
 
@@ -280,14 +276,12 @@ namespace ModularBOT.Entity
         {
             SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             Writing = true;
-            PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
 
             string[] lines = WordWrap(message, 1).Split('\n');
             ConsoleColor bglast = ScreenBackColor;
 
             Writing = true;
-            PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
             for (int i = 0; i < lines.Length; i++)
             {
@@ -323,13 +317,13 @@ namespace ModularBOT.Entity
                         Console.BackgroundColor = bglast;                   //restore previous color.
                         Console.ForegroundColor = ScreenFontColor;   //previous FG.
                     }
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
                 if (i > 0)
                 {
                     //write current line in queue, padded by 21 enQuads to preserve line format.
                     Console.WriteLine(lines[i].PadLeft(lines[i].Length, '\u2000').PadRight(Console.BufferWidth - 2));
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
 
             }
@@ -345,7 +339,6 @@ namespace ModularBOT.Entity
             Console.BackgroundColor = ScreenBackColor;
             Console.ForegroundColor = ScreenFontColor;
             Console.CursorVisible = showCursor;
-            CurTop = Console.CursorTop;
             Writing = false;
         }
 
@@ -360,14 +353,12 @@ namespace ModularBOT.Entity
         {
             SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             Writing = true;
-            PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);//Reset line position.
 
             string[] lines = WordWrap(message, 1).Split('\n');
             ConsoleColor bglast = ScreenBackColor;
 
             Writing = true;
-            PrvTop = Console.CursorTop;
             Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
             for (int i = 0; i < lines.Length; i++)
             {
@@ -406,13 +397,13 @@ namespace ModularBOT.Entity
                         Console.BackgroundColor = bglast;           //restore previous color.
                         Console.ForegroundColor = ScreenFontColor;  //previous FG.
                     }
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
                 if (i > 0)
                 {
                     //write current line in queue, padded by 21 enQuads to preserve line format.
                     Console.WriteLine(lines[i].PadLeft(lines[i].Length, '\u2000').PadRight(Console.BufferWidth - 2));
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
 
             }
@@ -428,7 +419,6 @@ namespace ModularBOT.Entity
             Console.BackgroundColor = ScreenBackColor;
             Console.ForegroundColor = ScreenFontColor;
             Console.CursorVisible = showCursor;
-            CurTop = Console.CursorTop;
             Writing = false;
         }
 
@@ -476,7 +466,6 @@ namespace ModularBOT.Entity
 
                
                 Writing = true;
-                PrvTop = Console.CursorTop;
                 Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
                 LogMessage l = new LogMessage(message.Severity,
                     message.Source.PadRight(11, '\u2000'),
@@ -544,13 +533,13 @@ namespace ModularBOT.Entity
                     if (i == 0)
                     {
                         Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2, '\u2000')); //write current line in queue.
-                        Console.CursorTop = Console.CursorTop - 1;
+                        Console.CursorTop -= 1;
                     }
                     if (i > 0)
                     {
                         //write current line in queue, padded by 21 enQuads to preserve line format.
                         Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000').PadRight(Console.BufferWidth - 2));
-                        Console.CursorTop = Console.CursorTop - 1;
+                        Console.CursorTop -= 1;
                     }
 
                 }
@@ -573,7 +562,6 @@ namespace ModularBOT.Entity
                     Console.Write("\u2551");
                 }
 
-                CurTop = Console.CursorTop;
                 Writing = false;
             }
 
@@ -632,7 +620,7 @@ namespace ModularBOT.Entity
             //Derive and Override.
             Console.WriteLine("test");
         }
-        private void _OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct) //Sub-screen options...
+        private void OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct) //Sub-screen options...
         {
             #region Option Trimming
             if (option1.Length > 37)
@@ -710,8 +698,6 @@ namespace ModularBOT.Entity
 
             #region Primary Clear
             Console.Clear();
-            Console.SetBufferSize(BufferWidth, BufferHeight);
-
             #region Window Height buffering
             if (WindowWidth > Console.LargestWindowWidth)
             {
@@ -724,6 +710,8 @@ namespace ModularBOT.Entity
             #endregion
 
             Console.SetWindowSize(WindowWidth, WindowHeight);
+
+            Console.SetBufferSize(BufferWidth, BufferHeight);
 
             Console.BackgroundColor = ScreenBackColor;
             Console.ForegroundColor = ScreenFontColor;
@@ -794,12 +782,15 @@ namespace ModularBOT.Entity
                     throw new ArgumentException("Your meta caption can't be over 120 characters.");
                 }
                 Console.ForegroundColor = TitlesFontColor;
+                Console.BackgroundColor = TitlesBackColor;
                 Console.Write("\u2551");
                 Console.ForegroundColor = MetaFontColor;
                 Console.Write("{0}", fmeta);
                 Console.ForegroundColor = TitlesFontColor;
                 Console.Write("\u2551");
+                Console.BackgroundColor = ScreenBackColor;
                 linecount++;//5
+
             }
 
             return linecount;
@@ -819,7 +810,6 @@ namespace ModularBOT.Entity
         {
             ActivePrompt = true;
             Console.CursorVisible = false;
-            int result = -1;
             int SelIndex = 0;
             int left = 71 - 20;
             int top = 16 - 7;
@@ -827,8 +817,6 @@ namespace ModularBOT.Entity
             List<int> SelectableIndicies = new List<int>();
             Console.CursorLeft = left;
             Console.CursorTop = top;
-            ConsoleColor PRVBG = Console.BackgroundColor;
-            ConsoleColor PRVFG = Console.ForegroundColor;
             Console.BackgroundColor = SBG;
             Console.ForegroundColor = SFG;
 
@@ -893,7 +881,7 @@ namespace ModularBOT.Entity
             #region Options and status
             Console.CursorLeft = left;
             Console.CursorTop = top + 4;
-            _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+            OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
             Console.CursorLeft = left;
             Console.CursorTop = top + 8;
             Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
@@ -909,10 +897,8 @@ namespace ModularBOT.Entity
             Console.CursorLeft = left;
             Console.CursorTop = top + 12;
             Console.Write("\u2514" + "".PadRight(40, '\u2500') + "\u2518");
-            int minLeft = left;
-            int maxleft = Console.CursorLeft;
-            int mintop = top;
-            int maxtop = top + 13;
+
+            int result;
             #endregion
 
             #region Control handler
@@ -929,7 +915,7 @@ namespace ModularBOT.Entity
                     {
                         SelIndex = SelectableIndicies.Count - 1;
                     }
-                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+                    OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
 
                 }
 
@@ -941,7 +927,7 @@ namespace ModularBOT.Entity
                     {
                         SelIndex = 0;
                     }
-                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+                    OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
 
                 }
                 if (c.Key == ConsoleKey.Enter)
