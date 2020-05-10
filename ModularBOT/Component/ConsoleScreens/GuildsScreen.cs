@@ -42,7 +42,7 @@ namespace ModularBOT.Component.ConsoleScreens
             TitlesFontColor = ConsoleColor.White;
             ProgressColor = ConsoleColor.Cyan;
 
-            Title = $"Guilds | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version.ToString()}";
+            Title = $"Guilds | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version}";
             RefreshMeta();
             ShowProgressBar = true;
             ShowMeta = true;
@@ -59,15 +59,11 @@ namespace ModularBOT.Component.ConsoleScreens
         {
             Console.CursorVisible = false;
 
-            if(ActivePrompt) { return false; }
-            
+            if(ActivePrompt) return false;
+
             if (keyinfo.Key == ConsoleKey.P || keyinfo.Key == ConsoleKey.LeftArrow)
             {
-                if (page > 1)
-                {
-                    page--;
-                    index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-                }
+                if (page > 1) page--;
 
                 selectionIndex = 0;
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
@@ -76,34 +72,30 @@ namespace ModularBOT.Component.ConsoleScreens
                 {
                     ProgressVal = page;
                     RefreshMeta();
-                    UpdateMeta();
                     UpdateProgressBar();
                     ClearContents();
-                    //RenderContents();
                     countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
                 }
                     
                 ppg = page;
             }
-            
+
             if (keyinfo.Key == ConsoleKey.N || keyinfo.Key == ConsoleKey.RightArrow)
             {
-                
-                if (page < max)
-                {
+                if (page < max) page++;
 
-                    page++;
-                }
                 selectionIndex = 0;
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+
                 if (ppg != page)
                 {
                     ProgressVal = page;
-                    UpdateMeta();
+                    RefreshMeta();
                     UpdateProgressBar();
                     ClearContents();
                     countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
                 }
+
                 ppg = page;
             }
 
@@ -111,23 +103,17 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 selectionIndex--;
 
-                if (selectionIndex < 0)
-                {
-                    selectionIndex = countOnPage - 1;
-                }
+                if (selectionIndex < 0) selectionIndex = countOnPage - 1;
 
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
                 countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
             }
-            
+
             if (keyinfo.Key == ConsoleKey.DownArrow)
             {
                 selectionIndex++;
 
-                if (selectionIndex > countOnPage - 1)
-                {
-                    selectionIndex = 0;
-                }
+                if (selectionIndex > countOnPage - 1) selectionIndex = 0;
 
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
                 countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
@@ -138,10 +124,8 @@ namespace ModularBOT.Component.ConsoleScreens
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
                 
                 string guildname = GetSafeName(Guildlist, index + selectionIndex);
-                if (!(Guildlist[index + selectionIndex].IsConnected))
-                {
-                    return false;
-                }
+                
+                if (!(Guildlist[index + selectionIndex].IsConnected)) return false;
 
                 ConsoleColor PRVBG = Console.BackgroundColor;
                 ConsoleColor PRVFG = Console.ForegroundColor;
@@ -168,7 +152,6 @@ namespace ModularBOT.Component.ConsoleScreens
                         break;
                     default:
                         break;
-
                 }
 
                 UpdateFooter(page, max);                //Restore footer 
@@ -177,7 +160,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.ForegroundColor = PRVFG;
                 Console.BackgroundColor = PRVBG;
             }
-            
+
             return base.ProcessInput(keyinfo);
         }
 
@@ -191,6 +174,7 @@ namespace ModularBOT.Component.ConsoleScreens
         private void RefreshMeta()
         {
             Meta = $"Present in {Guildlist.Count} guild(s). Connected to {Guildlist.Where(x => x.IsConnected).LongCount()} guild(s)";
+            UpdateMeta();
         }
 
         private void UpdateFooter(short page, short max, bool prompt = false)
@@ -251,7 +235,6 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 case (1):
                     RefreshMeta();
-                    UpdateMeta();
                     RenderScreen();
                     break;
                 case (2):
@@ -275,7 +258,6 @@ namespace ModularBOT.Component.ConsoleScreens
                         Guildlist[selectionIndex + index].LeaveAsync();
                         Guildlist.Remove(Guildlist[selectionIndex + index]);
                         RefreshMeta();
-                        UpdateMeta();
                         RenderScreen();
                     }
                     
@@ -303,10 +285,9 @@ namespace ModularBOT.Component.ConsoleScreens
                 }
             }
             //----------------End modal----------------
-            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-            RenderScreen();
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
             RefreshMeta();
-            UpdateMeta();
+            RenderScreen();
             countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
         }
 
