@@ -10,7 +10,7 @@ using System.Windows;
 
 namespace ModularBOT.Component.ConsoleScreens
 {
-    public class MyRolesScreen : ConsoleScreen
+    public class RolesScreen : ConsoleScreen
     {
         #region --- DECLARE ---
         private short page = 1;
@@ -19,20 +19,18 @@ namespace ModularBOT.Component.ConsoleScreens
         private int selectionIndex = 0;
         private int countOnPage = 0;
         private int ppg = 0;
-        private readonly DiscordNET DNet;
-        private List<SocketRole> MyRoles = new List<SocketRole>();
+        private List<SocketRole> Roles = new List<SocketRole>();
         private readonly SocketGuild currentguild;
 
         #endregion
 
-        public MyRolesScreen(SocketGuild Guild, DiscordNET discord, short startpage=1)
+        public RolesScreen(SocketGuild Guild, List<SocketRole> RoleList, string title = "Role List", short startpage = 1)
         {
-            DNet = discord;
             currentguild = Guild;
-            MyRoles = Guild.CurrentUser.Roles.ToList();
+            Roles = RoleList;
             page = startpage;
 
-            max = (short)(Math.Ceiling((double)(discord.Client.Guilds.Count / 22)) + 1);
+            max = (short)(Math.Ceiling((double)(Roles.Count / 22)) + 1);
             index = 0;
             selectionIndex = 0;
             countOnPage = 0;
@@ -44,7 +42,7 @@ namespace ModularBOT.Component.ConsoleScreens
             TitlesFontColor = ConsoleColor.White;
             ProgressColor = ConsoleColor.Cyan;
 
-            Title = $"My Roles in {GetSafeName(Guild)} | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version}";
+            Title = $"{title} in {GetSafeName(Guild)} | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version}";
             RefreshMeta();
             ShowProgressBar = true;
             ShowMeta = true;
@@ -76,7 +74,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     RefreshMeta();
                     UpdateProgressBar();
                     ClearContents();
-                    countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref MyRoles);
+                    countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref Roles);
                 }
                     
                 ppg = page;
@@ -95,7 +93,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     RefreshMeta();
                     UpdateProgressBar();
                     ClearContents();
-                    countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref MyRoles);
+                    countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref Roles);
                 }
 
                 ppg = page;
@@ -108,7 +106,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 if (selectionIndex < 0) selectionIndex = countOnPage - 1;
 
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-                countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref MyRoles);
+                countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref Roles);
             }
 
             if (keyinfo.Key == ConsoleKey.DownArrow)
@@ -118,14 +116,14 @@ namespace ModularBOT.Component.ConsoleScreens
                 if (selectionIndex > countOnPage - 1) selectionIndex = 0;
 
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-                countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref MyRoles);
+                countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref Roles);
             }
 
             if (keyinfo.Key == ConsoleKey.Enter)
             {
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
                 
-                string RoleName = GetSafeName(MyRoles, index + selectionIndex);
+                string RoleName = GetSafeName(Roles, index + selectionIndex);
 
                 ConsoleColor PRVBG = Console.BackgroundColor;
                 ConsoleColor PRVFG = Console.ForegroundColor;
@@ -140,7 +138,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 {
                     case (2):
                         index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
-                        Thread thread = new Thread(() => Clipboard.SetText(MyRoles[selectionIndex + index].Id.ToString()));
+                        Thread thread = new Thread(() => Clipboard.SetText(Roles[selectionIndex + index].Id.ToString()));
                         thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
                         thread.Start();
                         thread.Join(); //Wait for the thread to end
@@ -170,13 +168,12 @@ namespace ModularBOT.Component.ConsoleScreens
         {
             SpinWait.SpinUntil(() => !LayoutUpdating);
             SpinWait.SpinUntil(() => !ActivePrompt);
-            countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref MyRoles);
+            countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref Roles);
         }
 
         private void RefreshMeta()
         {
-            Meta = $"{DNet.Client.CurrentUser.Username}#{DNet.Client.CurrentUser.Discriminator} " +
-                $"has {MyRoles.Count} role(s) in {GetSafeName(currentguild)}";
+            Meta = $"Listing {Roles.Count} role(s) in {GetSafeName(currentguild)}";
             UpdateMeta();
         }
 

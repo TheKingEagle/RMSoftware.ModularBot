@@ -145,7 +145,7 @@ namespace ModularBOT.Component.ConsoleScreens
                         //SS_ViewChannelsScreen();
                         break;
                     case (3):
-                        //SS_ViewRoles();
+                        SS_ViewRolesScreen(false);
                         break;
                     case (4):
                         SS_MoreActions(guildname);
@@ -234,7 +234,7 @@ namespace ModularBOT.Component.ConsoleScreens
             switch (ss)
             {
                 case (1):
-                    SS_ViewMyRolesScreen();
+                    SS_ViewRolesScreen(true);
                     break;
                 case (2):
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
@@ -291,14 +291,17 @@ namespace ModularBOT.Component.ConsoleScreens
             countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
         }
 
-        private void SS_ViewMyRolesScreen()
+        private void SS_ViewRolesScreen(bool BotRoles)
         {
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
 
             //---------------start modal---------------
-            var NGScreen = new MyRolesScreen(Guildlist[index + selectionIndex], DNet)
+            var RoleList = BotRoles ? Guildlist[index + selectionIndex].CurrentUser.Roles.ToList() : Guildlist[index + selectionIndex].Roles.ToList();
+            string title = BotRoles ? $"Listing roles for {Guildlist[index + selectionIndex].CurrentUser.Username}#" +
+                $"{Guildlist[index + selectionIndex].CurrentUser.Discriminator}" : "Listing all roles";
+            var NGScreen = new RolesScreen(Guildlist[index + selectionIndex], RoleList, title);
             {
-                ActiveScreen = true
+                ActiveScreen = true;
             };
             NGScreen.RenderScreen();
             while (true)
