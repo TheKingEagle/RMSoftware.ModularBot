@@ -17,7 +17,6 @@ namespace ModularBOT.Entity
         #endregion
 
         #region Public Properties
-
         public string Title { get; set; } = "Untitled Screen";
         public string Meta { get; set; } = "Default Meta";
 
@@ -58,10 +57,12 @@ namespace ModularBOT.Entity
         /// Entry Queue for log entry writing. This buffer only applies if you use derived screen as a log
         /// </summary>
         public Queue<LogEntry> Backlog { get; set; } = new Queue<LogEntry>();
+        
         /// <summary>
         /// Entry Back Buffer for log entries to be re-written 
         /// </summary>
         public List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
+        
         /// <summary>
         /// Is the screen currently being written to the console?
         /// </summary>
@@ -223,10 +224,7 @@ namespace ModularBOT.Entity
             ConsoleColor bglast = ScreenBackColor;
             for (int i = 0; i < lines.Length; i++)
             {
-                if (lines[i].Length == 0)
-                {
-                    continue;
-                }
+                if (lines[i].Length == 0) continue;
                 ConsoleColor bg = ConsoleColor.Black;
                 ConsoleColor fg = ConsoleColor.Black;
                 bg = Entrycolor;
@@ -611,15 +609,7 @@ namespace ModularBOT.Entity
 
             return linecount;
         }
-        #endregion
 
-        #region overridden methods.
-
-        protected virtual void RenderContents()
-        {
-            //Derive and Override.
-            Console.WriteLine("test");
-        }
         private void OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct) //Sub-screen options...
         {
             #region Option Trimming
@@ -686,6 +676,16 @@ namespace ModularBOT.Entity
 
         #endregion
 
+        #region overridden methods.
+
+        protected virtual void RenderContents()
+        {
+            //Derive and Override.
+            Console.WriteLine("test");
+        }
+
+        #endregion
+
         #region Public Methods
 
         /// <summary>
@@ -693,24 +693,19 @@ namespace ModularBOT.Entity
         /// </summary>
         public void RenderScreen()
         {
-
             LayoutUpdating = true;
 
             #region Primary Clear
             Console.Clear();
+
             #region Window Height buffering
-            if (WindowWidth > Console.LargestWindowWidth)
-            {
-                WindowWidth = Console.LargestWindowWidth;
-            }
-            if (WindowHeight > Console.LargestWindowHeight)
-            {
-                WindowHeight = Console.LargestWindowHeight;
-            }
+            if (WindowHeight > BufferHeight) WindowHeight = BufferHeight;
+            if (WindowWidth > BufferWidth) WindowWidth = BufferWidth;
+            if (WindowWidth > Console.LargestWindowWidth) WindowWidth = Console.LargestWindowWidth;
+            if (WindowHeight > Console.LargestWindowHeight) WindowHeight = Console.LargestWindowHeight;
             #endregion
 
             Console.SetWindowSize(WindowWidth, WindowHeight);
-
             Console.SetBufferSize(BufferWidth, BufferHeight);
 
             Console.BackgroundColor = ScreenBackColor;

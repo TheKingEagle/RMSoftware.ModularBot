@@ -39,6 +39,7 @@ namespace ModularBOT.Component.ConsoleCommands
                     break;
                 }
             }
+            NGScreen.ActiveScreen = false;
             //----------------End modal----------------
             console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
                 Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);

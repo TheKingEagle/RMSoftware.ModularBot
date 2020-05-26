@@ -259,6 +259,7 @@
     <Compile Include="Component\ConsoleCommands\TSKillCommand.cs" />
     <Compile Include="Component\ConsoleCommands\UsersCommand.cs" />
     <Compile Include="Component\ConsoleIO.cs" />
+    <Compile Include="Component\ConsoleScreens\MyRolesScreen.cs" />
     <Compile Include="Component\ConsoleScreens\UsersScreen.cs" />
     <Compile Include="Component\ConsoleScreens\GuildsScreen.cs" />
     <Compile Include="Component\ConsoleScreens\TestConsoleScreen.cs" />

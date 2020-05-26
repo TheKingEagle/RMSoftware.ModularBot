@@ -234,8 +234,7 @@ namespace ModularBOT.Component.ConsoleScreens
             switch (ss)
             {
                 case (1):
-                    RefreshMeta();
-                    RenderScreen();
+                    SS_ViewMyRolesScreen();
                     break;
                 case (2):
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
@@ -284,6 +283,32 @@ namespace ModularBOT.Component.ConsoleScreens
                     break;
                 }
             }
+            NGScreen.ActiveScreen = false;
+            //----------------End modal----------------
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+            RefreshMeta();
+            RenderScreen();
+            countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+        }
+
+        private void SS_ViewMyRolesScreen()
+        {
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+
+            //---------------start modal---------------
+            var NGScreen = new MyRolesScreen(Guildlist[index + selectionIndex], DNet)
+            {
+                ActiveScreen = true
+            };
+            NGScreen.RenderScreen();
+            while (true)
+            {
+                if (NGScreen.ProcessInput(Console.ReadKey(true)))
+                {
+                    break;
+                }
+            }
+            NGScreen.ActiveScreen = false;
             //----------------End modal----------------
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
             RefreshMeta();
