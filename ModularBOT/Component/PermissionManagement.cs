@@ -296,6 +296,10 @@ namespace ModularBOT.Component
                 //Example: One user with BL role interacts with bot, gets the warning -> Warning flag resets.
                 //         Another user with same BL role (who never got warned before) would NOT get warning.
             }
+            if(role.Id == role.Guild.Id)
+            {
+                throw new InvalidOperationException("You can't register this entity");
+            }
             RegisteredEntity r = new RegisteredEntity
             {
                 EntityID = role.Id,
@@ -349,6 +353,10 @@ namespace ModularBOT.Component
                 //Unfortunately this would cause the warning system to work incorrectly.
                 //Example: One user with BL role interacts with bot, gets the warning -> Warning flag resets.
                 //         Another user with same BL role (who never got warned before) would NOT get warning.
+            }
+            if (role.Id == role.Guild.Id)
+            {
+                throw new InvalidOperationException("You can't register this entity");
             }
             RegisteredEntity r = new RegisteredEntity
             {
@@ -404,7 +412,7 @@ namespace ModularBOT.Component
             if(Context.Guild != null)
             {
                 role = Context.Guild?.GetRole(GenericID);
-                if(role == null)
+                if (role == null)
                 {
                     user = Context.Guild?.GetUserAsync(GenericID, CacheMode.AllowDownload).GetAwaiter().GetResult();
                     if(user == null)
@@ -429,6 +437,11 @@ namespace ModularBOT.Component
                     //Unfortunately this would cause the warning system to work incorrectly.
                     //Example: One user with BL role interacts with bot, gets the warning -> Warning flag resets.
                     //         Another user with same BL role (who never got warned before) would NOT get warning.
+                }
+
+                if (role.Id == role.Guild.Id)
+                {
+                    throw new InvalidOperationException("You can't register this entity.");
                 }
             }
             RegisteredEntity r = new RegisteredEntity
