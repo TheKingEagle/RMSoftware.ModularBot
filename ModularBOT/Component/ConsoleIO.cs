@@ -30,7 +30,7 @@ namespace ModularBOT.Component
         internal ConsoleColor ConsoleForegroundColor = ConsoleColor.Gray;
         internal ConsoleColor ConsoleBackgroundColor = ConsoleColor.Black;
 
-        private int[] cColors =
+        private readonly int[] cColors =
             {
             0x000000, 0x000080, 0x008000, 0x008080, 0x800000, 0x800080, 0x808000, 0xC0C0C0,
             0x808080, 0x0000FF, 0x00FF00, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFFFF00, 0xFFFFFF
@@ -139,7 +139,7 @@ namespace ModularBOT.Component
             return (ConsoleColor)(Math.Abs((Color - ConsoleColor.White)));
         }
 
-        private void _OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct) //Sub-screen options...
+        private void OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct) //Sub-screen options...
         {
             #region Option Trimming
             if (option1.Length > 37)
@@ -239,7 +239,7 @@ namespace ModularBOT.Component
            
             while (true)
             {
-                countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
+                countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref guilds);
                 ConsoleKeyInfo s = Console.ReadKey(true);
                 if (s.Key == ConsoleKey.P)
                 {
@@ -340,7 +340,7 @@ namespace ModularBOT.Component
                         case (4):
                             int ss = -1;
 
-                            countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
+                            countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref guilds);
                             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                             ss = ShowOptionSubScreen($"Manage: {guildname}", "What do you want to do?", "View My Roles...", "Copy ID...", "-", "Leave Guild...");
                             switch (ss)
@@ -360,7 +360,7 @@ namespace ModularBOT.Component
                                 case (4):
 
                                     //TODO: Add an ACTUAL confirmation prompt.
-                                    countOnPage = PopulateGuildList(discord, page, max, ref index, selectionIndex, ref ppg, ref guilds);
+                                    countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref guilds);
                                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                                     int confirmprompt = ShowOptionSubScreen($"Leave {guildname}?", $"Are you sure you want to leave?", "-", "NO", "YES", "-", ConsoleColor.DarkRed);
                                     if (confirmprompt == 3)
@@ -403,7 +403,7 @@ namespace ModularBOT.Component
 
         } //Guild List Screen
 
-        private int PopulateGuildList(DiscordNET discord, short page, short max, ref int index, int selectionIndex, ref int ppg, ref List<SocketGuild> guilds)
+        private int PopulateGuildList(short page, short max, ref int index, int selectionIndex, ref int ppg, ref List<SocketGuild> guilds)
         {
             int countOnPage;
             if (ppg != page)//is page changing?
@@ -427,7 +427,7 @@ namespace ModularBOT.Component
                     break;
                 }
                 countOnPage++;
-                WriteGuild(discord, selectionIndex, countOnPage, guilds, i);
+                WriteGuild(selectionIndex, countOnPage, guilds, i);
 
                 index++;
             }
@@ -454,7 +454,7 @@ namespace ModularBOT.Component
             return countOnPage;
         }
 
-        private void WriteGuild(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuild> guilds, int i)
+        private void WriteGuild(int selectionIndex, int countOnPage, List<SocketGuild> guilds, int i)
         {
             if(guilds[i].IsConnected)
             {
@@ -464,7 +464,6 @@ namespace ModularBOT.Component
                 {
                     name = name.Remove(36) + "...";
                 }
-                string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
                 string p = $"{name}".PadRight(39, '\u2005');
                 WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen);
 
@@ -477,7 +476,6 @@ namespace ModularBOT.Component
                 {
                     name = name.Remove(36) + "...";
                 }
-                string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
                 string p = $"{name}".PadRight(39, '\u2005');
                 WriteEntry($"\u2502\u2005\u2005 - {p} [{guilds.ElementAt(i).Id.ToString().PadLeft(20, '0')}]", (countOnPage - 1) == selectionIndex,true, ConsoleColor.DarkGreen);
 
@@ -974,7 +972,7 @@ namespace ModularBOT.Component
 
             while (true)
             {
-                countOnPage = PopulateChannelList(discord, page, selectionIndex, ref ppg, channels, name, max, ref index);
+                countOnPage = PopulateChannelList(page, selectionIndex, ref ppg, channels, name, max, ref index);
                 ConsoleKeyInfo s = Console.ReadKey(true);
                 if (s.Key == ConsoleKey.P)
                 {
@@ -1072,7 +1070,7 @@ namespace ModularBOT.Component
                             break;
                         case (4):
 
-                            countOnPage = PopulateChannelList(discord,page,selectionIndex,ref ppg,channels,name,max,ref index);
+                            countOnPage = PopulateChannelList(page,selectionIndex,ref ppg,channels,name,max,ref index);
                             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                             int confirmdel = ShowOptionSubScreen($"Delete: {channelname}", "Are you sure?", "-", "NO", "YES", "-", ConsoleColor.Red);
                             if (confirmdel == 3) { g.GetChannel(channels[index + selectionIndex].Id).DeleteAsync(); channels.Remove(channels[selectionIndex + index]); }
@@ -1106,7 +1104,7 @@ namespace ModularBOT.Component
 
         }
 
-        private int PopulateChannelList(DiscordNET discord, short page, int selectionIndex, ref int ppg, List<SocketGuildChannel> channels, string name, short max, ref int index)
+        private int PopulateChannelList(short page, int selectionIndex, ref int ppg, List<SocketGuildChannel> channels, string name, short max, ref int index)
         {
             int countOnPage;
             if (ppg != page)//is page changing?
@@ -1131,7 +1129,7 @@ namespace ModularBOT.Component
                     break;
                 }
                 countOnPage++;
-                WriteChannel(discord, selectionIndex, countOnPage, channels, i);
+                WriteChannel(selectionIndex, countOnPage, channels, i);
                 index++;
             }
             WriteEntry($"\u2502");
@@ -1157,7 +1155,7 @@ namespace ModularBOT.Component
             return countOnPage;
         }
 
-        private void WriteChannel(DiscordNET discord, int selectionIndex, int countOnPage, List<SocketGuildChannel> Channels, int i)
+        private void WriteChannel(int selectionIndex, int countOnPage, List<SocketGuildChannel> Channels, int i)
         {
             
             string channelin = Channels.ElementAt(i).Name ?? "Unsupported channel";
@@ -1250,7 +1248,6 @@ namespace ModularBOT.Component
                     if (page > 1)
                     {
                         page--;
-                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                         //continue;
                     }
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
@@ -1346,8 +1343,6 @@ namespace ModularBOT.Component
                     if (page > 1)
                     {
                         page--;
-                        index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-                        //continue;
                     }
                     index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
                     continue;
@@ -1496,13 +1491,13 @@ namespace ModularBOT.Component
                     if (i == 0)
                     {
                         Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2, '\u2000')); //write current line in queue.
-                        Console.CursorTop = Console.CursorTop - 1;
+                        Console.CursorTop -= 1;
                     }
                     if (i > 0)
                     {
                         //write current line in queue, padded by 21 enQuads to preserve line format.
                         Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000').PadRight(Console.BufferWidth - 2));
-                        Console.CursorTop = Console.CursorTop - 1;
+                        Console.CursorTop -= 1;
                     }
 
                 }
@@ -2004,13 +1999,13 @@ namespace ModularBOT.Component
                         Console.BackgroundColor = bglast;                   //restore previous color.
                         Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
                     }
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
                 if (i > 0)
                 {
                     //write current line in queue, padded by 21 enQuads to preserve line format.
                     Console.WriteLine(lines[i].PadLeft(lines[i].Length, '\u2000').PadRight(Console.BufferWidth - 2));
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
 
             }
@@ -2094,13 +2089,13 @@ namespace ModularBOT.Component
                         Console.BackgroundColor = bglast;                   //restore previous color.
                         Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
                     }
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
                 if (i > 0)
                 {
                     //write current line in queue, padded by 21 enQuads to preserve line format.
                     Console.WriteLine(lines[i].PadLeft(lines[i].Length, '\u2000').PadRight(Console.BufferWidth - 2));
-                    Console.CursorTop = Console.CursorTop - 1;
+                    Console.CursorTop -= 1;
                 }
 
             }
@@ -2264,7 +2259,6 @@ namespace ModularBOT.Component
             if (IsPW)
             {
                 Console.Write("\u2502 > ");
-                auth = "";
                 while (true)
                 {
                     string pass = "";
@@ -2308,7 +2302,6 @@ namespace ModularBOT.Component
             if (!IsPW)
             {
                 Console.Write("\u2502 > ");
-                auth = "";
                 while (true)
                 {
                     string pass = "";
@@ -2367,7 +2360,6 @@ namespace ModularBOT.Component
         public int ShowOptionSubScreen(string title, string prompt, string Option1, string Option2, string Option3, string Option4, ConsoleColor SBG = ConsoleColor.DarkBlue, ConsoleColor SFG = ConsoleColor.White)
         {
             Console.CursorVisible = false;
-            int result = -1;
             int SelIndex = 0;
             int left = 71 - 20;
             int top = 16 - 7;
@@ -2436,7 +2428,7 @@ namespace ModularBOT.Component
             #endregion
             Console.CursorLeft = left;
             Console.CursorTop = top + 4;
-            _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+            OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
             Console.CursorLeft = left;
             Console.CursorTop = top + 8;
             Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
@@ -2457,6 +2449,7 @@ namespace ModularBOT.Component
             int mintop = top;
             int maxtop = top + 13;
 
+            int result;
             #region Control handler
             while (true)
             {
@@ -2471,7 +2464,7 @@ namespace ModularBOT.Component
                     {
                         SelIndex = SelectableIndicies.Count - 1;
                     }
-                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+                    OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
 
                 }
 
@@ -2483,7 +2476,7 @@ namespace ModularBOT.Component
                     {
                         SelIndex = 0;
                     }
-                    _OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
+                    OSS_RenderOptions(Option1, Option2, Option3, Option4, SelectableIndicies[SelIndex], left, top + 4);
 
                 }
                 if (c.Key == ConsoleKey.Enter)
