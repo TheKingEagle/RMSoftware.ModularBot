@@ -562,6 +562,12 @@ namespace TestModule
             await ReplyAsync("You have the correct access level!");
         }
 
+        [Command("sbstars"), Remarks("AccessLevels.NotSpecified")]
+        public async Task StarTest()
+        {
+            await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Starboard Unicode testing", "`\\u2B50` should be \u2B50 and `\\uD83C\\uDF1F` should be \uD83C\uDF1F.", Color.Purple));
+        }
+
         [Command("reason", RunMode = RunMode.Async), Summary("Modify MODLOG reason for a case id.")]
         public async Task ModifyReason(ulong caseID, [Remainder]string REASON)
         {
@@ -947,19 +953,18 @@ namespace TestModule
 
             #region Starboards
 
-            if (arg3.Emote.ToString() == "⭐")
+            if (arg3.Emote.ToString() == "\u2B50" || arg3.Emote.ToString() == "\uD83C\uDF1F") //STAR or GLOWING STAR
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
                 if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
                 {
-                    if (arg2.Id != binding.ChannelID) // Starred message is NOT on the starboard. 
+                    if (arg2.Id != binding.ChannelID) // Starred message is NOT on the starboard channel. 
                     {
-
                         Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "SBBinding found. NOT Starboard embed."));
                         var sbmessage = binding.StarboardData.FirstOrDefault(x => x.StarredMessageID == arg1.Id);
                         if (sbmessage != null)
                         {
-                            //message is already in the starboard Modify the starcount.
+                            //message is already in the starboard channel Modify the starcount.
                             sbmessage.StarCount++;
                             binding.StarboardData[binding.StarboardData.IndexOf(sbmessage)].StarCount = sbmessage.StarCount;
                             SBBindings[STC.Guild.Id] = binding;
@@ -1152,8 +1157,11 @@ namespace TestModule
                                 }
                             }
                             var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                            var newSBMessage = await channel.SendMessageAsync($"🌟 **1** | " +
+                            var newSBMessage = await channel.SendMessageAsync($"\uD83C\uDF1F **1** | " +
                                 $"<#{StarredMessage.Channel.Id}>", false, SBEntryEmbed.Build());
+
+
+                            await newSBMessage.AddReactionAsync(new Emoji("\u2B50"));
                             //create a new starboard entry.
                             sbmessage = new SBEntry()
                             {
@@ -1168,9 +1176,9 @@ namespace TestModule
                         }
 
 
-                    } //Reaction is NOT from Starboard channel
+                    } //Starred message IS NOT from Starboard channel.
 
-                    if (arg2.Id == binding.ChannelID) // Starred message IS on the starboard. 
+                    if (arg2.Id == binding.ChannelID) // Starred message IS from Starboard channel. 
                     {
 
                         Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. Starboard embed."));
@@ -1338,7 +1346,7 @@ namespace TestModule
 
             #region Starboards
 
-            if (arg3.Emote.ToString() == "⭐")
+            if (arg3.Emote.ToString() == "\u2B50" || arg3.Emote.ToString() == "\uD83C\uDF1F")
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
                 if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
