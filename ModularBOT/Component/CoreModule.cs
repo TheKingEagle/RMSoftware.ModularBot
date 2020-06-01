@@ -1304,22 +1304,26 @@ namespace ModularBOT.Component
                     await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
                     return;
                 }
-                GuildObject pobj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
-                if (pobj.LockPFChanges)
+                GuildObject pobj = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == gid);
+                if(pobj !=null)
                 {
-                    if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) == AccessLevels.CommandManager)
+                    if (pobj.LockPFChanges)
                     {
-                        if (Context.User is SocketGuildUser sgu)
+                        if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) == AccessLevels.CommandManager)
                         {
-                            if (!sgu.GuildPermissions.Has(GuildPermission.ManageGuild))
+                            if (Context.User is SocketGuildUser sgu)
                             {
-                                await ReplyAsync("", false, GetEmbeddedMessage("DENIED!",
-                                    "This guild has their prefix locked. You must have `AccessLevels.Administrator`. Otherwise, you must have `AccessLevels.CommandManager` AND `Manage Server` Permissions.", Color.DarkRed));
-                                return;
+                                if (!sgu.GuildPermissions.Has(GuildPermission.ManageGuild))
+                                {
+                                    await ReplyAsync("", false, GetEmbeddedMessage("DENIED!",
+                                        "This guild has their prefix locked. You must have `AccessLevels.Administrator`. Otherwise, you must have `AccessLevels.CommandManager` AND `Manage Server` Permissions.", Color.DarkRed));
+                                    return;
+                                }
                             }
                         }
                     }
                 }
+                
                
             }
             if(gid == 0)
