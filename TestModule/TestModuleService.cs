@@ -389,7 +389,7 @@ namespace TestModule
 
         #region BINDING COMMANDS
 
-        [Command("pollJoin", RunMode = RunMode.Async), Alias("pollJoin","bindWelcomeMessage","bw")]
+        [Command("pollJoin", RunMode = RunMode.Async), Alias("pollJoin","bindWelcomeMessage","bw"),Remarks("AccessLevels.BotOnly")]
         public async Task BindWelcomeMessage(ulong GuildID, ulong ChannelID, ulong RoleID = 0, [Remainder]string WelcomeMessage = null)
         {
 
@@ -423,7 +423,7 @@ namespace TestModule
         }
 
         [Command("bindTrashcan", RunMode = RunMode.Async), Summary("Creates a Reaction event for specified " +
-            "server & emote to act as a self-delete button"),Alias("bt", "binddelete", "bindtrash","mktrash")]
+            "server & emote to act as a self-delete button"),Alias("bt", "binddelete", "bindtrash","mktrash"), Remarks("AccessLevels.GuildPermission")]
         public async Task BindTrashcan(string emote, ulong guildID = 0)
         {
 
@@ -463,7 +463,7 @@ namespace TestModule
         }
 
         [Command("unbindTrashcan", RunMode = RunMode.Async), Summary("Deletes a Reaction event for specified server " +
-            "& emote to act as a self-delete button"), Alias("ubt","unbinddelete","deltrash")]
+            "& emote to act as a self-delete button"), Alias("ubt","unbinddelete","deltrash"), Remarks("AccessLevels.GuildPermission")]
         public async Task UnbindTrashcan(ulong guildID = 0)
         {
 
@@ -490,9 +490,9 @@ namespace TestModule
 
         }
 
-        [Command("bindmodlog"), Remarks("AccessLevels.Normal"),
+        [Command("bindmodlog"),
             Summary("Creates a log channel binding. Requires user permission to 'Manage Channels'. " +
-            "Call the command in the channel you want to use as moderator log."), Alias("ml-bind", "mlb", "bml")]
+            "Call the command in the channel you want to use as moderator log."), Alias("ml-bind", "mlb", "bml"), Remarks("AccessLevels.GuildPermission")]
         public async Task BindModLog(SocketRole MuteRole)
         {
             if (Context.Guild == null)
@@ -525,9 +525,9 @@ namespace TestModule
 
         }
 
-        [Command("unbindmodlog"), Remarks("AccessLevels.Normal"),
+        [Command("unbindmodlog"),
             Summary("Removes a log channel binding. Requires user permission to 'Manage Channels'. " +
-            "Call the command in the current moderator log channel."), Alias("ml-unbind", "mlu", "uml")]
+            "Call the command in the current moderator log channel."), Alias("ml-unbind", "mlu", "uml"), Remarks("AccessLevels.GuildPermission")]
         public async Task UnbindModLog()
         {
             if (Context.Guild == null)
@@ -546,7 +546,6 @@ namespace TestModule
             await _jservice.UnBindModLog(Context);
 
         }
-
         #endregion BINDING COMMANDS
 
         #region MISC COMMANDS
@@ -1845,6 +1844,23 @@ namespace TestModule
             }
         }
 
+        public static async Task UnbindStarboard(ICommandContext context)
+        {
+            if (SBBindings.TryGetValue(context.Guild.Id, out _))
+            {
+                SBBindings.Remove(context.Guild.Id);
+                await context.Channel.SendMessageAsync("", false,
+                    GetEmbeddedMessage(context, "Updated Configuration", $"Starboard has been disabled.", Color.Green));
+                return;
+            }
+            else
+            {
+                await context.Channel.SendMessageAsync("", false,
+                    GetEmbeddedMessage(context, "Operation Failed", $"Starboard is not enabled.", Color.Red));
+                return;
+            }
+        }
+
         public static async Task SBSetAliasMode(ICommandContext context, bool AliasMode)
         {
 
@@ -1864,7 +1880,7 @@ namespace TestModule
             {
 
                 await context.Channel.SendMessageAsync("", false,
-                    GetEmbeddedMessage(context, "Configuration Error", $"Starboard is not bound to a channel. Please do this first.", Color.Orange));
+                    GetEmbeddedMessage(context, "Configuration Error", $"Starboard is not bound to a channel in this guild. Please do this first.", Color.Orange));
                 return;
             }
         }
