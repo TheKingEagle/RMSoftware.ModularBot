@@ -29,9 +29,9 @@ namespace TestModule.ConfigEntities
 
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
         {
-            if(_discordNET.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator && !(Context.User as SocketGuildUser).GuildPermissions.Has(Discord.GuildPermission.ManageChannels))
+            if(!(Context.User as SocketGuildUser).GuildPermissions.Has(Discord.GuildPermission.ManageChannels))
             {
-                await Context.Channel.SendMessageAsync("",false,TestModuleService.GetEmbeddedMessage(Context, "Insufficient Permission", "You need the ability to manage channels OR have `AccessLevels.Administrator`",Discord.Color.DarkRed));
+                await Context.Channel.SendMessageAsync("",false,TestModuleService.GetEmbeddedMessage(Context, "Insufficient Permission", "You need the ability to manage channels.",Discord.Color.DarkRed));
                 return;
             }
             if(!ulong.TryParse(value, out ulong channelid))
@@ -40,7 +40,19 @@ namespace TestModule.ConfigEntities
                     TestModuleService.GetEmbeddedMessage(Context, "Invalid ID", "Value must be a valid number.", Discord.Color.DarkRed));
                 return;
             }
-            await TestModuleService.BindStarboard(Context,channelid);
+            if(channelid == 0)
+            {
+                await TestModuleService.UnbindStarboard(Context);
+                return;
+            }
+            if ((await Context.Guild.GetChannelAsync(channelid) as SocketTextChannel) == null)
+            {
+                await Context.Channel.SendMessageAsync("", false,
+                    TestModuleService.GetEmbeddedMessage(Context, "Invalid Channel", "the ID must point to a text channel.", Discord.Color.DarkRed));
+                return;
+            }
+
+            await TestModuleService.BindStarboard(Context, channelid);
             
         }
     }
