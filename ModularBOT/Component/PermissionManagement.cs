@@ -550,11 +550,15 @@ namespace ModularBOT.Component
 
     public enum AccessLevels
     {
-       NotSpecified = -127,
-       /// <summary>
-       /// Users with this access level CANNOT use the bot at all.
-       /// </summary>
-       Blacklisted = -1,
+        BotOnly = -255,
+
+        GuildPermission = -128,
+
+        NotSpecified = -127,
+        /// <summary>
+        /// Users with this access level CANNOT use the bot at all.
+        /// </summary>
+        Blacklisted = -1,
 
         /// <summary>
         /// Users with this access level may use unrestricted commands.
