@@ -68,7 +68,7 @@ namespace ModularBOT.Component.ConfigEntities
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
             var g = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
-            return base.ExecuteView(_DiscordNet, Context, g.LockPFChanges ? "Yes" : "No");
+            return base.ExecuteView(_DiscordNet, Context, g.LockPFChanges.ToString());
         }
     }
 }
