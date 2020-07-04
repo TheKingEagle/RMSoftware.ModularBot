@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ModularBOT.Entity;
+using System.Data;
 
 namespace ModularBOT.Component
 {
@@ -141,18 +142,37 @@ namespace ModularBOT.Component
             {
                 throw (new ArgumentException("This variable cannot be modified."));
             }
+            //EVAL(math expression here)
+            bool eval = ((string)value).ToLower().StartsWith("eval(") && ((string)value).ToLower().EndsWith(")");
+
             bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
             if (!result)
             {
+                string parserdata = "";
+                if (eval)
+                {
+                    string val = ((string)value).ToLower();
+                    parserdata = val.Replace("eval(", "");
+                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                }
                 //add the new variable.
-                Variables.Add(var, (value, hidden));
+                object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                Variables.Add(var, (ev, hidden));
                 services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result False. Creating variable. Name:{var}; Value: {value}; Hidden: {hidden}"));
                 return;
             }
             else
             {
-
-                Variables[var] = (value, hidden);
+                string parserdata = "";
+                if (eval)
+                {
+                    string val = ((string)value).ToLower();
+                    parserdata = val.Replace("eval(", "");
+                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                }
+                
+                object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                Variables[var] = (ev, hidden);
                 Variables = Variables;
                 services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result true. modifying variable. Name:{var}; Value: {Variables[var].value}; Hidden: {Variables[var].hidden};"));
                 return;
