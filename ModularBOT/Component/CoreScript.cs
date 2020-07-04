@@ -198,13 +198,23 @@ namespace ModularBOT.Component
                 throw (new ArgumentException("This variable cannot be modified."));
             }
             bool HasDictionaryResult = UserVariableDictionaries.TryGetValue(KEY, out Dictionary<string, (object value, bool hidden)> userVarDictionary);
-            
-            //WARNING: Step-by-step navigation comments are here because this may be very confusing...
 
+            //WARNING: Step-by-step navigation comments are here because this may be very confusing...
+            //EVAL(math expression here)
+            bool eval = ((string)value).ToLower().StartsWith("eval(") && ((string)value).ToLower().EndsWith(")");
             if (!HasDictionaryResult)                                                       //NO DICRIONARY FOUND!
             {
                 userVarDictionary = new Dictionary<string, (object value, bool hidden)>();      //Create new dictionary;
-                userVarDictionary.Add(var,( value, hidden));                                    //Add variable to new dictionary;
+                string parserdata = "";
+                if (eval)
+                {
+                    string val = ((string)value).ToLower();
+                    parserdata = val.Replace("eval(", "");
+                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                }
+                //add the new variable.
+                object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                userVarDictionary.Add(var,( ev, hidden));                                    //Add variable to new dictionary;
                 UserVariableDictionaries.Add(KEY, userVarDictionary);                           //Add the new dictionary to the master dictionary;
                 UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
 
@@ -221,7 +231,16 @@ namespace ModularBOT.Component
 
                 if(!HasVariable)                                                                //NO VARIABLE FOUND!
                 {
-                    userVarDictionary.Add(var, (value, hidden));                                    //Add the variable to the dictionary.
+                    string parserdata = "";
+                    if (eval)
+                    {
+                        string val = ((string)value).ToLower();
+                        parserdata = val.Replace("eval(", "");
+                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    }
+                    //add the new variable.
+                    object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                    userVarDictionary.Add(var, (ev, hidden));                                    //Add the variable to the dictionary.
                     UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the user dictionary in master dictionary.
                     UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
 
@@ -233,7 +252,16 @@ namespace ModularBOT.Component
                 }
                 else                                                                            //VARIABLE FOUND!
                 {
-                    userVarDictionary[var] = (value, hidden);                                       //SET the variable in the dictionary
+                    string parserdata = "";
+                    if (eval)
+                    {
+                        string val = ((string)value).ToLower();
+                        parserdata = val.Replace("eval(", "");
+                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    }
+                    //add the new variable.
+                    object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                    userVarDictionary[var] = (ev, hidden);                                       //SET the variable in the dictionary
                     UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the dictionary in the master dictionary.
                     UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
 
