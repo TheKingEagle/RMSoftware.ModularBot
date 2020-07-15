@@ -142,36 +142,72 @@ namespace ModularBOT.Component
             {
                 throw (new ArgumentException("This variable cannot be modified."));
             }
-            //EVAL(math expression here)
-            bool eval = ((string)value).ToLower().StartsWith("eval(") && ((string)value).ToLower().EndsWith(")");
+            string function = "";
+            int findex = ((string)value).IndexOf('(');
+            if (findex > 0) function = ((string)value).ToLower().Remove(findex);
 
             bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
             if (!result)
             {
-                string parserdata = "";
-                if (eval)
+                object functionResult = null;
+                string parserdata;
+                if (function == "eval")
                 {
                     string val = ((string)value).ToLower();
                     parserdata = val.Replace("eval(", "");
                     parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    functionResult = new DataTable().Compute(parserdata, null);
+                }
+                if (function == "rand")
+                {
+                    string val = ((string)value).ToLower();
+                    parserdata = val.Replace("rand(", "");
+                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    string[] randrange = parserdata.Split(',');
+                    if (randrange.Length < 2 || randrange.Length > 2)
+                    {
+                        throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
+                    }
+                    if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
+                    if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
+                    if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
+                    functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
                 }
                 //add the new variable.
-                object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                object ev = functionResult != null ? functionResult : value;
                 Variables.Add(var, (ev, hidden));
                 services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result False. Creating variable. Name:{var}; Value: {value}; Hidden: {hidden}"));
                 return;
             }
             else
             {
-                string parserdata = "";
-                if (eval)
+                object functionResult = null;
+                string parserdata;
+                if (function == "eval")
                 {
                     string val = ((string)value).ToLower();
                     parserdata = val.Replace("eval(", "");
                     parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    functionResult = new DataTable().Compute(parserdata, null);
                 }
-                
-                object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                if (function == "rand")
+                {
+                    string val = ((string)value).ToLower();
+                    parserdata = val.Replace("rand(", "");
+                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    string[] randrange = parserdata.Split(',');
+                    if (randrange.Length < 2 || randrange.Length > 2)
+                    {
+                        throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
+                    }
+                    if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
+                    if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
+                    if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
+                    functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
+                }
+                //add the new variable.
+                object ev = functionResult != null ? functionResult : value;
+
                 Variables[var] = (ev, hidden);
                 Variables = Variables;
                 services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result true. modifying variable. Name:{var}; Value: {Variables[var].value}; Hidden: {Variables[var].hidden};"));
@@ -195,25 +231,44 @@ namespace ModularBOT.Component
             }
             if (SystemVars.Contains(var))
             {
-                throw (new ArgumentException("This variable cannot be modified."));
+                throw new ArgumentException("This variable cannot be modified.");
             }
             bool HasDictionaryResult = UserVariableDictionaries.TryGetValue(KEY, out Dictionary<string, (object value, bool hidden)> userVarDictionary);
 
             //WARNING: Step-by-step navigation comments are here because this may be very confusing...
-            //EVAL(math expression here)
-            bool eval = ((string)value).ToLower().StartsWith("eval(") && ((string)value).ToLower().EndsWith(")");
+            string function = "";
+            int findex = ((string)value).IndexOf('(');
+            if (findex > 0) function = ((string)value).ToLower().Remove(findex);
             if (!HasDictionaryResult)                                                       //NO DICRIONARY FOUND!
             {
                 userVarDictionary = new Dictionary<string, (object value, bool hidden)>();      //Create new dictionary;
-                string parserdata = "";
-                if (eval)
+                object functionResult = null;
+                string parserdata;
+                if (function == "eval")
                 {
                     string val = ((string)value).ToLower();
                     parserdata = val.Replace("eval(", "");
                     parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    functionResult = new DataTable().Compute(parserdata, null);
+                }
+                if (function == "rand")
+                {
+                    string val = ((string)value).ToLower();
+                    parserdata = val.Replace("rand(", "");
+                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                    string[] randrange = parserdata.Split(',');
+                    if(randrange.Length < 2 || randrange.Length > 2)
+                    {
+                        throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
+                    }
+                    if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
+                    if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
+                    if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
+                    functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
                 }
                 //add the new variable.
-                object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                object ev = functionResult != null ? functionResult : value;
+
                 userVarDictionary.Add(var,( ev, hidden));                                    //Add variable to new dictionary;
                 UserVariableDictionaries.Add(KEY, userVarDictionary);                           //Add the new dictionary to the master dictionary;
                 UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
@@ -231,15 +286,33 @@ namespace ModularBOT.Component
 
                 if(!HasVariable)                                                                //NO VARIABLE FOUND!
                 {
-                    string parserdata = "";
-                    if (eval)
+                    object functionResult = null;
+                    string parserdata;
+                    if (function == "eval")
                     {
                         string val = ((string)value).ToLower();
                         parserdata = val.Replace("eval(", "");
                         parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                        functionResult = new DataTable().Compute(parserdata, null);
+                    }
+                    if (function == "rand")
+                    {
+                        string val = ((string)value).ToLower();
+                        parserdata = val.Replace("rand(", "");
+                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                        string[] randrange = parserdata.Split(',');
+                        if (randrange.Length < 2 || randrange.Length > 2)
+                        {
+                            throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
+                        }
+                        if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
+                        if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
+                        if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
+                        functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
                     }
                     //add the new variable.
-                    object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                    object ev = functionResult != null ? functionResult : value;
+
                     userVarDictionary.Add(var, (ev, hidden));                                    //Add the variable to the dictionary.
                     UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the user dictionary in master dictionary.
                     UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
@@ -252,15 +325,33 @@ namespace ModularBOT.Component
                 }
                 else                                                                            //VARIABLE FOUND!
                 {
-                    string parserdata = "";
-                    if (eval)
+                    object functionResult = null;
+                    string parserdata;
+                    if (function == "eval")
                     {
                         string val = ((string)value).ToLower();
                         parserdata = val.Replace("eval(", "");
                         parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                        functionResult = new DataTable().Compute(parserdata, null);
+                    }
+                    if (function == "rand")
+                    {
+                        string val = ((string)value).ToLower();
+                        parserdata = val.Replace("rand(", "");
+                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                        string[] randrange = parserdata.Split(',');
+                        if (randrange.Length < 2 || randrange.Length > 2)
+                        {
+                            throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
+                        }
+                        if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
+                        if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
+                        if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
+                        functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
                     }
                     //add the new variable.
-                    object ev = eval ? ((new DataTable()).Compute(parserdata, null)) : value;
+                    object ev = functionResult != null ? functionResult : value;
+
                     userVarDictionary[var] = (ev, hidden);                                       //SET the variable in the dictionary
                     UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the dictionary in the master dictionary.
                     UserVariableDictionaries = UserVariableDictionaries;                            //Probably overkill?
