@@ -99,10 +99,11 @@ namespace TestModule
 
             try
             {
+                ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
                 await user.KickAsync(reason);
                 EmbedBuilder b = new EmbedBuilder
                 {
-                    Title = $"Kick | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
+                    Title = $"Kick | Case #{cid}",
                     Timestamp = DateTimeOffset.Now
                 };
                 b.WithColor(new Color(225, 192, 12));
@@ -110,7 +111,8 @@ namespace TestModule
                 b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
                 b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
                 b.AddField("Reason", reason);
-                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                var m = await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                TestModuleService.MessageCaseIDs.Add(Tuple.Create(Context.Guild.Id, cid), m.Id);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Kicked {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
             }
             catch (Discord.Net.HttpException ex)
@@ -174,6 +176,7 @@ namespace TestModule
 
             try
             {
+                ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
                 ModLogBinding ml = TestModuleService.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
                 if (ml != null)
                 {
@@ -181,7 +184,7 @@ namespace TestModule
                 }
                 EmbedBuilder b = new EmbedBuilder
                 {
-                    Title = $"Mute | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
+                    Title = $"Mute | Case #{cid}",
                     Timestamp = DateTimeOffset.Now
                 };
                 b.WithColor(new Color(225, 192, 12));
@@ -189,7 +192,8 @@ namespace TestModule
                 b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
                 b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
                 b.AddField("Reason", reason);
-                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                var m = await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                TestModuleService.MessageCaseIDs.Add(Tuple.Create(Context.Guild.Id, cid), m.Id);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Mute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
             }
             catch (Discord.Net.HttpException ex)
@@ -1611,7 +1615,7 @@ namespace TestModule
                     Title = oldembed.Title,
                     Timestamp = oldembed.Timestamp
                 };
-                b.WithColor(new Color(225, 18, 12));
+                b.WithColor(oldembed.Color.Value);
                 foreach (EmbedField item in oldembed.Fields)
                 {
                     if(item.Name !="Reason")
