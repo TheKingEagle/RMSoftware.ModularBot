@@ -137,6 +137,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigEntities\AllowSnipe.cs" />
+    <Compile Include="ConfigEntities\SniperQueueSize.cs" />
     <Compile Include="ConfigEntities\StarboardAliasMode.cs" />
     <Compile Include="ConfigEntities\StarboardChannel.cs" />
     <Compile Include="ConfigEntities\ServerMuteRole.cs" />
