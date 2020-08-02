@@ -552,6 +552,89 @@ namespace TestModule
         }
         #endregion BINDING COMMANDS
 
+        #region SNIPER COMMANDS
+
+        [Command("snipe"), Remarks("AccessLevels.Normal"), RequireContext(ContextType.Guild)]
+        public async Task SniperSnipeLastMsg()
+        {
+            SniperBinding sniperb = TestModuleService.SniperGuilds.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
+            if (sniperb == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Operation Failed", "Sniper is not tracking this guild! Check your configuration.", Color.DarkRed));
+                return;
+            }
+            if(sniperb.DeletedMessages.Where(x => x.ChannelID == Context.Channel.Id).Count() < 1)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Sniper", "There is nothing here to snipe!", Color.Magenta));
+                return;
+            }
+            var lastdel = sniperb.DeletedMessages.Where(x => x.ChannelID == Context.Channel.Id).Last();
+            if (lastdel == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Sniper", "There is nothing here to snipe!", Color.Magenta));
+                return;
+            }
+            EmbedBuilder b = new EmbedBuilder()
+            {
+                Color = Color.Blue,
+                Description = lastdel.Content,
+                Author = new EmbedAuthorBuilder()
+                {
+                    Name = $"[Latest Snipe] {lastdel.AuthorName}#{lastdel.AuthorDiscriminator}",
+                    IconUrl = lastdel.AuthorAvatarURL
+                },
+                 
+                Timestamp = lastdel.Timestamp,
+                Footer = new EmbedFooterBuilder()
+                {
+                    IconUrl = Context.User.GetAvatarUrl(ImageFormat.Auto),
+                    Text = $"Requested by {Context.User.Username}#{Context.User.Discriminator}"
+                }
+            };
+            await ReplyAsync("", false, b.Build());
+        }
+
+        [Command("ghostping"), Remarks("AccessLevels.Normal"), RequireContext(ContextType.Guild)]
+        public async Task SnipeGhostPing()
+        {
+            SniperBinding sniperb = TestModuleService.SniperGuilds.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
+            if (sniperb == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Operation Failed", "Sniper is not tracking this guild! Check your configuration.", Color.DarkRed));
+                return;
+            }
+            if (sniperb.DeletedMessages.Where(x => x.ChannelID == Context.Channel.Id && x.Content.Contains(Context.User.Mention)).Count() < 1)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Ghost Ping", "Nobody ghost pinged you", Color.Magenta));
+                return;
+            }
+            var lastdel = sniperb.DeletedMessages.Where(x => x.ChannelID == Context.Channel.Id && x.Content.Contains(Context.User.Mention)).Last();
+            if (lastdel == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Ghost Ping", "Nobody ghost pinged you", Color.Magenta));
+                return;
+            }
+            EmbedBuilder b = new EmbedBuilder()
+            {
+                Color = Color.Blue,
+                Description = lastdel.Content,
+                Author = new EmbedAuthorBuilder()
+                {
+                    Name = $"[Ghost Ping] {lastdel.AuthorName}#{lastdel.AuthorDiscriminator}",
+                    IconUrl = lastdel.AuthorAvatarURL
+                },
+                Timestamp = lastdel.Timestamp,
+                Footer = new EmbedFooterBuilder()
+                {
+                    IconUrl = Context.User.GetAvatarUrl(ImageFormat.Auto),
+                    Text = $"Requested by {Context.User.Username}#{Context.User.Discriminator}"
+                }
+            };
+            await ReplyAsync("", false, b.Build());
+        }
+
+        #endregion
+
         #region MISC COMMANDS
 
         [Command("tpmgr"), Remarks("AccessLevels.NotSpecified")]
@@ -614,6 +697,7 @@ namespace TestModule
 
         #endregion MISC COMMANDS
 
+
         #endregion PUBLIC COMMANDS
 
         #region EMBED MESSAGES
@@ -654,6 +738,7 @@ namespace TestModule
         private readonly string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
         private readonly string TrashcanBindingsConfig = "Modules/TestModule/trash-can.json";
         private static readonly string StarboardBindingsConfig = "Modules/TestModule/starboard.json";
+        private static readonly string SniperGuildConfig = "Modules/TestModule/snipe.json";
         private static bool doonce = false;
 
         #endregion PRIVATE FIELDS
@@ -668,6 +753,9 @@ namespace TestModule
 
         [DontInject]
         public static List<ModLogBinding> MLbindings { get; set;} =  new List<ModLogBinding>();
+
+        [DontInject]
+        public static List<SniperBinding> SniperGuilds { get; set; } = new List<SniperBinding>();
 
         [DontInject]
         public static Dictionary<Tuple<ulong, ulong>, ulong> MessageCaseIDs { get; set; } = new Dictionary<Tuple<ulong, ulong>, ulong>();
@@ -757,6 +845,25 @@ namespace TestModule
                     }
                 }
 
+                if (!Directory.Exists(Path.GetDirectoryName(SniperGuildConfig)))
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(SniperGuildConfig));
+                    SniperGuilds = new List<SniperBinding>();
+                    using (StreamWriter sw = new StreamWriter(SniperGuildConfig))
+                    {
+                        sw.WriteLine(JsonConvert.SerializeObject(SniperGuilds, Formatting.Indented));
+                    }
+                }
+                else
+                {
+                    if (!File.Exists(SniperGuildConfig))
+                    {
+                        var fs = File.Create(SniperGuildConfig);
+                        fs.WriteByte(0);
+                        fs.Close();
+                    }
+                }
+
                 using (StreamReader sr = new StreamReader(ModLogBindingsConfig))
                 {
                     MLbindings = JsonConvert.DeserializeObject<List<ModLogBinding>>(sr.ReadToEnd());
@@ -766,9 +873,15 @@ namespace TestModule
                 {
                     Trashcans = JsonConvert.DeserializeObject<Dictionary<ulong, string>>(sr.ReadToEnd());
                 }
+
                 using (StreamReader sr = new StreamReader(StarboardBindingsConfig))
                 {
                     SBBindings = JsonConvert.DeserializeObject<Dictionary<ulong, StarboardBinding>>(sr.ReadToEnd());
+                }
+
+                using (StreamReader sr = new StreamReader(SniperGuildConfig))
+                {
+                    SniperGuilds = JsonConvert.DeserializeObject<List<SniperBinding>>(sr.ReadToEnd());
                 }
 
                 if (MLbindings == null)
@@ -786,22 +899,30 @@ namespace TestModule
                     SBBindings = new Dictionary<ulong, StarboardBinding>();
                 }
 
+                if (SniperGuilds == null)
+                {
+                    SniperGuilds = new List<SniperBinding>();
+                }
+
                 BoundItems = new Dictionary<ulong, GuildQueryItem>();
                 ShardedClient.UserJoined += ShardedClient_UserJoined;
                 ShardedClient.ReactionAdded += ShardedClient_ReactionAdded;
                 ShardedClient.ReactionRemoved += ShardedClient_ReactionRemoved;
                 ShardedClient.UserBanned += ShardedClient_UserBanned;
                 ShardedClient.UserUnbanned += ShardedClient_UserUnbanned;
+                ShardedClient.MessageDeleted += ShardedClient_MessageDeleted;
                 LogMessage Log1 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionAdded event handler to client.");
                 LogMessage Log3 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionRemoved event handler to client.");
                 LogMessage Log2 = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
                 LogMessage Log4 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserBanned event handler to client.");
                 LogMessage Log5 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserUnbanned event handler to client.");
+                LogMessage Log6 = new LogMessage(LogSeverity.Info, "Sniper", "Added MessageDeleted event handler to client.");
                 _consoleIO.WriteEntry(Log1);
                 _consoleIO.WriteEntry(Log3);
                 _consoleIO.WriteEntry(Log2);
                 _consoleIO.WriteEntry(Log4);
                 _consoleIO.WriteEntry(Log5);
+                _consoleIO.WriteEntry(Log6);
 
 
 
@@ -814,12 +935,56 @@ namespace TestModule
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.WelcomeRole());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.StarboardChannel());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.StarboardAliasMode());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.AllowSnipe());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.SniperQueueSize());
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Success!! Config entities registered."));
                 doonce = true;
             }
         }
 
+
+
         #region PRIVATE EVENTS
+
+        private Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        {
+            if (!(channel is SocketGuildChannel sgc))
+            {
+                return Task.Delay(0);
+            }
+            SniperBinding sniper = SniperGuilds.FirstOrDefault(x => x.GuildID == sgc.Guild.Id);
+            if(sniper == null)
+            {
+                return Task.Delay(0);
+            }
+            SniperGuilds.Remove(sniper);
+            if(sniper.DeletedMessages.Count+1 > sniper.QueueSize)
+            {
+                sniper.DeletedMessages.RemoveAt(0);
+            }
+            sniper.DeletedMessages.Add(
+                new DeletedMessage()
+                {
+                    AuthorAvatarURL = message.Value.Author.GetAvatarUrl(ImageFormat.Auto),
+                    AuthorID = message.Value.Author.Id,
+                    ChannelID = channel.Id,
+                    guildID = sgc.Guild.Id,
+                    Content = message.Value.Content,
+                    ID = message.Value.Id,
+                    Timestamp = message.Value.Timestamp,
+                    AuthorDiscriminator = message.Value.Author.Discriminator,
+                    AuthorName = message.Value.Author.Username
+
+                });
+            SniperGuilds.Add(sniper);
+            using (StreamWriter sw = new StreamWriter(SniperGuildConfig))
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_MD", "Deconstruction: Saving Snipers"));
+                sw.WriteLine(JsonConvert.SerializeObject(SniperGuilds, Formatting.Indented,new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore}));
+            }
+            Writer.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_MD", "Deconstruction: Snipers Saved..."));
+            return Task.Delay(0);
+        }
 
         private async Task ShardedClient_UserUnbanned(SocketUser arg1, SocketGuild arg2)
         {
@@ -1891,6 +2056,82 @@ namespace TestModule
 
         #endregion STARBOARD
 
+        #region SNIPER
+
+        public static async Task BindSniper(ICommandContext context)
+        {
+            if (context.Guild == null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Invalid Context", "You need to be in a guild.", Color.DarkRed));
+                return;
+            }
+            if (SniperGuilds.FirstOrDefault(x => x.GuildID == context.Guild.Id) != null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Configuration Failed", "Sniper is already tracking this guild.", Color.Orange));
+                return;
+            }
+            SniperBinding sniper = new SniperBinding()
+            {
+                GuildID = context.Guild.Id,
+                DeletedMessages = new List<DeletedMessage>()
+            };
+            SniperGuilds.Add(sniper);
+            using (StreamWriter sw = new StreamWriter(SniperGuildConfig))
+            {
+                sw.WriteLine(JsonConvert.SerializeObject(SniperGuilds, Formatting.Indented));
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Configuration Updated", $"Sniper enabled for `{context.Guild.Name}`", Color.Green));
+
+            }
+        }
+
+        public static async Task UnBindSniper(ICommandContext context)
+        {
+            if (context.Guild == null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Invalid Context", "You need to be in a guild.", Color.DarkRed));
+                return;
+            }
+            SniperBinding sniper = SniperGuilds.FirstOrDefault(x => x.GuildID == context.Guild.Id);
+            if (sniper == null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Configuration Failed", "Sniper wasn't tracking this guild.", Color.Orange));
+                return;
+            }
+            SniperGuilds.Remove(sniper);
+            using (StreamWriter sw = new StreamWriter(SniperGuildConfig))
+            {
+                sw.WriteLine(JsonConvert.SerializeObject(SniperGuilds, Formatting.Indented));
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Configuration Updated", $"Sniper disabled for `{context.Guild.Name}`", Color.Green));
+
+            }
+        }
+
+        public static async Task SetSniperQueueSize(ICommandContext context, int size=20)
+        {
+            if (context.Guild == null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Invalid Context", "You need to be in a guild.", Color.DarkRed));
+                return;
+            }
+            SniperBinding sniper = SniperGuilds.FirstOrDefault(x => x.GuildID == context.Guild.Id);
+            if (sniper == null)
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Configuration Failed", "Sniper isn't tracking this guild.", Color.Orange));
+                return;
+            }
+            SniperGuilds.Remove(sniper);//overkill?
+            sniper.QueueSize = size;
+            SniperGuilds.Add(sniper);//overkill?
+            using (StreamWriter sw = new StreamWriter(SniperGuildConfig))
+            {
+                sw.WriteLine(JsonConvert.SerializeObject(SniperGuilds, Formatting.Indented));
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Configuration Updated", $"Sniper Queue size set to `{size}`", Color.Green));
+
+            }
+        }
+
+        #endregion SNIPER
+
         #region EMBED MESSAGES
         public static Embed GetEmbeddedMessage(ICommandContext Context, string title, string message, Color color, Exception e = null)
         {
@@ -1930,6 +2171,24 @@ namespace TestModule
         public ulong MuteRoleID { get; set; }
     }
 
+    public class SniperBinding
+    {
+        public ulong GuildID { get; set; }
+        public List<DeletedMessage> DeletedMessages { get; set; }
+        public int QueueSize { get; set; } = 100;
+    }
+    public class DeletedMessage
+    {
+        public ulong ID { get; set; }
+        public string Content { get; set; }
+        public ulong AuthorID { get; set; }
+        public string AuthorName { get; set; }
+        public string AuthorDiscriminator { get; set; }
+        public string AuthorAvatarURL { get; set; }
+        public ulong ChannelID { get; set; }
+        public ulong guildID { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
+    }
     public class StarboardBinding
     {
         public ulong ChannelID { get; set; }
