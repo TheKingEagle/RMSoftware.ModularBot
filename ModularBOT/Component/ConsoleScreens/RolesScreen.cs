@@ -20,16 +20,18 @@ namespace ModularBOT.Component.ConsoleScreens
         private int countOnPage = 0;
         private int ppg = 0;
         private List<SocketRole> Roles = new List<SocketRole>();
+        private bool errorfooter;
         private readonly SocketGuild currentguild;
+        private readonly DiscordNET DNet;
 
         #endregion
 
-        public RolesScreen(SocketGuild Guild, List<SocketRole> RoleList, string title = "Role List", short startpage = 1)
+        public RolesScreen(DiscordNET discord, SocketGuild Guild, List<SocketRole> RoleList, string title = "Role List", short startpage = 1)
         {
             currentguild = Guild;
             Roles = RoleList;
             page = startpage;
-
+            DNet = discord;
             max = (short)(Math.Ceiling((double)(Roles.Count / 22)) + 1);
             index = 0;
             selectionIndex = 0;
@@ -145,8 +147,7 @@ namespace ModularBOT.Component.ConsoleScreens
                                        //TODO: If success or fail, Display a message prompt
                         break;
                     case (3):
-                        //SS_EditAccessLevel();
-
+                        SS_EditAccessLevel();
                         RefreshMeta();
                         RenderScreen();
                         break;
@@ -220,10 +221,79 @@ namespace ModularBOT.Component.ConsoleScreens
             LayoutUpdating = false;
         }
 
+        private void WriteFooter(string footer, ConsoleColor BackColor = ConsoleColor.Gray, ConsoleColor ForeColor = ConsoleColor.Black)
+        {
+            LayoutUpdating = true;
+            ScreenBackColor = BackColor;
+            ScreenFontColor = ForeColor;
+            int CT = Console.CursorTop;
+            Console.CursorTop = 31;
+            WriteEntry($"\u2502 {footer} \u2502".PadRight(141, '\u2005') + "\u2502", BackColor, false, BackColor);
+            Console.CursorTop = 0;
+            Console.CursorTop = CT;
+            ScreenFontColor = ConsoleColor.Cyan;
+            ScreenBackColor = ConsoleColor.Black;
+            LayoutUpdating = false;
+        }
         #endregion
 
         #region Role Properties Sub-Screen Methods
         //TODO: SS_EditAccessLevel();
+
+        public bool SS_EditAccessLevel()
+        {
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+
+            string rolename = GetSafeName(Roles, index + selectionIndex);
+            if (Roles[index+selectionIndex].Id == Roles[index + selectionIndex].Guild.Id)
+            {
+                WriteFooter("[ERROR] Operation Failed", ConsoleColor.DarkRed, ConsoleColor.White);
+                errorfooter = true;
+                ShowOptionSubScreen("Invalid Operation", $"Editing {rolename} is not permitted", "-", "Okay", "-", "-", ConsoleColor.DarkRed);
+                
+                return false;
+            }
+            ConsoleColor PRVBG = Console.BackgroundColor;
+            ConsoleColor PRVFG = Console.ForegroundColor;
+
+            #region ------------ [ACCESS LEVEL EDITOR] ------------
+
+            UpdateFooter(page, max, true);          //prompt footer
+            int rr = ShowOptionSubScreen($"Editing: {rolename}", "Please select a new access level",
+                "BlackListed", "Normal", "Command Manager", "Administrator");
+
+            switch (rr)
+            {
+                case (1):
+                    WriteFooter("[ERROR] Operation Failed.", ConsoleColor.DarkRed, ConsoleColor.White);
+                    errorfooter = true;
+                    ShowOptionSubScreen("Invalid Operation", "You cannot blacklist a role.", "-", "Okay", "-", "-", ConsoleColor.DarkRed);
+                    break;
+                case (2):
+                    if (DNet.PermissionManager.IsEntityRegistered(Roles[index + selectionIndex]))
+                    {
+                        DNet.PermissionManager.DeleteEntity(Roles[index + selectionIndex]);
+                    }
+                    break;
+                case (3):
+                    DNet.PermissionManager.RegisterEntity(Roles[index + selectionIndex], AccessLevels.CommandManager);
+                    break;
+                case (4):
+                    DNet.PermissionManager.RegisterEntity(Roles[index + selectionIndex], AccessLevels.Administrator);
+                    break;
+                default:
+                    break;
+            }
+
+            UpdateFooter(page, max);                //restore footer
+
+            #endregion
+
+            Console.ForegroundColor = PRVFG;
+            Console.BackgroundColor = PRVBG;
+            return true;
+
+        }
         #endregion
 
         #region Role Listing Methods
@@ -252,8 +322,8 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.SetCursorPosition(0, ContentTop);
             }
 
-            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Role Name".PadRight(39, '\u2005')} {"Role ID".PadRight(22, '\u2005')} {"Is Admin".PadLeft(10, '\u2005')}", ConsoleColor.Blue,false);
-            WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(10, '\u2500')}", ConsoleColor.Blue,false);
+            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Role Name".PadRight(39, '\u2005')} {"Role ID".PadRight(22, '\u2005')} {"Access Level".PadRight(16, '\u2005')} {"Is Admin".PadLeft(10, '\u2005')}", ConsoleColor.Blue,false);
+            WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadRight(16, '\u2500')} {"".PadLeft(10, '\u2500')}", ConsoleColor.Blue,false);
             
             for (int i = index; i < 22 * page; i++)//22 results per page.
             {
@@ -280,7 +350,8 @@ namespace ModularBOT.Component.ConsoleScreens
             string o = Encoding.ASCII.GetString(Encoding.Convert(Encoding.Unicode, Encoding.GetEncoding(Encoding.ASCII.EncodingName, new EncoderReplacementFallback("?"), new DecoderExceptionFallback()), Encoding.Unicode.GetBytes(name))).Replace(' ', '\u2005').Replace("??", "?");
             string p = $"{o}".PadRight(39, '\u2005');
             string admin = roles[i].Permissions.Administrator ? "Yes".PadLeft(10, '\u2005') : "No".PadLeft(10, '\u2005');
-            WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{roles.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {admin}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen, false);
+            string accesslevel = DNet.PermissionManager.GetAccessLevel(roles.ElementAt(i)).ToString().PadRight(16, '\u2005');
+            WriteEntry($"\u2502\u2005\u2005\u2005 - {p} [{roles.ElementAt(i).Id.ToString().PadLeft(20, '0')}] {accesslevel} {admin}", (countOnPage - 1) == selectionIndex, ConsoleColor.DarkGreen, false);
 
 
         }

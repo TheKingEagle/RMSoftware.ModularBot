@@ -299,7 +299,7 @@ namespace ModularBOT.Component.ConsoleScreens
             var RoleList = BotRoles ? Guildlist[index + selectionIndex].CurrentUser.Roles.ToList() : Guildlist[index + selectionIndex].Roles.ToList();
             string title = BotRoles ? $"Listing roles for {Guildlist[index + selectionIndex].CurrentUser.Username}#" +
                 $"{Guildlist[index + selectionIndex].CurrentUser.Discriminator}" : "Listing all roles";
-            var NGScreen = new RolesScreen(Guildlist[index + selectionIndex], RoleList, title);
+            var NGScreen = new RolesScreen(DNet,Guildlist[index + selectionIndex], RoleList, title);
             {
                 ActiveScreen = true;
             };
