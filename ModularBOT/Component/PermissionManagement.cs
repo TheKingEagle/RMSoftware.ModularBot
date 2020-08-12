@@ -356,7 +356,7 @@ namespace ModularBOT.Component
             }
             if (role.Id == role.Guild.Id)
             {
-                throw new InvalidOperationException("You can't register this entity");
+                return 0; //ignore @/everyone for this method.
             }
             RegisteredEntity r = new RegisteredEntity
             {
