@@ -142,7 +142,7 @@ namespace ModularBOT.Component.ConsoleScreens
                         SS_ViewUserScreen();
                         break;
                     case (2):
-                        //SS_ViewChannelsScreen();
+                        SS_ViewChannelsScreen();
                         break;
                     case (3):
                         SS_ViewRolesScreen(false);
@@ -302,6 +302,31 @@ namespace ModularBOT.Component.ConsoleScreens
             var NGScreen = new RolesScreen(DNet,Guildlist[index + selectionIndex], RoleList, title);
             {
                 ActiveScreen = true;
+            };
+            NGScreen.RenderScreen();
+            while (true)
+            {
+                if (NGScreen.ProcessInput(Console.ReadKey(true)))
+                {
+                    break;
+                }
+            }
+            NGScreen.ActiveScreen = false;
+            //----------------End modal----------------
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+            RefreshMeta();
+            RenderScreen();
+            countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
+        }
+
+        private void SS_ViewChannelsScreen()
+        {
+            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
+
+            //---------------start modal---------------
+            var NGScreen = new ChannelsScreen(Guildlist[index + selectionIndex], Guildlist[index + selectionIndex].Channels.ToList())
+            {
+                ActiveScreen = true
             };
             NGScreen.RenderScreen();
             while (true)
