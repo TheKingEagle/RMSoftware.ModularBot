@@ -243,7 +243,7 @@
     <Compile Include="Component\ConsoleCommands\DisableCMDCommand.cs" />
     <Compile Include="Component\ConsoleCommands\EnableCMDCommand.cs" />
     <Compile Include="Component\ConsoleCommands\GuildNameCommand.cs" />
-    <Compile Include="Component\ConsoleCommands\GuildsCommand.cs" />
+    <Compile Include="Component\ConsoleCommands\TestScreenCommand.cs" />
     <Compile Include="Component\ConsoleCommands\LeaveCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ListCommand.cs" />
     <Compile Include="Component\ConsoleCommands\MBotDataCommand.cs" />
@@ -255,10 +255,11 @@
     <Compile Include="Component\ConsoleCommands\SetvarCommand.cs" />
     <Compile Include="Component\ConsoleCommands\StatusCommand.cs" />
     <Compile Include="Component\ConsoleCommands\StopCommand.cs" />
-    <Compile Include="Component\ConsoleCommands\TestScreenCommand.cs" />
+    <Compile Include="Component\ConsoleCommands\GuildsCommand.cs" />
     <Compile Include="Component\ConsoleCommands\TSKillCommand.cs" />
     <Compile Include="Component\ConsoleCommands\UsersCommand.cs" />
     <Compile Include="Component\ConsoleIO.cs" />
+    <Compile Include="Component\ConsoleScreens\ChannelsScreen.cs" />
     <Compile Include="Component\ConsoleScreens\RolesScreen.cs" />
     <Compile Include="Component\ConsoleScreens\UsersScreen.cs" />
     <Compile Include="Component\ConsoleScreens\GuildsScreen.cs" />
