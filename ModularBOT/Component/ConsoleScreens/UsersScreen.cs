@@ -243,7 +243,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.SetCursorPosition(0, ContentTop);
             }
             
-            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadLeft(16, '\u2005')} {"G. Admin".PadLeft(10, '\u2005')} {"G. Owner".PadLeft(10, '\u2005')}", ConsoleColor.Blue,false);
+            WriteEntry($"\u2502\u2005\u2005\u2005 - {"Discord User".PadRight(39, '\u2005')} {"Entity ID".PadRight(22, '\u2005')} {"Access Level".PadRight(16, '\u2005')} {"G. Admin".PadLeft(10, '\u2005')} {"G. Owner".PadLeft(10, '\u2005')}", ConsoleColor.Blue,false);
             WriteEntry($"\u2502\u2005\u2005\u2005 \u2500 {"".PadRight(39, '\u2500')} {"".PadLeft(22, '\u2500')} {"".PadLeft(16, '\u2500')} {"".PadLeft(10, '\u2500')} {"".PadLeft(10, '\u2500')}", ConsoleColor.Blue,false);
             
             for (int i = index; i < 22 * page; i++)//22 results per page.
