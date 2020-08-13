@@ -8,9 +8,8 @@ using Discord;
 using Discord.Net;
 using ModularBOT.Component;
 using Microsoft.Extensions.DependencyInjection;
-using ModularBOT.Component.ConsoleScreens;
 using static ModularBOT.Component.ConsoleIO;
-using System.Threading;
+using ModularBOT.Component.ConsoleScreens;
 
 namespace ModularBOT.Component.ConsoleCommands
 {
@@ -18,8 +17,9 @@ namespace ModularBOT.Component.ConsoleCommands
     {
         public TestScreenCommand()
         {
-            CommandName = "newguilds";//temporary test guilds command
+            CommandName = "testscreen";
         }
+
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
 
@@ -27,14 +27,14 @@ namespace ModularBOT.Component.ConsoleCommands
             List<LogEntry> v = new List<LogEntry>();
             ScreenModal = true;
             //---------------start modal---------------
-            var NGScreen = new GuildsScreen(discordNET.Client.Guilds.ToList(),discordNET)
+            var NGScreen = new TestConsoleScreen()
             {
                 ActiveScreen = true
             };
             NGScreen.RenderScreen();
             while (true)
             {
-                if(NGScreen.ProcessInput(Console.ReadKey(true)))
+                if (NGScreen.ProcessInput(Console.ReadKey(true)))
                 {
                     break;
                 }
@@ -53,5 +53,6 @@ namespace ModularBOT.Component.ConsoleCommands
             }
             return true;
         }
+
     }
 }
