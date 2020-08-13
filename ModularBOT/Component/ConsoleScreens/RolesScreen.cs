@@ -20,7 +20,6 @@ namespace ModularBOT.Component.ConsoleScreens
         private int countOnPage = 0;
         private int ppg = 0;
         private List<SocketRole> Roles = new List<SocketRole>();
-        private bool errorfooter;
         private readonly SocketGuild currentguild;
         private readonly DiscordNET DNet;
 
@@ -248,7 +247,6 @@ namespace ModularBOT.Component.ConsoleScreens
             if (Roles[index+selectionIndex].Id == Roles[index + selectionIndex].Guild.Id)
             {
                 WriteFooter("[ERROR] Operation Failed", ConsoleColor.DarkRed, ConsoleColor.White);
-                errorfooter = true;
                 ShowOptionSubScreen("Invalid Operation", $"Editing {rolename} is not permitted", "-", "Okay", "-", "-", ConsoleColor.DarkRed);
                 
                 return false;
@@ -266,7 +264,6 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 case (1):
                     WriteFooter("[ERROR] Operation Failed.", ConsoleColor.DarkRed, ConsoleColor.White);
-                    errorfooter = true;
                     ShowOptionSubScreen("Invalid Operation", "You cannot blacklist a role.", "-", "Okay", "-", "-", ConsoleColor.DarkRed);
                     break;
                 case (2):
