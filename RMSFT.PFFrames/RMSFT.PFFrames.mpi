@@ -1,6 +1,0 @@
-{
-  "moduleName": "RMSFT.PFFrames.AvatarOverlay",
-  "serviceClass": "RMSFT.PFFrames.AvatarService",
-  "guildsAvailable": [],
-  "moduleGroups": [ "PFFrames" ]
-}
