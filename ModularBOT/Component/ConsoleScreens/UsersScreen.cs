@@ -26,13 +26,24 @@ namespace ModularBOT.Component.ConsoleScreens
             DNet = discord;
             guild.DownloadUsersAsync();
             UserList = guild.Users.ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
-            page = startpage;
 
             max = (short)(Math.Ceiling((double)(UserList.Count / 22)) + 1);
-            index = 0;
+
+            page = startpage;
             selectionIndex = 0;
             countOnPage = 0;
+            if(page > max)
+            {
+                page = max;
+            }
             ppg = 0;
+            index = (page * 22) - 22;
+
+            ProgressMax = max;
+            ProgressVal = page;
+
+            ShowProgressBar = true;
+            ShowMeta = true;
 
             ScreenFontColor = ConsoleColor.Cyan;
             ScreenBackColor = ConsoleColor.Black;
@@ -42,11 +53,6 @@ namespace ModularBOT.Component.ConsoleScreens
             string shortname = guild.Name.Length > 24 ? $"{guild.Name.Remove(24)}..." : $"{guild.Name}";
             Title = $"Listing users for {shortname} | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version}";
             RefreshMeta();
-            ShowProgressBar = true;
-            ShowMeta = true;
-
-            ProgressVal = page;
-            ProgressMax = max;
             BufferHeight = 34;
             WindowHeight = 32;
 
