@@ -28,13 +28,19 @@ namespace ModularBOT.Component.ConsoleScreens
         {
             DNet = discord;
             Guildlist = guilds;
-            page = startpage;
-
             max = (short)(Math.Ceiling((double)(discord.Client.Guilds.Count / 22)) + 1);
-            index = 0;
+            page = startpage;
             selectionIndex = 0;
             countOnPage = 0;
+            if (page > max)
+            {
+                page = max;
+            }
             ppg = 0;
+            index = (page * 22) - 22;
+
+            ProgressMax = max;
+            ProgressVal = page;
 
             ScreenFontColor = ConsoleColor.Cyan;
             ScreenBackColor = ConsoleColor.Black;
@@ -47,8 +53,6 @@ namespace ModularBOT.Component.ConsoleScreens
             ShowProgressBar = true;
             ShowMeta = true;
 
-            ProgressVal = page;
-            ProgressMax = max;
             BufferHeight = 34;
             WindowHeight = 32;
         }
