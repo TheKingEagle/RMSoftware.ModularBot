@@ -19,19 +19,33 @@ namespace ModularBOT.Component.ConsoleScreens
             ProgressColor   = ConsoleColor.Green;
 
             Title           = $"Test Console Screen | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version.ToString()}";
-            Meta            = "This is a fucking test.";
+            Meta            = "This is a test.";
             ShowProgressBar = true;
             ShowMeta        = true;
 
             ProgressVal     = 1;
             ProgressMax     = 2;
-            BufferHeight    = 36;
-            WindowHeight    = 35;
+            BufferHeight    = 34;
+            WindowHeight    = 32;
             
         }
 
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
+            if(keyinfo.Key == ConsoleKey.F3)
+            {
+                string val = ShowStringPrompt("Test StringPrompt", "Please enter some text below.");
+                ScreenFontColor = ConsoleColor.Cyan;
+                ScreenBackColor = ConsoleColor.Black;
+                TitlesBackColor = ConsoleColor.Black;
+                TitlesFontColor = ConsoleColor.White;
+                ProgressColor = ConsoleColor.Green;
+                RenderScreen();//reset;
+                if(val !=null)
+                {
+                    WriteEntry($"Prompt response: {val}", ConsoleColor.Red, false);
+                }
+            }
             return base.ProcessInput(keyinfo);
         }
 
@@ -39,63 +53,49 @@ namespace ModularBOT.Component.ConsoleScreens
         {
             SpinWait.SpinUntil(() => !LayoutUpdating);
             ScreenFontColor = ConsoleColor.DarkBlue;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.Blue;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.DarkRed;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.Red;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.DarkYellow;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.Yellow;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.DarkGreen;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.Green;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.DarkMagenta;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.Magenta;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.DarkGray;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.Gray;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.White;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.DarkCyan;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenFontColor = ConsoleColor.Cyan;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
 
             ScreenBackColor = ConsoleColor.DarkBlue;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenBackColor = ConsoleColor.Blue;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenBackColor = ConsoleColor.DarkRed;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenBackColor = ConsoleColor.Red;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenBackColor = ConsoleColor.DarkYellow;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenBackColor = ConsoleColor.Yellow;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
+            WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenBackColor = ConsoleColor.DarkGreen;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
-            ScreenBackColor = ConsoleColor.Green;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
-            ScreenBackColor = ConsoleColor.DarkMagenta;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
-            ScreenBackColor = ConsoleColor.Magenta;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
-            ScreenBackColor = ConsoleColor.DarkGray;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
-            ScreenBackColor = ConsoleColor.Gray;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
-            ScreenBackColor = ConsoleColor.White;
-            WriteEntry("This is a fucking test!", ConsoleColor.Red, false);
-            Console.CursorTop = 0;
         }
     }
 }
