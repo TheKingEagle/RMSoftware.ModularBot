@@ -86,6 +86,8 @@ namespace ModularBOT.Entity
 
         public bool IsLogScreen { get; set; } = false;
 
+        public bool ShowCursor { get; set; } = false;
+
         #endregion
 
         #region internal/private/protected methods
@@ -761,6 +763,7 @@ namespace ModularBOT.Entity
 
             LayoutUpdating = false;
             RenderContents();
+            Console.CursorVisible = ShowCursor;
         }
 
         protected int UpdateMeta()
@@ -817,7 +820,7 @@ namespace ModularBOT.Entity
 
             if (string.IsNullOrWhiteSpace(Option1) || string.IsNullOrWhiteSpace(Option2) || string.IsNullOrWhiteSpace(Option3) || string.IsNullOrWhiteSpace(Option4))
             {
-                throw (new ArgumentException("We cannot support empty text at this time."));
+                throw (new ArgumentException("Options may not be blank at this time."));
             }
 
             #region TOP
@@ -945,6 +948,110 @@ namespace ModularBOT.Entity
             ActivePrompt = false;
             RenderScreen();
             return result;
+        }
+
+        public string ShowStringPrompt(string title,string prompt, ConsoleColor SBG = ConsoleColor.DarkBlue, ConsoleColor SFG = ConsoleColor.White)
+        {
+            ActivePrompt = true;
+            Console.CursorVisible = false;
+            int left = 71 - 20;
+            int top = 16 - 3;
+
+            Console.CursorLeft = left;
+            Console.CursorTop = top;
+            Console.BackgroundColor = SBG;
+            Console.ForegroundColor = SFG;
+
+            //WARNING: This code file is a fucking nightmare unless you view it in Visual Studio, 
+            //or other #region supporting IDE.
+            //Each #region tells you which part of the dialog is rendered.
+
+            #region ╒════════ Prompt Title ════════╕
+            if (title.Length > 35)
+            {
+                title = title.Remove(32) + "...";
+            }
+
+            string WTitle = " " + title + " ";
+            string pTitle = WTitle.PadLeft(((40 / 2)) + WTitle.Length / 2, '\u2550');
+            pTitle += "".PadRight(((40 / 2)) - WTitle.Length / 2, '\u2550');
+            Console.Write("\u2552{0}\u2555", pTitle);
+            #endregion
+            #region │ Some prompt text.            │
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 1;
+            if (prompt.Length > 40)
+            {
+                prompt = prompt.Remove(36) + "...";
+            }
+
+            //Console.Write("\u2502 " + "".PadRight(39) + "\u2502");
+            //Console.CursorLeft = left;
+            //Console.CursorTop = top + 2;
+            Console.Write("\u2502 " + prompt.PadRight(39) + "\u2502");
+            #endregion
+            #region │┌────────────────────────────┐│
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 2;
+            Console.Write("\u2502\u250C" + "".PadRight(38,'\u2500') + "\u2510\u2502");
+            #endregion
+            #region ││Textbox Text                ││
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 3;
+            Console.Write("\u2502\u2502" + "".PadRight(38) + "\u2502\u2502");
+            #endregion
+            #region │└────────────────────────────┘│
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 4;
+            Console.Write("\u2502\u2514" + "".PadRight(38, '\u2500') + "\u2518\u2502");
+            #endregion
+            #region │ [ENTER]: Ok | [ESC]: Cancel  │
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 5;
+            Console.Write("\u2502 " + "[ENTER]: Confirm | [ESC]: Cancel ".PadLeft(39) + "\u2502");
+            #endregion
+            #region └──────────────────────────────┘
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 6;
+            Console.Write("\u2514" + "".PadRight(40, '\u2500') + "\u2518");
+            #endregion
+
+            //TODO: Set cursor input to LINE 3 COL 2, handle input.
+            Console.CursorTop = top + 3;
+            Console.CursorLeft = left + 2;
+            Console.CursorVisible = true;
+            string InputString = "";
+
+            while (true)
+            {
+                ConsoleKeyInfo input = Console.ReadKey(true);
+                if (input.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+                if (input.Key == ConsoleKey.Escape)
+                {
+                    return null;
+                }
+                if (input.Key == ConsoleKey.Backspace && InputString.Length > 0)
+                {
+
+                    InputString = InputString.Substring(0, (InputString.Length - 1));
+                    Console.Write("\b \b");
+                    
+                }
+                if (!char.IsControl(input.KeyChar))
+                {
+                    if(InputString.Length < 36)
+                    {
+                        Console.Write(input.KeyChar);
+                        InputString += input.KeyChar;
+                    }
+                }
+            }
+            
+            Console.CursorVisible = ShowCursor;
+            return InputString;
         }
 
         public void ClearContents()
