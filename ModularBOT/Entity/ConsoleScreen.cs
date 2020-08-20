@@ -1051,6 +1051,7 @@ namespace ModularBOT.Entity
             }
             
             Console.CursorVisible = ShowCursor;
+            ActivePrompt = false;
             return InputString;
         }
 
