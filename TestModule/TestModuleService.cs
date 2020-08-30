@@ -968,7 +968,7 @@ namespace TestModule
                     AuthorAvatarURL = message.Value.Author.GetAvatarUrl(ImageFormat.Auto),
                     AuthorID = message.Value.Author.Id,
                     ChannelID = channel.Id,
-                    guildID = sgc.Guild.Id,
+                    GuildID = sgc.Guild.Id,
                     Content = message.Value.Content,
                     ID = message.Value.Id,
                     Timestamp = message.Value.Timestamp,
@@ -1008,14 +1008,14 @@ namespace TestModule
             string ut = arg1.IsBot ? "Bot" : "User";
             b.AddField(ut, $"{arg1.Username}#{arg1.Discriminator} ({arg1.Mention})", true);
             //b.AddField("Staff Responsible", $"{rb.}", true);
-            var audits = await arg2.GetAuditLogsAsync(1).Flatten().ToList();
+            var audits = await arg2.GetAuditLogsAsync(1).Flatten().ToListAsync();
             var u = audits.FirstOrDefault(x => x.Action == ActionType.Unban)?.User;
             var r = audits.FirstOrDefault(x => x.Action == ActionType.Unban)?.Reason;
             if (u != null)
             {
                 b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}",true);
             }
-            b.AddField("Reason", r != null ? r : "Ban successfully appealed");
+            b.AddField("Reason", r ?? "Ban successfully appealed");
             if (u.Id != ShardedClient.CurrentUser.Id)
             {
                 await SendModLog(arg2.Id, b.Build());
@@ -1048,7 +1048,7 @@ namespace TestModule
             string ut = arg1.IsBot ? "Bot" : "User";
             b.AddField(ut, $"{arg1.Username}#{arg1.Discriminator} ({arg1.Mention})", true);
             //b.AddField("Staff Responsible", $"{rb.}", true);
-            var audits =  await arg2.GetAuditLogsAsync(1).Flatten().ToList();
+            var audits =  await arg2.GetAuditLogsAsync(1).Flatten().ToListAsync();
             var u = audits.FirstOrDefault(x => x.Action == ActionType.Ban)?.User;
             if(u != null)
             {
@@ -1081,13 +1081,16 @@ namespace TestModule
                 await item.DefaultChannel.SendMessageAsync($"Hello `{arg.Username}#{arg.Discriminator}`, Welcome to `{arg.Guild.Name}`! {item.WelcomeMessage}");
                 if (item.RoleToAssign == null)
                 {
-                    Log = new LogMessage(LogSeverity.Warning, "Greetings", $"A role was not specified. Playing welcome message only.");//debuglul
+                    Log = new LogMessage(LogSeverity.Warning, "Greetings", $"A role was not specified. Playing welcome message only.");
+                    Writer.WriteEntry(Log);
                 }
                 if (item.RoleToAssign != null)
                 {
                     Log = new LogMessage(LogSeverity.Info, "Greetings", $"A role was specified, let's assign to user. ROLE: {item.RoleToAssign.Name}<{item.RoleToAssign.Id}>");//debuglul
+                    Writer.WriteEntry(Log);
                     await arg.AddRoleAsync(item.RoleToAssign); //assign le role
                 }
+                
                 Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser uses JoinEvent... It's SUPER EFFECTIVE!");//debuglul
                 Writer.WriteEntry(Log);
                 Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser: " + arg.Username + "\r\n" + "The Guild: " + arg.Guild.Name);//debuglul
@@ -1219,7 +1222,7 @@ namespace TestModule
                                     Color = new Color(255, 234, 119),
                                     Footer = new EmbedFooterBuilder()
                                     {
-                                        Text = $"MessageID: {StarredMessage.Id} | {StarredMessage.Timestamp.ToString()}"
+                                        Text = $"MessageID: {StarredMessage.Id} | {StarredMessage.Timestamp}"
                                     }
 
                                 };
@@ -1417,8 +1420,7 @@ namespace TestModule
                                     }
                                 }
                             }
-                            var sum = await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) as IUserMessage;
-                            if (sum != null)
+                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
@@ -1441,7 +1443,7 @@ namespace TestModule
                                     Color = new Color(255, 234, 119),
                                     Footer = new EmbedFooterBuilder()
                                     {
-                                        Text = $"MessageID: {StarredMessage.Id} | {StarredMessage.Timestamp.ToString()}"
+                                        Text = $"MessageID: {StarredMessage.Id} | {StarredMessage.Timestamp}"
                                     }
 
                                 };
@@ -1768,11 +1770,10 @@ namespace TestModule
                 {
                     return new Tuple<bool, string>(false, "Specified channel is not valid!");
                 }
-                var message = await ch.GetMessageAsync(MessageID) as IUserMessage;
-                if(message == null)
+                if (!(await ch.GetMessageAsync(MessageID) is IUserMessage message))
                 {
                     return new Tuple<bool, string>(false, "The message could not be found!");
-                    
+
                 }
                 Embed oldembed = (Embed)message.Embeds.ToList()[0];
                 EmbedBuilder b = new EmbedBuilder
@@ -1925,8 +1926,8 @@ namespace TestModule
                     Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Saving Config..."));
                     await SW.WriteLineAsync(JsonConvert.SerializeObject(Trashcans));
                 }
-                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"UPDATED: Now Listening for {emote.ToString()} Reactions",
-                $"Any of **MY** messages in `{ShardedClient.GetGuild(GuildID).Name}` that receive the reaction {emote.ToString()} will be deleted.", Color.Green));
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"UPDATED: Now Listening for {emote} Reactions",
+                $"Any of **MY** messages in `{ShardedClient.GetGuild(GuildID).Name}` that receive the reaction {emote} will be deleted.", Color.Green));
                 return;
             }
             else
@@ -1938,8 +1939,8 @@ namespace TestModule
                     Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Saving Config..."));
                     await SW.WriteLineAsync(JsonConvert.SerializeObject(Trashcans));
                 }
-                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"ADDED: Now Listening for {emote.ToString()} Reactions",
-                $"Any of **my** messages in `{ShardedClient.GetGuild(GuildID).Name}` that receive the reaction {emote.ToString()} will be deleted.", Color.Green));
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"ADDED: Now Listening for {emote} Reactions",
+                $"Any of **my** messages in `{ShardedClient.GetGuild(GuildID).Name}` that receive the reaction {emote} will be deleted.", Color.Green));
                 return;
             }
             
@@ -1957,8 +1958,8 @@ namespace TestModule
                     Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "Reaction", "Saving Config..."));
                     await SW.WriteLineAsync(JsonConvert.SerializeObject(Trashcans));
                 }
-                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"Removed: {S.ToString()} Reaction Event",
-                $"Messages will no longer be deleted with {S.ToString()}", Color.LightOrange));
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(Context, $"Removed: {S} Reaction Event",
+                $"Messages will no longer be deleted with {S}", Color.LightOrange));
                 
                 return;
             }
@@ -2186,7 +2187,7 @@ namespace TestModule
         public string AuthorDiscriminator { get; set; }
         public string AuthorAvatarURL { get; set; }
         public ulong ChannelID { get; set; }
-        public ulong guildID { get; set; }
+        public ulong GuildID { get; set; }
         public DateTimeOffset Timestamp { get; set; }
     }
     public class StarboardBinding
