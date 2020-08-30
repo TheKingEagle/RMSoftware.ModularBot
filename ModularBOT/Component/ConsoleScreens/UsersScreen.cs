@@ -12,7 +12,7 @@ namespace ModularBOT.Component.ConsoleScreens
     public class UsersScreen : ConsoleScreen
     {
         private short page = 1;
-        private readonly short max = 1;
+        private short max = 1;
         private int index = 0;
         private int selectionIndex = 0;
         private int countOnPage = 0;
@@ -20,10 +20,12 @@ namespace ModularBOT.Component.ConsoleScreens
         private bool errorfooter = false;
         private readonly DiscordNET DNet;
         private List<SocketGuildUser> UserList = new List<SocketGuildUser>();
+        private readonly SocketGuild guild;
 
-        public UsersScreen(SocketGuild guild, DiscordNET discord, short startpage=1)
+        public UsersScreen(SocketGuild _guild, DiscordNET discord, short startpage=1)
         {
             DNet = discord;
+            guild = _guild;
             guild.DownloadUsersAsync();
             UserList = guild.Users.ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
 
@@ -150,6 +152,50 @@ namespace ModularBOT.Component.ConsoleScreens
                 countOnPage = PopulateList(page, max, ref index, selectionIndex, ref ppg, ref UserList);
             }
 
+            if(keyinfo.Key == ConsoleKey.F3)
+            {
+                string SearchQuery = ShowStringPrompt($"Search {guild.Name}", "Enter a username and/or #tag.");
+                string[] array = { SearchQuery } ;
+                string userquery = "";
+                string discrimquery = "";
+                if (!string.IsNullOrWhiteSpace(SearchQuery))
+                {
+                    array = SearchQuery.Split('#');
+                    if (array.Length > 1)
+                    {
+                        userquery = array[0];
+                        discrimquery = array[1];
+                    }
+                }
+                //guild.DownloadUsersAsync();
+                UserList = guild.Users.ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
+                if (!string.IsNullOrWhiteSpace(SearchQuery) && (array.Length ==1))
+                {
+                    UserList = UserList.FindAll(x => x.Username.ToLower().Contains(SearchQuery.ToLower())).OrderByDescending(x => (int)(x.Hierarchy)).ToList();
+
+                }
+
+                if (!string.IsNullOrWhiteSpace(SearchQuery) && (array.Length >1))
+                {
+                    UserList = UserList.FindAll(x => (x.Username.ToLower() + "#" + x.Discriminator).Contains(userquery.ToLower() + "#" + discrimquery)).ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
+                }
+                max = (short)(Math.Ceiling((double)(UserList.Count / 22)) + 1);
+
+                page = 1;
+                selectionIndex = 0;
+                countOnPage = 0;
+                if (page > max)
+                {
+                    page = max;
+                }
+                ppg = 0;
+                index = (page * 22) - 22;
+
+                ProgressMax = max;
+                ProgressVal = page;
+                RefreshMeta();
+                RenderScreen();
+            }
             if (keyinfo.Key == ConsoleKey.Enter)
             {
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
@@ -273,19 +319,19 @@ namespace ModularBOT.Component.ConsoleScreens
 
             if (page > 1 && page < max)
             {
-                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F3] Search...");
             }
             if (page == 1 && page < max)
             {
-                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F3] Search...");
             }
             if (page == 1 && page == max)
             {
-                WriteFooter("[ESC] Exit \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F3] Search...");
             }
             if (page > 1 && page == max)
             {
-                WriteFooter("[ESC] Exit \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F3] Search...");
             }
             if(prompt)
             {
