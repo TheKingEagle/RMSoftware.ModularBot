@@ -26,32 +26,32 @@ namespace ModularBOT.Component.ConfigEntities
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
-            if (!ulong.TryParse(value, out ulong ulchid))
+            if (ulong.TryParse(value, out ulong ulchid))
             {
                 if (Client.GetChannel(ulchid) != null)
                 {
-                    if (Client.GetChannel(ulchid) is SocketTextChannel stc)
+                    if ((Client.GetChannel(ulchid) as SocketTextChannel) != null)
                     {
                         _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogChannel = ulchid;
                         _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
                         await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>(),Context,"Config Updated", $"`GlobalInitChannel` updated to `{ulchid}`", Color.Green));
-                        
+                        return;
                     }
                     else
                     {
-                        await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>(), Context,"Invalid Channel", $"`{ulchid}` is not a valid Text Channel.", Color.Green));
+                        await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>(), Context,"Invalid Channel", $"`{ulchid}` is not a valid Text Channel.", Color.Red));
                         return;
                     }
                 }
                 else
                 {
-                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>(), Context,"Channel Not Found", $"`{ulchid}` did not match any available guild channels.", Color.Green));
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>(), Context,"Channel Not Found", $"`{ulchid}` did not match any available guild channels.", Color.Red));
                     return;
                 }
             }
             else
             {
-                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>(), Context, "Invalid Format", $"`{ulchid}` is not a valid `ulong` value.", Color.Green));
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>(), Context, "Invalid Format", $"`{ulchid}` is not a valid `ulong` value.", Color.Red));
                 return;
             }
         }
