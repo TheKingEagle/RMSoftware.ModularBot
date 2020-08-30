@@ -9,6 +9,8 @@ using Discord.Net;
 using ModularBOT.Component;
 using Microsoft.Extensions.DependencyInjection;
 using static ModularBOT.Component.ConsoleIO;
+using Discord.WebSocket;
+using ModularBOT.Component.ConsoleScreens;
 
 namespace ModularBOT.Component.ConsoleCommands
 {
@@ -55,33 +57,50 @@ namespace ModularBOT.Component.ConsoleCommands
                 return true;
             }
 
+            SocketGuild guild = discordNET.Client.GetGuild(id);
+
+            if (guild == null)
+            {
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Guild."));
+                return true;
+            }
             #endregion Parse Checking
 
             string PRV_TITLE = console.ConsoleTitle;
             List<LogEntry> v = new List<LogEntry>();
             //---------------start modal---------------
-            bool ModalResult = console.ListRoles(ref discordNET, id, numpage);
-            if (!ModalResult)
+            string gname = guild.Name;
+            if(gname.Length > 32)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "Roles", "The guild was not found..."));
-
-                return true;
+                gname = gname.Remove(29) + "...";
             }
-            //----------------End modal----------------
-            if (ModalResult)
+            string title = $"Listing all roles";
+            var NGScreen = new RolesScreen(discordNET, guild, guild.Roles.ToList(), title)
             {
-
-                console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                    Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-                ScreenModal = false;
-                v.AddRange(console.LogEntries);
-                console.LogEntries.Clear();//clear buffer.
-                                   //output previous logEntry.
-                foreach (var item in v)
+                ActiveScreen = true
+            };
+            NGScreen.RenderScreen();
+            while (true)
+            {
+                if (NGScreen.ProcessInput(Console.ReadKey(true)))
                 {
-                    console.WriteEntry(item.LogMessage, item.EntryColor);
+                    break;
                 }
             }
+            NGScreen.ActiveScreen = false;
+            //----------------End modal----------------
+            
+            console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+            ScreenModal = false;
+            v.AddRange(console.LogEntries);
+            console.LogEntries.Clear();//clear buffer.
+                                //output previous logEntry.
+            foreach (var item in v)
+            {
+                console.WriteEntry(item.LogMessage, item.EntryColor);
+            }
+            
             return true;
             //return base.Execute(consoleInput, ref ShutdownCalled, ref RestartRequested, ref InputCanceled, ref discordNET);
         }
