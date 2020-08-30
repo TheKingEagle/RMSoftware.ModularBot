@@ -29,7 +29,8 @@ namespace ModularBOT.Component.ConsoleScreens
             guild.DownloadUsersAsync();
             UserList = guild.Users.ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
 
-            max = (short)(Math.Ceiling((double)(UserList.Count / 22)) + 1);
+            max = (short)Math.Ceiling((double)UserList.Count / 22);
+            if (max == 0) { max = 1; }
 
             page = startpage;
             selectionIndex = 0;
@@ -179,8 +180,8 @@ namespace ModularBOT.Component.ConsoleScreens
                 {
                     UserList = UserList.FindAll(x => (x.Username.ToLower() + "#" + x.Discriminator).Contains(userquery.ToLower() + "#" + discrimquery)).ToList().OrderByDescending(x => (int)(x.Hierarchy)).ToList();
                 }
-                max = (short)(Math.Ceiling((double)(UserList.Count / 22)) + 1);
-
+                max = (short)Math.Ceiling((double)UserList.Count / 22);
+                if (max == 0) { max = 1; }
                 page = 1;
                 selectionIndex = 0;
                 countOnPage = 0;

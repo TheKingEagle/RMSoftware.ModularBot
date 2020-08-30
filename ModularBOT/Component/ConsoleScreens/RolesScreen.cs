@@ -30,7 +30,8 @@ namespace ModularBOT.Component.ConsoleScreens
             currentguild = Guild;
             Roles = RoleList;
             DNet = discord;
-            max = (short)(Math.Ceiling((double)(RoleList.Count / 22)) + 1);
+            max = (short)Math.Ceiling((double)RoleList.Count / 22);
+            if (max == 0) { max = 1; }
             page = startpage;
             selectionIndex = 0;
             countOnPage = 0;
