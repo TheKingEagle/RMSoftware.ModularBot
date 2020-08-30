@@ -27,8 +27,9 @@ namespace ModularBOT.Component.ConsoleScreens
         public GuildsScreen(List<SocketGuild> guilds, DiscordNET discord, short startpage=1)
         {
             DNet = discord;
-            Guildlist = guilds;
-            max = (short)(Math.Ceiling((double)(discord.Client.Guilds.Count / 22)) + 1);
+            Guildlist = guilds.OrderBy(x=>x.Name).ToList();
+            max = (short)Math.Ceiling((double)discord.Client.Guilds.Count / 22);
+            if(max == 0) { max = 1; }
             page = startpage;
             selectionIndex = 0;
             countOnPage = 0;
