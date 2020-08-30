@@ -50,7 +50,7 @@ namespace ModularBOT.Component.ConsoleScreens
             TitlesFontColor = ConsoleColor.White;
             ProgressColor = ConsoleColor.Green;
 
-            Title = $"{title} for {GetSafeName(Guild)} | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version.ToString()}";
+            Title = $"{title} for {GetSafeName(Guild)} | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version}";
             RefreshMeta();
             ShowProgressBar = true;
             ShowMeta = true;

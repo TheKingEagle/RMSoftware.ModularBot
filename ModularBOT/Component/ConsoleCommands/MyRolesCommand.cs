@@ -75,7 +75,7 @@ namespace ModularBOT.Component.ConsoleCommands
                 gname = gname.Remove(29) + "...";
             }
             string title = $"Listing bot's roles";
-            var NGScreen = new RolesScreen(discordNET, guild,guild.CurrentUser.Roles.ToList(), title)
+            var NGScreen = new RolesScreen(discordNET, guild,guild.CurrentUser.Roles.ToList(), title,numpage)
             {
                 ActiveScreen = true
             };

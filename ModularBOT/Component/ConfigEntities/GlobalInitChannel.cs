@@ -60,7 +60,7 @@ namespace ModularBOT.Component.ConfigEntities
         {
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogChannel.ToString()}`",
+                Value = $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogChannel}`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
