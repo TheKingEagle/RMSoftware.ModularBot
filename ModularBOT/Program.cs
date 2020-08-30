@@ -73,7 +73,6 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new MyRolesCommand());          //myroles
             consoleIO.ConsoleCommands.Add(new RolesCommand());            //roles
             consoleIO.ConsoleCommands.Add(new RSKillCommand());           //rskill
-            consoleIO.ConsoleCommands.Add(new SearchCommand());           //search
             consoleIO.ConsoleCommands.Add(new SetgchCommand());           //setgch
             consoleIO.ConsoleCommands.Add(new SetvarCommand());           //setvar
             consoleIO.ConsoleCommands.Add(new StatusCommand());           //status

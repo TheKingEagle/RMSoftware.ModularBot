@@ -250,7 +250,6 @@
     <Compile Include="Component\ConsoleCommands\MyRolesCommand.cs" />
     <Compile Include="Component\ConsoleCommands\RolesCommand.cs" />
     <Compile Include="Component\ConsoleCommands\RSKillCommand.cs" />
-    <Compile Include="Component\ConsoleCommands\SearchCommand.cs" />
     <Compile Include="Component\ConsoleCommands\SetgchCommand.cs" />
     <Compile Include="Component\ConsoleCommands\SetvarCommand.cs" />
     <Compile Include="Component\ConsoleCommands\StatusCommand.cs" />
