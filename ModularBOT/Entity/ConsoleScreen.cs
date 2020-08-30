@@ -1031,7 +1031,8 @@ namespace ModularBOT.Entity
                 }
                 if (input.Key == ConsoleKey.Escape)
                 {
-                    return null;
+                    InputString = null;
+                    break;
                 }
                 if (input.Key == ConsoleKey.Backspace && InputString.Length > 0)
                 {
