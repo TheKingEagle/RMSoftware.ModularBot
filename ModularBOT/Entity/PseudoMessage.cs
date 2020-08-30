@@ -121,6 +121,10 @@ namespace ModularBOT.Entity
 
         public MessageApplication Application => throw new NotImplementedException();
 
+        public bool IsSuppressed => throw new NotImplementedException();
+
+        public MessageReference Reference => throw new NotImplementedException();
+
         Task IDeletable.DeleteAsync(RequestOptions options)
         {
             return Task.Delay(0);
@@ -169,6 +173,16 @@ namespace ModularBOT.Entity
         public IAsyncEnumerable<IReadOnlyCollection<IUser>> GetReactionUsersAsync(IEmote emoji, int limit, RequestOptions options = null)
         {
             throw new NotSupportedException();
+        }
+
+        public Task RemoveReactionAsync(IEmote emote, ulong userId, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task ModifySuppressionAsync(bool suppressEmbeds, RequestOptions options = null)
+        {
+            throw new NotImplementedException();
         }
     }
 }
