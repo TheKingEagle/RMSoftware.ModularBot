@@ -137,7 +137,7 @@ namespace ModularBOT.Entity
             }
         }
 
-        private string WordWrap(string paragraph, int consoleoffset = 24)
+        internal string WordWrap(string paragraph, int consoleoffset = 24)
         {
             paragraph = new Regex(@" {2,}").Replace(paragraph.Trim(), @" ");
             //paragraph = new Regex(@"\r\n{2,}").Replace(paragraph.Trim(), @" ");
@@ -217,7 +217,7 @@ namespace ModularBOT.Entity
         /// <param name="message">Text to write</param>
         /// <param name="Entrycolor">Left margin color.</param>
         /// <param name="showCursor">If false the '&gt;' will not be shown after the output.</param>
-        protected void WriteEntry(string message, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true, ConsoleColor BorderColor = ConsoleColor.White, ConsoleColor? SEntrycolor = null)
+        protected void WriteEntry(string message, ConsoleColor Entrycolor = ConsoleColor.Black, bool showCursor = true, ConsoleColor BorderColor = ConsoleColor.White, ConsoleColor? SEntrycolor = null, ConsoleColor? borderBGColor = null)
         {
             SpinWait.SpinUntil(() => !Writing);//This will help prevent the console from being sent into a mess of garbled words.
             Writing = true;
@@ -235,9 +235,12 @@ namespace ModularBOT.Entity
                 Console.ForegroundColor = fg;
 
                 Console.Write((char)9617);//Write the colored space.
-                Console.BackgroundColor = bglast;//restore previous color.
+
+                Console.BackgroundColor = borderBGColor ?? ConsoleColor.Black;//UI border.
                 Console.ForegroundColor = BorderColor;//white UI border.
                 Console.Write("\u2551");
+                Console.BackgroundColor = bglast;//restore previous color.
+
                 Console.ForegroundColor = ScreenFontColor;//reset font.
 
                 if (i == 0)
@@ -727,8 +730,8 @@ namespace ModularBOT.Entity
             string pTitle = WTitle.PadLeft(71 + WTitle.Length / 2);
             pTitle += "".PadRight(71 - WTitle.Length / 2);
             Console.Write("\u2551{0}\u2551", pTitle);
-            _ = UpdateProgressBar();//2
-            int linecount = UpdateMeta();//4
+            int s = UpdateProgressBar();//2
+            int linecount = UpdateMeta(s);//4
 
             DecorateBottom();
             linecount++;//6
@@ -739,7 +742,7 @@ namespace ModularBOT.Entity
 
             #region Sidebar
             int ct = linecount;
-            for (int i = ct; i < BufferHeight; i++)
+            for (int i = ct; i < WindowHeight; i++)
             {
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Black;
@@ -754,6 +757,7 @@ namespace ModularBOT.Entity
                 Console.CursorTop = i;
                 Console.CursorLeft = 0;
             }
+            
             Console.CursorTop = 0;
 
             #endregion
@@ -766,9 +770,9 @@ namespace ModularBOT.Entity
             Console.CursorVisible = ShowCursor;
         }
 
-        protected int UpdateMeta()
+        protected int UpdateMeta(int startinglinecount)
         {
-            int linecount = 4;
+            int linecount = startinglinecount;
             if (ShowMeta && !string.IsNullOrWhiteSpace(Meta))
             {
                 Console.CursorLeft = 0;

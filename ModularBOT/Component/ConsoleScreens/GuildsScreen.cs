@@ -179,7 +179,7 @@ namespace ModularBOT.Component.ConsoleScreens
         private void RefreshMeta()
         {
             Meta = $"Present in {Guildlist.Count} guild(s). Connected to {Guildlist.Where(x => x.IsConnected).LongCount()} guild(s)";
-            UpdateMeta();
+            UpdateMeta(ShowProgressBar ? 3 : 4);
         }
 
         private void UpdateFooter(short page, short max, bool prompt = false)
@@ -217,7 +217,7 @@ namespace ModularBOT.Component.ConsoleScreens
             ScreenFontColor = ConsoleColor.Black;
             int CT = Console.CursorTop;
             Console.CursorTop = 31;
-            WriteEntry($"\u2502 {footer} \u2502".PadRight(141, '\u2005') + "\u2502", ConsoleColor.Gray, false, ConsoleColor.Gray);
+            WriteEntry($"\u2502 {footer} \u2502".PadRight(141, '\u2005') + "\u2502", ConsoleColor.Gray, false, ConsoleColor.Gray,null,ConsoleColor.Gray);
             Console.CursorTop = 0;
             Console.CursorTop = CT;
             ScreenFontColor = ConsoleColor.Cyan;

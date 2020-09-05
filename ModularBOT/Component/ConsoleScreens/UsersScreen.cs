@@ -86,7 +86,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 {
                     ProgressVal = page;
                     RefreshMeta();
-                    UpdateMeta();
+                    UpdateMeta(ShowProgressBar ? 3 : 2);
                     UpdateProgressBar();
                     ClearContents();
                     //RenderContents();
@@ -109,7 +109,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 if (ppg != page)
                 {
                     ProgressVal = page;
-                    UpdateMeta();
+                    UpdateMeta(ShowProgressBar ? 3 : 2);
                     UpdateProgressBar();
                     ClearContents();
                     //RenderContents();
@@ -263,7 +263,7 @@ namespace ModularBOT.Component.ConsoleScreens
             ScreenFontColor = ForeColor;
             int CT = Console.CursorTop;
             Console.CursorTop = 31;
-            WriteEntry($"\u2502 {footer} \u2502".PadRight(141, '\u2005') + "\u2502", BackColor, false, BackColor);
+            WriteEntry($"\u2502 {footer} \u2502".PadRight(141, '\u2005') + "\u2502", BackColor, false, BackColor,null,BackColor);
             Console.CursorTop = 0;
             Console.CursorTop = CT;
             ScreenFontColor = ConsoleColor.Cyan;
