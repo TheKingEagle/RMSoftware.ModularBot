@@ -217,7 +217,7 @@ namespace ModularBOT.Component
                         builder.WithTitle("WARNING");
                         builder.WithDescription("The program was auto-restarted due to a crash. Please see `Crash.LOG` and `Errors.LOG` for details.");
                         builder.WithColor(new Color(255, 255, 0));
-                        builder.WithFooter("RMSoftware.ModularBOT Core");
+                        builder.WithFooter("ModularBOT • Core");
                         ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
                     }
@@ -255,25 +255,24 @@ namespace ModularBOT.Component
                     if (serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value)
                     {
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
-                        bool pre = serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value;
+                        bool pre = serviceProvider.GetRequiredService<Configuration>().UseInDevChannel.Value;
                         bool availableUpdates = Updater.CheckUpdate(pre).GetAwaiter().GetResult();
                         if (availableUpdates)
                         {
                             string verdata = pre ? Updater.UpdateInfo.PREVERS : Updater.UpdateInfo.VERSION;
-                            string package = pre ? Updater.UpdateInfo.PREPAKG : Updater.UpdateInfo.PACKAGE;
                             EmbedBuilder builder = new EmbedBuilder();
                             builder.WithAuthor(Client.CurrentUser);
                             builder.WithTitle("UPDATE AVAILABLE");
-                            builder.WithUrl(package);
                             builder.WithThumbnailUrl(Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto, 256));
-                            builder.WithDescription("A new version of ModularBOT is available for download!");
-                            builder.AddField("Version", $"v{verdata}");
-                            builder.AddField("Download Link", package);
+                            builder.WithDescription("A new version is available for download! From the console, use the `update` command to download and install.");
+                            builder.AddField("⚠ Installed", $"`v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)}`", true);
+                            builder.AddField("✅ Latest", $"`v{verdata}`", true);
+                            builder.AddField("📂 Updates Channel", $"`{(pre ? "INDEV":"RELEASE")}`", true);
                             builder.WithColor(new Color(0, 255, 60));
-                            builder.WithFooter("RMSoftware.ModularBOT Core");
+                            builder.WithFooter("ModularBOT • Core");
                             ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
                             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"A new version is available! v{verdata}"),ConsoleColor.Green);
-                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"Download: {package}"),ConsoleColor.Green);
+                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"use the 'update' command to download and install."),ConsoleColor.Green);
                         }
                         else
                         {
@@ -301,7 +300,7 @@ namespace ModularBOT.Component
                     
                 }
             }
-            catch (Discord.Net.HttpException httx)
+            catch (HttpException httx)
             {
                 if (httx.DiscordCode == 50001)
                 {
