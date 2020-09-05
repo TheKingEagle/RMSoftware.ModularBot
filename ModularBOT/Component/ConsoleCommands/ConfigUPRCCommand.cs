@@ -14,17 +14,17 @@ namespace ModularBOT.Component.ConsoleCommands
     {
         public ConfigUPRCCommand()
         {
-            CommandName = "config.useprereleasechannel";
+            CommandName = "config.updateindev";
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
             string input = consoleInput;
-            if (input.Split(' ').Length > 1)
+            if (input.Split(' ').Length > 2)
             {
                 console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
                 return true;
             }
-            if (input.Split(' ').Length < 1)
+            if (input.Split(' ').Length < 2)
             {
                 console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
                 return true;
@@ -32,7 +32,7 @@ namespace ModularBOT.Component.ConsoleCommands
             input = input.Remove(0, CommandName.Length).Trim();
             if (bool.TryParse(input, out bool result))
             {
-                Program.configMGR.CurrentConfig.UsePreReleaseChannel = result;
+                Program.configMGR.CurrentConfig.UseInDevChannel = result;
                 Program.configMGR.Save();
                 console.WriteEntry(new LogMessage(LogSeverity.Info, "Console", "You've switched update channels."), null, true, false, true);
             }
