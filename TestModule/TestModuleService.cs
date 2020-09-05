@@ -946,34 +946,39 @@ namespace TestModule
 
         #region PRIVATE EVENTS
 
-        private Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
+        private async Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
             if (!(channel is SocketGuildChannel sgc))
             {
-                return Task.Delay(0);
+                return;
             }
             SniperBinding sniper = SniperGuilds.FirstOrDefault(x => x.GuildID == sgc.Guild.Id);
             if(sniper == null)
             {
-                return Task.Delay(0);
+                return;
             }
             SniperGuilds.Remove(sniper);
             if(sniper.DeletedMessages.Count+1 > sniper.QueueSize)
             {
                 sniper.DeletedMessages.RemoveAt(0);
             }
+            var m = await message.GetOrDownloadAsync();
+            if(m == null)
+            {
+                return;
+            }
             sniper.DeletedMessages.Add(
                 new DeletedMessage()
                 {
-                    AuthorAvatarURL = message.Value.Author.GetAvatarUrl(ImageFormat.Auto),
-                    AuthorID = message.Value.Author.Id,
+                    AuthorAvatarURL = m.Author.GetAvatarUrl(ImageFormat.Auto),
+                    AuthorID = m.Author.Id,
                     ChannelID = channel.Id,
                     GuildID = sgc.Guild.Id,
-                    Content = message.Value.Content,
-                    ID = message.Value.Id,
-                    Timestamp = message.Value.Timestamp,
-                    AuthorDiscriminator = message.Value.Author.Discriminator,
-                    AuthorName = message.Value.Author.Username
+                    Content = m.Content,
+                    ID = m.Id,
+                    Timestamp = m.Timestamp,
+                    AuthorDiscriminator = m.Author.Discriminator,
+                    AuthorName = m.Author.Username
 
                 });
             SniperGuilds.Add(sniper);
@@ -983,7 +988,7 @@ namespace TestModule
                 sw.WriteLine(JsonConvert.SerializeObject(SniperGuilds, Formatting.Indented,new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore}));
             }
             Writer.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_MD", "Deconstruction: Snipers Saved..."));
-            return Task.Delay(0);
+            return;
         }
 
         private async Task ShardedClient_UserUnbanned(SocketUser arg1, SocketGuild arg2)
