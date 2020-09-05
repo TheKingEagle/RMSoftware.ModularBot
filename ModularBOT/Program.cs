@@ -20,6 +20,7 @@ namespace ModularBOT
         private static DiscordNET discord = new DiscordNET();
         internal static bool ShutdownCalled = false;
         public static bool RestartRequested = false;
+        public static bool ImmediateTerm = false;
         private static ConsoleIO consoleIO;
         private static bool recoveredFromCrash = false;
         private delegate bool ConsoleCtrlHandlerDelegate(int sig);
@@ -67,7 +68,7 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new DisableCMDCommand());       //disablecmd
             consoleIO.ConsoleCommands.Add(new EnableCMDCommand());        //enablecmd
             consoleIO.ConsoleCommands.Add(new GuildNameCommand());        //guildname
-            consoleIO.ConsoleCommands.Add(new TestScreenCommand());           //guilds
+            consoleIO.ConsoleCommands.Add(new TestScreenCommand());       //testscreen
             consoleIO.ConsoleCommands.Add(new LeaveCommand());            //leave
             consoleIO.ConsoleCommands.Add(new MBotDataCommand());         //mbotdata
             consoleIO.ConsoleCommands.Add(new MyRolesCommand());          //myroles
@@ -80,7 +81,8 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new TSKillCommand());           //tskill
             consoleIO.ConsoleCommands.Add(new UsersCommand());            //users
             consoleIO.ConsoleCommands.Add(new ListCommand());             //list
-            consoleIO.ConsoleCommands.Add(new GuildsCommand());       //testscreen
+            consoleIO.ConsoleCommands.Add(new GuildsCommand());           //guilds
+            consoleIO.ConsoleCommands.Add(new UpdateCommand());           //update
             #endregion
 
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
@@ -120,15 +122,20 @@ namespace ModularBOT
                 p.Start();
                 return 0x5BB;//code for RESTART NEEDED
             }
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 3..."), ConsoleColor.Black, false);
-            //Console.CursorTop = consoleIO.PrvTop;
-            Thread.Sleep(1000);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 2..."), ConsoleColor.Black, false);
-            //Console.CursorTop = consoleIO.PrvTop;
-            Thread.Sleep(1000);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 1..."), ConsoleColor.Black, false);
-            //Console.CursorTop = consoleIO.PrvTop;
-            Thread.Sleep(1000);
+            if (!ImmediateTerm)
+            {
+
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 3..."), ConsoleColor.Black, false);
+                //Console.CursorTop = consoleIO.PrvTop;
+                Thread.Sleep(1000);
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 2..."), ConsoleColor.Black, false);
+                //Console.CursorTop = consoleIO.PrvTop;
+                Thread.Sleep(1000);
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Session", "Ending session. and closing program in 1..."), ConsoleColor.Black, false);
+                //Console.CursorTop = consoleIO.PrvTop;
+                Thread.Sleep(1000);
+
+            }
             return 0x000;//ok;
         }
 

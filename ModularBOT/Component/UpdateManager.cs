@@ -95,5 +95,14 @@ namespace ModularBOT.Component
         public string PREVERS { get; set; }
         public int RELEASE { get; set; }
         public int PRERELE { get; set; }
+        public List<string> ACHANGES { get; set; }
+        public List<string> BCHANGES { get; set; }
+
+        public string ASUMMARY { get; set; }
+        public string BSUMMARY { get; set; }
+
+        public string ATITLE { get; set; }
+        public string BTITLE { get; set; }
+
     }
 }

@@ -12,19 +12,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ModularBOT.Component.ConfigEntities
 {
-    internal class UsePreReleaseChannel : ConfigEntity
+    internal class UpdateInDev : ConfigEntity
     {
-        public UsePreReleaseChannel()
+        public UpdateInDev()
         {
             ReadOnly = false;
-            ConfigIdentifier = "UsePreReleaseChannel";
+            ConfigIdentifier = "UpdateInDev";
         }
 
         public override EmbedFieldBuilder ExecuteView(DiscordNET _DiscordNet, ICommandContext Context, bool inline)
         {
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value ? "`True`" : "`False`",
+                Value = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().UseInDevChannel.Value ? "`True`" : "`False`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
@@ -34,7 +34,7 @@ namespace ModularBOT.Component.ConfigEntities
         public override string ExecuteView(DiscordNET _discordNET, ICommandContext Context)
         {
             return base.ExecuteView(_discordNET, Context, 
-                _discordNET.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel.Value ? "True" : "False");
+                _discordNET.serviceProvider.GetRequiredService<Configuration>().UseInDevChannel.Value ? "True" : "False");
         }
 
         public override Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
@@ -48,7 +48,7 @@ namespace ModularBOT.Component.ConfigEntities
                 return Context.Channel.SendMessageAsync("", false, _discordNET.CustomCMDMgr.GetEmbeddedMessage(Context, 
                     "Unexpected Value", "This configuration only accepts a boolean value `True` or `False`.", Color.DarkRed));
             }
-            _discordNET.serviceProvider.GetRequiredService<Configuration>().UsePreReleaseChannel = newval;
+            _discordNET.serviceProvider.GetRequiredService<Configuration>().UseInDevChannel = newval;
             _discordNET.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
 
             return Context.Channel.SendMessageAsync("", false, this.GetEmbeddedMessage(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(),Context,

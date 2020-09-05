@@ -235,7 +235,7 @@
     <Compile Include="Component\ConfigEntities\CheckForUpdates.cs" />
     <Compile Include="Component\ConfigEntities\GuildPrefix.cs" />
     <Compile Include="Component\ConfigEntities\EventLogLevel.cs" />
-    <Compile Include="Component\ConfigEntities\UsePreReleaseChannel.cs" />
+    <Compile Include="Component\ConfigEntities\UpdateInDev.cs" />
     <Compile Include="Component\ConfigEntities\StartLogoPath.cs" />
     <Compile Include="Component\ConfigEntities\ShardCount.cs" />
     <Compile Include="Component\ConfigEntities\LoadCoreModule.cs" />
@@ -268,10 +268,12 @@
     <Compile Include="Component\ConsoleCommands\StopCommand.cs" />
     <Compile Include="Component\ConsoleCommands\GuildsCommand.cs" />
     <Compile Include="Component\ConsoleCommands\TSKillCommand.cs" />
+    <Compile Include="Component\ConsoleCommands\UpdateCommand.cs" />
     <Compile Include="Component\ConsoleCommands\UsersCommand.cs" />
     <Compile Include="Component\ConsoleIO.cs" />
     <Compile Include="Component\ConsoleScreens\ChannelsScreen.cs" />
     <Compile Include="Component\ConsoleScreens\RolesScreen.cs" />
+    <Compile Include="Component\ConsoleScreens\UpdaterConsoleScreen.cs" />
     <Compile Include="Component\ConsoleScreens\UsersScreen.cs" />
     <Compile Include="Component\ConsoleScreens\GuildsScreen.cs" />
     <Compile Include="Component\ConsoleScreens\TestConsoleScreen.cs" />

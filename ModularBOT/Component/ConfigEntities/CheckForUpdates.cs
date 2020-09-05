@@ -34,7 +34,7 @@ namespace ModularBOT.Component.ConfigEntities
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
             return base.ExecuteView(_DiscordNet, Context,
-                _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value ? "Yes" : "No");
+                _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value.ToString());
         }
     }
 }
