@@ -21,7 +21,7 @@ namespace ModularBOT.Component
 
             if (!appConfig.DebugWizard)
             {
-                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.UsePreReleaseChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
+                if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.UseInDevChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
                     && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath) && appConfig.RegisterManagementOnJoin.HasValue)
                 {
                     return false;//if every critical thing is set... continue.
@@ -390,7 +390,7 @@ namespace ModularBOT.Component
             #endregion
 
             #region PAGE 7 - Updates
-            if (!appConfig.CheckForUpdates.HasValue || !appConfig.UsePreReleaseChannel.HasValue)
+            if (!appConfig.CheckForUpdates.HasValue || !appConfig.UseInDevChannel.HasValue)
             {
                 consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Check for updates", 7, 8, ConsoleColor.Green);
 
@@ -446,28 +446,28 @@ namespace ModularBOT.Component
                 {
                     if (!appConfig.DebugWizard)
                     {
-                        appConfig.UsePreReleaseChannel = false;//set to use stable by default so wizard will stop bothering us.
+                        appConfig.UseInDevChannel = false;//set to use stable by default so wizard will stop bothering us.
                     }
                 }
-                if (!appConfig.UsePreReleaseChannel.HasValue && appConfig.CheckForUpdates.Value)
+                if (!appConfig.UseInDevChannel.HasValue && appConfig.CheckForUpdates.Value)
                 {
                     while (true)
                     {
                         consoleIO.WriteEntry("\u2502 Please choose which update channel you'd like to use.",ConsoleColor.DarkGreen);
                         consoleIO.WriteEntry("\u2502\u2005");
                         consoleIO.WriteEntry("\u2502\u2005");
-                        consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 1. STABLE");
-                        consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 2. PRE-RELEASE");
+                        consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 1. RELEASE (Production ready)");
+                        consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 2. INDEV (Provides early access to new features, but may not be production ready)");
                         Console.Write("\u2502 > ");
                         var k = Console.ReadKey();
                         if (k.KeyChar == '1')
                         {
                             if(!appConfig.DebugWizard)
                             {
-                                appConfig.UsePreReleaseChannel = false;
+                                appConfig.UseInDevChannel = false;
                             }
-                            consoleIO.WriteEntry("\u2502 You've subscribed to the STABLE updates channel.");
-                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease true`");
+                            consoleIO.WriteEntry("\u2502 You've subscribed to the RELEASE updates channel.");
+                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.updateindev true`");
 
                             break;
                         }
@@ -475,10 +475,10 @@ namespace ModularBOT.Component
                         {
                             if (!appConfig.DebugWizard)
                             {
-                                appConfig.UsePreReleaseChannel = true;
+                                appConfig.UseInDevChannel = true;
                             }
-                            consoleIO.WriteEntry("\u2502  You've subscribed to the PRE-RELEASE updates channel.");
-                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.update.prerelease false`");
+                            consoleIO.WriteEntry("\u2502  You've subscribed to the INDEV updates channel.");
+                            consoleIO.WriteEntry("\u2502 You can change this later via command: `config.updateindev false`");
                             break;
                         }
                     }
@@ -495,14 +495,14 @@ namespace ModularBOT.Component
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- The documentation, and links to the source code are available at https://rmsoftware.org/modularbot");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Version history can be found here https://rmsoftware.org/modularbot/history");
             consoleIO.WriteEntry("\u2502\u2005");
-            consoleIO.WriteEntry("\u2502\u2005Available Console Commands");
+            consoleIO.WriteEntry("\u2502\u2005Key Console Commands");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- cls or clear: clear the console output");
-            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- conmsg <message>: sends a message to the guild channel you set with setgch first");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- list: List all available console commands");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- disablecmd: disables message and command processing");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- enablecmd: enables message and command processing");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- mbotdata: Opens modularBOT's installation directory.");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- rskill: Cause the program to crash (and restart)");
-            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- setgch <id>: sets conmsg guild channel");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- guilds: view the guild list");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- setvar <var name> <value>: sets a temporary variable.");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- stopbot: stops the bot");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- tskill: Cause the program to crash (and prompt for termination)");
@@ -527,7 +527,7 @@ namespace ModularBOT.Component
             consoleIO.ConsoleGUIReset(ConsoleColor.Cyan, ConsoleColor.Black, "Setup Wizard - Startup Logo", 5, 8, ConsoleColor.Green);
 
             consoleIO.WriteEntry("\u2502 Have you ever seen those old DOS programs that have the fancy ASCII art @ startup?");
-            consoleIO.WriteEntry("\u2502 Yea? Well great! This bot can do that! Why? (You may be asking) WHY NOT?!");
+            consoleIO.WriteEntry("\u2502 Yea? Well great! This can do that! Why? (You may be asking) WHY NOT?!");
             consoleIO.WriteEntry("\u2502\u2005");
             consoleIO.WriteEntry("\u2502\u2005\u2005 Options:", ConsoleColor.DarkGreen);
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005 1. No logo", ConsoleColor.DarkGreen);
