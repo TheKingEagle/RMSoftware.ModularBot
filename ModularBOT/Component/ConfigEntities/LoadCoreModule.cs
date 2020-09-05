@@ -33,7 +33,7 @@ namespace ModularBOT.Component.ConfigEntities
 
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            return base.ExecuteView(_DiscordNet, Context, _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LoadCoreModule ? "Yes" : "No");
+            return base.ExecuteView(_DiscordNet, Context, _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LoadCoreModule.ToString());
         }
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _DiscordNet, ICommandContext Context, string value)
         {
