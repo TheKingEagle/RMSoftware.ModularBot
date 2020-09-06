@@ -64,28 +64,16 @@ namespace ModularBOT.Component
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.WithDescription("NOTE: This application is not finished. Some features are not currently implemented.");
+            eb.WithDescription("TThis update includes several fixes to Console.");
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT - System Updates",
-                $"• MOVED to Discord.NET v2.2.0\r\n" +
-                $"• Supports more guilds! - Shard connections\r\n" +
-                $"• RE-WROTE ConsoleIO & REDESINED Console UI\r\n" +
-                $"• RE-WROTE Command manager to use a cleaner, more-modular format\r\n" +
-                $"• RE-WROTE Setup Wizard\r\n" +
-                $"• RE-WROTE Configuration system\r\n" +
-                $"• RE-WROTE Permission system\r\n" +
-                $"• ORGANIZED Source code looks pretty[ish]\r\n" +
-                $"• ADDED Update system[WIP]\r\n" +
-                $"• REMOVED Json log mode\r\n" +
-                $"• Cleaned up install directory\r\n" +
-                $"• IMPROVED KillScreens & Stability\r\n" + 
-                $"• ADDED Customizable console colors.");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT - Command Updates",
-                $"• ADDED commands: `addgcmd`, `delgcmd`, `permissions set/del user/role`, `permissions get`, `prefix`\r\n" +
-                $"• CHANGED `status` command syntax\r\n" +
-                $"• CHANGED `addcmd` command syntax\r\n" +
-                $"• ADDED per-guild prefix support\r\n" +
-                $"• ADDED multi-character prefix support\r\n" +
-                $"• IMPROVED command list annotations\r\n");
+                $"• Updated library to Discord.NET v2.2.0\r\n" +
+                $"• ConsoleScreens without progress bar now properly render\r\n" +
+                $"• Added update screen\r\n" +
+                $"• Added update command\r\n" +
+                $"• Updated setup wizard\r\n" +
+                $"• Renamed configuration entity\r\n" +
+                $"• Renamed update channels\r\n" +
+                $"• Organized Source code looks pretty[ish]");
 
 
             eb.WithFooter("ModularBOT • CORE");
