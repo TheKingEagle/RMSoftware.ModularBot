@@ -75,40 +75,40 @@ namespace ModularBOT.Component.ConsoleScreens
         [DllImport("User32.Dll", EntryPoint = "PostMessageA")]
         internal static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
 
-        int a = -1;
         #endregion
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
             //TODO: Custom input handling: NOTE -- Base adds exit handler [E] key.
-            
-            
-            
 
-            if (updateStep == 0)
+
+
+            if (UpdateAvailable)
             {
-                if (keyinfo.Key == ConsoleKey.Enter)
+                if (updateStep == 0)
                 {
-                    //run thread
-                    WriteFooter("Downloading... Please wait");
-                    Task.Run(() => DownloadUpdate(pr ? u.PREPAKG : u.PACKAGE, $"updater-{(pr ? u.PREVERS : u.VERSION)}.exe"));
-                    SpinWait.SpinUntil(() => DownloadFinished);
-                    updateStep = 1;
-                    RenderScreen();
-                    UPDATERLOC = $"updater-{ (pr ? u.PREVERS : u.VERSION)}.exe";
-                    Thread.Sleep(2500);
+                    if (keyinfo.Key == ConsoleKey.Enter)
+                    {
+                        //run thread
+                        WriteFooter("Downloading... Please wait");
+                        Task.Run(() => DownloadUpdate(pr ? u.PREPAKG : u.PACKAGE, $"updater-{(pr ? u.PREVERS : u.VERSION)}.exe"));
+                        SpinWait.SpinUntil(() => DownloadFinished);
+                        updateStep = 1;
+                        RenderScreen();
+                        UPDATERLOC = $"updater-{ (pr ? u.PREVERS : u.VERSION)}.exe";
+                        Thread.Sleep(2500);
+                    }
+
+
                 }
-
-
-            }
-            if (updateStep == 1)
-            {
-                if (keyinfo.Key == ConsoleKey.Enter)
+                if (updateStep == 1)
                 {
-                    InstallUpdate = true;
-                    return true;
+                    if (keyinfo.Key == ConsoleKey.Enter)
+                    {
+                        InstallUpdate = true;
+                        return true;
+                    }
                 }
             }
-
             return base.ProcessInput(keyinfo);
         }
 
@@ -155,6 +155,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     
                     int coffset = 0;
                     UpdateMeta(ShowProgressBar ? 3 : 2);
+                    
                     string[] summlines = WordWrap($"You are currently running the latest version. Check https://rms0.org?a=mbchanges for the current change log.", 16).Split('\n');
                     Console.BackgroundColor = ConsoleColor.DarkBlue;
                     ScreenBackColor = ConsoleColor.DarkBlue;
@@ -172,7 +173,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     Console.ForegroundColor = ConsoleColor.Gray;
                     Console.Write($"Update Channel: {(pr ? "INDEV" : "RELEASE")}");
                     Console.ForegroundColor = ConsoleColor.Cyan;
-
+                    WriteFooter("[ESC] Close...");
                 }
                 else
                 {
