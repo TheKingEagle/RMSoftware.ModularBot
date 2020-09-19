@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Net;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.IO.Ports;
 
 namespace ModularBOT.Component.ConsoleScreens
 {
@@ -23,6 +24,7 @@ namespace ModularBOT.Component.ConsoleScreens
         public string UPDATERLOC = "";
         bool UpdateAvailable = false;
         bool pr = false;
+        string ErrorDeet = "";
         DiscordNET disnet;
         UpdateInfo u = null;
         public UpdaterConsoleScreen(ref Configuration currentconfig, ref DiscordNET dnet)
@@ -47,27 +49,34 @@ namespace ModularBOT.Component.ConsoleScreens
             BufferHeight = 34;
             WindowHeight = 32;
             //ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
-
-            if (currentconfig.UseInDevChannel.HasValue)
+            try
             {
-                UpdateAvailable = dnet.Updater.CheckUpdate(true).GetAwaiter().GetResult();
+                if (currentconfig.UseInDevChannel.HasValue)
+                {
+                    UpdateAvailable = dnet.Updater.CheckUpdate(true).GetAwaiter().GetResult();
 
-                if (UpdateAvailable)
-                {
-                    u = dnet.Updater.UpdateInfo;
-                    
-                    UpdateMeta(ShowProgressBar ? 3:2);
-                }
-                if (u != null)
-                {
-                    UpdateVersion = currentconfig.UseInDevChannel.Value ? u.PREVERS : u.VERSION;
-                    Meta = "Software Update Available!";
-                    MetaFontColor = ConsoleColor.Green;
-                    UpdateVersion = currentconfig.UseInDevChannel.Value ? u.PREVERS : u.VERSION;
-                    UpdateTitle = currentconfig.UseInDevChannel.Value ? u.BTITLE : u.ATITLE;
+                    if (UpdateAvailable)
+                    {
+                        u = dnet.Updater.UpdateInfo;
+
+                        UpdateMeta(ShowProgressBar ? 3 : 2);
+                    }
+                    if (u != null)
+                    {
+                        UpdateVersion = currentconfig.UseInDevChannel.Value ? u.PREVERS : u.VERSION;
+                        Meta = "Software Update Available!";
+                        MetaFontColor = ConsoleColor.Green;
+                        UpdateVersion = currentconfig.UseInDevChannel.Value ? u.PREVERS : u.VERSION;
+                        UpdateTitle = currentconfig.UseInDevChannel.Value ? u.BTITLE : u.ATITLE;
+                    }
                 }
             }
-            
+            catch(Exception ex)
+            {
+                ErrorDeet = ex.Message;
+                updateStep = -1;
+            }
+
         }
         #region P/Invoke
         [DllImport("kernel32.dll")]
@@ -92,10 +101,13 @@ namespace ModularBOT.Component.ConsoleScreens
                         WriteFooter("Downloading... Please wait");
                         Task.Run(() => DownloadUpdate(pr ? u.PREPAKG : u.PACKAGE, $"updater-{(pr ? u.PREVERS : u.VERSION)}.exe"));
                         SpinWait.SpinUntil(() => DownloadFinished);
-                        updateStep = 1;
-                        RenderScreen();
-                        UPDATERLOC = $"updater-{ (pr ? u.PREVERS : u.VERSION)}.exe";
-                        Thread.Sleep(2500);
+                        if(updateStep != -1)
+                        {
+                            updateStep = 1;
+                            RenderScreen();
+                            UPDATERLOC = $"updater-{ (pr ? u.PREVERS : u.VERSION)}.exe";
+                            Thread.Sleep(2500);
+                        }
                     }
 
 
@@ -140,39 +152,18 @@ namespace ModularBOT.Component.ConsoleScreens
                 #endregion
 
                 #region Text
-                Console.CursorTop = 5;
-                Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
-
-                Console.Write($"{UpdateTitle} (v{UpdateVersion})");
-                Console.CursorTop = 6;
-                Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
-                Console.Write("".PadLeft(width - 4, '\u2500'));
-                Console.CursorTop = 8;
-                Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
+                
+                UpdateScreen_WriteTitleLine(width,$"{ UpdateTitle} (v{ UpdateVersion})");
+                
                 if (!UpdateAvailable)
                 {
-                    Meta = "Update Check Complete...";
-                    
-                    int coffset = 0;
-                    UpdateMeta(ShowProgressBar ? 3 : 2);
-                    
-                    string[] summlines = WordWrap($"You are currently running the latest version. Check https://rms0.org?a=mbchanges for the current change log.", 16).Split('\n');
+                    UpdateScreen_WriteBody(width,"You are already running the latest version. Check https://rms0.org?a=mbchanges for the change log.","Update Check Finished");
+
                     Console.BackgroundColor = ConsoleColor.DarkBlue;
-                    ScreenBackColor = ConsoleColor.DarkBlue;
-                    foreach (string line in summlines)
-                    {
-
-
-                        Console.CursorTop = 8 + coffset;
-                        Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
-                        Console.Write(line);
-                        coffset++;
-                    }
-                    Console.CursorTop = 10 + coffset;
-                    Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write($"Update Channel: {(pr ? "INDEV" : "RELEASE")}");
                     Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.CursorTop = 28;
+                    Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
+                    Console.Write("".PadLeft(width - 4, '\u2500'));//bottom line
                     WriteFooter("[ESC] Close...");
                 }
                 else
@@ -298,10 +289,78 @@ namespace ModularBOT.Component.ConsoleScreens
 
                 WriteFooter("Please Wait just a moment...");
             }
+
+            if(updateStep == -1)
+            {
+                for (int i = 4; i < 31; i++)
+                {
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    ScreenBackColor = ConsoleColor.DarkBlue;
+                    ScreenFontColor = ConsoleColor.Cyan;
+                    Console.CursorLeft = ((140 / 2) - (140 / 2)) + 2;
+                    Console.CursorTop = i;
+                    Console.Write("".PadLeft(140 + 2, '\u2005'));//+2 to include spacing
+                }
+                UpdateScreen_WriteTitleLine(140, "The program has encountered a problem...");
+                UpdateScreen_WriteBody(140, $"Unable to update due to an error.\r\n" +
+                    $"ERROR DETAILS: {ErrorDeet}\r\n" +
+                    $"{"".PadLeft(100,'\u2500')}\r\n" +
+                    $"Try the following:\r\n" +
+                    $"- Check your Internet connection\r\n" +
+                    $"- Ensure you can reach api.rms0.org\r\n" +
+                    $"- If all else fails, send error report to the ModularBOT repository.", "Update Failed", ConsoleColor.Red);
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.CursorTop = 28;
+                Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
+                Console.Write("".PadLeft(width - 4, '\u2500'));//bottom line
+                WriteFooter("[ESC] Exit...");
+            }
             //Thread.Sleep(1000);
             //Meta = "Downloading Software Update...";
             //UpdateMeta(ShowProgressBar ? 3 : 2);
             Console.CursorTop = 0;
+        }
+
+        private void UpdateScreen_WriteBody(int width, string Message, string meta, ConsoleColor MetaColor = ConsoleColor.Green)
+        {
+            MetaFontColor = MetaColor;
+            Meta = meta;
+
+            int coffset = 0;
+            UpdateMeta(ShowProgressBar ? 3 : 2);
+
+            string[] summlines = WordWrap($"{Message}", 16).Split('\n');
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
+            ScreenBackColor = ConsoleColor.DarkBlue;
+            foreach (string line in summlines)
+            {
+
+
+                Console.CursorTop = 8 + coffset;
+                Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
+                Console.Write(line);
+                coffset++;
+            }
+            Console.CursorTop = 10 + coffset;
+            Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write($"Update Channel: {(pr ? "INDEV" : "RELEASE")}");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            
+        }
+
+        private void UpdateScreen_WriteTitleLine(int width, string Title)
+        {
+            Console.CursorTop = 5;
+            Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
+
+            Console.Write($"{Title}");
+            Console.CursorTop = 6;
+            Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
+            Console.Write("".PadLeft(width - 4, '\u2500'));
+            Console.CursorTop = 8;
+            Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
         }
 
         private void RenderProgress(int width, int val, int max)
@@ -387,6 +446,12 @@ namespace ModularBOT.Component.ConsoleScreens
 
         private void Wc_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
         {
+            if(e.Error != null)
+            {
+                ErrorDeet = e.Error.Message;
+                updateStep = -1;
+                RenderScreen();
+            }
             DownloadFinished = true;
            
         }
