@@ -6,7 +6,6 @@ using ModularBOT.Component;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -49,6 +48,12 @@ namespace QuotesDB
         public async Task QDBAddQuote(string Text, string Author, string DateTime)
         {
             await _service.AddQuote(Context, Text, Author, DateTime);
+        }
+
+        [Command("delquote")]
+        public async Task QDBAddQuote(int index)
+        {
+            await _service.DelQuote(Context, index);
         }
 
         [Command("addquote")]
@@ -260,6 +265,50 @@ namespace QuotesDB
                         Color = new Color(18, 164, 238)
                     };
                     await context.Channel.SendMessageAsync("", false, quotebuilder.Build());
+                }
+                else
+                {
+                    await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "Not Found", "This quote doesn't exist!", Color.DarkRed));
+                    return;
+                }
+            }
+            else
+            {
+                await context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(context, "No Quote DB", "This guild doesn't have a quoteDB.", Color.DarkRed));
+                return;
+            }
+        }
+
+        public async Task DelQuote (ICommandContext context, int index)
+        {
+            if (context.Guild == null)
+            {
+                await context.Channel.SendMessageAsync("", false,
+                    GetEmbeddedMessage(context, "Invalid Context", "You can only do this from a guild/server.", Color.DarkRed));
+                return;
+            }
+
+            var qdb = GuildQuoteContainers.FirstOrDefault(x => x.GuildID == context.Guild.Id);
+
+            if (qdb != null)
+            {
+                int qdbindex = GuildQuoteContainers.IndexOf(qdb);
+
+                Writer.WriteEntry(new LogMessage(LogSeverity.Info, "QDB Del", $"Quote Container for {context.Guild.Name} was found"));
+                Quote Q = qdb.Quotes.FirstOrDefault(x => x.Index == index);
+                if (Q != null)
+                {
+                    qdb.Quotes.Remove(qdb.Quotes.First(x => x.Index == index));
+                    string json = JsonConvert.SerializeObject(qdb, Formatting.Indented);
+                    using (StreamWriter sw = new StreamWriter($"{dbdir}/{context.Guild.Id}.qdb"))
+                    {
+                        sw.Write(json);
+                        sw.Flush();
+                    }
+                    //update list item
+                    GuildQuoteContainers[qdbindex] = qdb;
+                    await context.Channel.SendMessageAsync("", false,
+                        GetEmbeddedMessage(context, "Quote Removed", $"Successfully deleted quote #{index}.", Color.Orange));
                 }
                 else
                 {
