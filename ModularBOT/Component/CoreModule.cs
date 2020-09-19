@@ -64,19 +64,15 @@ namespace ModularBOT.Component
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.WithDescription("TThis update includes several fixes to Console.");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT - System Updates",
-                $"• Updated library to Discord.NET v2.2.0\r\n" +
-                $"• ConsoleScreens without progress bar now properly render\r\n" +
-                $"• Added update screen\r\n" +
-                $"• Added update command\r\n" +
-                $"• Updated setup wizard\r\n" +
-                $"• Renamed configuration entity\r\n" +
-                $"• Renamed update channels\r\n" +
-                $"• Organized Source code looks pretty[ish]");
+            eb.WithDescription("This version is compatible with all existing data.");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT System Update",
+                $"• FIXED: Update screen hang if there is a server issue.\r\n" +
+                $"• FIXED: Update screen will properly display error messages during check and download.\r\n" +
+                $"• CHANGED: Uptime command now displays discord's session uptime & application uptime.\r\n" +
+                $"• SOURCE: Update screen source refactoring");
 
 
-            eb.WithFooter("ModularBOT • CORE");
+            eb.WithFooter("ModularBOT • Core");
             eb.Color = Color.DarkBlue;
             await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build());
         }
@@ -1375,9 +1371,26 @@ namespace ModularBOT.Component
         [Command("uptime"),Remarks("AccessLevels.Normal"), Summary("show how long bot has been connected.")]
         public async Task BOT_ShowUptime([Remainder] string args=null)
         {
-            var delta = DateTime.Now - DiscordNet.StartTime;
-            string format = string.Format("I've been alive and well for **{0}** hours, **{1}** minutes, and **{2}** seconds!", Math.Floor(delta.TotalHours).ToString("n0"), delta.Minutes, delta.Seconds);
-            await Context.Channel.SendMessageAsync(format + " " + args);
+            var delta = DateTime.Now - DiscordNet.ClientStartTime;
+            var deltb = DateTime.Now - DiscordNet.InstanceStartTime;
+
+            EmbedBuilder b = new EmbedBuilder
+            {
+                Author = new EmbedAuthorBuilder
+                {
+                    IconUrl = Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto, 128),
+                    Name = $"System Uptime for {Client.CurrentUser.Username}#{Client.CurrentUser.Discriminator}"
+                },
+                Description = "This is a breakdown of how long I've been alive and well!\r\n",
+                Color = Color.Green,
+                Footer= new EmbedFooterBuilder
+                {
+                    Text = "ModularBOT • Core"
+                }
+            };
+            b.AddField("Application Uptime", $" {Math.Floor(deltb.TotalHours):n0} hour(s), {deltb.Minutes} minute(s), {deltb.Seconds} second(s)");
+            b.AddField("Session Uptime", $" {Math.Floor(delta.TotalHours):n0} hour(s), {delta.Minutes} minute(s), {delta.Seconds} second(s)");
+            await Context.Channel.SendMessageAsync("",false,b.Build());
         }
 
 

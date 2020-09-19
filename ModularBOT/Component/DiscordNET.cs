@@ -34,7 +34,8 @@ namespace ModularBOT.Component
 
         #region Properties
         public bool DisableMessages { get; set; } = false;                     //DiscordNET Message Processing Flag
-        public DateTime StartTime { get; private set; }                        //DiscordNET Operation Start Date
+        public DateTime ClientStartTime { get; private set; }                  //DiscordNET client session Start Date
+        public DateTime InstanceStartTime { get; private set; }                //DiscordNET client instance Start Date
         public CustomCommandManager CustomCMDMgr { get; private set; }         //ModularBOT Custom Commands Manager
         public PermissionManager PermissionManager { get; private set; }       //ModularBOT Permission Manager
         public ModuleManager ModuleMgr { get; private set; }                   //ModularBOT Module Manager
@@ -48,6 +49,7 @@ namespace ModularBOT.Component
         {
             try
             {
+                
                 DisableMessages = true;//Do not allow messages until bot is fully logged in.
                 Initialized = false;
                 string token = AppConfig.AuthToken;
@@ -88,6 +90,8 @@ namespace ModularBOT.Component
                 Client.JoinedGuild += Client_JoinedGuild;
 
 
+                InstanceStartTime = DateTime.Now;
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "I-Uptime", $"Instance start time set to {InstanceStartTime}"));
 
                 Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord INIT attempt"));
                 Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
@@ -397,8 +401,8 @@ namespace ModularBOT.Component
             {
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", 
                     $"Requested initialization channel ({c.Name}) has been found. {guild.Name} currently has it!"));
-                StartTime = DateTime.Now;
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"System uptime set to {StartTime}"));
+                ClientStartTime = DateTime.Now;
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"Client SessionStart time set to {ClientStartTime}"));
                 LogConnected = true;
             }
             await Task.Delay(0);
