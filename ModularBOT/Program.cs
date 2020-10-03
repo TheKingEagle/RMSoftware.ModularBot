@@ -82,6 +82,8 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new UsersCommand());            //users
             consoleIO.ConsoleCommands.Add(new ListCommand());             //list
             consoleIO.ConsoleCommands.Add(new GuildsCommand());           //guilds
+            consoleIO.ConsoleCommands.Add(new ConIOCrashCommand());       //iocrash
+
             consoleIO.ConsoleCommands.Add(new UpdateCommand());           //update
             #endregion
 

@@ -245,6 +245,7 @@
     <Compile Include="Component\ConsoleCommands\AboutCommand.cs" />
     <Compile Include="Component\ConsoleCommands\CfgLCMCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ChannelsCommand.cs" />
+    <Compile Include="Component\ConsoleCommands\ConIOCrashCommand.cs" />
     <Compile Include="Component\ConsoleCommands\CLSCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ConfigCFUCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ConfigDCEvtLLCommand.cs" />
@@ -273,6 +274,7 @@
     <Compile Include="Component\ConsoleIO.cs" />
     <Compile Include="Component\ConsoleScreens\ChannelsScreen.cs" />
     <Compile Include="Component\ConsoleScreens\RolesScreen.cs" />
+    <Compile Include="Component\ConsoleScreens\KillConsoleScreen.cs" />
     <Compile Include="Component\ConsoleScreens\UpdaterConsoleScreen.cs" />
     <Compile Include="Component\ConsoleScreens\UsersScreen.cs" />
     <Compile Include="Component\ConsoleScreens\GuildsScreen.cs" />
