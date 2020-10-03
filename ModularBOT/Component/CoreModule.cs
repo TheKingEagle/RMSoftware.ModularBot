@@ -65,11 +65,11 @@ namespace ModularBOT.Component
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
             eb.WithDescription("This version is compatible with all existing data.");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT System Update",
-                $"• FIXED: Update screen hang if there is a server issue.\r\n" +
-                $"• FIXED: Update screen will properly display error messages during check and download.\r\n" +
-                $"• CHANGED: Uptime command now displays discord's session uptime & application uptime.\r\n" +
-                $"• SOURCE: Update screen source refactoring");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT KillScreen Update [BETA]",
+                $"• IMPROVED: ERRORS/CRASH.log file writing.\r\n" +
+                $"• CHANGED: Killscreen uses new ConsoleScreen framework. Adding more information\r\n" +
+                $"• CHANGED: Consoleio command to accurately list screens under the new framework.\r\n" +
+                $"• ISSUE TRACK: Attempting to track down the cause behind consoleIO randomly seizing up (again), adding exception handling");
 
 
             eb.WithFooter("ModularBOT • Core");
@@ -1397,6 +1397,7 @@ namespace ModularBOT.Component
         [Command("consoleio",RunMode=RunMode.Async), Remarks("AccessLevels.Administrator"), Summary("Print consoleIO stats")]
         public async Task BOT_Consoleio([Remainder] string args = null)
         {
+            
             if(DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 await ReplyAsync("", false, DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
@@ -1420,7 +1421,7 @@ namespace ModularBOT.Component
             b.AddField("Is screen Active/writing?", ConsoleIO.Writing);
             b.AddField("Was input canceled?", DiscordNet.InputCanceled);
             b.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry.LogMessage.ToString()}`");
-            b.AddField("Console Title", $"`{ConsoleIO.ConsoleTitle}`");
+            b.AddField("Active Modal", $"`{ConsoleIO.ActiveScreen?.Title??"NONE"}`");
             var msg = await ReplyAsync("", false, b.Build());
             for (int i = 1; i < 5; i++)
             {
@@ -1444,7 +1445,7 @@ namespace ModularBOT.Component
                 be.AddField("Is screen Active/writing?", ConsoleIO.Writing);
                 be.AddField("Was input canceled?", DiscordNet.InputCanceled);
                 be.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry.LogMessage.ToString()}`");
-                be.AddField("Console Title", $"`{ConsoleIO.ConsoleTitle}`");
+                be.AddField("Active Modal", $"`{ConsoleIO.ActiveScreen?.Title ?? "NONE"}`");
                 await msg.ModifyAsync(m => m.Embed = be.Build());
             }
         }
