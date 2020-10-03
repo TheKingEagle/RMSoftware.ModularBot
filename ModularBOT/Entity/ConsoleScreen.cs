@@ -139,7 +139,7 @@ namespace ModularBOT.Entity
 
         internal string WordWrap(string paragraph, int consoleoffset = 24)
         {
-            paragraph = new Regex(@" {2,}").Replace(paragraph.Trim(), @" ");
+            paragraph = new Regex(@" {2,}").Replace(paragraph, @" ");
             //paragraph = new Regex(@"\r\n{2,}").Replace(paragraph.Trim(), @" ");
             //paragraph = new Regex(@"\r{2,}").Replace(paragraph.Trim(), @" ");
             var lines = new List<string>();
@@ -153,7 +153,7 @@ namespace ModularBOT.Entity
                 {
                     lines[i] = lines[i].Remove(NewLinePos);
                     paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
-                    returnstring += (lines[i].Trim()) + "\n";
+                    returnstring += (lines[i]) + "\n";
                     i++;
                     continue;
                     //lines.Add(paragraph.Substring(NewLinePos, paragraph.Length-NewLinePos));
@@ -174,7 +174,7 @@ namespace ModularBOT.Entity
                     //lines[i] = lines[i].Remove(length).PadRight(Console.WindowWidth - 2, '\u2000');
                 }
                 paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
-                returnstring += (lines[i].Trim()) + "\n";
+                returnstring += (lines[i]) + "\n";
                 i++;
             }
             if (lines.Count > 1)
