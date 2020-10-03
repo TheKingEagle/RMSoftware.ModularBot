@@ -280,6 +280,7 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 ActiveScreen = true
             };
+            ConsoleIO.ActiveScreen = NGScreen;
             NGScreen.RenderScreen();
             while (true)
             {
@@ -288,7 +289,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     break;
                 }
             }
-            NGScreen.ActiveScreen = false;
+            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
             //----------------End modal----------------
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
             RefreshMeta();
@@ -308,6 +309,7 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 ActiveScreen = true;
             };
+            ConsoleIO.ActiveScreen = NGScreen;
             NGScreen.RenderScreen();
             while (true)
             {
@@ -316,7 +318,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     break;
                 }
             }
-            NGScreen.ActiveScreen = false;
+            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
             //----------------End modal----------------
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
             RefreshMeta();
@@ -333,6 +335,7 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 ActiveScreen = true
             };
+            ConsoleIO.ActiveScreen = NGScreen;
             NGScreen.RenderScreen();
             while (true)
             {
@@ -341,7 +344,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     break;
                 }
             }
-            NGScreen.ActiveScreen = false;
+            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
             //----------------End modal----------------
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
             RefreshMeta();

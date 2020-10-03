@@ -82,7 +82,7 @@ namespace ModularBOT.Component.ConsoleCommands
                     break;
                 }
             }
-            NGScreen.ActiveScreen = false;
+            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
             //----------------End modal----------------
 
             console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,

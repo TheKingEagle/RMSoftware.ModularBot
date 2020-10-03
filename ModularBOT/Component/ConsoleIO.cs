@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Windows;
 using ModularBOT.Entity;
+using ModularBOT.Component.ConsoleScreens;
 
 namespace ModularBOT.Component
 {
@@ -51,7 +52,7 @@ namespace ModularBOT.Component
         public int CurTop { get; set; }
         public int PrvTop { get; set; }
         public string ConsoleTitle { get; set; } = "";
-
+        public static ConsoleScreen ActiveScreen { get; set; }
         public List<ConsoleCommand> ConsoleCommands { get; internal set; } = new List<ConsoleCommand>();
 
         public LogEntry LatestEntry { get; set; }
@@ -161,147 +162,165 @@ namespace ModularBOT.Component
 
         internal void ProcessQueue()
         {
-
-            if (QueueProcessStarted)
+            try
             {
-                WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO",
-                    "An attempt was made to start the queue processor task, but it is already started..."));
-
-                return;
-            }
-            QueueProcessStarted = true;
-            WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO",
-                "Console Queue has initialized. Processing any incoming log events."));
-
-
-
-            while (true)
-            {
-                SpinWait.SpinUntil(() => Backlog.Count > 0);
-                if (ScreenBusy) { continue; }                       //If the screen's busy (Resetting), DO NOT DQ!
-                if (Writing) { continue; }                          //If the console is in the middle of writing, DO NOT DQ!
-
-                LogEntry qitem = Backlog.Dequeue();                 //DQ the item and process it as qitem.
-                LatestEntry = qitem;
-                LogMessage message = qitem.LogMessage;              //Entry's log message data.
-                ConsoleColor? Entrycolor = qitem.EntryColor;        //left margin color
-
-                bool bypassFilter = qitem.BypassFilter;             //will this entry obey application log level?
-                bool bypassScreenLock = qitem.BypassScreenLock;     //will this entry show up through a modal screen?
-                bool showCursor = qitem.ShowCursor;                 //will this entry output and show the console cursor?
-
-                LogEntries.Add(new LogEntry(message, Entrycolor));  //Add the entry to buffer. Ignore screen modal, for outputting when modal is closed.
-
-                if (LogEntries.Count > Console.BufferHeight - 3)
+                if (QueueProcessStarted)
                 {
-                    LogEntries.Remove(LogEntries.First());          //keep the buffer tidy. (509 MAX)
+                    WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO",
+                        "An attempt was made to start the queue processor task, but it is already started..."));
+
+                    return;
                 }
+                QueueProcessStarted = true;
+                WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO",
+                    "Console Queue has initialized. Processing any incoming log events."));
 
-                if (ScreenModal && !bypassScreenLock)
+                while (true)
                 {
-                    continue;                                       //Do not output
-                }
-                Writing = true;
-                PrvTop = Console.CursorTop;
-                Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
-                LogMessage l = new LogMessage(message.Severity,
-                    message.Source.PadRight(11, '\u2000'),
-                    message.Message, message.Exception);
-                string[] lines = WordWrap(l.ToString()).Split('\n');
-                ConsoleColor bglast = ConsoleBackgroundColor;
-                int prt = Console.CursorTop;
-                for (int i = 0; i < lines.Length; i++)
-                {
-
-                    if (lines[i].Length == 0)
+                    SpinWait.SpinUntil(() => Backlog.Count > 0);
+                    if (ScreenBusy) { continue; }                       //If the screen's busy (Resetting), DO NOT DQ!
+                    if (Writing) { continue; }                          //If the console is in the middle of writing, DO NOT DQ!
+                    if(Program.ShutdownCalled)
                     {
-                        continue;
+                        return;
                     }
-                    ConsoleColor bg = ConsoleColor.Black;
-                    ConsoleColor fg = ConsoleColor.Black;
-
-                    #region setup entry color.
-                    if (!Entrycolor.HasValue)
+                    LogEntry qitem = Backlog.Dequeue();                 //DQ the item and process it as qitem.
+                    if(qitem.LogMessage.Source == "██▒")
                     {
-                        switch (message.Severity)
+                        throw new Exception($"SYSTEM STOP -- Source-triggered crash. Msg: {qitem.LogMessage.Message}");
+                    }
+                    LatestEntry = qitem;
+                    LogMessage message = qitem.LogMessage;              //Entry's log message data.
+                    ConsoleColor? Entrycolor = qitem.EntryColor;        //left margin color
+
+                    bool bypassFilter = qitem.BypassFilter;             //will this entry obey application log level?
+                    bool bypassScreenLock = qitem.BypassScreenLock;     //will this entry show up through a modal screen?
+                    bool showCursor = qitem.ShowCursor;                 //will this entry output and show the console cursor?
+
+                    LogEntries.Add(new LogEntry(message, Entrycolor));  //Add the entry to buffer. Ignore screen modal, for outputting when modal is closed.
+
+                    if (LogEntries.Count > Console.BufferHeight - 3)
+                    {
+                        LogEntries.Remove(LogEntries.First());          //keep the buffer tidy. (509 MAX)
+                    }
+
+                    if (ScreenModal && !bypassScreenLock)
+                    {
+                        continue;                                       //Do not output
+                    }
+                    Writing = true;
+                    PrvTop = Console.CursorTop;
+                    Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
+                    LogMessage l = new LogMessage(message.Severity,
+                        message.Source.PadRight(11, '\u2000'),
+                        message.Message, message.Exception);
+                    string[] lines = WordWrap(l.ToString()).Split('\n');
+                    ConsoleColor bglast = ConsoleBackgroundColor;
+                    int prt = Console.CursorTop;
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+
+                        if (lines[i].Length == 0)
                         {
-                            case LogSeverity.Critical:
-                                bg = ConsoleColor.Red;
-                                fg = ConsoleColor.Red;
-                                break;
-                            case LogSeverity.Error:
-                                fg = ConsoleColor.DarkRed;
-                                bg = ConsoleColor.DarkRed;
-                                break;
-                            case LogSeverity.Warning:
-                                fg = ConsoleColor.Yellow;
-                                bg = ConsoleColor.Yellow;
-                                break;
-                            case LogSeverity.Info:
-                                fg = ConsoleColor.Black;
-                                bg = ConsoleColor.Black;
-                                break;
-                            case LogSeverity.Verbose:
-                                fg = ConsoleColor.Magenta;
-                                bg = ConsoleColor.Cyan;
-                                break;
-                            case LogSeverity.Debug:
-                                fg = ConsoleColor.DarkGray;
-                                bg = ConsoleColor.DarkGray;
-                                break;
-                            default:
-                                break;
+                            continue;
                         }
+                        ConsoleColor bg = ConsoleColor.Black;
+                        ConsoleColor fg = ConsoleColor.Black;
+
+                        #region setup entry color.
+                        if (!Entrycolor.HasValue)
+                        {
+                            switch (message.Severity)
+                            {
+                                case LogSeverity.Critical:
+                                    bg = ConsoleColor.Red;
+                                    fg = ConsoleColor.Red;
+                                    break;
+                                case LogSeverity.Error:
+                                    fg = ConsoleColor.DarkRed;
+                                    bg = ConsoleColor.DarkRed;
+                                    break;
+                                case LogSeverity.Warning:
+                                    fg = ConsoleColor.Yellow;
+                                    bg = ConsoleColor.Yellow;
+                                    break;
+                                case LogSeverity.Info:
+                                    fg = ConsoleColor.Black;
+                                    bg = ConsoleColor.Black;
+                                    break;
+                                case LogSeverity.Verbose:
+                                    fg = ConsoleColor.Magenta;
+                                    bg = ConsoleColor.Cyan;
+                                    break;
+                                case LogSeverity.Debug:
+                                    fg = ConsoleColor.DarkGray;
+                                    bg = ConsoleColor.DarkGray;
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            bg = Entrycolor.Value;
+                            fg = Entrycolor.Value;
+                        }
+                        #endregion
+
+                        Console.BackgroundColor = bg;
+                        Console.ForegroundColor = fg;
+                        Console.Write((char)9617);                          //Write the colored space.
+                        Console.BackgroundColor = bglast;                   //restore previous color.
+                        Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
+                        Console.Write("\u2551");                            //uileft ║
+
+                        if (i == 0)
+                        {
+                            Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2, '\u2000')); //write current line in queue.
+                            Console.CursorTop -= 1;
+                        }
+                        if (i > 0)
+                        {
+                            //write current line in queue, padded by 21 enQuads to preserve line format.
+                            Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000').PadRight(Console.BufferWidth - 2));
+                            Console.CursorTop -= 1;
+                        }
+
                     }
-                    else
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    if (showCursor)
                     {
-                        bg = Entrycolor.Value;
-                        fg = Entrycolor.Value;
+                        Console.Write(">");//Write the input indicator.
+
                     }
-                    #endregion
-
-                    Console.BackgroundColor = bg;
-                    Console.ForegroundColor = fg;
-                    Console.Write((char)9617);                          //Write the colored space.
-                    Console.BackgroundColor = bglast;                   //restore previous color.
-                    Console.ForegroundColor = ConsoleForegroundColor;   //previous FG.
-                    Console.Write("\u2551");                            //uileft ║
-
-                    if (i == 0)
+                    if (!showCursor)
                     {
-                        Console.WriteLine(lines[i].PadRight(Console.BufferWidth - 2, '\u2000')); //write current line in queue.
-                        Console.CursorTop -= 1;
+                        Console.CursorTop = prt;
                     }
-                    if (i > 0)
+                    Console.BackgroundColor = ConsoleBackgroundColor;
+                    Console.ForegroundColor = ConsoleForegroundColor;
+                    Console.CursorVisible = showCursor;
+                    if (showCursor)
                     {
-                        //write current line in queue, padded by 21 enQuads to preserve line format.
-                        Console.WriteLine(lines[i].PadLeft(lines[i].Length + 21, '\u2000').PadRight(Console.BufferWidth - 2));
-                        Console.CursorTop -= 1;
+                        Console.Write("\u2551");
                     }
 
+                    CurTop = Console.CursorTop;
+                    Writing = false;
                 }
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.White;
-                if (showCursor)
-                {
-                    Console.Write(">");//Write the input indicator.
-
-                }
-                if (!showCursor)
-                {
-                    Console.CursorTop = prt;
-                }
-                Console.BackgroundColor = ConsoleBackgroundColor;
-                Console.ForegroundColor = ConsoleForegroundColor;
-                Console.CursorVisible = showCursor;
-                if (showCursor)
-                {
-                    Console.Write("\u2551");
-                }
-
-                CurTop = Console.CursorTop;
-                Writing = false;
             }
+            catch (Exception ex)
+            {
+                PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
+                Program.RestartRequested = ShowKillScreen("Queue Failure", $"The ConsoleIO Queue process crashed. {ex.Message}", false,
+                    ref Program.ShutdownCalled, ref Program.RestartRequested, 5, ex, "CIO_QUEUE_EXCEPTION").GetAwaiter().GetResult();
+                
+                CurTop = 0;
+                Program.ShutdownCalled = true;
+                Program.ImmediateTerm = true;
+            }
+            
 
         }
 
@@ -377,13 +396,21 @@ namespace ModularBOT.Component
                 {
                     continue;
                 }
-                string input = Console.ReadLine();
-                string unproc = input;
+
                 if (InputCanceled)
                 {
                     return Task.Delay(0);
                 }
-                Console.CursorTop = CurTop;
+                if (ShutdownCalled)
+                {
+                    return Task.Delay(0);
+                }
+                string input = Console.ReadLine();
+                string unproc = input;
+                if(CurTop < Console.BufferHeight)
+                {
+                    Console.CursorTop = CurTop;
+                }
 
                 #region Console Command Statements
 
@@ -908,50 +935,35 @@ namespace ModularBOT.Component
         /// <param name="timeout">auto restart timeout in seconds.</param>
         /// <param name="ex">The inner exception leading to the kill screen.</param>
         /// <returns></returns>
-        public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ProgramShutdownFlag, ref bool ProgramRestartFlag, int timeout = 5, Exception ex = null)
+        public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ProgramShutdownFlag, ref bool ProgramRestartFlag, int timeout = 5, Exception ex = null,string source = "Unknown Source")
         {
             ScreenModal = true;
-            ConsoleGUIReset(ConsoleColor.White, ConsoleColor.DarkRed, title);
-            WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "The program encountered a problem, and was terminated. Details below."), null, true, true);
-            LogMessage m = new LogMessage(LogSeverity.Critical, "CRITICAL", message);
-            WriteEntry(m, null, true, true, false);
-
-            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "writing error report to CRASH.LOG"), null, true, true, false);
-            CreateCrashLog(ex, m);
-            WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Writing additional information to ERRORS.LOG"), null, true, true, false);
-            WriteErrorsLog(ex);
-
-            if (!autorestart)
+            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
+            var NGScreen = new KillConsoleScreen(ex ?? new Exception("Undefined exception"),autorestart,source,title,message,timeout)
             {
-                WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", "Press any key to terminate..."), null, true, true, false);
-                Console.ReadKey();
-            }
-            else
+                ActiveScreen = true
+            };
+            ActiveScreen = NGScreen;
+            NGScreen.RenderScreen();
+            while (true)
             {
-                //prompt for autorestart.
-                for (int i = 0; i < timeout; i++)
+                if (NGScreen.ProcessInput(Console.ReadKey(true)))
                 {
-                    int l = Console.CursorLeft;
-                    int t = Console.CursorTop;
-
-                    WriteEntry(new LogMessage(LogSeverity.Info, "MAIN", $"Restarting in {timeout - i} second(s)..."), null, false, true, false);
-
-                    Console.CursorLeft = l;
-                    Console.CursorTop = t;//reset.
-                    Thread.Sleep(1000);
+                    break;
                 }
-
-                if (!Program.AppArguments.Contains("-crashed"))
-                {
-                    Program.AppArguments.Add("-crashed");
-                }
-
             }
-
+            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
+            if(ex!=null)
+            {
+                CreateCrashLog(ex, new LogMessage(LogSeverity.Critical, source, message, ex));
+                WriteErrorsLog(message,ex);
+            }
+            Program.AppArguments.Add("-crashed");
+            Program.ImmediateTerm = true;
             ScreenModal = false;
             ProgramShutdownFlag = true;
             ProgramRestartFlag = autorestart;//redundancy
-            //ScreenBusy = false;
+            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
             return Task.FromResult(autorestart);//redundancy
 
         }
@@ -963,19 +975,17 @@ namespace ModularBOT.Component
         /// <param name="m">Log message data</param>
         public void CreateCrashLog(Exception ex, LogMessage m)
         {
-            using (FileStream fs = File.Create("CRASH.LOG"))
-            {
-                using (StreamWriter sw = new StreamWriter(fs))
+            
+                using (StreamWriter sw = new StreamWriter("CRASH.LOG",false))
                 {
                     sw.WriteLine(m.ToString());
                     sw.WriteLine("If you continue to get this error, please report it to the developer, including the stack below.");
                     sw.WriteLine();
                     sw.WriteLine("Developer STACK:");
                     sw.WriteLine("=================================================================================================================================");
-                    sw.WriteLine(ex.ToString());
+                    sw.WriteLine(ex.StackTrace??"No stack available.");
                     sw.Flush();
                 }
-            }
         }
 
         /// <summary>
@@ -986,14 +996,11 @@ namespace ModularBOT.Component
         {
             SpinWait.SpinUntil(() => !errorLogWrite);
             errorLogWrite = true;
-            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            using (StreamWriter sw = new StreamWriter("ERRORS.LOG", true))
             {
-                using (StreamWriter sw = new StreamWriter(fs))
-                {
-                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + "   " + ex.ToString());
-                    sw.Flush();
-                    sw.Close();
-                }
+                
+                sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy}]: {ex}");
+                sw.Flush();
             }
             errorLogWrite = false;
         }
@@ -1005,22 +1012,18 @@ namespace ModularBOT.Component
         /// <param name="ex">Optional exception</param>
         public void WriteErrorsLog(string message, Exception ex = null)
         {
-            using (FileStream fs = new FileStream("ERRORS.LOG", FileMode.Append))
+            SpinWait.SpinUntil(() => !errorLogWrite);
+            errorLogWrite = true;
+            using (StreamWriter sw = new StreamWriter("ERRORS.LOG", true))
             {
-                using (StreamWriter sw = new StreamWriter(fs))
+                sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy}]: {message}");
+                if (ex != null)
                 {
-                    sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + " - " + message);
-
-                    if (ex != null)
-                    {
-                        sw.WriteLine(DateTime.Today.ToString("MM/dd/yyyy") + " - " + ex.ToString());
-                    }
-
-                    sw.Flush();
-                    sw.Close();
-                    Thread.Sleep(150);
+                    sw.WriteLine($"[{DateTime.Now:MM/dd/yyyy}]: {ex}");
                 }
+                sw.Flush();
             }
+            errorLogWrite = false;
         }
 
         #endregion

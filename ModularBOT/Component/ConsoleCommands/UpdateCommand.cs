@@ -31,6 +31,7 @@ namespace ModularBOT.Component.ConsoleCommands
             {
                 ActiveScreen = true
             };
+            ActiveScreen = NGScreen;
             NGScreen.RenderScreen();
             while (true)
             {
@@ -39,7 +40,7 @@ namespace ModularBOT.Component.ConsoleCommands
                     break;
                 }
             }
-            NGScreen.ActiveScreen = false;
+            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
             //----------------End modal----------------
             
             console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,

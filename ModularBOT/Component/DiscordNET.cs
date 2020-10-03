@@ -122,29 +122,29 @@ namespace ModularBOT.Component
 
                      RestartRequested = consoleIO.ShowKillScreen("Unauthorized", 
                          "The server responded with error 401. Make sure your authorization token is correct.", false,
-                         ref ShutdownRequest, ref RestartRequested,5, httex).GetAwaiter().GetResult();
+                         ref ShutdownRequest, ref RestartRequested,5, httex, "DNET_HTTPEX_UNAUTHORIZED").GetAwaiter().GetResult();
                 }
                 if (httex.DiscordCode == 4007)
                 {
                     RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,
-                        ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
+                        ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_INVALID_ID").GetAwaiter().GetResult();
                 }
                 if (httex.DiscordCode == 5001)
                 {
                     RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true, 
-                        ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
+                        ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_TIMED_OUT").GetAwaiter().GetResult();
                 }
 
                 else
                 {
                     RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.",
-                        true, ref ShutdownRequest, ref RestartRequested, 5, httex).GetAwaiter().GetResult();
+                        true, ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_UNKNOWN_ERROR").GetAwaiter().GetResult();
                 }
             }
 
             catch (Exception ex)
             {
-                RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex)
+                RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex,"DNET_START_ERROR")
                     .GetAwaiter()
                     .GetResult();
             }
@@ -232,7 +232,8 @@ namespace ModularBOT.Component
                     {
                         InputCanceled = true;
                         ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
-                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, ref shutdownRequested, ref RestartRequested, 0, new ArgumentException("Guild channel was invalid.", "botChannel"));
+                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, ref shutdownRequested, 
+                            ref RestartRequested, 0, new ArgumentException("Guild channel was invalid.", "botChannel"),"DNET_INIT_INVALID");
                         
                         Stop(ref shutdownRequested);
                         return;
@@ -247,7 +248,8 @@ namespace ModularBOT.Component
                     {
                         InputCanceled = true;
                         ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
-                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", $"{ex.Message}", false, ref shutdownRequested, ref RestartRequested, 0, ex);
+                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", $"{ex.Message}", false, 
+                            ref shutdownRequested, ref RestartRequested, 0, ex,"DNET_CORE_FILE_MISSING");
                         Stop(ref shutdownRequested);
 
                         return;
@@ -332,7 +334,7 @@ namespace ModularBOT.Component
                 {
 
                     serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Operation Timed out", $"The specified operation timed out: {eventDescription}",
-                    true, ref Program.ShutdownCalled, ref Program.RestartRequested, 5,ex);
+                    true, ref Program.ShutdownCalled, ref Program.RestartRequested, 5,ex, "DNET_TIME_OUT");
                 }
                 
                 
