@@ -68,6 +68,7 @@ namespace ModularBOT.Component
             eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT KillScreen Update [BETA]",
                 $"• IMPROVED: ERRORS/CRASH.log file writing.\r\n" +
                 $"• CHANGED: Killscreen uses new ConsoleScreen framework. Adding more information\r\n" +
+                $"• ADDED: CoreScript: `EMBED_AUTHOR` and `EMBED_AUTHOR_I` functions to add author bit to embeds." +
                 $"• CHANGED: Consoleio command to accurately list screens under the new framework.\r\n" +
                 $"• ISSUE TRACK: Attempting to track down the cause behind consoleIO randomly seizing up (again), adding exception handling");
 
