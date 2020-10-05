@@ -1651,6 +1651,58 @@ namespace ModularBOT.Component
                                         break;
                                     }
                                     break;
+                                case ("EMBED_AUTHOR")://embed footer text
+
+                                    //Get the line removing echo.
+                                    output = line.Remove(0, 12);
+                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+
+                                    CSEmbed.WithAuthor(ProcessVariableString(gobj, output, cmd, client, message));
+                                    break;
+                                case ("EMBED_AUTHOR_I")://embed footer text
+                                    if (CSEmbed.Author == null)
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"You must use `EMBED_AUTHOR` first. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    //Get the line removing echo.
+                                    output = line.Remove(0, 14);
+                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, cmd, client, message)))
+                                    {
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    try
+                                    {
+                                        CSEmbed.Author.IconUrl = ProcessVariableString(gobj, output, cmd, client, message);
+                                    }
+                                    catch (ArgumentException ex)
+                                    {
+
+                                        error = true;
+                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
+                                        errorEmbed.WithDescription($"Argument Exception: `{ex.Message}` ```{line}```");
+                                        errorEmbed.AddField("Line", LineInScript, true);
+                                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
+                                        break;
+                                    }
+                                    break;
 
                                 case ("EMBED_COLOR")://embed footer text
 
