@@ -554,9 +554,13 @@ namespace TestModule
 
         #region SNIPER COMMANDS
 
-        [Command("snipe"), Remarks("AccessLevels.Normal"), RequireContext(ContextType.Guild)]
+        [Command("snipe"), Remarks("AccessLevels.CommandManager"), RequireContext(ContextType.Guild)]
         public async Task SniperSnipeLastMsg()
         {
+            if(_permissions.GetAccessLevel(Context.User) < AccessLevels.CommandManager)
+            {
+                await ReplyAsync("", false, _permissions.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
+            }
             SniperBinding sniperb = TestModuleService.SniperGuilds.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
             if (sniperb == null)
             {
@@ -591,7 +595,55 @@ namespace TestModule
                     Text = $"Requested by {Context.User.Username}#{Context.User.Discriminator}"
                 }
             };
+            if(string.IsNullOrWhiteSpace(lastdel.Content))
+            {
+                b.Description = "Message had no text";
+            }
             await ReplyAsync("", false, b.Build());
+            foreach(DeletedEmbed embed in lastdel.Embeds)
+            {
+                EmbedBuilder delb = new EmbedBuilder();
+
+                if(!string.IsNullOrEmpty(embed.EAuthorName))
+                {
+                    delb.WithAuthor(embed.EAuthorName, embed.EAuthorIconURL);
+                }
+                if (!string.IsNullOrEmpty(embed.FooterText))
+                {
+                    delb.WithFooter(embed.FooterText, embed.FooterImageURL);
+                }
+                if (!string.IsNullOrEmpty(embed.Description))
+                {
+                    delb.WithDescription(embed.Description);
+                }
+                
+                if (!string.IsNullOrEmpty(embed.ThumbnailURL))
+                {
+                    delb.WithThumbnailUrl(embed.ThumbnailURL);
+                }
+                
+                if (!string.IsNullOrEmpty(embed.ImageURL))
+                {
+                    delb.WithImageUrl(embed.ImageURL);
+                }
+                
+                if (!string.IsNullOrEmpty(embed.Title))
+                {
+                    delb.WithTitle(embed.Title);
+                }
+
+                if (embed.Color != null)
+                {
+                    delb.Color = embed.Color;
+                }
+                
+
+                foreach (DeletedEmbedField item in embed.Fields)
+                {
+                    delb.AddField(item.FName??"No Name", item.FValue??"No Value", item.Inline);
+                }
+                await ReplyAsync("", false, delb.Build());
+            }
         }
 
         [Command("ghostping"), Remarks("AccessLevels.Normal"), RequireContext(ContextType.Guild)]
@@ -967,6 +1019,35 @@ namespace TestModule
             {
                 return;
             }
+            List<DeletedEmbed> dlembeds = new List<DeletedEmbed>();
+            foreach (var embed in m.Embeds)
+            {
+                List<DeletedEmbedField> fields = new List<DeletedEmbedField>();
+                foreach (var field in embed.Fields)
+                {
+                    
+                    fields.Add(new DeletedEmbedField
+                    {
+                        FName = field.Name,
+                        FValue = field.Value,
+                        Inline = field.Inline
+                    });
+                }
+                dlembeds.Add(new DeletedEmbed
+                {
+                    Description = embed.Description,
+                    EAuthorIconURL = embed.Author.GetValueOrDefault().IconUrl,
+                    EAuthorName = $"[sniped] {embed.Author.GetValueOrDefault().Name}",
+                    FooterImageURL = embed.Footer.GetValueOrDefault().IconUrl,
+                    FooterText = embed.Footer.GetValueOrDefault().Text,
+                    ImageURL = embed.Image.GetValueOrDefault().Url,
+                    Color = embed.Color.Value,
+                    Title = embed.Title,
+                    Fields = fields,
+                    ThumbnailURL = embed.Thumbnail.GetValueOrDefault().Url
+                });
+
+            }
             sniper.DeletedMessages.Add(
                 new DeletedMessage()
                 {
@@ -978,7 +1059,8 @@ namespace TestModule
                     ID = m.Id,
                     Timestamp = m.Timestamp,
                     AuthorDiscriminator = m.Author.Discriminator,
-                    AuthorName = m.Author.Username
+                    AuthorName = m.Author.Username,
+                    Embeds = dlembeds
 
                 });
             SniperGuilds.Add(sniper);
@@ -2187,6 +2269,7 @@ namespace TestModule
     {
         public ulong ID { get; set; }
         public string Content { get; set; }
+        public List<DeletedEmbed> Embeds { get; set; }
         public ulong AuthorID { get; set; }
         public string AuthorName { get; set; }
         public string AuthorDiscriminator { get; set; }
@@ -2194,6 +2277,26 @@ namespace TestModule
         public ulong ChannelID { get; set; }
         public ulong GuildID { get; set; }
         public DateTimeOffset Timestamp { get; set; }
+    }
+    public class DeletedEmbed
+    {
+        public string EAuthorIconURL { get; set; }
+        public string EAuthorName { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public List<DeletedEmbedField> Fields { get; set; }
+        public string ThumbnailURL { get; set; }
+        public string ImageURL { get; set; }
+        public string FooterImageURL { get; set; }
+        public string FooterText { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
+        public Color Color { get; set; }
+    }
+    public class DeletedEmbedField
+    {
+        public bool Inline { get; set; }
+        public string FName { get; set; }
+        public object FValue { get; set; }
     }
     public class StarboardBinding
     {
