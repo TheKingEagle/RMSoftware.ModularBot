@@ -452,10 +452,10 @@ namespace ModularBOT.Component
             if (Processed.Contains("%invoker_nick%"))
             {
                 SocketGuildUser sgu = message.Author as SocketGuildUser;
-                string nick = "Not specified";
+                string nick = message.Author.Username;
                 if(sgu != null)
                 {
-                    nick = sgu.Nickname ?? "Not specified";
+                    nick = sgu.Nickname ?? sgu.Username;
                 }
                 Processed = Processed.Replace("%invoker_nick%", nick);
             }
@@ -672,7 +672,7 @@ namespace ModularBOT.Component
                 {
                     IGuild g = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult();
                     IGuildUser gu = g.GetOwnerAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
-                    GuildOwnernick = gu.Nickname;
+                    GuildOwnernick = gu.Nickname ?? gu.Username;
                 }
                 Processed = Processed.Replace("%go_nick%", GuildOwnernick);
             }
