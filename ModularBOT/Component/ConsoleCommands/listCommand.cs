@@ -20,7 +20,7 @@ namespace ModularBOT.Component.ConsoleCommands
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
-            //TODO: Replace with user code.
+            
             console.WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO","Printing current ConsoleCommands List"));
 
             foreach (var item in console.ConsoleCommands)

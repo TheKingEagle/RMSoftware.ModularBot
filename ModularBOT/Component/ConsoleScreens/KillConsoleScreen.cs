@@ -57,7 +57,7 @@ namespace ModularBOT.Component.ConsoleScreens
         #endregion
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
-            //TODO: Custom input handling: NOTE -- Base adds exit handler [E] key.
+            
             if(keyinfo.Key == ConsoleKey.Escape)
             {
                 return true;
@@ -75,7 +75,7 @@ namespace ModularBOT.Component.ConsoleScreens
 
         protected override void RenderContents()
         {
-            //TODO: Use entry writing instead... When things aren't stupid.
+            
             SpinWait.SpinUntil(() => !LayoutUpdating);
             int width = 140;
             Console.CursorLeft = ((140 / 2) - (width / 2)) + 2;

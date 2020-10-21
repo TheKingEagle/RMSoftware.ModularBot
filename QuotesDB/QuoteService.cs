@@ -42,8 +42,6 @@ namespace QuotesDB
 
         #region PUBLIC COMMANDS
 
-        //TODO: Implement Custom commands with [Command("CommandName")...]
-
         [Command("addquote")]
         public async Task QDBAddQuote(string Text, string Author, string DateTime)
         {
@@ -101,7 +99,7 @@ namespace QuotesDB
                         IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto),
                         Name = $"{Context.Client.CurrentUser.Username}#{Context.Client.CurrentUser.Discriminator}"
                     },
-                    //TODO: Edit your module's description in the dedicated About command
+                    
                     Description = "Make what your guild members say live forever. turn funny and memorable chat moments into 'inspirational' quotes.",
                     Color = Color.DarkBlue
                 };
@@ -129,16 +127,10 @@ namespace QuotesDB
 
         private bool doonce = false; //Required check due to ModularBOT bug calling constructors more than once.
 
-        //TODO: Add custom private fields here.
         private readonly string dbdir = "modules/quotedb";
 
         private List<QuoteContainer> GuildQuoteContainers = new List<QuoteContainer>();
 
-        #endregion
-
-        #region PUBLIC PROPERTIES
-        //TODO: Add custom public properties here.
-        
         #endregion
 
         public QuoteDBService(DiscordShardedClient _client, ConsoleIO _consoleIO,
@@ -160,7 +152,7 @@ namespace QuotesDB
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Critical, "QDBService", "QuoteDBService Initializing..."));
 
-                //TODO: Add any One-time initialization here.
+                
                 if(!Directory.Exists(dbdir))
                 {
                     Directory.CreateDirectory(dbdir);

@@ -1020,7 +1020,7 @@ namespace ModularBOT.Entity
             Console.Write("\u2514" + "".PadRight(40, '\u2500') + "\u2518");
             #endregion
 
-            //TODO: Set cursor input to LINE 3 COL 2, handle input.
+            
             Console.CursorTop = top + 3;
             Console.CursorLeft = left + 2;
             Console.CursorVisible = true;

@@ -148,7 +148,6 @@ namespace ModularBOT.Component.ConsoleScreens
                         thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
                         thread.Start();
                         thread.Join(); //Wait for the thread to end
-                                       //TODO: If success or fail, Display a message prompt
                         break;
                     default:
                         break;

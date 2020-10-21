@@ -18,8 +18,6 @@ namespace TestModule.ConfigEntities
         }
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            //throw new NotImplementedException("Pending implementation");
-            //TODO: Implement StarboardChannel Config Entity;.SpyroLove
             if(TestModuleService.SBBindings.TryGetValue(Context.Guild.Id,out StarboardBinding binding))
             {
                 return base.ExecuteView(_DiscordNet, Context, binding.ChannelID.ToString());

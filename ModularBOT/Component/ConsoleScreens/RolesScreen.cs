@@ -153,7 +153,6 @@ namespace ModularBOT.Component.ConsoleScreens
                         thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
                         thread.Start();
                         thread.Join(); //Wait for the thread to end
-                                       //TODO: If success or fail, Display a message prompt
                         break;
                     case (3):
                         SS_EditAccessLevel();
@@ -247,8 +246,7 @@ namespace ModularBOT.Component.ConsoleScreens
         #endregion
 
         #region Role Properties Sub-Screen Methods
-        //TODO: SS_EditAccessLevel();
-
+        
         public bool SS_EditAccessLevel()
         {
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.

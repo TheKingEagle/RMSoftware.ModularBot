@@ -69,7 +69,6 @@ namespace ModularBOT.Component.ConsoleScreens
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
             Console.CursorVisible = false;
-            //TODO: Custom input handling: NOTE -- Base adds exit handler [E] key.
             if(ActivePrompt) { return false; }
 
             if (keyinfo.Key == ConsoleKey.P || keyinfo.Key == ConsoleKey.LeftArrow)
