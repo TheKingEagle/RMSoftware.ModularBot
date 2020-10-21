@@ -64,13 +64,12 @@ namespace ModularBOT.Component
             EmbedBuilder eb = new EmbedBuilder();
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.WithDescription("This version is compatible with all existing data.");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT KillScreen Update [BETA]",
-                $"• IMPROVED: ERRORS/CRASH.log file writing.\r\n" +
-                $"• CHANGED: Killscreen uses new ConsoleScreen framework. Adding more information\r\n" +
-                $"• ADDED: CoreScript: `EMBED_AUTHOR` and `EMBED_AUTHOR_I` functions to add author bit to embeds." +
-                $"• CHANGED: Consoleio command to accurately list screens under the new framework.\r\n" +
-                $"• ISSUE TRACK: Attempting to track down the cause behind consoleIO randomly seizing up (again), adding exception handling");
+            eb.WithDescription("This version may not be compatible with pre-existing scripts.");
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT CoreScript Update [BETA]",
+                $"• REWRITE: CoreScript now implements a modular function list.\r\n" +
+                $"• RENAMED: `BOTSTATUS` to `TITLE`\r\n" +
+                $"• RENAMED: `BOTGOLIVE` to `STRMSTATUS`\r\n" +
+                $"• SOURCE: Refactoring/TODOs");
 
 
             eb.WithFooter("ModularBOT • Core");
