@@ -382,7 +382,7 @@ namespace ModularBOT.Component
 
         #endregion
 
-        internal Task GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET) //TODO: Re-write for "Snap-in" commands. (additional Console commands from modules)
+        internal Task GetConsoleInput(ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET)
         {
             //Process Loop
             while (true)
