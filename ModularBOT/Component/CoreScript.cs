@@ -75,7 +75,7 @@ namespace ModularBOT.Component
             }
 
             #region =================================== [CoreScript FUNCTIONS] ===================================
-
+            CoreScriptFunctions.Add(new CSFunctions.CSFAttach());
             CoreScriptFunctions.Add(new CSFunctions.CSFEcho());
             CoreScriptFunctions.Add(new CSFunctions.CSFCounterStart());
             CoreScriptFunctions.Add(new CSFunctions.CSFCounterStop());
