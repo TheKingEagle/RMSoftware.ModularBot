@@ -274,11 +274,12 @@
     <Compile Include="Component\ConsoleIO.cs" />
     <Compile Include="Component\ConsoleScreens\ChannelsScreen.cs" />
     <Compile Include="Component\ConsoleScreens\RolesScreen.cs" />
-    <Compile Include="Component\ConsoleScreens\KillConsoleScreen.cs" />
-    <Compile Include="Component\ConsoleScreens\UpdaterConsoleScreen.cs" />
+    <Compile Include="Component\ConsoleScreens\KillScreen.cs" />
+    <Compile Include="Component\ConsoleScreens\SetupWizardScreen.cs" />
+    <Compile Include="Component\ConsoleScreens\UpdaterScreen.cs" />
     <Compile Include="Component\ConsoleScreens\UsersScreen.cs" />
     <Compile Include="Component\ConsoleScreens\GuildsScreen.cs" />
-    <Compile Include="Component\ConsoleScreens\TestConsoleScreen.cs" />
+    <Compile Include="Component\ConsoleScreens\TestScreen.cs" />
     <Compile Include="Component\CoreModule.cs" />
     <Compile Include="Component\CSFunctions\CSFAttach.cs" />
     <Compile Include="Component\CSFunctions\CSFEchoTTS.cs" />

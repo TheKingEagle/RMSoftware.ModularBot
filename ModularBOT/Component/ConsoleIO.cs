@@ -939,7 +939,7 @@ namespace ModularBOT.Component
         {
             ScreenModal = true;
             PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
-            var NGScreen = new KillConsoleScreen(ex ?? new Exception("Undefined exception"),autorestart,source,title,message,timeout)
+            var NGScreen = new KillScreen(ex ?? new Exception("Undefined exception"),autorestart,source,title,message,timeout)
             {
                 ActiveScreen = true
             };

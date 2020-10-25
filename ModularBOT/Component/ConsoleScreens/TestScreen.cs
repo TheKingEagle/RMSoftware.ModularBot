@@ -8,9 +8,9 @@ using System.Reflection;
 using System.Threading;
 namespace ModularBOT.Component.ConsoleScreens
 {
-    public class TestConsoleScreen: ConsoleScreen
+    public class TestScreen: ConsoleScreen
     {
-        public TestConsoleScreen()
+        public TestScreen()
         {
             ScreenFontColor = ConsoleColor.Cyan;
             ScreenBackColor = ConsoleColor.Black;

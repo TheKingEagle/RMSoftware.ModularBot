@@ -14,7 +14,7 @@ using System.IO.Ports;
 
 namespace ModularBOT.Component.ConsoleScreens
 {
-    public class KillConsoleScreen : ConsoleScreen
+    public class KillScreen : ConsoleScreen
     {
 
 
@@ -24,7 +24,7 @@ namespace ModularBOT.Component.ConsoleScreens
         bool AutoReboot = false;
         Exception exception = null;
         bool timedout = false;
-        public KillConsoleScreen(Exception ex, bool autorestart, string source, string title, string message, int timeout=5)
+        public KillScreen(Exception ex, bool autorestart, string source, string title, string message, int timeout=5)
         {
             ScreenFontColor = ConsoleColor.White;
             ScreenBackColor = ConsoleColor.Black;

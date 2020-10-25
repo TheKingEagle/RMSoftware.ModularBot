@@ -27,7 +27,7 @@ namespace ModularBOT.Component.ConsoleCommands
             List<LogEntry> v = new List<LogEntry>();
             ScreenModal = true;
             //---------------start modal---------------
-            var NGScreen = new UpdaterConsoleScreen(ref Program.configMGR.CurrentConfig, ref discordNET)
+            var NGScreen = new UpdaterScreen(ref Program.configMGR.CurrentConfig, ref discordNET)
             {
                 ActiveScreen = true
             };

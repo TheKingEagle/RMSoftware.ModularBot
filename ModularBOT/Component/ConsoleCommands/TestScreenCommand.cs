@@ -27,7 +27,7 @@ namespace ModularBOT.Component.ConsoleCommands
             List<LogEntry> v = new List<LogEntry>();
             ScreenModal = true;
             //---------------start modal---------------
-            var NGScreen = new TestConsoleScreen()
+            var NGScreen = new TestScreen()
             {
                 ActiveScreen = true
             };

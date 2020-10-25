@@ -14,7 +14,7 @@ using System.IO.Ports;
 
 namespace ModularBOT.Component.ConsoleScreens
 {
-    public class UpdaterConsoleScreen : ConsoleScreen
+    public class UpdaterScreen : ConsoleScreen
     {
 
         bool DownloadFinished = false;
@@ -27,7 +27,7 @@ namespace ModularBOT.Component.ConsoleScreens
         string ErrorDeet = "";
         DiscordNET disnet;
         UpdateInfo u = null;
-        public UpdaterConsoleScreen(ref Configuration currentconfig, ref DiscordNET dnet)
+        public UpdaterScreen(ref Configuration currentconfig, ref DiscordNET dnet)
         {
             disnet = dnet;
             ScreenFontColor = ConsoleColor.Cyan;
