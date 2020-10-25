@@ -738,7 +738,7 @@ namespace ModularBOT.Component
             channelTarget = target;
             contextToDM = CtxToDM;
         }
-        public async Task EvaluateScript(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message, EmbedBuilder CSEmbed = null)
+        public async Task EvaluateScript(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message, EmbedBuilder CSEmbed = null, bool isFile = false)
         {
             int LineInScript = 0;
             bool error = false;
@@ -863,7 +863,7 @@ namespace ModularBOT.Component
                             }
                             if (function != null)
                             {
-                                error = !await function.Evaluate(this, gobj, response, cmd, client, message, errorEmbed, LineInScript, line, contextToDM, channelTarget, CSEmbed);
+                                error = !await function.Evaluate(this, gobj, response, cmd, client, message, errorEmbed, LineInScript, line, contextToDM, channelTarget, CSEmbed,isFile);
                                 if (error)
                                 {
                                     break;
@@ -904,180 +904,10 @@ namespace ModularBOT.Component
 
         public async Task EvaluateScriptFile(GuildObject gobj, string filename, IDiscordClient client, IMessage message, GuildCommand cmd = null)
         {
-            int LineInScript = 1;
-            bool error = false;
-            EmbedBuilder errorEmbed = new EmbedBuilder();
-            errorEmbed.WithAuthor(client.CurrentUser);
-            errorEmbed.WithTitle("CoreScript Error");
-            errorEmbed.WithColor(Color.Red);
-            errorEmbed.WithFooter("CoreScript Engine • ModularBOT");
-            //This method supports reading a script from a file. This script does not require ```DOS header.
-            using (FileStream fs = File.OpenRead(filename))
+            using (StreamReader sr = new StreamReader(filename))
             {
-                using (StreamReader sr = new StreamReader(fs))
-                {
-                    while (!error)
-                    {
-
-                        if (sr.Peek() == -1)
-                        {
-                            LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", "End of script!"), ConsoleColor.Green);
-                            break;
-                        }
-                        string line = await sr.ReadLineAsync();
-                        if(string.IsNullOrWhiteSpace(line))
-                        {
-                            LineInScript++;
-                            continue;
-                        }
-                        if (LineInScript >= 1)
-                        {
-                            if (line.ToUpper().StartsWith("::") || line.ToUpper().StartsWith("REM") || line.ToUpper().StartsWith("//"))
-                            {
-                                //comment line.
-                                LineInScript++;
-                                continue;
-                            }
-
-
-                            //GET COMMAND PART.
-                            string output = "";
-                            switch (line.Split(' ')[0].ToUpper())
-                            {
-                                case ("ECHO"):
-
-                                    //Get the line removing echo.
-                                    output = line.Remove(0, 5);
-                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, null, client, message)))
-                                    {
-                                        error = true;
-                                        //errorMessage = $"SCRIPT ERROR:```Output string cannot be empty.``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```";
-                                        errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
-                                        errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
-                                        break;
-                                    }
-                                    await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, null, client, message), false);
-
-                                    break;
-                                
-                                case ("ECHOTTS"):
-                                    //Get the line removing echo.
-                                    output = line.Remove(0, 8);
-                                    if (string.IsNullOrWhiteSpace(ProcessVariableString(gobj, output, null, client, message)))
-                                    {
-                                        error = true;
-                                        errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
-                                        errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
-                                        break;
-                                    }
-                                    await message.Channel.SendMessageAsync(ProcessVariableString(gobj, output, null, client, message), true);
-
-                                    break;
-                                case ("SET"):
-                                   //Sadly, I cannot allow for prompts in the CoreScript File evaluation.
-                                    if (line.Split(' ')[1] == "/H")
-                                    {
-                                        CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message, true);
-                                        break;
-                                    }
-                                    CaseSetVar(line, ref error, ref errorEmbed, ref LineInScript, ref cmd, ref gobj, ref client, ref message);
-                                    break;
-                                case ("CMD"):
-                                    //SocketMessage m = message as SocketMessage;
-                                    CaseExecCmd(ProcessVariableString(gobj, line, null, client, message), ccmgr, gobj, ref error, ref errorEmbed, ref LineInScript, ref client, ref cmd, ref message);
-
-                                    break;
-                                case ("BOTSTATUS"):
-                                    await ((DiscordShardedClient)client).SetGameAsync(ProcessVariableString(gobj, line.Remove(0, 10), cmd, client, message));
-                                    break;
-                                case ("STATUSORB"):
-                                    string cond = line.Remove(0, 10).ToUpper();
-                                    switch (cond)
-                                    {
-                                        case ("ONLINE"):
-                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Online);
-                                            break;
-                                        case ("AWAY"):
-                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Idle);
-                                            break;
-                                        case ("AFK"):
-                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.AFK);
-                                            break;
-                                        case ("BUSY"):
-                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.DoNotDisturb);
-                                            break;
-                                        case ("OFFLINE"):
-                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Offline);
-                                            break;
-                                        case ("INVISIBLE"):
-                                            await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Invisible);
-                                            break;
-                                        default:
-                                            error = true;
-                                            //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected Argument: {cond}. Try either ONLINE, BUSY, AWAY, AFK, INVISIBLE, OFFLINE.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
-                                            break;
-                                    }
-
-                                    break;
-                                case ("BOTGOLIVE"):
-                                    string linevar = ProcessVariableString(gobj, line, cmd, client, message);
-                                    string[] data = linevar.Remove(0, 10).Split(' ');
-                                    if (data.Length < 2)
-                                    {
-                                        error = true;
-                                        //errorMessage = $"SCRIPT ERROR:```\r\nFunction error: Expected format BOTGOLIVE <ChannelName> <status text>.\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
-                                        errorEmbed.WithDescription($"Function error: Expected format ```BOTGOLIVE <ChannelName> <status text>.```");
-                                        errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
-                                        break;
-                                    }
-                                    string statusText = line.Remove(0, 10 + data[0].Length + 1).Trim();
-
-                                    await ((DiscordShardedClient)client).SetGameAsync(statusText, $"https://twitch.tv/{data[0]}", ActivityType.Streaming);
-                                    break;
-                                case ("WAIT"):
-                                    int v = 1;
-                                    if (!int.TryParse(ProcessVariableString(gobj, line.Remove(0, 5), cmd, client, message), out v))
-                                    {
-                                        error = true;
-                                        //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
-                                        errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
-                                        errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
-                                        break;
-                                    }
-                                    if (v < 1)
-                                    {
-                                        //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
-                                        errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
-                                        errorEmbed.AddField("Line", LineInScript, true);
-                                        errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
-                                        error = true;
-                                        break;
-                                    }
-                                    await Task.Delay(v);
-                                    break;
-                                default:
-                                    error = true;
-                                    //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected core function: {line.Split(' ')[0]}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
-                                    errorEmbed.WithDescription($"Unexpected function: ```{line.Split(' ')[0]}```");
-                                    errorEmbed.AddField("Line", LineInScript, true);
-                                    errorEmbed.AddField("Execution Context", Path.GetFileName(filename), true);
-                                    break;
-                            }
-
-                        }
-                        await Task.Delay(20);
-                        LineInScript++;
-                    }
-                }
-                if (error)
-                {
-                    await message.Channel.SendMessageAsync("", false, errorEmbed.Build());
-                    return;
-                }
+                string response = $"```DOS\r\n{sr.ReadToEnd()}\r\n```";
+                await EvaluateScript(gobj, response, cmd, client, message, null,true);
             }
         }
         #endregion
