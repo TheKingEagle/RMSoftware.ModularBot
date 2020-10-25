@@ -383,8 +383,12 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>REM Move assembly references to LIB.
-ROBOCOPY "$(TargetDir) " "$(TargetDir)lib\ " /XF *.exe *.config *.manifest *.LOG *.json *.core *.cnf *.pdb /XD lib modules guilds ext downloads attachments /E /IS /MOVE
+    <PostBuildEvent>REM Delete lib folder to prevent robocopy from skipping!
+RD "$(TargetDir)lib" /s /q
+REM Make the directory
+MKDIR $(TargetDir)lib
+REM Move assembly references to LIB.
+ROBOCOPY "$(TargetDir) " "$(TargetDir)lib\ " /XF *.exe *.config *.manifest *.LOG *.json *.core *.cnf *.pdb /XD lib modules guilds ext downloads attachments scripts /E /IS /MOVE
 if %25errorlevel%25 leq 4 exit 0 else exit %25errorlevel%25</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
