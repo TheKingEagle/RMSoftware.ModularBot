@@ -40,8 +40,6 @@ namespace ModularBOT
                 if(discord!=null)
                 {
                     discord.Stop(ref ShutdownCalled);
-                    
-                    Thread.Sleep(3000);
                 }
                 return false;
             };
@@ -83,7 +81,7 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new ListCommand());             //list
             consoleIO.ConsoleCommands.Add(new GuildsCommand());           //guilds
             consoleIO.ConsoleCommands.Add(new ConIOCrashCommand());       //iocrash
-
+            consoleIO.ConsoleCommands.Add(new ConfigResetCommand());      //config.reset
             consoleIO.ConsoleCommands.Add(new UpdateCommand());           //update
             #endregion
 
