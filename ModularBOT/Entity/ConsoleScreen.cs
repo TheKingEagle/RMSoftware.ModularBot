@@ -153,7 +153,7 @@ namespace ModularBOT.Entity
                 {
                     lines[i] = lines[i].Remove(NewLinePos);
                     paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
-                    returnstring += (lines[i]) + "\n";
+                    returnstring += (lines[i]);
                     i++;
                     continue;
                     //lines.Add(paragraph.Substring(NewLinePos, paragraph.Length-NewLinePos));
@@ -174,7 +174,7 @@ namespace ModularBOT.Entity
                     //lines[i] = lines[i].Remove(length).PadRight(Console.WindowWidth - 2, '\u2000');
                 }
                 paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
-                returnstring += (lines[i]) + "\n";
+                returnstring += (lines[i]) + "\r\n";
                 i++;
             }
             if (lines.Count > 1)
@@ -732,7 +732,8 @@ namespace ModularBOT.Entity
             Console.Write("\u2551{0}\u2551", pTitle);
             int s = UpdateProgressBar();//2
             int linecount = UpdateMeta(s);//4
-
+            Console.BackgroundColor = TitlesBackColor;
+            Console.ForegroundColor = TitlesFontColor;
             DecorateBottom();
             linecount++;//6
             ContentTop = linecount;
