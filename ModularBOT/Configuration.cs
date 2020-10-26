@@ -78,6 +78,17 @@ namespace ModularBOT
                 sw.WriteLine(json);
             }
         }
+        public void DelConfig(string jsonFilename)
+        {
+            if(File.Exists(jsonFilename))
+            {
+                File.Delete(jsonFilename);
+            }
+            else
+            {
+                throw new FileNotFoundException("Can't delete a file that isn't there.", jsonFilename);
+            }
+        }
     }
 
     /// <summary>
@@ -87,7 +98,7 @@ namespace ModularBOT
     {
         public Configuration CurrentConfig;
         internal SetupWizard setup;
-
+        internal bool Deleted = false;
         private List<ConfigEntity> _GuildConfigEntities = new List<ConfigEntity>();
         private List<ConfigEntity> _ModularCnfgEntities = new List<ConfigEntity>();
 
@@ -155,8 +166,16 @@ namespace ModularBOT
         }
         public void Save()
         {
-            CurrentConfig.SaveConfig(FileName);
+            if(!Deleted)
+            {
+                CurrentConfig.SaveConfig(FileName);
+            }
         }
-        
+        public void Delete()
+        {
+            CurrentConfig.DelConfig(FileName);
+            Deleted = true;
+        }
+
     }
 }
