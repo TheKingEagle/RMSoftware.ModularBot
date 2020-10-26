@@ -30,6 +30,7 @@ namespace ModularBOT.Component
         private List<SocketMessage> messageQueue = new List<SocketMessage>();          //DiscordNET Message Queue
         private Dictionary<ulong, short> userBL = new Dictionary<ulong, short>();      //Auto Blacklisting dictionary for users who like to spam...
         private string lastrecieved = "";
+        private int shardinitAttempts = 0;
         #endregion
 
         #region Properties
@@ -93,11 +94,14 @@ namespace ModularBOT.Component
                 InstanceStartTime = DateTime.Now;
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "I-Uptime", $"Instance start time set to {InstanceStartTime}"));
 
-                Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord INIT attempt"));
-                Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token));
+                //var timeout = Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord INIT attempt"));
+                var z = Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token,true));
+                z.Wait();
+                if (z.Exception != null) throw z.Exception;
                 SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);//wait for the client to login before starting...
-                Task.Run(async () => await Client.StartAsync());
-                
+                var sz = Task.Run(async () => await Client.StartAsync());
+                sz.Wait();
+                if (sz.Exception != null) throw sz.Exception;
                 Client.SetStatusAsync(UserStatus.DoNotDisturb);//go into DND mode.
                 SpinWait.SpinUntil(() => init_start);//Hold thread until needed shard is ready.
                 SpinWait.SpinUntil(() => LoginEventsCalled);//Don't instruct core to init until client finished login event.
@@ -115,30 +119,41 @@ namespace ModularBOT.Component
                
                 
             }
-            catch (Discord.Net.HttpException httex)
+            catch (AggregateException agex)
             {
-                if (httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
+                foreach (HttpException httex in agex.InnerExceptions)
                 {
 
-                     RestartRequested = consoleIO.ShowKillScreen("Unauthorized", 
-                         "The server responded with error 401. Make sure your authorization token is correct.", false,
-                         ref ShutdownRequest, ref RestartRequested,5, httex, "DNET_HTTPEX_UNAUTHORIZED").GetAwaiter().GetResult();
-                }
-                if (httex.DiscordCode == 4007)
-                {
-                    RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,
-                        ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_INVALID_ID").GetAwaiter().GetResult();
-                }
-                if (httex.DiscordCode == 5001)
-                {
-                    RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true, 
-                        ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_TIMED_OUT").GetAwaiter().GetResult();
-                }
 
-                else
+                    if (httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
+                    {
+                        serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.AuthToken = null;
+                        serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+
+                        RestartRequested = consoleIO.ShowKillScreen("Unauthorized",
+                            "The server responded with error 401. Verify your token is correct, and try again.", false,
+                            ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_UNAUTHORIZED").GetAwaiter().GetResult();
+                    }
+                    if (httex.DiscordCode == 4007)
+                    {
+                        RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,
+                            ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_INVALID_ID").GetAwaiter().GetResult();
+                    }
+                    if (httex.DiscordCode == 5001)
+                    {
+                        RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true,
+                            ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_TIMED_OUT").GetAwaiter().GetResult();
+                    }
+
+                    else
+                    {
+                        RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.",
+                            true, ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_UNKNOWN_ERROR").GetAwaiter().GetResult();
+                    }
+                }
+                foreach (Exception item in agex.InnerExceptions)
                 {
-                    RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.",
-                        true, ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_UNKNOWN_ERROR").GetAwaiter().GetResult();
+                    throw item;
                 }
             }
 
@@ -149,7 +164,7 @@ namespace ModularBOT.Component
                     .GetResult();
             }
         }
-
+        
         private Task Client_GuildUpdated(SocketGuild arg1, SocketGuild arg2)
         {
             Task.Run(()=> SyncGuild(arg2));
@@ -193,9 +208,15 @@ namespace ModularBOT.Component
 
         public void Stop(ref bool ShutdownRequest)
         {
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Permissions", $"Saving permissions @ Stop"));
+            if(serviceProvider != null)
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Permissions", $"Saving permissions @ Stop"));
 
-            PermissionManager.SaveJson();
+            }
+            if(PermissionManager != null)
+            {
+                PermissionManager.SaveJson();
+            }
             if(Client != null)
             {
                 Client.SetStatusAsync(UserStatus.Invisible);
@@ -214,17 +235,7 @@ namespace ModularBOT.Component
                 {
                     //Client.SetStatusAsync(UserStatus.DoNotDisturb);
                     ulong id = serviceProvider.GetRequiredService<Configuration>().LogChannel;
-                    if (recovered)
-                    {
-                        EmbedBuilder builder = new EmbedBuilder();
-                        builder.WithAuthor(Client.CurrentUser);
-                        builder.WithTitle("WARNING");
-                        builder.WithDescription("The program was auto-restarted due to a crash. Please see `Crash.LOG` and `Errors.LOG` for details.");
-                        builder.WithColor(new Color(255, 255, 0));
-                        builder.WithFooter("ModularBOT • Core");
-                        ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
-                    }
+                    
 
                     #region Startup.CORE
                     IGuildChannel i = (IGuildChannel)Client.GetChannel(id);
@@ -237,6 +248,17 @@ namespace ModularBOT.Component
                         
                         Stop(ref shutdownRequested);
                         return;
+                    }
+                    if (recovered)
+                    {
+                        EmbedBuilder builder = new EmbedBuilder();
+                        builder.WithAuthor(Client.CurrentUser);
+                        builder.WithTitle("WARNING");
+                        builder.WithDescription("The program was auto-restarted due to a crash. Please see `Crash.LOG` and `Errors.LOG` for details.");
+                        builder.WithColor(new Color(255, 255, 0));
+                        builder.WithFooter("ModularBOT • Core");
+                        ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
                     }
                     GuildObject obj = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == i.Guild.Id) ?? CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
                     try
@@ -407,6 +429,7 @@ namespace ModularBOT.Component
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"Client SessionStart time set to {ClientStartTime}"));
                 LogConnected = true;
             }
+            
             await Task.Delay(0);
 #pragma warning disable 4014
             Task.Run(() => SyncGuild(guild));//don't really care about result in this case. just want a new thread.
@@ -735,6 +758,21 @@ namespace ModularBOT.Component
 
                 init_start = true;//Signal SpinWait to run task.
                
+            }
+            else
+            {
+                if(!init_start)
+                {
+                    shardinitAttempts++;
+                    if (shardinitAttempts >= Client.Shards.Count)
+                    {
+                        serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.LogChannel = 0;
+                        serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Log Channel Invalid", "You specified an invalid Log channel ID. Please verify your guild channel's ID and try again.", false, ref Program.ShutdownCalled,
+                                ref Program.RestartRequested, 0, new ArgumentException("init channel was invalid.", "botChannel"), "DNET_INIT_INVALID");
+
+                    }
+                }
             }
             return Task.Delay(0);
         }
