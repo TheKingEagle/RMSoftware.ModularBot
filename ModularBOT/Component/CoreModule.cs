@@ -65,10 +65,13 @@ namespace ModularBOT.Component
 
             eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
             eb.WithDescription("This version may not be compatible with pre-existing scripts.");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT CoreScript Update [BETA]",
+            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT System Update [BETA]",
                 $"• REWRITE: CoreScript now implements a modular function list.\r\n" +
                 $"• RENAMED: `BOTSTATUS` to `TITLE`\r\n" +
-                $"• RENAMED: `BOTGOLIVE` to `STRMSTATUS`\r\n" +
+                $"• FIX: Proper Error handling for misconfiguration`\r\n" +
+                $"• ADD: `config.reset` to console commands\r\n" +
+                $"• FIX: KillScreen stacktrace malformed\r\n" +
+                $"• CHANGE: Startup.CORE now supports the same commands as a standard CoreScript call.\r\n" +
                 $"• SOURCE: Refactoring/TODOs");
 
 
