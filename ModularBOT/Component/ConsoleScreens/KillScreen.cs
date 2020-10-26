@@ -105,8 +105,8 @@ namespace ModularBOT.Component.ConsoleScreens
                 foreach (string item in stacksp)
                 {
                     count++;
-                    stack += $"{item}\r\n";
-                    if (count > 4)
+                    stack += $"{item}\n";
+                    if (count > 7)
                     {
                         break;
                     }
