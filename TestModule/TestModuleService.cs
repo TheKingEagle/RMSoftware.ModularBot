@@ -1214,8 +1214,10 @@ namespace TestModule
             if (arg3.Emote.ToString() == "\u2B50" || arg3.Emote.ToString() == "\uD83C\uDF1F") //STAR or GLOWING STAR
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
+                string msgattachment = "";
                 if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
                 {
+
                     if (arg2.Id != binding.ChannelID) // Starred message is NOT on the starboard channel. 
                     {
                         Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "SBBinding found. NOT Starboard embed."));
@@ -1237,6 +1239,7 @@ namespace TestModule
                             }
                             string name = binding.UseAlias ? nick : sname;
                             //modify the starboard message
+                            
                             EmbedBuilder SBEntryEmbed = new EmbedBuilder()
                             {
                                 Author = new EmbedAuthorBuilder()
@@ -1284,6 +1287,11 @@ namespace TestModule
                                     {
                                         SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
                                     }
+                                }
+                                else
+                                {
+                                    msgattachment = StarredMessage.Attachments.First().Url;
+                                    SBEntryEmbed.AddField("Attachment", $"||{StarredMessage.Attachments.First().Url}||");
                                 }
                             }
                             if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is IUserMessage sum)
@@ -1333,11 +1341,11 @@ namespace TestModule
                                         SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
                                     }
                                 }
-                                if (StarredMessage.Attachments.Count > 0)
+                                if(StarredMessage.Attachments.Count > 0)
                                 {
                                     if (StarredMessage.Attachments.First().Width.HasValue)
                                     {
-                                        if (!StarredMessage.Attachments.First().Filename.StartsWith("SPOILER_"))
+                                        if (!StarredMessage.Attachments.First().IsSpoiler())
                                         {
                                             SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
                                         }
@@ -1346,10 +1354,26 @@ namespace TestModule
                                             SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
                                         }
                                     }
+
+                                    msgattachment = StarredMessage.Attachments.First().Filename;
+                                    SBEntryEmbed.AddField("Attachment", msgattachment);
                                 }
                                 var channel = STC.Guild.GetTextChannel(binding.ChannelID);
                                 var newSBMessage = await channel.SendMessageAsync($"🌟 **1** | " +
                                     $"<#{StarredMessage.Channel.Id}>", false, SBEntryEmbed.Build());
+                                if (!string.IsNullOrEmpty(msgattachment))
+                                {
+                                    if (msgattachment.EndsWith(".mov") ||
+                                        msgattachment.EndsWith(".mp4") ||
+                                        msgattachment.EndsWith(".wmv") ||
+                                        msgattachment.EndsWith(".mkv") ||
+                                        msgattachment.EndsWith(".avi") ||
+                                        msgattachment.EndsWith(".flv") ||
+                                        msgattachment.EndsWith(".mpeg"))
+                                    {
+                                        await channel.SendMessageAsync(StarredMessage.Attachments.First().Url);
+                                    }
+                                }
                             }
                         }
 
@@ -1404,7 +1428,7 @@ namespace TestModule
                             {
                                 if (StarredMessage.Attachments.First().Width.HasValue)
                                 {
-                                    if (!StarredMessage.Attachments.First().Filename.StartsWith("SPOILER_"))
+                                    if (!StarredMessage.Attachments.First().IsSpoiler())
                                     {
                                         SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
                                     }
@@ -1413,13 +1437,28 @@ namespace TestModule
                                         SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
                                     }
                                 }
+
+                                msgattachment = StarredMessage.Attachments.First().Filename;
+                                SBEntryEmbed.AddField("Attachment", msgattachment);
                             }
                             var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                            var newSBMessage = await channel.SendMessageAsync($"\uD83C\uDF1F **1** | " +
+                            var newSBMessage = await channel.SendMessageAsync($"🌟 **1** | " +
                                 $"<#{StarredMessage.Channel.Id}>", false, SBEntryEmbed.Build());
 
-
                             await newSBMessage.AddReactionAsync(new Emoji("\u2B50"));
+                            if (!string.IsNullOrEmpty(msgattachment))
+                            {
+                                if (msgattachment.EndsWith(".mov") ||
+                                    msgattachment.EndsWith(".mp4") ||
+                                    msgattachment.EndsWith(".wmv") ||
+                                    msgattachment.EndsWith(".mkv") ||
+                                    msgattachment.EndsWith(".avi") ||
+                                    msgattachment.EndsWith(".flv") ||
+                                    msgattachment.EndsWith(".mpeg"))
+                                {
+                                    await channel.SendMessageAsync(StarredMessage.Attachments.First().Url);
+                                }
+                            }
                             //create a new starboard entry.
                             sbmessage = new SBEntry()
                             {
@@ -1506,6 +1545,7 @@ namespace TestModule
                                         SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
                                     }
                                 }
+
                             }
                             if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) is IUserMessage sum)
                             {
@@ -1558,7 +1598,7 @@ namespace TestModule
                                 {
                                     if (StarredMessage.Attachments.First().Width.HasValue)
                                     {
-                                        if (!StarredMessage.Attachments.First().Filename.StartsWith("SPOILER_"))
+                                        if (!StarredMessage.Attachments.First().IsSpoiler())
                                         {
                                             SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
                                         }
@@ -1567,10 +1607,26 @@ namespace TestModule
                                             SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
                                         }
                                     }
+
+                                    msgattachment = StarredMessage.Attachments.First().Filename;
+                                    SBEntryEmbed.AddField("Attachment", msgattachment);
                                 }
                                 var channel = STC.Guild.GetTextChannel(binding.ChannelID);
                                 var newSBMessage = await channel.SendMessageAsync($"🌟 **1** | " +
                                     $"<#{StarredMessage.Channel.Id}>", false, SBEntryEmbed.Build());
+                                if (!string.IsNullOrEmpty(msgattachment))
+                                {
+                                    if (msgattachment.EndsWith(".mov") ||
+                                        msgattachment.EndsWith(".mp4") ||
+                                        msgattachment.EndsWith(".wmv") ||
+                                        msgattachment.EndsWith(".mkv") ||
+                                        msgattachment.EndsWith(".avi") ||
+                                        msgattachment.EndsWith(".flv") ||
+                                        msgattachment.EndsWith(".mpeg"))
+                                    {
+                                        await channel.SendMessageAsync(StarredMessage.Attachments.First().Url);
+                                    }
+                                }
                             }
                         }
                     } //Reaction is from starboard channel
