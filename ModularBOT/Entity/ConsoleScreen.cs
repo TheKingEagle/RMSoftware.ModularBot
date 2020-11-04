@@ -148,12 +148,12 @@ namespace ModularBOT.Entity
             while (paragraph.Length > 0)
             {
                 lines.Add(paragraph.Substring(0, Math.Min(Console.WindowWidth - consoleoffset, paragraph.Length)));
-                int NewLinePos = lines[i].LastIndexOf("\r\n");
+                int NewLinePos = lines[i].LastIndexOf("\n");
                 if (NewLinePos > 0)
                 {
                     lines[i] = lines[i].Remove(NewLinePos);
                     paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
-                    returnstring += (lines[i]);
+                    returnstring += (lines[i])+"\n";
                     i++;
                     continue;
                     //lines.Add(paragraph.Substring(NewLinePos, paragraph.Length-NewLinePos));
@@ -174,7 +174,7 @@ namespace ModularBOT.Entity
                     //lines[i] = lines[i].Remove(length).PadRight(Console.WindowWidth - 2, '\u2000');
                 }
                 paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
-                returnstring += (lines[i]) + "\r\n";
+                returnstring += (lines[i])+"\n";
                 i++;
             }
             if (lines.Count > 1)
@@ -246,10 +246,13 @@ namespace ModularBOT.Entity
                 if (i == 0)
                 {
                     Console.WriteLine(lines[i]);//write current line in queue.
+                    //Console.CursorTop -= 1;
+
                 }
                 if (i > 0)
                 {
                     Console.WriteLine(lines[i]);//write current line in queue, padded by 21 enQuads to preserve line format.
+                    //Console.CursorTop-=1;
                 }
 
             }
