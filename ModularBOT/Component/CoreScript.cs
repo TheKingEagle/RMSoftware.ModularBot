@@ -25,6 +25,7 @@ namespace ModularBOT.Component
 
         internal Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)> ActivePrompts { get; set; }
         public List<CSFunction> CoreScriptFunctions = new List<CSFunction>();
+        public List<SystemVariable> SystemVariables = new List<SystemVariable>();
         internal CommandService cmdsvr;
         public readonly IServiceProvider Services;
         public short OutputCount = 0;
@@ -105,6 +106,31 @@ namespace ModularBOT.Component
             CoreScriptFunctions.Add(new CSFunctions.CSFWait());
             #endregion
 
+            #region =================================== [CoreScript VARIABLES] ===================================
+            SystemVariables.Add(new SystemVariables.Invoker());
+            SystemVariables.Add(new SystemVariables.Invoker_Nick());
+            SystemVariables.Add(new SystemVariables.Invoker_NoMention());
+            SystemVariables.Add(new SystemVariables.Invoker_Avatar());
+
+            SystemVariables.Add(new SystemVariables.Self());
+            SystemVariables.Add(new SystemVariables.Self_Nick());
+            SystemVariables.Add(new SystemVariables.Self_NoMention());
+            SystemVariables.Add(new SystemVariables.Self_Avatar());
+
+            SystemVariables.Add(new SystemVariables.Bot_Owner());
+            SystemVariables.Add(new SystemVariables.Bot_Owner_NoMention());
+            SystemVariables.Add(new SystemVariables.Bot_Owner_Avatar());
+
+            SystemVariables.Add(new SystemVariables.Guild_Owner());
+            SystemVariables.Add(new SystemVariables.Go_Nick());
+            SystemVariables.Add(new SystemVariables.Go_Avatar());
+
+            SystemVariables.Add(new SystemVariables.Command());
+            SystemVariables.Add(new SystemVariables.Command_Count());
+            SystemVariables.Add(new SystemVariables.Latency());
+
+            #endregion
+            
             Task.Run(() => OutputThrottleRS());//new thread throttle loop check.
         }
 
@@ -210,7 +236,7 @@ namespace ModularBOT.Component
                     if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
                     if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
                     if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
-                    functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
+                    functionResult = (new Random()).Next(randmin, randmax + 1);
                 }
                 //add the new variable.
                 object ev = functionResult != null ? functionResult : value;
@@ -242,7 +268,7 @@ namespace ModularBOT.Component
                     if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
                     if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
                     if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
-                    functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
+                    functionResult = (new Random()).Next(randmin, randmax + 1);
                 }
                 //add the new variable.
                 object ev = functionResult != null ? functionResult : value;
@@ -274,7 +300,6 @@ namespace ModularBOT.Component
             }
             bool HasDictionaryResult = UserVariableDictionaries.TryGetValue(KEY, out Dictionary<string, (object value, bool hidden)> userVarDictionary);
 
-            //WARNING: Step-by-step navigation comments are here because this may be very confusing...
             string function = "";
             int findex = ((string)value).IndexOf('(');
             if (findex > 0) function = ((string)value).ToLower().Remove(findex);
@@ -462,98 +487,8 @@ namespace ModularBOT.Component
         {
             string Processed = response;
             
-            #region Bot Instance
-            if (Processed.Contains("%self%"))
-            {
-                Processed = Processed.Replace("%self%", client.CurrentUser.Mention);
-            }
-            if (Processed.Contains("%self_avatar%"))
-            {
-                Processed = Processed.Replace("%self_avatar%", client.CurrentUser.GetAvatarUrl(ImageFormat.Auto,512));
-            }
-            if (Processed.Contains("%self_nick%"))
-            {
-                string snick = "Not specified";
-                if (client.CurrentUser is SocketGuildUser sgu)
-                {
-                    snick = sgu.Nickname ?? "Not specified";
-                }
-
-                Processed = Processed.Replace("%self_nick%", snick);
-            }
-
-            #endregion
-
-            #region Command Invoker
-            if (Processed.Contains("%invoker%"))
-            {
-                Processed = Processed.Replace("%invoker%", message.Author.Mention);
-            }
-            if (Processed.Contains("%invoker_nick%"))
-            {
-                SocketGuildUser sgu = message.Author as SocketGuildUser;
-                string nick = message.Author.Username;
-                if(sgu != null)
-                {
-                    nick = sgu.Nickname ?? sgu.Username;
-                }
-                Processed = Processed.Replace("%invoker_nick%", nick);
-            }
-            if (Processed.Contains("%invoker_nomention%"))
-            {
-                Processed = Processed.Replace("%invoker_nomention%", message.Author.Username+"#"+message.Author.Discriminator);
-            }
-            if (Processed.Contains("%invoker_avatar%"))
-            {
-                Processed = Processed.Replace("%invoker_avatar%", message.Author.GetAvatarUrl(ImageFormat.Auto, 512));
-            }
-
-            #endregion
-
-            #region Bot Owner
-            if (Processed.Contains("%bot_owner%"))
-            {
-                Processed = Processed.Replace("%bot_owner%", client.GetApplicationInfoAsync().GetAwaiter().GetResult().Owner.Mention);
-            }
-            if (Processed.Contains("%bot_owner_nomention%"))
-            {
-                IUser b_own = client.GetApplicationInfoAsync().GetAwaiter().GetResult().Owner;
-                Processed = Processed.Replace("%bot_owner_nomention%", b_own.Username + "#" + b_own.Discriminator);
-            }
-            if (Processed.Contains("%bot_owner_avatar%"))
-            {
-                IUser b_own = client.GetApplicationInfoAsync().GetAwaiter().GetResult().Owner;
-                Processed = Processed.Replace("%bot_owner_avatar%", b_own.GetAvatarUrl(ImageFormat.Auto,512));
-            }
-
-            #endregion
-
             #region Statistics/Guild info
-            if (Processed.Contains("%command%"))
-            {
-                Processed = Processed.Replace("%command%", cmd.Name);
-            }
-            if (Processed.Contains("%command_count%"))
-            {
-                int c = gobj.GuildCommands.Count + cmdsvr.Commands.Count();
-                Processed = Processed.Replace("%command_count%", c.ToString());
-            }
-            if (Processed.Contains("%latency%"))
-            {
-                DiscordShardedClient cl = client as DiscordShardedClient;
-                int? l = null;
-                if (message is SocketUserMessage a)
-                {
-                    if (a.Channel is SocketTextChannel c)
-                    {
-                        if (c.Guild != null)
-                        {
-                            l = cl.GetShardFor(c.Guild).Latency;
-                        }
-                    }
-                }
-                Processed = Processed.Replace("%latency%", (l ?? cl.Latency).ToString() + " ms");
-            }
+          
             if (Processed.Contains("%prefix%") || Processed.Contains("%pf%"))
             {
 
@@ -676,49 +611,20 @@ namespace ModularBOT.Component
 
             #endregion
 
-            #region Guild Owner
-            if (Processed.Contains("%guild_owner%"))
+            //Check for use of system-defined variables.
+
+            foreach (Match item in Regex.Matches(Processed, @"%[^%]*%"))
             {
-                string GuildOwner = "Null";
-
-
-                if(gobj.ID != 0)
+                string vname = item.Value.Replace("%", "");
+                var sysvar = SystemVariables.FirstOrDefault(x => x.Name == vname);
+                if ( sysvar != null)
                 {
-                    IGuild g = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult();
-                    IGuildUser gu = g.GetOwnerAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
-                    GuildOwner = gu.Username + "#" + gu.Discriminator;
+                    string replacedvar = sysvar.GetReplacedString(gobj, Processed, cmd, client, message,cmdsvr);
+                    Processed = replacedvar;
                 }
-                Processed = Processed.Replace("%guild_owner%",GuildOwner);
             }
-            if (Processed.Contains("%go_avatar%"))
-            {
-                string GuildOwnerav = "Null";
 
-
-                if (gobj.ID != 0)
-                {
-                    IGuild g = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult();
-                    IGuildUser gu = g.GetOwnerAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
-                    GuildOwnerav = gu.GetAvatarUrl(ImageFormat.Auto,512);
-                }
-                Processed = Processed.Replace("%go_avatar%", GuildOwnerav);
-            }
-            if (Processed.Contains("%go_nick%"))
-            {
-                string GuildOwnernick = "Null";
-
-
-                if (gobj.ID != 0)
-                {
-                    IGuild g = client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult();
-                    IGuildUser gu = g.GetOwnerAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
-                    GuildOwnernick = gu.Nickname ?? gu.Username;
-                }
-                Processed = Processed.Replace("%go_nick%", GuildOwnernick);
-            }
-            #endregion
-
-            //Check for use of Custom defined variables.
+            //Check for use of Custom-defined variables.
 
             foreach (Match item in Regex.Matches(Processed, @"%[^%]*%"))
             {
@@ -729,7 +635,7 @@ namespace ModularBOT.Component
                     Processed = Processed.Replace(item.Value, replacedvar);
                 }
             }
-            //Final variable.
+            //Final result.
             return Processed;
         }
 
@@ -738,6 +644,7 @@ namespace ModularBOT.Component
             channelTarget = target;
             contextToDM = CtxToDM;
         }
+
         public async Task EvaluateScript(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message, EmbedBuilder CSEmbed = null, bool isFile = false)
         {
             int LineInScript = 0;
@@ -868,9 +775,7 @@ namespace ModularBOT.Component
                                 {
                                     break;
                                 }
-
                             }
-
 
                             #endregion
                         }
@@ -932,7 +837,7 @@ namespace ModularBOT.Component
             return Task.Delay(0);
         }
 
-        #endregion ========================================================= END CORESCRIPT EVENTS =======================================================
+        #endregion
         
         #region Private methods
         private void CaseSetVar(string line, ref bool error, ref EmbedBuilder errorEmbed, ref int LineInScript, ref GuildCommand cmd, ref GuildObject gobj, ref IDiscordClient client,ref IMessage message, bool hidden=false)
@@ -1072,7 +977,6 @@ namespace ModularBOT.Component
         }
 
         #endregion
-
 
     }
 }
