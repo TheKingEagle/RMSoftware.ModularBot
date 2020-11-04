@@ -317,6 +317,11 @@
     <Compile Include="Component\ModuleProperties.cs" />
     <Compile Include="Component\OS_SystemInfo.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
+    <Compile Include="Component\SystemVariables\BotInstanceVars.cs" />
+    <Compile Include="Component\SystemVariables\BotOwnerVars.cs" />
+    <Compile Include="Component\SystemVariables\CommandInvokerVars.cs" />
+    <Compile Include="Component\SystemVariables\GuildOwnerVars.cs" />
+    <Compile Include="Component\SystemVariables\StatisticalVars.cs" />
     <Compile Include="Entity\ConfigEntity.cs" />
     <Compile Include="Entity\ConsoleCommand.cs" />
     <Compile Include="Entity\ConsoleScreen.cs" />
@@ -333,6 +338,7 @@
     <Compile Include="Entity\GuildCommand.cs" />
     <Compile Include="Entity\GuildObject.cs" />
     <Compile Include="Entity\ModulePropertyItem.cs" />
+    <Compile Include="Entity\SystemVariable.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
