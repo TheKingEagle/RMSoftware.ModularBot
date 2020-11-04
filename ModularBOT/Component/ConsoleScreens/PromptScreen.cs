@@ -42,7 +42,7 @@ namespace ModularBOT.Component.ConsoleScreens
         protected override void RenderContents()
         {
             //SpinWait.SpinUntil(() => !LayoutUpdating);
-            WriteEntry($"\r\n{tx}", ConsoleColor.DarkRed, false,ConsoleColor.White,null,ScreenBackColor);
+            WriteEntry($"{tx}", ConsoleColor.DarkRed, false,ConsoleColor.White,null,ScreenBackColor);
             //ScreenBackColor = ConsoleColor.Gray;
             //ScreenFontColor = ConsoleColor.Black;
             //Console.CursorTop = 0;
