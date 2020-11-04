@@ -28,8 +28,8 @@ namespace ModularBOT.Component.ConsoleCommands
             ScreenModal = true;
             //---------------start modal---------------
             var NGScreen = new PromptScreen("Configuration Warning",
-                "   You are about to reset the configuration file. This will restart the application and run the initial setup wizard. " +
-                "\r\n   This will not remove installed modules, module configuration, nor any custom commands.")
+                "   You are about to reset the configuration file. This will restart the application and run the initial setup wizard." +
+                " This will not remove installed modules, module configuration, nor any custom commands.")
             {
                 ActiveScreen = true
             };
