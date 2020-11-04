@@ -106,7 +106,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 {
                     count++;
                     stack += $"{item}\n";
-                    if (count > 7)
+                    if (count > 8)
                     {
                         break;
                     }
@@ -119,9 +119,9 @@ namespace ModularBOT.Component.ConsoleScreens
             UpdateScreen_WriteTitleLine(140, "The program has encountered a problem...");
             UpdateScreen_WriteBody(140,$"{ErrorDeet}\r\n\r\n" +
                 $"Dev Stack (partial):\r\n"+
-                $"{"".PadLeft(140-16, '\u2500')}\r\n" +
+                $"{"".PadLeft(100, '\u2500')}\r\n" +
                 $"{stack}\r\n" +
-                $"{"".PadLeft(140-16, '\u2500')}\r\n" +
+                $"{"".PadLeft(100, '\u2500')}\r\n" +
                 $"If this happens frequently, please submit a bug report to the ModularBOT GitHub repository. ",
                 "Something went wrong...", ConsoleColor.Red);
             Console.BackgroundColor = ConsoleColor.DarkRed;
@@ -151,16 +151,18 @@ namespace ModularBOT.Component.ConsoleScreens
             int coffset = 0;
             UpdateMeta(ShowProgressBar ? 3 : 2);
 
-            string[] summlines = WordWrap($"{Message}", 16).Split('\n');
+            string[] summlines = WordWrap($"{Message.Replace("\r","")}", 4).Split('\n');
             Console.BackgroundColor = ConsoleColor.DarkRed;
             ScreenBackColor = ConsoleColor.DarkRed;
+            summlines = summlines.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             foreach (string line in summlines)
             {
 
-
+                
                 Console.CursorTop = 8 + coffset;
                 Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
                 Console.Write(line);
+                //Console.CursorTop -= 1;//hack workaround to fix wordwrapping issue
                 coffset++;
             }
             Console.CursorTop = 10 + coffset;
