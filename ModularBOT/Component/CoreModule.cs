@@ -1648,20 +1648,35 @@ namespace ModularBOT.Component
             PaginatedMessage.Page pageItem = new PaginatedMessage.Page();
             string dsc = "";
             dsc += "\r\n== System Variables ==\r\n";
-            foreach (var item in DiscordNet.CustomCMDMgr.coreScript.SystemVars)
+
+            GuildCommand cmd = new GuildCommand()
             {
-                int flen = dsc.Length + $"• {item,-20} :: [System Defined]\r\n".Length;
+                Name = "printvars",
+                Action = "N/A",
+                CommandAccessLevel = AccessLevels.CommandManager,
+                Counter = null,
+                RequirePermission = true
+            };
+            foreach (var item in DiscordNet.CustomCMDMgr.coreScript.SystemVariables)
+            {
+                string eval = item.GetReplacedString(gobj, $"%{item.Name}%", cmd, Client, Context.Message, Cmdsvr);
+                if(eval.Length > 20)
+                {
+                    eval = eval.Substring(0, 18) + " *";
+                }
+                int flen = dsc.Length + $"• {item.Name,-20} :: {eval}\r\n".Length;
                 if (flen > 798)
                 {
                     
-                    pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
+                    pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n* :: Value was too long for display.\r\n```";
                     Pages.Add(pageItem);
                     pageItem = new PaginatedMessage.Page();
                     dsc = "";
 
                 }
-                dsc += $"• {item,-20} :: [System Defined]\r\n";
+                dsc += $"• {item.Name,-20} :: {eval}\r\n";
             }
+            dsc += "\r\n* :: Value was too long for display.";
             dsc += "\r\n== Custom Variables ==\r\n";
             foreach (var item in DiscordNet.CustomCMDMgr.coreScript.Variables)
             {
