@@ -33,13 +33,14 @@ namespace ModularBOT.Component
         public bool terminated = false;
         public bool EXIT = false;
         private bool ClMRHandlerBound = false;
-        internal Dictionary<ulong, int> MessageCounter = new Dictionary<ulong, int>(); //MessageCounter<Channel,Count>
+        internal static Dictionary<ulong, int> MessageCounter = new Dictionary<ulong, int>(); //MessageCounter<Channel,Count>
 
 
         internal bool contextToDM = false;
         internal ulong channelTarget = 0;
         #endregion
 
+        //TODO: Priority=LOW; Save custom global & user variables, and populate them via constructor.
         public CoreScript(CustomCommandManager ccmgr,
             ref IServiceProvider _services, 
             Dictionary<string, (object value, bool hidden)> dict = null, 
@@ -49,31 +50,9 @@ namespace ModularBOT.Component
             cmdsvr = _services.GetRequiredService<CommandService>();
             Services = _services;
             this.ccmgr = ccmgr;
-            if (dict == null)
-            {
-                Variables = new Dictionary<string, (object value, bool hidden)>();
-            }
-            else
-            {
-                Variables = dict;
-            }
-
-            if (ap == null)
-            {
-                ActivePrompts = new Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)>();
-            }
-            else
-            {
-                ActivePrompts = ap;
-            }
-            if (uv == null)
-            {
-                UserVariableDictionaries = new Dictionary<ulong, Dictionary<string, (object value, bool hidden)>>();
-            }
-            else
-            {
-                UserVariableDictionaries = uv;
-            }
+            Variables = dict ?? new Dictionary<string, (object value, bool hidden)>();
+            ActivePrompts = ap ?? new Dictionary<ulong, (IMessage InvokerMessage, ulong ChannelID, string PromptReply)>();
+            UserVariableDictionaries = uv ?? new Dictionary<ulong, Dictionary<string, (object value, bool hidden)>>();
 
             #region =================================== [CoreScript FUNCTIONS] ===================================
             CoreScriptFunctions.Add(new CSFunctions.CSFAttach());
@@ -106,91 +85,46 @@ namespace ModularBOT.Component
             CoreScriptFunctions.Add(new CSFunctions.CSFWait());
             #endregion
 
-            #region =================================== [CoreScript VARIABLES] ===================================
+            #region =================================== [CoreScript SYSTEMVAR] ===================================
             SystemVariables.Add(new SystemVariables.Invoker());
             SystemVariables.Add(new SystemVariables.Invoker_Nick());
             SystemVariables.Add(new SystemVariables.Invoker_NoMention());
             SystemVariables.Add(new SystemVariables.Invoker_Avatar());
-
             SystemVariables.Add(new SystemVariables.Self());
             SystemVariables.Add(new SystemVariables.Self_Nick());
             SystemVariables.Add(new SystemVariables.Self_NoMention());
             SystemVariables.Add(new SystemVariables.Self_Avatar());
-
             SystemVariables.Add(new SystemVariables.Bot_Owner());
             SystemVariables.Add(new SystemVariables.Bot_Owner_NoMention());
             SystemVariables.Add(new SystemVariables.Bot_Owner_Avatar());
-
             SystemVariables.Add(new SystemVariables.Guild_Owner());
             SystemVariables.Add(new SystemVariables.Go_Nick());
             SystemVariables.Add(new SystemVariables.Go_Avatar());
-
             SystemVariables.Add(new SystemVariables.Command());
             SystemVariables.Add(new SystemVariables.Command_Count());
             SystemVariables.Add(new SystemVariables.Latency());
+            SystemVariables.Add(new SystemVariables.Prefix());
+            SystemVariables.Add(new SystemVariables.PrefixPF());
+            SystemVariables.Add(new SystemVariables.Version());
+            SystemVariables.Add(new SystemVariables.OS_Name());
+            SystemVariables.Add(new SystemVariables.OS_Bit());
+            SystemVariables.Add(new SystemVariables.OS_Ver());
+            SystemVariables.Add(new SystemVariables.Bot_Mem());
+            SystemVariables.Add(new SystemVariables.Guild());
+            SystemVariables.Add(new SystemVariables.Guild_ID());
+            SystemVariables.Add(new SystemVariables.Guild_Count());
+            SystemVariables.Add(new SystemVariables.Guild_UserCount());
+            SystemVariables.Add(new SystemVariables.Guild_Icon());
+            SystemVariables.Add(new SystemVariables.Channel_NoMention());
+            SystemVariables.Add(new SystemVariables.Channel());
+            SystemVariables.Add(new SystemVariables.Channel_ID());
+            SystemVariables.Add(new SystemVariables.MsgCount());
+            SystemVariables.Add(new SystemVariables.Counter());
 
             #endregion
-            
-            Task.Run(() => OutputThrottleRS());//new thread throttle loop check.
+
+            Task.Run(() => OutputThrottleRS());//output "throttle" loop. [script rate-limiting]
         }
-
-        /// <summary>
-        /// These are variable names that are defined by the custom commands class.
-        /// They are not managed by the CoreScript in any way, therefore must be protected.
-        /// </summary>
-        internal readonly string[] SystemVars =
-        {
-            #region Bot Instance
-            "self",
-            "self_nick",
-            "self_avatar",
-
-            #endregion
-
-            #region Command Invoker
-            "invoker",
-            "invoker_nomention",
-            "invoker_avatar",
-            "invoker_nick",
-
-            #endregion
-
-            #region Bot Owner
-            "bot_owner",
-            "bot_owner_nomention",
-            "bot_owner_avatar",
-
-            #endregion
-     
-            #region Statistics/Guild Info
-            "command",
-            "command_count",
-            "latency",
-            "prefix","pf",
-            "version",
-            "os_name",
-            "os_bit",
-            "os_ver",
-            "bot_mem",
-            "guild",
-            "guild_id",
-            "guild_count",
-            "guild_usercount",
-            "guild_icon",
-            "channel",
-            "channel_id",
-            "counter",
-            "msgcount",
-            #endregion
-            
-            #region Guild Owner
-            "guild_owner",
-            "go_avatar",
-            "go_nick"
-
-            #endregion
-
-        };
 
         #region Public Methods
         public void Set(string var, object value, bool hidden = false)
@@ -203,7 +137,7 @@ namespace ModularBOT.Component
             {
                 throw (new ArgumentException($"You cannot set `{var}` to a value of `null`"));
             }
-            if (SystemVars.Contains(var))
+            if (SystemVariables.Where(x => x.Name == var).Count() >= 1)
             {
                 throw (new ArgumentException("This variable cannot be modified."));
             }
@@ -294,10 +228,11 @@ namespace ModularBOT.Component
             {
                 throw (new ArgumentException($"You cannot set `{var}` to a value of `null`"));
             }
-            if (SystemVars.Contains(var))
+            if (SystemVariables.Where(x => x.Name == var).Count() >= 1)
             {
-                throw new ArgumentException("This variable cannot be modified.");
+                throw (new ArgumentException("This variable cannot be modified."));
             }
+
             bool HasDictionaryResult = UserVariableDictionaries.TryGetValue(KEY, out Dictionary<string, (object value, bool hidden)> userVarDictionary);
 
             string function = "";
@@ -482,134 +417,9 @@ namespace ModularBOT.Component
 
         }
 
-        //TODO: Modularize and eliminate the need for system var list.
         public string ProcessVariableString(GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message)
         {
             string Processed = response;
-            
-            #region Statistics/Guild info
-          
-            if (Processed.Contains("%prefix%") || Processed.Contains("%pf%"))
-            {
-
-                Processed = Processed.Replace("%prefix%", gobj.CommandPrefix);
-
-                Processed = Processed.Replace("%pf%", gobj.CommandPrefix.ToString());
-            }
-            if (Processed.Contains("%version%"))
-            {
-                Processed = Processed.Replace("%version%", Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
-            }
-            if (Processed.Contains("%os_name%"))
-            {
-                Processed = Processed.Replace("%os_name%", SystemInfo.FriendlyName());
-            }
-            if (Processed.Contains("%os_bit%"))
-            {
-                Processed = Processed.Replace("%os_bit%", Environment.Is64BitOperatingSystem ? "x64" : "x86");
-            }
-            if (Processed.Contains("%os_ver%"))
-            {
-                OperatingSystem os = Environment.OSVersion;
-                Processed = Processed.Replace("%os_ver%", os.Version.ToString());
-            }
-            if (Processed.Contains("%bot_mem%"))
-            {
-                Processed = Processed.Replace("%bot_mem%", SystemInfo.SizeSuffix(System.Diagnostics.Process.GetCurrentProcess().WorkingSet64));
-            }
-            if (Processed.Contains("%guild%"))
-            {
-                string Context = message.Author.Mention;
-                if (message.Channel is IGuildChannel IGC)
-                {
-                    Context = IGC.Guild.Name;
-                }
-                Processed = Processed.Replace("%guild%", Context);
-            }
-            if (Processed.Contains("%guild_id%"))
-            {
-                string Context = message.Author.Id.ToString();
-                if(message.Channel is IGuildChannel IGC)
-                {
-                    Context = IGC.GuildId.ToString();
-                }
-                Processed = Processed.Replace("%guild_id%", Context);
-            }
-            if (Processed.Contains("%guild_count%"))
-            {
-                DiscordShardedClient cl = client as DiscordShardedClient;
-                Processed = Processed.Replace("%guild_count%", cl.Guilds.Count.ToString());
-            }
-            if (Processed.Contains("%guild_usercount%"))
-            {
-                if (message.Channel is IGuildChannel IGC)
-                {
-                    Task.Run(() => IGC.Guild.DownloadUsersAsync());
-                    var ul = client.GetGuildAsync(IGC.Guild.Id, CacheMode.AllowDownload)
-                        .GetAwaiter().GetResult().GetUsersAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
-                    Processed = Processed.Replace("%guild_usercount%", ul.Count.ToString());
-                }
-                else
-                {
-                    Processed = Processed.Replace("%guild_usercount%", "2");//assume this is a DM. in which case it will always be two... (Groups aren't supported)
-                }
-            }
-            if (Processed.Contains("%guild_icon%"))
-            {
-                string Context = message.Author.GetAvatarUrl(ImageFormat.Auto,512);
-                if (message.Channel is IGuildChannel IGC)
-                {
-                    Context = client.GetGuildAsync(IGC.GuildId).GetAwaiter().GetResult().IconUrl;
-                }
-                Processed = Processed.Replace("%guild_icon%", Context);
-            }
-            if (Processed.Contains("%channel%"))
-            {
-                string Context = message.Author.Mention;
-                if (message.Channel is IGuildChannel IGC)
-                {
-                    Context = "#"+IGC.Name;
-                }
-                Processed = Processed.Replace("%channel%", Context);
-            }
-            if (Processed.Contains("%channel_id%"))
-            {
-                string Context = message.Author.Id.ToString();
-                if (message.Channel is IGuildChannel IGC)
-                {
-                    Context = IGC.Id.ToString();
-                }
-                Processed = Processed.Replace("%channel_id%", Context);
-            }
-            if (Processed.Contains("%msgcount%"))
-            {
-                string count = "0";
-                if(MessageCounter.ContainsKey(message.Channel.Id))
-                {
-                    count = MessageCounter[message.Channel.Id].ToString();
-                }
-                Processed = Processed.Replace("%msgcount%", count);
-            }
-            if (cmd != null)
-            {
-                if (Processed.Contains("%counter%"))
-                {
-                    if (cmd.Counter.HasValue)
-                    {
-                        cmd.Counter++;
-                        gobj.SaveJson();
-                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
-                    }
-                    else
-                    {
-                        cmd.Counter = 1;
-                        gobj.SaveJson();
-                        Processed = Processed.Replace("%counter%", cmd.Counter.ToString());
-                    }
-                }
-            } //("%counter%"))
-
-            #endregion
 
             //Check for use of system-defined variables.
 
