@@ -2198,6 +2198,7 @@ namespace TestModule
             }
         }
 
+
         #endregion STARBOARD
 
         #region SNIPER
@@ -2321,6 +2322,7 @@ namespace TestModule
         public List<DeletedMessage> DeletedMessages { get; set; }
         public int QueueSize { get; set; } = 100;
     }
+    
     public class DeletedMessage
     {
         public ulong ID { get; set; }
@@ -2334,6 +2336,7 @@ namespace TestModule
         public ulong GuildID { get; set; }
         public DateTimeOffset Timestamp { get; set; }
     }
+    
     public class DeletedEmbed
     {
         public string EAuthorIconURL { get; set; }
@@ -2348,12 +2351,14 @@ namespace TestModule
         public DateTimeOffset Timestamp { get; set; }
         public Color Color { get; set; }
     }
+    
     public class DeletedEmbedField
     {
         public bool Inline { get; set; }
         public string FName { get; set; }
         public object FValue { get; set; }
     }
+    
     public class StarboardBinding
     {
         public ulong ChannelID { get; set; }
