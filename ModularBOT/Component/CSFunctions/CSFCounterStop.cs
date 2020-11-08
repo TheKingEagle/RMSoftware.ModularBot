@@ -27,9 +27,9 @@ namespace ModularBOT.Component.CSFunctions
                 errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 return false;
             }
-            if (engine.MessageCounter.ContainsKey(message.Channel.Id))
+            if (CoreScript.MessageCounter.ContainsKey(message.Channel.Id))
             {
-                engine.MessageCounter.Remove(message.Channel.Id);
+                CoreScript.MessageCounter.Remove(message.Channel.Id);
             }
 
             return await Task.FromResult(true);

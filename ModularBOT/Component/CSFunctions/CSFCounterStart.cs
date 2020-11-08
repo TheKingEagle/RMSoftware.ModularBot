@@ -25,11 +25,11 @@ namespace ModularBOT.Component.CSFunctions
                 errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
                 return await Task.FromResult(false);
             }
-            if (engine.MessageCounter.ContainsKey(message.Channel.Id))
+            if (CoreScript.MessageCounter.ContainsKey(message.Channel.Id))
             {
-                engine.MessageCounter.Remove(message.Channel.Id);
+                CoreScript.MessageCounter.Remove(message.Channel.Id);
             }
-            engine.MessageCounter.Add(message.Channel.Id, 0);
+            CoreScript.MessageCounter.Add(message.Channel.Id, 0);
 
             return await Task.FromResult(true);
         }
