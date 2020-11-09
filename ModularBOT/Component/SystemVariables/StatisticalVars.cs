@@ -157,7 +157,7 @@ namespace ModularBOT.Component.SystemVariables
             //TODO: Due to recent events with DISCORD, this may return 1 or 2 until it is called again.
             if (message.Channel is IGuildChannel IGC)
             {
-                IGC.Guild.DownloadUsersAsync().GetAwaiter().GetResult();//TODO: Task.Run() => IGC.Guild.DownloadUsersAsync(); //due to threadlock
+                Task.Run(() => IGC.Guild.DownloadUsersAsync()); //due to threadlock
                 var ul = client.GetGuildAsync(IGC.Guild.Id, CacheMode.AllowDownload)
                     .GetAwaiter().GetResult().GetUsersAsync(CacheMode.AllowDownload).GetAwaiter().GetResult();
                 return ul.Count.ToString();
