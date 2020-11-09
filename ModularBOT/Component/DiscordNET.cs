@@ -433,6 +433,8 @@ namespace ModularBOT.Component
             await Task.Delay(0);
 #pragma warning disable 4014
             Task.Run(() => SyncGuild(guild));//don't really care about result in this case. just want a new thread.
+            //Task.Run(() => guild.DownloadUsersAsync());//don't really care about result in this case. just want a new thread.
+            
 #pragma warning restore 4014
         }
 
@@ -736,19 +738,21 @@ namespace ModularBOT.Component
             }
         }
 
-        private Task Client_ShardConnected(DiscordSocketClient arg)
+        private async Task Client_ShardConnected(DiscordSocketClient arg)
         {
+            await arg.DownloadUsersAsync(arg.Guilds);
             //Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
                 $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
 
             Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
             
-            return Task.Delay(0);
+            
         }
 
-        private Task Client_ShardReady(DiscordSocketClient arg)
+        private async Task Client_ShardReady(DiscordSocketClient arg)
         {
+            
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
                 $"Shard ready! {arg.Guilds.Count} guilds are fully loaded. "),ConsoleColor.Green);
@@ -768,13 +772,12 @@ namespace ModularBOT.Component
                     {
                         serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.LogChannel = 0;
                         serviceProvider.GetRequiredService<ConfigurationManager>().Save();
-                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Log Channel Invalid", "You specified an invalid Log channel ID. Please verify your guild channel's ID and try again.", false, ref Program.ShutdownCalled,
+                       await serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Log Channel Invalid", "You specified an invalid Log channel ID. Please verify your guild channel's ID and try again.", false, ref Program.ShutdownCalled,
                                 ref Program.RestartRequested, 0, new ArgumentException("init channel was invalid.", "botChannel"), "DNET_INIT_INVALID");
 
                     }
                 }
             }
-            return Task.Delay(0);
         }
 
         private Task Client_Log(LogMessage arg)
