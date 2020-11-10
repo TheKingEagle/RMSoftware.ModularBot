@@ -130,8 +130,9 @@ namespace TestModule
         }
 
         [Command("mute", RunMode = RunMode.Async)]
-        public async Task mute(IGuildUser user, [Remainder]string reason = "being obnoxious")
+        public async Task mute(IUser iuser=null, [Remainder]string reason = "being obnoxious")
         {
+            
             #region ERRORS
             if (Context.Guild == null)
             {
@@ -139,6 +140,14 @@ namespace TestModule
                     "You cannot use this command here! Please make sure you're calling from a guild.", Color.Red));
                 return;
             }
+            if (iuser == null)
+            {
+                await ReplyAsync("", false, GetEmbeddedMessage("Missing argument",
+                    "You did not specify a user.", Color.Red));
+                return;
+            }
+            await Context.Guild.DownloadUsersAsync();
+            SocketGuildUser user = (await Context.Guild.GetUserAsync(iuser.Id, CacheMode.AllowDownload)) as SocketGuildUser;
             SocketGuildUser SGUuser = Context.User as SocketGuildUser;
             if (!SGUuser.GuildPermissions.Has(GuildPermission.ManageRoles))
             {
@@ -176,6 +185,7 @@ namespace TestModule
 
             try
             {
+                
                 ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
                 ModLogBinding ml = TestModuleService.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
                 if (ml != null)
