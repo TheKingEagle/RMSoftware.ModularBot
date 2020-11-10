@@ -89,7 +89,7 @@ namespace ModularBOT.Component
                 Client.GuildUnavailable += Client_GuildUnavailable;
                 Client.GuildUpdated += Client_GuildUpdated;
                 Client.JoinedGuild += Client_JoinedGuild;
-
+                Client.GuildMembersDownloaded += Client_GuildMembersDownloaded;
 
                 InstanceStartTime = DateTime.Now;
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "I-Uptime", $"Instance start time set to {InstanceStartTime}"));
@@ -164,7 +164,13 @@ namespace ModularBOT.Component
                     .GetResult();
             }
         }
-        
+
+        private Task Client_GuildMembersDownloaded(SocketGuild arg)
+        {
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", $"Members for {arg.Name} downloaded!"));
+            return Task.Delay(0);
+        }
+
         private Task Client_GuildUpdated(SocketGuild arg1, SocketGuild arg2)
         {
             Task.Run(()=> SyncGuild(arg2));
@@ -235,6 +241,9 @@ namespace ModularBOT.Component
                 {
                     //Client.SetStatusAsync(UserStatus.DoNotDisturb);
                     ulong id = serviceProvider.GetRequiredService<Configuration>().LogChannel;
+
+                    //download users
+
                     
 
                     #region Startup.CORE
@@ -431,11 +440,7 @@ namespace ModularBOT.Component
             }
             
             await Task.Delay(0);
-#pragma warning disable 4014
-            Task.Run(() => SyncGuild(guild));//don't really care about result in this case. just want a new thread.
-            //Task.Run(() => guild.DownloadUsersAsync());//don't really care about result in this case. just want a new thread.
-            
-#pragma warning restore 4014
+
         }
 
         private Task Client_ShardDisconnected(Exception arg1, DiscordSocketClient arg2)
@@ -738,15 +743,18 @@ namespace ModularBOT.Component
             }
         }
 
-        private async Task Client_ShardConnected(DiscordSocketClient arg)
+        private Task Client_ShardConnected(DiscordSocketClient arg)
         {
-            await arg.DownloadUsersAsync(arg.Guilds);
+            foreach (var guild in arg.Guilds)
+            {
+                guild.DownloadUsersAsync().GetAwaiter().GetResult();
+            }
             //Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
                 $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
 
             Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
-            
+            return Task.Delay(0);
             
         }
 
