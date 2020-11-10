@@ -167,7 +167,8 @@ namespace ModularBOT.Component
 
         private Task Client_GuildMembersDownloaded(SocketGuild arg)
         {
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", $"Members for {arg.Name} downloaded!"));
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "USERDL",
+                    $" Userlist for <Guild ID: {arg.Id}> has {arg.Users.Count} members."), ConsoleColor.Green); 
             return Task.Delay(0);
         }
 
@@ -232,7 +233,7 @@ namespace ModularBOT.Component
                 ShutdownRequest = true;
             }
         }
-
+        
         private void OffloadReady(ref bool recovered,ref bool shutdownRequested,ref bool RestartRequested)
         {
             try
@@ -745,17 +746,24 @@ namespace ModularBOT.Component
 
         private Task Client_ShardConnected(DiscordSocketClient arg)
         {
-            foreach (var guild in arg.Guilds)
-            {
-                guild.DownloadUsersAsync().GetAwaiter().GetResult();
-            }
+            Task.Run(()=>DownloadGuildUsers(arg));
             //Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards",
                 $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
 
             Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
             return Task.Delay(0);
-            
+
+        }
+
+        private void DownloadGuildUsers(DiscordSocketClient arg)
+        {
+            foreach (var guild in arg.Guilds)
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "USERDL", 
+                    $"Fetching userlist for <Guild ID: {guild.Id}>"), ConsoleColor.Magenta);
+                guild.DownloadUsersAsync().GetAwaiter().GetResult();
+            }
         }
 
         private async Task Client_ShardReady(DiscordSocketClient arg)
