@@ -21,12 +21,13 @@ namespace ModularBOT.Component.ConsoleScreens
         private int ppg = 0;
         private readonly DiscordNET DNet;
         private List<SocketGuild> Guildlist = new List<SocketGuild>();
-
+        private ConsoleIO ConsoleInstance { get; set; }
         #endregion
 
-        public GuildsScreen(List<SocketGuild> guilds, DiscordNET discord, short startpage=1)
+        public GuildsScreen(DiscordNET discord, ConsoleIO console, List<SocketGuild> guilds, short startpage=1)
         {
             DNet = discord;
+            ConsoleInstance = console;
             Guildlist = guilds.OrderBy(x=>x.Name).ToList();
             max = (short)Math.Ceiling((double)discord.Client.Guilds.Count / 22);
             if(max == 0) { max = 1; }
@@ -274,22 +275,8 @@ namespace ModularBOT.Component.ConsoleScreens
         {
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
 
-            //---------------start modal---------------
-            var NGScreen = new UsersScreen(Guildlist[index + selectionIndex], DNet)
-            {
-                ActiveScreen = true
-            };
-            ConsoleIO.ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                {
-                    break;
-                }
-            }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
+            ConsoleInstance.ShowConsoleScreen(new UsersScreen(Guildlist[index + selectionIndex], DNet),false);
+
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
             RefreshMeta();
             RenderScreen();
@@ -299,26 +286,12 @@ namespace ModularBOT.Component.ConsoleScreens
         private void SS_ViewRolesScreen(bool BotRoles)
         {
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-
-            //---------------start modal---------------
             var RoleList = BotRoles ? Guildlist[index + selectionIndex].CurrentUser.Roles.ToList() : Guildlist[index + selectionIndex].Roles.ToList();
             string title = BotRoles ? $"Listing roles for {Guildlist[index + selectionIndex].CurrentUser.Username}#" +
                 $"{Guildlist[index + selectionIndex].CurrentUser.Discriminator}" : "Listing all roles";
-            var NGScreen = new RolesScreen(DNet,Guildlist[index + selectionIndex], RoleList, title);
-            {
-                ActiveScreen = true;
-            };
-            ConsoleIO.ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                {
-                    break;
-                }
-            }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
+
+            ConsoleInstance.ShowConsoleScreen(new RolesScreen(DNet, Guildlist[index + selectionIndex], RoleList, title), false);
+
             index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
             RefreshMeta();
             RenderScreen();
@@ -327,25 +300,11 @@ namespace ModularBOT.Component.ConsoleScreens
 
         private void SS_ViewChannelsScreen()
         {
-            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 20; etc.
-
-            //---------------start modal---------------
-            var NGScreen = new ChannelsScreen(Guildlist[index + selectionIndex], Guildlist[index + selectionIndex].Channels.ToList())
-            {
-                ActiveScreen = true
-            };
-            ConsoleIO.ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                {
-                    break;
-                }
-            }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
-            index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+            index = (page * 22) - 22;
+            
+            ConsoleInstance.ShowConsoleScreen(new ChannelsScreen(Guildlist[index + selectionIndex], Guildlist[index + selectionIndex].Channels.ToList()), false);
+            
+            index = (page * 22) - 22;
             RefreshMeta();
             RenderScreen();
             countOnPage = PopulateGuildList(page, max, ref index, selectionIndex, ref ppg, ref Guildlist);
