@@ -1026,6 +1026,41 @@ namespace ModularBOT.Component
             errorLogWrite = false;
         }
 
+        public void ShowConsoleScreen(ConsoleScreen NGScreen, bool FromLog)
+        {
+
+            string PRV_TITLE = ConsoleTitle;
+            ScreenModal = true;
+            //---------------start modal---------------
+            NGScreen.ActiveScreen = true;
+            ActiveScreen = NGScreen;
+            NGScreen.RenderScreen();
+            while (true)
+            {
+                if (NGScreen.ProcessInput(Console.ReadKey(true)))
+                {
+                    break;
+                }
+            }
+            NGScreen.ActiveScreen = false; ActiveScreen = null;
+            //----------------End modal----------------
+            if(FromLog)
+            {
+                List<LogEntry> v = new List<LogEntry>();
+                ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
+                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+                ScreenModal = false;
+                v.AddRange(LogEntries);
+                LogEntries.Clear();//clear buffer.
+                                   //output previous logEntry.
+                foreach (var item in v)
+                {
+                    WriteEntry(item.LogMessage, item.EntryColor);
+                }
+            }
+            
+        }
+
         #endregion
 
         #endregion
