@@ -154,6 +154,7 @@ namespace ModularBOT.Component.ConsoleScreens
 
             if(keyinfo.Key == ConsoleKey.F3)
             {
+                WriteFooter("-PROMPT- [ENTER]: Search query | Empty query will show full list");
                 string SearchQuery = ShowStringPrompt($"Search {guild.Name}", "Enter a username and/or #tag.");
                 string[] array = { SearchQuery } ;
                 string userquery = "";
@@ -198,6 +199,7 @@ namespace ModularBOT.Component.ConsoleScreens
             }
             if (keyinfo.Key == ConsoleKey.Enter)
             {
+                if (UserList.Count < 1) return false;
                 index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
 
                 string username = GetSafeName(UserList, index + selectionIndex);
