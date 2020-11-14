@@ -8,6 +8,8 @@ using Discord;
 using Discord.Net;
 using ModularBOT.Component;
 using Microsoft.Extensions.DependencyInjection;
+using Discord.WebSocket;
+
 namespace ModularBOT.Component.ConsoleCommands
 {
     public class LeaveCommand : ConsoleCommand
@@ -19,44 +21,42 @@ namespace ModularBOT.Component.ConsoleCommands
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
 
-            string input = consoleInput;
+            string[] param = GetParameters(consoleInput);
 
-                    #region Parse Checking
+            #region Parse Checking
 
-                    if (input.Split(' ').Length > 2)
-                    {
-                        console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
-                        return true;
-                    }
-                    if (input.Split(' ').Length < 2)
-                    {
-                        console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
-                        return true;
-                    }
+            if (param.Length > 1)
+            {
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "LEAVE", "Too many arguments!"),null,true,false,true);
+                return true;
+            }
+            if (param.Length < 1)
+            {
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "LEAVE", "Too few arguments!"), null, true, false, true);
+                return true;
+            }
+            
 
-                    if (input.Split(' ').Length == 2)
-                    {
-                        input = input.Split(' ')[1];
-                    }
-                    if (!ulong.TryParse(input, out ulong id))
-                    {
-                        console.WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "Invalid Guild ID format"));
-                        return true;
-                    }
+            if (!ulong.TryParse(param[0], out ulong id))
+            {
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "LEAVE", "Guild ID was malformed!"), null, true, false, true);
+                return true;
+            }
+            #endregion
+            var G = discordNET.Client.GetGuild(id);
+            if (G == null)
+            {
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "LEAVE", "This guild isn't valid."), null, true, false, true);
+                return true;
+            }
+            console.WriteEntry(new LogMessage(LogSeverity.Critical, "LEAVE", $"Attempting to leave guild: {G.Name}"), null, true, false, true);
 
-                    #endregion Parse Checking
-                    var G = discordNET.Client.GetGuild(id);
-                    if (G == null)
-                    {
-                        console.WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", "This guild isn't valid."));
-                        return true;
-                    }
-                    console.WriteEntry(new LogMessage(LogSeverity.Critical, "Leave", $"Attempting to leave guild: {G.Name}"));
+            G.LeaveAsync();
 
-                    G.LeaveAsync();
-           
+            console.WriteEntry(new LogMessage(LogSeverity.Verbose, "LEAVE", $"Operation Complete"), null, true, false, true);
+
             return true;
-            //return base.Execute(consoleInput, ref ShutdownCalled, ref RestartRequested, ref InputCanceled, ref discordNET);
+
         }
     }
 }

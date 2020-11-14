@@ -23,42 +23,16 @@ namespace ModularBOT.Component.ConsoleCommands
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
-            string PRV_TITLE = console.ConsoleTitle;
-            List<LogEntry> v = new List<LogEntry>();
-            ScreenModal = true;
-            //---------------start modal---------------
-            var NGScreen = new UpdaterScreen(ref Program.configMGR.CurrentConfig, ref discordNET)
-            {
-                ActiveScreen = true
-            };
-            ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                {
-                    break;
-                }
-            }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
+            var NGScreen = new UpdaterScreen(ref Program.configMGR.CurrentConfig, ref discordNET);
             
-            console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-            ScreenModal = false;
-            v.AddRange(console.LogEntries);
-            console.LogEntries.Clear();//clear buffer.
-                                       //output previous logEntry.
-            foreach (var item in v)
-            {
-                console.WriteEntry(item.LogMessage, item.EntryColor);
-            }
+            console.ShowConsoleScreen(NGScreen, true);
+            
             if(NGScreen.InstallUpdate)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "MAIN", "Terminating application and running system update..."));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Terminating application and running system update..."));
                 Program.ImmediateTerm = true;
                 Process.Start(NGScreen.UPDATERLOC);
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
                 discordNET.Stop(ref ShutdownCalled);
                 RestartRequested = false;
                 

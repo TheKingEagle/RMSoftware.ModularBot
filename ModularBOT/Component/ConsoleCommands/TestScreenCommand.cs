@@ -23,35 +23,7 @@ namespace ModularBOT.Component.ConsoleCommands
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
 
-            string PRV_TITLE = console.ConsoleTitle;
-            List<LogEntry> v = new List<LogEntry>();
-            ScreenModal = true;
-            //---------------start modal---------------
-            var NGScreen = new TestScreen()
-            {
-                ActiveScreen = true
-            };
-            ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                {
-                    break;
-                }
-            }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
-            console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-            ScreenModal = false;
-            v.AddRange(console.LogEntries);
-            console.LogEntries.Clear();//clear buffer.
-                                       //output previous logEntry.
-            foreach (var item in v)
-            {
-                console.WriteEntry(item.LogMessage, item.EntryColor);
-            }
+            console.ShowConsoleScreen(new TestScreen(), true);
             return true;
         }
 

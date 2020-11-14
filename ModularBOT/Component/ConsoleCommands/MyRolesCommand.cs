@@ -22,88 +22,53 @@ namespace ModularBOT.Component.ConsoleCommands
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
-            string input = consoleInput;
-            string page = "1";
+            short numpage = 1;
+            string[] param = GetParameters(consoleInput);
 
             #region Parse Checking
 
-            if (input.Split(' ').Length > 3)
+            if (param.Length > 2)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "ROLES", "Too many arguments!"));
                 return true;
             }
-            if (input.Split(' ').Length < 2)
+            if (param.Length < 1)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "ROLES", "Too few arguments!"));
                 return true;
             }
-            if (input.Split(' ').Length < 3)
+            if (param.Length == 2)
             {
-                input = input.Remove(0, 8).Trim();
-            }
-            if (input.Split(' ').Length == 3)
-            {
-                page = input.Split(' ')[2];
-                input = input.Split(' ')[1];
-            }
-            if (!short.TryParse(page, out short numpage))
-            {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "Invalid Page number"));
-                return true;
-            }
-            if (!ulong.TryParse(input, out ulong id))
-            {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "MyRoles", "Invalid Guild ID format"));
-                return true;
+                if (!short.TryParse(param[1], out numpage))
+                {
+                    console.WriteEntry(new LogMessage(LogSeverity.Critical, "ROLES", "Page number must be a valid number."));
+                    return true;
+                }
+                else if (numpage < 1)
+                {
+                    console.WriteEntry(new LogMessage(LogSeverity.Critical, "ROLES", "Page number must be no lower than 1."));
+                    return true;
+                }
             }
 
+            if (!ulong.TryParse(param[0], out ulong id))
+            {
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "ROLES", "Guild ID was malformed!"));
+                return true;
+            }
             SocketGuild guild = discordNET.Client.GetGuild(id);
 
             if (guild == null)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Guild."));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "ROLES", "Guild not found!"));
                 return true;
             }
-            #endregion Parse Checking
+            #endregion
 
-            string PRV_TITLE = console.ConsoleTitle;
-            List<LogEntry> v = new List<LogEntry>();
-            //---------------start modal---------------
-            string gname = guild.Name;
-            if (gname.Length > 32)
-            {
-                gname = gname.Remove(29) + "...";
-            }
-            string title = $"Listing bot's roles";
-            var NGScreen = new RolesScreen(discordNET, guild,guild.CurrentUser.Roles.ToList(), title,numpage)
-            {
-                ActiveScreen = true
-            };
-            ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                {
-                    break;
-                }
-            }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
-            
-            console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-            ScreenModal = false;
-            v.AddRange(console.LogEntries);
-            console.LogEntries.Clear();//clear buffer.
-                                //output previous logEntry.
-            foreach (var item in v)
-            {
-                console.WriteEntry(item.LogMessage, item.EntryColor);
-            }
-            
+            console.ShowConsoleScreen(new RolesScreen(discordNET, guild, guild.CurrentUser.Roles.ToList(), "Listing bot's roles", numpage), true);
+
             return true;
-            //return base.Execute(consoleInput, ref ShutdownCalled, ref RestartRequested, ref InputCanceled, ref discordNET);
+
         }
     }
 }

@@ -22,36 +22,22 @@ namespace ModularBOT.Component.ConsoleCommands
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
-
-            string PRV_TITLE = console.ConsoleTitle;
-            List<LogEntry> v = new List<LogEntry>();
-            ScreenModal = true;
-            //---------------start modal---------------
-            var NGScreen = new GuildsScreen(discordNET.Client.Guilds.ToList(),discordNET)
+            string[] param = GetParameters(consoleInput);
+            short startpage = 1;
+            if (param.Length > 0)
             {
-                ActiveScreen = true
-            };
-            ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if(NGScreen.ProcessInput(Console.ReadKey(true)))
+                if(!short.TryParse(param[0],out startpage))
                 {
-                    break;
+                    console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Value must be a number!"));
+                    return true;
+                }
+                if(startpage < 1)
+                {
+                    console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Value cannot be less than 1"));
+                    return true;
                 }
             }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
-            console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-            ScreenModal = false;
-            v.AddRange(console.LogEntries);
-            console.LogEntries.Clear();//clear buffer.
-                                       //output previous logEntry.
-            foreach (var item in v)
-            {
-                console.WriteEntry(item.LogMessage, item.EntryColor);
-            }
+            console.ShowConsoleScreen(new GuildsScreen(discordNET,console, discordNET.Client.Guilds.ToList(),startpage),true);
             return true;
         }
     }
