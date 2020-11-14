@@ -22,81 +22,53 @@ namespace ModularBOT.Component.ConsoleCommands
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
-            string input = consoleInput;
-            string page = "1";
+            short numpage = 1;
+            string[] param = GetParameters(consoleInput);
 
             #region Parse Checking
 
-            if (input.Split(' ').Length > 3)
+            if (param.Length > 2)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too many arguments!"));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", "Too many arguments!"));
                 return true;
             }
-            if (input.Split(' ').Length < 2)
+            if (param.Length < 1)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Too few arguments!"));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", "Too few arguments!"));
                 return true;
             }
-            if (input.Split(' ').Length < 3)
+            if(param.Length == 2)
             {
-                input = input.Remove(0, CommandName.Length).Trim();
+                if(!short.TryParse(param[1],out numpage))
+                {
+                    console.WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", "Page number must be a valid number."));
+                    return true;
+                }
+                else if(numpage <1)
+                {
+                    console.WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", "Page number must be no lower than 1."));
+                    return true;
+                }
             }
-            if (input.Split(' ').Length == 3)
+            
+            if(!ulong.TryParse(param[0],out ulong id))
             {
-                page = input.Split(' ')[2];
-                input = input.Split(' ')[1];
-            }
-            if (!short.TryParse(page, out short numpage))
-            {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Page number"));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", "Guild ID was malformed!"));
                 return true;
             }
-            if (!ulong.TryParse(input, out ulong id))
-            {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Guild ID format"));
-                return true;
-            }
-
             SocketGuild guild = discordNET.Client.GetGuild(id);
 
             if(guild == null)
             {
-                console.WriteEntry(new LogMessage(LogSeverity.Critical, "List Users", "Invalid Guild."));
+                console.WriteEntry(new LogMessage(LogSeverity.Critical, "USERS", "Guild not found!"));
                 return true;
             }
             #endregion
 
-            string PRV_TITLE = console.ConsoleTitle;
-            List<LogEntry> v = new List<LogEntry>();
-            //---------------start modal---------------
-            var NGScreen = new UsersScreen(guild, discordNET,numpage)
-            {
-                ActiveScreen = true
-            };
-            ActiveScreen = NGScreen;
-            NGScreen.RenderScreen();
-            while (true)
-            {
-                if (NGScreen.ProcessInput(Console.ReadKey(true)))
-                {
-                    break;
-                }
-            }
-            NGScreen.ActiveScreen = false; ConsoleIO.ActiveScreen = null;
-            //----------------End modal----------------
+            console.ShowConsoleScreen(new UsersScreen(guild, discordNET, numpage), true);
             
-            console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
-            v.AddRange(console.LogEntries);
-            console.LogEntries.Clear();//clear buffer.
-                                //output previous logEntry.
-            foreach (var item in v)
-            {
-                console.WriteEntry(item.LogMessage, item.EntryColor);
-            }
-
             return true;
-            //return base.Execute(consoleInput, ref ShutdownCalled, ref RestartRequested, ref InputCanceled, ref discordNET);
+            
         }
     }
 }
