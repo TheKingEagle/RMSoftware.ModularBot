@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading;
 using Discord.WebSocket;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ModularBOT.Component.ConsoleScreens
 {
@@ -167,7 +168,74 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.BackgroundColor = PRVBG;
             }
 
+            if(keyinfo.Key == ConsoleKey.F12)
+            {
+                int z = ShowOptionSubScreen("Guild Data Management", "What would you like to do?", "-", "Purge unused guilds", "Sync new guilds", "-");
+                if (z == 2) PurgeData(); 
+                if (z == 3) SyncData();
+
+                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+                RefreshMeta();
+                RenderScreen();
+                UpdateFooter(page, max);                //Restore footer 
+            }
+
             return base.ProcessInput(keyinfo);
+        }
+
+        private void PurgeData()
+        {
+            var NGScreen = new PromptScreen("Configuration Warning",
+                            "   This will PERMENANTLY delete all data associated with guilds the bot " +
+                            "is not currently joined. This will result in the irreversible loss of custom commands, scripts, and attachments. " +
+                            "This will also reset any configuration changes made within those guilds.")
+            {
+                ActiveScreen = true
+            };
+            ConsoleIO.ActiveScreen = NGScreen;
+            NGScreen.RenderScreen();
+            int res = NGScreen.Show("Purge Unused Guilds", "Are you sure you want to proceed?", ConsoleColor.DarkRed, ConsoleColor.White);
+
+            if (res == 2)
+            {
+                List<GuildObject> ToRemove = new List<GuildObject>();
+                foreach (var item in DNet.CustomCMDMgr.GuildObjects)
+                {
+                    if (item.ID == 0)
+                    {
+                        continue;
+                    }
+                    if (DNet.Client.Guilds.FirstOrDefault(x => x.Id == item.ID) == null)
+                    {
+                        ToRemove.Add(item);
+                    }
+                }
+                foreach (var item in ToRemove)
+                {
+                    DNet.CustomCMDMgr.DeleteGuildObject(item);
+                }
+                ShowOptionSubScreen("Operation Completed", $"Deleted {ToRemove.Count} guild objects...", "Close", "-", "-", "-");
+                ToRemove.Clear(); ToRemove = null;
+            }
+        }
+
+        private void SyncData()
+        {
+            int added = 0;
+            foreach (SocketGuild item in DNet.Client.Guilds)
+            {
+                bool z = DNet.CustomCMDMgr.AddGuildObject(new GuildObject()
+                {
+                    CommandPrefix = DNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                    ID = item.Id,
+                    BlacklistMode = AutoBlacklistModes.Disabled,
+                    GuildCommands = new List<GuildCommand>(),
+                    LockPFChanges = false
+                });
+                if (z) added++;
+            }
+            ShowOptionSubScreen("Operation Completed", $"Added {added} new guild objects...", "Close", "-", "-", "-");
+
         }
 
         protected override void RenderContents()
@@ -189,19 +257,19 @@ namespace ModularBOT.Component.ConsoleScreens
 
             if (page > 1 && page < max)
             {
-                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F12] Manage Data...");
             }
             if (page == 1 && page < max)
             {
-                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [N/RIGHT] Next Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F12] Manage Data...");
             }
             if (page == 1 && page == max)
             {
-                WriteFooter("[ESC] Exit \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F12] Manage Data...");
             }
             if (page > 1 && page == max)
             {
-                WriteFooter("[ESC] Exit \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties...");
+                WriteFooter("[ESC] Exit \u2502 [P/LEFT] Previous Page \u2502 [UP/DOWN] Select \u2502 [ENTER] Properties... \u2502 [F12] Manage Data...");
             }
             if (prompt)
             {
