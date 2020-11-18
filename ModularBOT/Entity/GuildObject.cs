@@ -29,6 +29,13 @@ namespace ModularBOT.Entity
                 sw.Close();
             }
         }
+        public void DeleteJson()
+        {
+            if(File.Exists($"guilds/{ID}.guild"))
+            {
+                File.Delete($"guilds/{ID}.guild");
+            }
+        }
     }
 
     public enum AutoBlacklistModes
