@@ -855,15 +855,30 @@ namespace ModularBOT.Component
         #endregion
 
         #region GuildObject manipulation
-        public void AddGuildObject(GuildObject obj)
+        public bool AddGuildObject(GuildObject obj)
         {
             if(guilds.FirstOrDefault(x=>x.ID == obj.ID) != null)
             {
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", "Guild was already in loaded list"));
-                return;
+                return false;
             }
             guilds.Add(obj);
             obj.SaveJson();
+            return true;
+        }
+
+        public void DeleteGuildObject(GuildObject obj)
+        {
+            if (guilds.FirstOrDefault(x => x.ID == obj.ID) == null)
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "Guilds", "Guild object doesn't exist!"));
+                return;
+            }
+
+            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Deleting guild data: {obj.ID}.guild"));
+
+            obj.DeleteJson();
+            guilds.Remove(obj);
         }
         #endregion
 
