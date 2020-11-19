@@ -8,6 +8,7 @@ using System.Threading;
 using Discord.WebSocket;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
+using System.IO;
 
 namespace ModularBOT.Component.ConsoleScreens
 {
@@ -213,8 +214,21 @@ namespace ModularBOT.Component.ConsoleScreens
                 foreach (var item in ToRemove)
                 {
                     DNet.CustomCMDMgr.DeleteGuildObject(item);
+                    //purge scripts
+                    if(Directory.Exists($"scripts/{item.ID}"))
+                    {
+                        ConsoleInstance.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Info, "Guilds", $"Deleting script folder for guild: {item.ID}"));
+                        Directory.Delete($"scripts/{item.ID}", true);
+                    }
+                    //purge attachments
+                    if (Directory.Exists($"attachments/{item.ID}"))
+                    {
+                        ConsoleInstance.WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Info, "Guilds", $"Deleting attachments folder for guild: {item.ID}"));
+                        Directory.Delete($"attachments/{item.ID}", true);
+                    }
                 }
-                ShowOptionSubScreen("Operation Completed", $"Deleted {ToRemove.Count} guild objects...", "Close", "-", "-", "-");
+                //TODO: Replace with actual prompt dialog
+                ShowOptionSubScreen("Operation Completed", $"Deleted {ToRemove.Count} guild objects...", "-", "Close", "-", "-");
                 ToRemove.Clear(); ToRemove = null;
             }
         }
