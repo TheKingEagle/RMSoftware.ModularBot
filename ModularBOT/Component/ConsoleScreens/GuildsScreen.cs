@@ -237,7 +237,7 @@ namespace ModularBOT.Component.ConsoleScreens
                         Directory.Delete($"attachments/{item.ID}", true);
                     }
                 }
-                ShowAlert("Operation Complete!", $"Successfully removed {ToRemove.Count} unused guild object file(s).",ConsoleColor.DarkYellow,ConsoleColor.White,ConsoleColor.Yellow);
+                ShowAlert("Operation Complete!", $"Successfully removed {ToRemove.Count} unused guild object file(s).",ConsoleColor.DarkRed,ConsoleColor.White,ConsoleColor.Yellow);
 
                 ToRemove.Clear(); ToRemove = null;
             }
