@@ -181,6 +181,16 @@ namespace ModularBOT.Component.ConsoleScreens
                 UpdateFooter(page, max);                //Restore footer 
             }
 
+            if (keyinfo.Key == ConsoleKey.F10)
+            {
+                ShowAlert("This is a test", "Hello, this is a test of a new screen prompt. i am testing a test of a tested test, this will probably render terribly, and might not work at all.");
+
+                index = (page * 22) - 22;//0 page 1 = 0; page 2 = 22; etc.
+                RefreshMeta();
+                RenderScreen();
+                UpdateFooter(page, max);                //Restore footer 
+            }
+
             return base.ProcessInput(keyinfo);
         }
 
@@ -227,8 +237,8 @@ namespace ModularBOT.Component.ConsoleScreens
                         Directory.Delete($"attachments/{item.ID}", true);
                     }
                 }
-                //TODO: Replace with actual prompt dialog
-                ShowOptionSubScreen("Operation Completed", $"Deleted {ToRemove.Count} guild objects...", "-", "Close", "-", "-");
+                ShowAlert("Operation Complete!", $"Successfully removed {ToRemove.Count} unused guild object file(s).",ConsoleColor.DarkYellow,ConsoleColor.White,ConsoleColor.Yellow);
+
                 ToRemove.Clear(); ToRemove = null;
             }
         }
@@ -248,8 +258,8 @@ namespace ModularBOT.Component.ConsoleScreens
                 });
                 if (z) added++;
             }
-            ShowOptionSubScreen("Operation Completed", $"Added {added} new guild objects...", "Close", "-", "-", "-");
-
+            //ShowOptionSubScreen("Operation Completed", $"Added {added} new guild objects...", "Close", "-", "-", "-");
+            ShowAlert("Operation Complete!", $"Successfully Added {added} new guild object file(s).");
         }
 
         protected override void RenderContents()
@@ -330,6 +340,9 @@ namespace ModularBOT.Component.ConsoleScreens
                     thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
                     thread.Start();
                     thread.Join(); //Wait for the thread to end
+                    ShowAlert("Clipboard", $"{Guildlist[selectionIndex + index].Name}'s ID copied to clipboard.", ConsoleColor.DarkGreen, ConsoleColor.White, ConsoleColor.Green);
+                    RefreshMeta();
+                    RenderScreen();
                     break;
                 case (4):
                     UpdateFooter(page, max, true);     //PROMPT FOOTER
