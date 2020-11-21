@@ -185,6 +185,53 @@ namespace ModularBOT.Entity
             return returnstring;
         }
 
+        internal string BoxText(string paragraph, int width = 10)
+        {
+            paragraph = new Regex(@" {2,}").Replace(paragraph, @" ");
+            //paragraph = new Regex(@"\r\n{2,}").Replace(paragraph.Trim(), @" ");
+            //paragraph = new Regex(@"\r{2,}").Replace(paragraph.Trim(), @" ");
+            var lines = new List<string>();
+            string returnstring = "";
+            int i = 0;
+            while (paragraph.Length > 0)
+            {
+                lines.Add(paragraph.Substring(0, Math.Min(width, paragraph.Length)));
+                int NewLinePos = lines[i].LastIndexOf("\n");
+                if (NewLinePos > 0)
+                {
+                    lines[i] = lines[i].Remove(NewLinePos);
+                    paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
+                    returnstring += (lines[i]) + "\n";
+                    i++;
+                    continue;
+                    //lines.Add(paragraph.Substring(NewLinePos, paragraph.Length-NewLinePos));
+                    //lines[i] = lines[i].Remove(length).PadRight(Console.WindowWidth - 2, '\u2000');
+                }
+                var length = lines[i].LastIndexOf(" ");
+
+                if (length == -1 && lines[i].Length > width) //23 (█00:00:00 MsgSource00)
+                {
+                    int l = width;
+                    lines[i] = lines[i].Remove(l);
+                    //lines[i] = lines[i].Remove(l).PadRight(Console.WindowWidth-2,'\u2000');
+                }
+                if (length > 20 && paragraph.Length > width)
+                {
+                    lines[i] = lines[i].Remove(length);
+
+                    //lines[i] = lines[i].Remove(length).PadRight(Console.WindowWidth - 2, '\u2000');
+                }
+                paragraph = paragraph.Substring(Math.Min(lines[i].Length, paragraph.Length));
+                returnstring += (lines[i]) + "\n";
+                i++;
+            }
+            if (lines.Count > 1)
+            {
+
+                returnstring += "\u2005";
+            }
+            return returnstring;
+        }
         private ConsoleColor GetInvertedColor(ConsoleColor Color) //I realize this is not accurate.
         {
             return (ConsoleColor)(Math.Abs((Color - ConsoleColor.White)));
@@ -970,11 +1017,9 @@ namespace ModularBOT.Entity
             Console.BackgroundColor = SBG;
             Console.ForegroundColor = SFG;
 
-            //WARNING: This code file is a fucking nightmare unless you view it in Visual Studio, 
-            //or other #region supporting IDE.
             //Each #region tells you which part of the dialog is rendered.
 
-            #region ╒════════ Prompt Title ════════╕
+            #region ╒═══════════ Prompt Title ═══════════╕
             if (title.Length > 35)
             {
                 title = title.Remove(32) + "...";
@@ -985,7 +1030,7 @@ namespace ModularBOT.Entity
             pTitle += "".PadRight(((40 / 2)) - WTitle.Length / 2, '\u2550');
             Console.Write("\u2552{0}\u2555", pTitle);
             #endregion
-            #region │ Some prompt text.            │
+            #region │ Some prompt text.                  │
             Console.CursorLeft = left;
             Console.CursorTop = top + 1;
             if (prompt.Length > 40)
@@ -998,27 +1043,27 @@ namespace ModularBOT.Entity
             //Console.CursorTop = top + 2;
             Console.Write("\u2502 " + prompt.PadRight(39) + "\u2502");
             #endregion
-            #region │┌────────────────────────────┐│
+            #region │┌──────────────────────────────────┐│
             Console.CursorLeft = left;
             Console.CursorTop = top + 2;
             Console.Write("\u2502\u250C" + "".PadRight(38,'\u2500') + "\u2510\u2502");
             #endregion
-            #region ││Textbox Text                ││
+            #region ││Textbox Text                      ││
             Console.CursorLeft = left;
             Console.CursorTop = top + 3;
             Console.Write("\u2502\u2502" + "".PadRight(38) + "\u2502\u2502");
             #endregion
-            #region │└────────────────────────────┘│
+            #region │└──────────────────────────────────┘│
             Console.CursorLeft = left;
             Console.CursorTop = top + 4;
             Console.Write("\u2502\u2514" + "".PadRight(38, '\u2500') + "\u2518\u2502");
             #endregion
-            #region │ [ENTER]: Ok | [ESC]: Cancel  │
+            #region │  [ENTER]: Confirm | [ESC]: Cancel  │
             Console.CursorLeft = left;
             Console.CursorTop = top + 5;
             Console.Write("\u2502 " + "[ENTER]: Confirm | [ESC]: Cancel ".PadLeft(39) + "\u2502");
             #endregion
-            #region └──────────────────────────────┘
+            #region └────────────────────────────────────┘
             Console.CursorLeft = left;
             Console.CursorTop = top + 6;
             Console.Write("\u2514" + "".PadRight(40, '\u2500') + "\u2518");
@@ -1062,6 +1107,108 @@ namespace ModularBOT.Entity
             Console.CursorVisible = ShowCursor;
             ActivePrompt = false;
             return InputString;
+        }
+
+        public void ShowAlert(string title, string text, ConsoleColor SBG = ConsoleColor.DarkBlue, ConsoleColor SFG = ConsoleColor.White, ConsoleColor BRD = ConsoleColor.Cyan)
+        {
+            ActivePrompt = true;
+            Console.CursorVisible = false;
+            int left = 71 - 20;
+            int top = 16 - 3;
+
+            Console.CursorLeft = left;
+            Console.CursorTop = top;
+            Console.BackgroundColor = SBG;
+            Console.ForegroundColor = SFG;
+
+             
+            //Each #region tells you which part of the dialog is rendered.
+
+            #region ╒═══════════ Prompt Title ═══════════╕
+            if (title.Length > 35)
+            {
+                title = title.Remove(32) + "...";
+            }
+
+            string WTitle = " " + title + " ";
+            string pTitle = WTitle.PadLeft(((40 / 2)) + WTitle.Length / 2, '\u2550');
+            pTitle += "".PadRight(((40 / 2)) - WTitle.Length / 2, '\u2550');
+            Console.ForegroundColor = BRD;
+            Console.Write("\u2552{0}\u2555", pTitle);
+            Console.ForegroundColor = SFG;
+            #endregion
+            #region │ Some prompt text.                  │
+            Console.CursorLeft = left;
+            Console.CursorTop = top + 1;
+            if (text.Length > 1024)
+            {
+                text = text.Remove(1021) + "...";
+            }
+
+            text = BoxText(text, 38);
+
+            int lh = text.Split('\n').Where(x=>!string.IsNullOrWhiteSpace(x)).Count();
+            for (int i = 0; i < lh; i++)
+            {
+                string line = text.Split('\n')[i].Trim();
+                if(string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+                Console.Write("\u2502 {0} \u2502", text.Split('\n')[i].Trim().PadRight(38));
+                Console.CursorLeft = left;
+                Console.ForegroundColor = BRD;
+                Console.Write("\u2502");
+                Console.CursorLeft = left+41;
+                Console.Write("\u2502");
+                Console.ForegroundColor = SFG;
+                Console.CursorTop++;
+                Console.CursorLeft = left;
+            }
+
+            //Console.Write("\u2502 " + text.PadRight(39) + "\u2502");
+            #endregion
+            #region │ ────────────────────────────────── │
+            Console.ForegroundColor = BRD;
+            Console.CursorLeft = left;
+            Console.CursorTop = top +lh+ 1;
+            Console.Write("\u2502 " + "".PadRight(38, '\u2500') + " \u2502");
+            Console.ForegroundColor = SFG;
+
+            #endregion
+            #region │                   [ENTER]: Confirm │
+            Console.ForegroundColor = BRD;
+            Console.CursorLeft = left;
+            Console.CursorTop = top+lh + 2;
+            Console.Write("\u2502 " + "".PadLeft(38) + " \u2502");
+            Console.CursorLeft = left+2;
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.Write(" " + "[ENTER]: Close".PadLeft(37) + " ");
+            Console.ForegroundColor = SFG;
+            #endregion
+            #region └────────────────────────────────────┘
+            Console.ForegroundColor = BRD;
+
+            Console.CursorLeft = left;
+            Console.CursorTop = top+lh + 3;
+            Console.Write("\u2514" + "".PadRight(40, '\u2500') + "\u2518");
+            Console.ForegroundColor = SFG;
+
+            #endregion
+
+
+            while (true)
+            {
+                ConsoleKeyInfo input = Console.ReadKey(true);
+                if (input.Key == ConsoleKey.Enter)
+                {
+                    
+                    break;
+                }
+                
+            }
+            ActivePrompt = false;
+            Console.CursorVisible = ShowCursor;
         }
 
         public void ClearContents()
