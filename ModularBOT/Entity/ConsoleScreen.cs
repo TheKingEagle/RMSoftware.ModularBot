@@ -1182,7 +1182,7 @@ namespace ModularBOT.Entity
             Console.CursorTop = top+lh + 2;
             Console.Write("\u2502 " + "".PadLeft(38) + " \u2502");
             Console.CursorLeft = left+2;
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ForegroundColor = SFG;
             Console.Write(" " + "[ENTER]: Close".PadLeft(37) + " ");
             Console.ForegroundColor = SFG;
             #endregion
