@@ -180,7 +180,7 @@ namespace ModularBOT.Component
             }
             if (function.ToLower() == "urlencode")
             {
-                string val = ((string)value).ToLower();
+                string val = ((string)value);
                 parserdata = val.Replace("urlencode(", "");
                 parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
                 functionResult = WebUtility.UrlEncode(parserdata);
