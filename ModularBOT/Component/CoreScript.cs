@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ModularBOT.Entity;
 using System.Data;
-
+using System.Net;
 namespace ModularBOT.Component
 {
     public class CoreScript
@@ -148,70 +148,60 @@ namespace ModularBOT.Component
             bool result = Variables.TryGetValue(var, out (object value, bool hidden) v);
             if (!result)
             {
-                object functionResult = null;
-                string parserdata;
-                if (function == "eval")
-                {
-                    string val = ((string)value).ToLower();
-                    parserdata = val.Replace("eval(", "");
-                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                    functionResult = new DataTable().Compute(parserdata, null);
-                }
-                if (function == "rand")
-                {
-                    string val = ((string)value).ToLower();
-                    parserdata = val.Replace("rand(", "");
-                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                    string[] randrange = parserdata.Split(',');
-                    if (randrange.Length < 2 || randrange.Length > 2)
-                    {
-                        throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
-                    }
-                    if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
-                    if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
-                    if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
-                    functionResult = (new Random()).Next(randmin, randmax + 1);
-                }
+                object functionResult = EvaluateVarFunction(value, function);
                 //add the new variable.
-                object ev = functionResult != null ? functionResult : value;
+                object ev = functionResult ?? value;
                 Variables.Add(var, (ev, hidden));
                 Services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result False. Creating variable. Name:{var}; Value: {value}; Hidden: {hidden}"));
                 return;
             }
             else
             {
-                object functionResult = null;
-                string parserdata;
-                if (function == "eval")
-                {
-                    string val = ((string)value).ToLower();
-                    parserdata = val.Replace("eval(", "");
-                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                    functionResult = new DataTable().Compute(parserdata, null);
-                }
-                if (function == "rand")
-                {
-                    string val = ((string)value).ToLower();
-                    parserdata = val.Replace("rand(", "");
-                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                    string[] randrange = parserdata.Split(',');
-                    if (randrange.Length < 2 || randrange.Length > 2)
-                    {
-                        throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
-                    }
-                    if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
-                    if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
-                    if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
-                    functionResult = (new Random()).Next(randmin, randmax + 1);
-                }
-                //add the new variable.
-                object ev = functionResult != null ? functionResult : value;
+                object functionResult = EvaluateVarFunction(value, function);
+                object ev = functionResult ?? value;
 
                 Variables[var] = (ev, hidden);
                 Variables = Variables;
                 Services.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Debug, "Variables", $"Result true. modifying variable. Name:{var}; Value: {Variables[var].value}; Hidden: {Variables[var].hidden};"));
                 return;
             }
+        }
+
+        private static object EvaluateVarFunction(object value, string function)
+        {
+            object functionResult = null;
+            string parserdata;
+            if (function.ToLower() == "eval")
+            {
+                string val = ((string)value).ToLower();
+                parserdata = val.Replace("eval(", "");
+                parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                functionResult = new DataTable().Compute(parserdata, null);
+            }
+            if (function.ToLower() == "urlencode")
+            {
+                string val = ((string)value).ToLower();
+                parserdata = val.Replace("urlencode(", "");
+                parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                functionResult = WebUtility.UrlEncode(parserdata);
+            }
+            if (function.ToLower() == "rand")
+            {
+                string val = ((string)value).ToLower();
+                parserdata = val.Replace("rand(", "");
+                parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
+                string[] randrange = parserdata.Split(',');
+                if (randrange.Length < 2 || randrange.Length > 2)
+                {
+                    throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
+                }
+                if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
+                if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
+                if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
+                functionResult = (new Random()).Next(randmin, randmax + 1);
+            }
+
+            return functionResult;
         }
 
         public void SetUserVar(ulong KEY,string var, object value, bool hidden = false)
@@ -241,32 +231,8 @@ namespace ModularBOT.Component
             if (!HasDictionaryResult)                                                       //NO DICRIONARY FOUND!
             {
                 userVarDictionary = new Dictionary<string, (object value, bool hidden)>();      //Create new dictionary;
-                object functionResult = null;
-                string parserdata;
-                if (function == "eval")
-                {
-                    string val = ((string)value).ToLower();
-                    parserdata = val.Replace("eval(", "");
-                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                    functionResult = new DataTable().Compute(parserdata, null);
-                }
-                if (function == "rand")
-                {
-                    string val = ((string)value).ToLower();
-                    parserdata = val.Replace("rand(", "");
-                    parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                    string[] randrange = parserdata.Split(',');
-                    if(randrange.Length < 2 || randrange.Length > 2)
-                    {
-                        throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
-                    }
-                    if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
-                    if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
-                    if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
-                    functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
-                }
-                //add the new variable.
-                object ev = functionResult != null ? functionResult : value;
+                object functionResult = EvaluateVarFunction(value, function);
+                object ev = functionResult ?? value;
 
                 userVarDictionary.Add(var,( ev, hidden));                                    //Add variable to new dictionary;
                 UserVariableDictionaries.Add(KEY, userVarDictionary);                           //Add the new dictionary to the master dictionary;
@@ -285,32 +251,8 @@ namespace ModularBOT.Component
 
                 if(!HasVariable)                                                                //NO VARIABLE FOUND!
                 {
-                    object functionResult = null;
-                    string parserdata;
-                    if (function == "eval")
-                    {
-                        string val = ((string)value).ToLower();
-                        parserdata = val.Replace("eval(", "");
-                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                        functionResult = new DataTable().Compute(parserdata, null);
-                    }
-                    if (function == "rand")
-                    {
-                        string val = ((string)value).ToLower();
-                        parserdata = val.Replace("rand(", "");
-                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                        string[] randrange = parserdata.Split(',');
-                        if (randrange.Length < 2 || randrange.Length > 2)
-                        {
-                            throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
-                        }
-                        if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
-                        if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
-                        if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
-                        functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
-                    }
-                    //add the new variable.
-                    object ev = functionResult != null ? functionResult : value;
+                    object functionResult = EvaluateVarFunction(value, function);
+                    object ev = functionResult ?? value;
 
                     userVarDictionary.Add(var, (ev, hidden));                                    //Add the variable to the dictionary.
                     UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the user dictionary in master dictionary.
@@ -324,32 +266,9 @@ namespace ModularBOT.Component
                 }
                 else                                                                            //VARIABLE FOUND!
                 {
-                    object functionResult = null;
-                    string parserdata;
-                    if (function == "eval")
-                    {
-                        string val = ((string)value).ToLower();
-                        parserdata = val.Replace("eval(", "");
-                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                        functionResult = new DataTable().Compute(parserdata, null);
-                    }
-                    if (function == "rand")
-                    {
-                        string val = ((string)value).ToLower();
-                        parserdata = val.Replace("rand(", "");
-                        parserdata = parserdata.Remove(parserdata.LastIndexOf(")"));
-                        string[] randrange = parserdata.Split(',');
-                        if (randrange.Length < 2 || randrange.Length > 2)
-                        {
-                            throw new ArgumentException("You must specify a range. Usage: RAND(low number,high number)");
-                        }
-                        if (!int.TryParse(randrange[0], out int randmin)) throw new ArgumentException("You must specify valid number for minimum. Usage: RAND(low number,high number)");
-                        if (!int.TryParse(randrange[1], out int randmax)) throw new ArgumentException("You must specify valid number for maximum. Usage: RAND(low number,high number)");
-                        if (randmin > randmax) throw new ArgumentException("Your minimum must not be higher than your maximum. Usage: RAND(minimum number,maximum number)");
-                        functionResult = (new Random()).Next(randmin, randmax + 1);//Randmax+1 to allow randmax to be included in the result.
-                    }
+                    object functionResult = EvaluateVarFunction(value, function);
                     //add the new variable.
-                    object ev = functionResult != null ? functionResult : value;
+                    object ev = functionResult ?? value;
 
                     userVarDictionary[var] = (ev, hidden);                                       //SET the variable in the dictionary
                     UserVariableDictionaries[KEY] = userVarDictionary;                              //SET the dictionary in the master dictionary.
