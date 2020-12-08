@@ -99,8 +99,13 @@ namespace TestModule
 
             try
             {
-                ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
                 await user.KickAsync(reason);
+                if (!_jservice.ModLogBound(Context.Guild.Id, out ModLogBinding mb)) //12/7/20 -- Impl. Alias mode check
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage($"Kicked {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
+                    return;
+                }
+                ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
                 EmbedBuilder b = new EmbedBuilder
                 {
                     Title = $"Kick | Case #{cid}",
@@ -109,7 +114,10 @@ namespace TestModule
                 b.WithColor(new Color(225, 192, 12));
                 string ut = user.IsBot ? "Bot" : "User";
                 b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
-                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+
+                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
+
                 b.AddField("Reason", reason);
                 var m = await _jservice.SendModLog(Context.Guild.Id, b.Build());
                 TestModuleService.MessageCaseIDs.Add(Tuple.Create(Context.Guild.Id, cid), m.Id);
@@ -185,13 +193,14 @@ namespace TestModule
 
             try
             {
-                
-                ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
-                ModLogBinding ml = TestModuleService.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
-                if (ml != null)
+                if (!_jservice.ModLogBound(Context.Guild.Id, out ModLogBinding mb)) //12/7/20 -- Impl. Alias mode check
                 {
-                    await user.AddRoleAsync(Context.Guild.GetRole(ml.MuteRoleID));
+                    string pf = Context.Message.Content.Split(' ')[0].Replace("mute", "");
+                    await ReplyAsync("", false, GetEmbeddedMessage("Nope!", $"You must have a Moderation log bound to this guild. You can do this with `{pf}bindmodlog` in a channel of your choice.", Color.DarkRed));
+                    return;
                 }
+                ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
+                
                 EmbedBuilder b = new EmbedBuilder
                 {
                     Title = $"Mute | Case #{cid}",
@@ -200,7 +209,10 @@ namespace TestModule
                 b.WithColor(new Color(225, 192, 12));
                 string ut = user.IsBot ? "Bot" : "User";
                 b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
-                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+
+                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
+
                 b.AddField("Reason", reason);
                 var m = await _jservice.SendModLog(Context.Guild.Id, b.Build());
                 TestModuleService.MessageCaseIDs.Add(Tuple.Create(Context.Guild.Id, cid), m.Id);
@@ -267,10 +279,11 @@ namespace TestModule
 
             try
             {
-                ModLogBinding ml = TestModuleService.MLbindings.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
-                if (ml != null)
+                if(!_jservice.ModLogBound(Context.Guild.Id,out ModLogBinding mb)) //12/7/20 -- Impl. Alias mode check
                 {
-                    await user.RemoveRoleAsync(Context.Guild.GetRole(ml.MuteRoleID));
+                    string pf = Context.Message.Content.Split(' ')[0].Replace("unmute", "");
+                    await ReplyAsync("", false, GetEmbeddedMessage("Nope!", $"You must have a Moderation log bound to this guild. You can do this with `{pf}bindmodlog` in a channel of your choice.", Color.DarkRed));
+                    return;
                 }
                 EmbedBuilder b = new EmbedBuilder
                 {
@@ -280,7 +293,10 @@ namespace TestModule
                 b.WithColor(new Color(0, 192, 12));
                 string ut = user.IsBot ? "Bot" : "User";
                 b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
-                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+
+                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
+
                 b.AddField("Reason", reason);
                 await _jservice.SendModLog(Context.Guild.Id, b.Build());
                 await ReplyAsync("", false, GetEmbeddedMessage($"Unmute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(0, 192, 12)));
@@ -357,6 +373,11 @@ namespace TestModule
             try
             {
                 await user.BanAsync(7, reason);
+                if (!_jservice.ModLogBound(Context.Guild.Id, out ModLogBinding mb)) //12/7/20 -- Impl. Alias mode check
+                {
+                    await ReplyAsync("", false, GetEmbeddedMessage($"Banned {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 18, 12)));
+                    return;
+                }
                 EmbedBuilder b = new EmbedBuilder
                 {
                     Title = $"Ban | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
@@ -365,7 +386,10 @@ namespace TestModule
                 b.WithColor(new Color(225, 18, 12));
                 string ut = user.IsBot ? "Bot" : "User";
                 b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
-                b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+
+                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
+                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
+
                 b.AddField("Reason", reason);
                 await _jservice.SendModLog(Context.Guild.Id, b.Build());
                 await ReplyAsync("", false, GetEmbeddedMessage($"Banned {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 18, 12)));
@@ -749,7 +773,7 @@ namespace TestModule
                         IconUrl = Context.Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto),
                         Name = $"{Context.Client.CurrentUser.Username}#{Context.Client.CurrentUser.Discriminator}"
                     },
-                    Description = "This is a module designed for ModularBOT. Implementing Starboard, Welcome Messages, and a moderation suite.",
+                    Description = "This is a module designed for a ModularBOT instance. Implementing Starboard, Welcome Messages, and a moderation suite.",
                     Color = Color.DarkBlue
                 };
                 await ReplyAsync("", false, eb.Build());
@@ -797,7 +821,7 @@ namespace TestModule
 
         #region PRIVATE FIELDS
 
-        private readonly string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
+        private static readonly string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
         private readonly string TrashcanBindingsConfig = "Modules/TestModule/trash-can.json";
         private static readonly string StarboardBindingsConfig = "Modules/TestModule/starboard.json";
         private static readonly string SniperGuildConfig = "Modules/TestModule/snipe.json";
@@ -999,6 +1023,7 @@ namespace TestModule
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.StarboardAliasMode());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.AllowSnipe());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.SniperQueueSize());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.ModlogAliasMode());
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Success!! Config entities registered."));
                 doonce = true;
             }
@@ -1085,7 +1110,7 @@ namespace TestModule
 
         private async Task ShardedClient_UserUnbanned(SocketUser arg1, SocketGuild arg2)
         {
-            if (!ModLogBound(arg2.Id))
+            if (!ModLogBound(arg2.Id, out ModLogBinding mb))
             {
                 return;
             }
@@ -1110,7 +1135,8 @@ namespace TestModule
             var r = audits.FirstOrDefault(x => x.Action == ActionType.Unban)?.Reason;
             if (u != null)
             {
-                b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}",true);
+                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}", true);
+                else b.AddField("Staff Responsible", $"{(u as SocketGuildUser).Nickname ?? u.Username} ({u.Mention})", true);
             }
             b.AddField("Reason", r ?? "Ban successfully appealed");
             if (u.Id != ShardedClient.CurrentUser.Id)
@@ -1121,7 +1147,7 @@ namespace TestModule
         
         private async Task ShardedClient_UserBanned(SocketUser arg1, SocketGuild arg2)
         {
-            if(!ModLogBound(arg2.Id))
+            if(!ModLogBound(arg2.Id, out ModLogBinding mb))
             {
                 return;
             }
@@ -1149,7 +1175,8 @@ namespace TestModule
             var u = audits.FirstOrDefault(x => x.Action == ActionType.Ban)?.User;
             if(u != null)
             {
-                b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}",true);
+                if(!mb.UseAlias) b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}", true);
+                else b.AddField("Staff Responsible", $"{(u as SocketGuildUser).Nickname ?? u.Username} ({u.Mention})", true);
             }
             string BR = rb.Reason;
             if(string.IsNullOrWhiteSpace(BR))
@@ -1968,9 +1995,9 @@ namespace TestModule
             return null;
         }
 
-        public bool ModLogBound(ulong guildID)
+        public bool ModLogBound(ulong guildID,out ModLogBinding mb)
         {
-            ModLogBinding mb = MLbindings.FirstOrDefault(x => x.GuildID == guildID);
+            mb = MLbindings.FirstOrDefault(x => x.GuildID == guildID);
             return mb != null;
         }
 
@@ -2208,6 +2235,29 @@ namespace TestModule
             }
         }
 
+        public static async Task MLSetAliasMode(ICommandContext context, bool AliasMode)
+        {
+            ModLogBinding ML = MLbindings.FirstOrDefault(x => x.GuildID == context.Guild?.Id);
+            if(ML !=null)
+            {
+                ML.UseAlias = AliasMode;
+                using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+                {
+                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+                }
+                await context.Channel.SendMessageAsync("", false,
+                    GetEmbeddedMessage(context, "Updated Configuration", ML.UseAlias ? $"Mod Log will run in `Alias` mode. Staff will appear as `nickname (@mention)` if possible." : $"Mod Log will run in `Standard` mode. Staff will appear as `username#0000`.", Color.Green));
+                return;
+            }
+            else
+            {
+
+                await context.Channel.SendMessageAsync("", false,
+                    GetEmbeddedMessage(context, "Configuration Error", $"Mod Log is not bound to a channel in this guild. Please do this first.", Color.Orange));
+                return;
+            }
+        }
+
 
         #endregion STARBOARD
 
@@ -2324,6 +2374,7 @@ namespace TestModule
         public ulong ChannelID { get; set; }
         public ulong CaseCount { get; set; }
         public ulong MuteRoleID { get; set; }
+        public bool UseAlias { get; set; }
     }
 
     public class SniperBinding
