@@ -1971,7 +1971,7 @@ namespace TestModule
                         {
                             IsInline = true,
                             Name = usertype,
-                            Value = $"{USER.Username}#{USER.Discriminator}"
+                            Value = $"{USER.Username}#{USER.Discriminator} ({USER.Mention})"
                         },
                         new EmbedFieldBuilder()
                         {
