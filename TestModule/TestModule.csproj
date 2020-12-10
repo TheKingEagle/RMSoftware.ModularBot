@@ -150,6 +150,15 @@
     <Compile Include="ConfigEntities\WelcomeChannel.cs" />
     <Compile Include="ConfigEntities\WelcomeMessage.cs" />
     <Compile Include="ConfigEntities\WelcomeRole.cs" />
+    <Compile Include="Entity\DeletedEmbed.cs" />
+    <Compile Include="Entity\DeletedEmbedField.cs" />
+    <Compile Include="Entity\DeletedMessage.cs" />
+    <Compile Include="Entity\GuildQueryItem.cs" />
+    <Compile Include="Entity\ModLogBinding.cs" />
+    <Compile Include="Entity\ModLogEventTypes.cs" />
+    <Compile Include="Entity\SBEntry.cs" />
+    <Compile Include="Entity\SniperBinding.cs" />
+    <Compile Include="Entity\StarboardBinding.cs" />
     <Compile Include="TestModuleService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ConfigEntities\TrashCanEmote.cs" />
@@ -166,6 +175,9 @@
       <Project>{291babd5-417c-43b7-b67f-39fc10b7249d}</Project>
       <Name>ModularBOT</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Component\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
