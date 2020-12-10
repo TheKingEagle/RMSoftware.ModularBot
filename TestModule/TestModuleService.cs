@@ -11,7 +11,7 @@ using System.IO;
 using Newtonsoft.Json;
 using ModularBOT;
 using Discord.Rest;
-
+using TestModule.Entity;
 namespace TestModule
 {
     [Summary("A Basic moderation toolkit for ModularBOT")]
@@ -106,20 +106,8 @@ namespace TestModule
                     return;
                 }
                 ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
-                EmbedBuilder b = new EmbedBuilder
-                {
-                    Title = $"Kick | Case #{cid}",
-                    Timestamp = DateTimeOffset.Now
-                };
-                b.WithColor(new Color(225, 192, 12));
-                string ut = user.IsBot ? "Bot" : "User";
-                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
-
-                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
-                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
-
-                b.AddField("Reason", reason);
-                var m = await _jservice.SendModLog(Context.Guild.Id, b.Build());
+               
+                var m = await _jservice.SendModLog(Context.Guild.Id,cid,Entity.ModLogEventTypes.Kick,Context.User as SocketGuildUser,user as SocketUser,reason,mb.UseAlias);
                 TestModuleService.MessageCaseIDs.Add(Tuple.Create(Context.Guild.Id, cid), m.Id);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Kicked {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
             }
@@ -200,21 +188,8 @@ namespace TestModule
                     return;
                 }
                 ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
-                
-                EmbedBuilder b = new EmbedBuilder
-                {
-                    Title = $"Mute | Case #{cid}",
-                    Timestamp = DateTimeOffset.Now
-                };
-                b.WithColor(new Color(225, 192, 12));
-                string ut = user.IsBot ? "Bot" : "User";
-                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
 
-                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
-                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
-
-                b.AddField("Reason", reason);
-                var m = await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                var m = await _jservice.SendModLog(Context.Guild.Id,cid,ModLogEventTypes.Mute,Context.User as SocketGuildUser,iuser as SocketUser,reason,mb.UseAlias);
                 TestModuleService.MessageCaseIDs.Add(Tuple.Create(Context.Guild.Id, cid), m.Id);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Mute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
             }
@@ -298,7 +273,7 @@ namespace TestModule
                 else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
 
                 b.AddField("Reason", reason);
-                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                await _jservice.SendModLog(Context.Guild.Id,0,ModLogEventTypes.Unmute,Context.User as SocketGuildUser,user as SocketUser,reason,mb.UseAlias);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Unmute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(0, 192, 12)));
             }
             catch (Discord.Net.HttpException ex)
@@ -378,20 +353,9 @@ namespace TestModule
                     await ReplyAsync("", false, GetEmbeddedMessage($"Banned {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 18, 12)));
                     return;
                 }
-                EmbedBuilder b = new EmbedBuilder
-                {
-                    Title = $"Ban | Case #{_jservice.GetCaseCount(Context.Guild.Id)}",
-                    Timestamp = DateTimeOffset.Now
-                };
-                b.WithColor(new Color(225, 18, 12));
-                string ut = user.IsBot ? "Bot" : "User";
-                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
-
-                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
-                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
-
-                b.AddField("Reason", reason);
-                await _jservice.SendModLog(Context.Guild.Id, b.Build());
+                ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
+                
+                await _jservice.SendModLog(Context.Guild.Id, cid,ModLogEventTypes.Ban,Context.User as SocketGuildUser,user as SocketUser,reason,mb.UseAlias);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Banned {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 18, 12)));
             }
             catch (Discord.Net.HttpException ex)
@@ -992,6 +956,7 @@ namespace TestModule
 
                 BoundItems = new Dictionary<ulong, GuildQueryItem>();
                 ShardedClient.UserJoined += ShardedClient_UserJoined;
+                ShardedClient.UserLeft += ShardedClient_UserLeft;
                 ShardedClient.ReactionAdded += ShardedClient_ReactionAdded;
                 ShardedClient.ReactionRemoved += ShardedClient_ReactionRemoved;
                 ShardedClient.UserBanned += ShardedClient_UserBanned;
@@ -1001,16 +966,16 @@ namespace TestModule
                 LogMessage Log3 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionRemoved event handler to client.");
                 LogMessage Log2 = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
                 LogMessage Log4 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserBanned event handler to client.");
-                LogMessage Log5 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserUnbanned event handler to client.");
-                LogMessage Log6 = new LogMessage(LogSeverity.Info, "Sniper", "Added MessageDeleted event handler to client.");
+                LogMessage Log5 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserLeft event handler to client.");
+                LogMessage Log6 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserUnbanned event handler to client.");
+                LogMessage Log7 = new LogMessage(LogSeverity.Info, "Sniper", "Added MessageDeleted event handler to client.");
                 _consoleIO.WriteEntry(Log1);
                 _consoleIO.WriteEntry(Log3);
                 _consoleIO.WriteEntry(Log2);
                 _consoleIO.WriteEntry(Log4);
                 _consoleIO.WriteEntry(Log5);
                 _consoleIO.WriteEntry(Log6);
-
-
+                _consoleIO.WriteEntry(Log7);
 
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Adding entities to the configuration manager"));
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.TrashCanEmote());
@@ -1029,9 +994,7 @@ namespace TestModule
             }
         }
 
-
-
-        #region PRIVATE EVENTS
+        #region ShardedClient EVENTS
 
         private async Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
         {
@@ -1121,27 +1084,14 @@ namespace TestModule
                 return;
             }
             Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMS_Events", $"User: {arg1.Username}#{arg1.Discriminator} was unbanned from: {arg2.Name}."));
-            EmbedBuilder b = new EmbedBuilder
-            {
-                Title = $"Unban",
-                Timestamp = DateTimeOffset.Now
-            };
-            b.WithColor(new Color(18, 225, 12));
-            string ut = arg1.IsBot ? "Bot" : "User";
-            b.AddField(ut, $"{arg1.Username}#{arg1.Discriminator} ({arg1.Mention})", true);
-            //b.AddField("Staff Responsible", $"{rb.}", true);
+            
             var audits = await arg2.GetAuditLogsAsync(1).Flatten().ToListAsync();
             var u = audits.FirstOrDefault(x => x.Action == ActionType.Unban)?.User;
             var r = audits.FirstOrDefault(x => x.Action == ActionType.Unban)?.Reason;
-            if (u != null)
-            {
-                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}", true);
-                else b.AddField("Staff Responsible", $"{(u as SocketGuildUser).Nickname ?? u.Username} ({u.Mention})", true);
-            }
-            b.AddField("Reason", r ?? "Ban successfully appealed");
+            
             if (u.Id != ShardedClient.CurrentUser.Id)
             {
-                await SendModLog(arg2.Id, b.Build());
+                await SendModLog(arg2.Id, 0, ModLogEventTypes.Unban, arg2.GetUser(u.Id), arg1, "Ban Successfully appealed.", mb.UseAlias);
             }
         }
         
@@ -1162,31 +1112,19 @@ namespace TestModule
             var rb = await arg2.GetBanAsync(arg1);
 
             ulong caseid = GetCaseCount(arg2.Id);
-            EmbedBuilder b = new EmbedBuilder
-            {
-                Title = $"Ban | Case #{caseid}",
-                Timestamp = DateTimeOffset.Now
-            };
-            b.WithColor(new Color(225, 18, 12));
-            string ut = arg1.IsBot ? "Bot" : "User";
-            b.AddField(ut, $"{arg1.Username}#{arg1.Discriminator} ({arg1.Mention})", true);
-            //b.AddField("Staff Responsible", $"{rb.}", true);
+            
             var audits =  await arg2.GetAuditLogsAsync(1).Flatten().ToListAsync();
             var u = audits.FirstOrDefault(x => x.Action == ActionType.Ban)?.User;
-            if(u != null)
-            {
-                if(!mb.UseAlias) b.AddField("Staff Responsible", $"{u.Username}#{u.Discriminator}", true);
-                else b.AddField("Staff Responsible", $"{(u as SocketGuildUser).Nickname ?? u.Username} ({u.Mention})", true);
-            }
+            
             string BR = rb.Reason;
             if(string.IsNullOrWhiteSpace(BR))
             {
                 BR = $"Ban reason not specified! Please execute the `reason {caseid} <Reason>` command.";
             }
-            b.AddField("Reason", BR);
+           
             if(u.Id != ShardedClient.CurrentUser.Id)
             {
-                RestUserMessage r = await SendModLog(arg2.Id, b.Build());
+                RestUserMessage r = await SendModLog(arg2.Id,caseid,ModLogEventTypes.Ban,arg2.GetUser(u.Id),arg1,BR,mb.UseAlias);
                 MessageCaseIDs.Add(Tuple.Create(arg2.Id,caseid), r.Id);
             }
 
@@ -1226,6 +1164,40 @@ namespace TestModule
                 Writer.WriteEntry(Log);
                 Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser: " + arg.Username + "\r\n" + "The Guild: " + arg.Guild.Name);//debuglul
                 Writer.WriteEntry(Log);
+            }
+        }
+
+        private async Task ShardedClient_UserLeft(SocketGuildUser arg)
+        {
+            if (arg.Guild.CurrentUser.GuildPermissions.Has(GuildPermission.ViewAuditLog))
+            {
+                var audits = await arg.Guild.GetAuditLogsAsync(1).Flatten().ToListAsync();
+                var log = audits.OrderByDescending(x => x.CreatedAt).First();
+                if (log == null)
+                {
+                    return;
+                }
+                if (!ModLogBound(arg.Guild.Id, out ModLogBinding mb))
+                {
+                    return;
+                }
+                var staff = log.User;
+                Writer.WriteEntry(new LogMessage(LogSeverity.Critical, "AuditLog", $"Entry: {log.Action} R: {log.Reason} @ {log.CreatedAt}"));
+                if (log.Action == ActionType.Kick)
+                {
+                    ulong caseid = GetCaseCount(arg.Guild.Id);
+                    string kickreason = log.Reason;
+                    if (string.IsNullOrWhiteSpace(kickreason))
+                    {
+                        kickreason = $"Kick reason not specified! Please execute the `reason {caseid} <Reason>` command.";
+                    }
+
+                    if (staff.Id != ShardedClient.CurrentUser.Id)
+                    {
+                        RestUserMessage r = await SendModLog(arg.Guild.Id, caseid, ModLogEventTypes.Kick, arg.Guild.GetUser(staff.Id), arg, kickreason, mb.UseAlias);
+                        MessageCaseIDs.Add(Tuple.Create(arg.Guild.Id, caseid), r.Id);
+                    }
+                }
             }
         }
 
@@ -1925,7 +1897,6 @@ namespace TestModule
             #endregion Trashcans
         }
 
-
         #endregion PRIVATE EVENTS
 
         #region PUBLIC METHODS
@@ -1982,14 +1953,44 @@ namespace TestModule
             }
         }
 
-        public async Task<RestUserMessage> SendModLog(ulong GuildID, Embed embed)
+        public async Task<RestUserMessage> SendModLog(ulong GuildID, ulong caseid, ModLogEventTypes mlevent, SocketGuildUser STAFF, SocketUser USER, string REASON, bool ALIAS)
         {
             ModLogBinding mb = MLbindings.FirstOrDefault(x => x.GuildID == GuildID);
             if (mb != null)
             {
+                string mltitle = (caseid > 0) ? $"{mlevent} | Case #{caseid}" : mlevent.ToString();
+                string usertype = USER.IsBot ? "Bot" : "User";
+
+                EmbedBuilder eb = new EmbedBuilder()
+                {
+                    Color = new Color((uint)mlevent),
+                    Title = mltitle,
+                    Fields =
+                    {
+                        new EmbedFieldBuilder()
+                        {
+                            IsInline = true,
+                            Name = usertype,
+                            Value = $"{USER.Username}#{USER.Discriminator}"
+                        },
+                        new EmbedFieldBuilder()
+                        {
+                            IsInline = true,
+                            Name = "Staff Responsible",
+                            Value = ALIAS ? $"{(STAFF.Nickname ?? STAFF.Username)}({STAFF.Mention})" : $"{STAFF.Username}#{STAFF.Discriminator}"
+                        },
+                        new EmbedFieldBuilder()
+                        {
+                            IsInline = false,
+                            Name = "Reason",
+                            Value = REASON
+                        },
+                    },
+                    Timestamp = DateTimeOffset.Now
+                };
                 if (ShardedClient.GetGuild(GuildID).GetChannel(mb.ChannelID) is SocketTextChannel sfl)
                 {
-                    return await sfl.SendMessageAsync("", false, embed);
+                    return await sfl.SendMessageAsync("", false, eb.Build());
                 }
             }
             return null;
@@ -2078,11 +2079,33 @@ namespace TestModule
             $"This channel will not receive moderation logs anymore.", new Color(244, 168, 0)));
         }
 
+        public static async Task MLSetAliasMode(ICommandContext context, bool AliasMode)
+        {
+            ModLogBinding ML = MLbindings.FirstOrDefault(x => x.GuildID == context.Guild?.Id);
+            if (ML != null)
+            {
+                ML.UseAlias = AliasMode;
+                using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+                {
+                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+                }
+                await context.Channel.SendMessageAsync("", false,
+                    GetEmbeddedMessage(context, "Updated Configuration", ML.UseAlias ? $"Mod Log will run in `Alias` mode. Staff will appear as `nickname (@mention)` if possible." : $"Mod Log will run in `Standard` mode. Staff will appear as `username#0000`.", Color.Green));
+                return;
+            }
+            else
+            {
+
+                await context.Channel.SendMessageAsync("", false,
+                    GetEmbeddedMessage(context, "Configuration Error", $"Mod Log is not bound to a channel in this guild. Please do this first.", Color.Orange));
+                return;
+            }
+        }
+
         #endregion MODLOG
 
         public Task BindWelcomeMessage(ICommandContext Context, GuildQueryItem roletoadd)
         {
-            
             BoundItems.Add(roletoadd.DefaultChannel.GuildId, roletoadd);
             var Log = new LogMessage(LogSeverity.Info, "Greetings", $"Created a Join Event listener using the channel `{roletoadd.DefaultChannel.Name}` located in guild `{roletoadd.DefaultChannel.Guild.Name}`. Using Welcome message: {roletoadd.WelcomeMessage}");//debuglul
             Writer.WriteEntry(Log);
@@ -2235,30 +2258,6 @@ namespace TestModule
             }
         }
 
-        public static async Task MLSetAliasMode(ICommandContext context, bool AliasMode)
-        {
-            ModLogBinding ML = MLbindings.FirstOrDefault(x => x.GuildID == context.Guild?.Id);
-            if(ML !=null)
-            {
-                ML.UseAlias = AliasMode;
-                using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
-                {
-                    sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
-                }
-                await context.Channel.SendMessageAsync("", false,
-                    GetEmbeddedMessage(context, "Updated Configuration", ML.UseAlias ? $"Mod Log will run in `Alias` mode. Staff will appear as `nickname (@mention)` if possible." : $"Mod Log will run in `Standard` mode. Staff will appear as `username#0000`.", Color.Green));
-                return;
-            }
-            else
-            {
-
-                await context.Channel.SendMessageAsync("", false,
-                    GetEmbeddedMessage(context, "Configuration Error", $"Mod Log is not bound to a channel in this guild. Please do this first.", Color.Orange));
-                return;
-            }
-        }
-
-
         #endregion STARBOARD
 
         #region SNIPER
@@ -2361,83 +2360,4 @@ namespace TestModule
 
     }
 
-    public class GuildQueryItem
-    {
-        public ITextChannel DefaultChannel { get; set; }
-        public IRole RoleToAssign { get; set; }
-        public string WelcomeMessage { get; set; }
-    }
-
-    public class ModLogBinding
-    {
-        public ulong GuildID { get; set; }
-        public ulong ChannelID { get; set; }
-        public ulong CaseCount { get; set; }
-        public ulong MuteRoleID { get; set; }
-        public bool UseAlias { get; set; }
-    }
-
-    public class SniperBinding
-    {
-        public ulong GuildID { get; set; }
-        public List<DeletedMessage> DeletedMessages { get; set; }
-        public int QueueSize { get; set; } = 100;
-    }
-    
-    public class DeletedMessage
-    {
-        public ulong ID { get; set; }
-        public string Content { get; set; }
-        public List<DeletedEmbed> Embeds { get; set; }
-        public ulong AuthorID { get; set; }
-        public string AuthorName { get; set; }
-        public string AuthorDiscriminator { get; set; }
-        public string AuthorAvatarURL { get; set; }
-        public ulong ChannelID { get; set; }
-        public ulong GuildID { get; set; }
-        public DateTimeOffset Timestamp { get; set; }
-    }
-    
-    public class DeletedEmbed
-    {
-        public string EAuthorIconURL { get; set; }
-        public string EAuthorName { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public List<DeletedEmbedField> Fields { get; set; }
-        public string ThumbnailURL { get; set; }
-        public string ImageURL { get; set; }
-        public string FooterImageURL { get; set; }
-        public string FooterText { get; set; }
-        public DateTimeOffset Timestamp { get; set; }
-        public Color Color { get; set; }
-    }
-    
-    public class DeletedEmbedField
-    {
-        public bool Inline { get; set; }
-        public string FName { get; set; }
-        public object FValue { get; set; }
-    }
-    
-    public class StarboardBinding
-    {
-        public ulong ChannelID { get; set; }
-        public bool UseAlias { get; set; } = false;
-        public List<SBEntry> StarboardData { get; set; }
-    }
-
-    public class SBEntry
-    {
-        public ulong StarCount { get; set; }
-        public ulong StarredMessageID { get; set; }
-        public ulong StarredMsgChannelID { get; set; }
-        public ulong SbMessageID { get; set; }
-    }
-
-    public class MLentry
-    {
-        public ulong CaseID { get; set; }
-        public ulong GuildID { get; set; }
-    }
 }
