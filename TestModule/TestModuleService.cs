@@ -188,7 +188,7 @@ namespace TestModule
                     return;
                 }
                 ulong cid = _jservice.GetCaseCount(Context.Guild.Id);
-
+                await user.AddRoleAsync(Context.Guild.GetRole(mb.MuteRoleID));
                 var m = await _jservice.SendModLog(Context.Guild.Id,cid,ModLogEventTypes.Mute,Context.User as SocketGuildUser,iuser as SocketUser,reason,mb.UseAlias);
                 TestModuleService.MessageCaseIDs.Add(Tuple.Create(Context.Guild.Id, cid), m.Id);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Mute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(225, 192, 12)));
@@ -260,19 +260,8 @@ namespace TestModule
                     await ReplyAsync("", false, GetEmbeddedMessage("Nope!", $"You must have a Moderation log bound to this guild. You can do this with `{pf}bindmodlog` in a channel of your choice.", Color.DarkRed));
                     return;
                 }
-                EmbedBuilder b = new EmbedBuilder
-                {
-                    Title = $"Unmute",
-                    Timestamp = DateTimeOffset.Now
-                };
-                b.WithColor(new Color(0, 192, 12));
-                string ut = user.IsBot ? "Bot" : "User";
-                b.AddField(ut, $"{user.Username}#{user.Discriminator} ({user.Mention})", true);
 
-                if (!mb.UseAlias) b.AddField("Staff Responsible", $"{Context.User.Username}#{Context.User.Discriminator}", true);
-                else b.AddField("Staff Responsible", $"{(Context.User as SocketGuildUser).Nickname ?? Context.User.Username} ({Context.User.Mention})", true);
-
-                b.AddField("Reason", reason);
+                await user.RemoveRoleAsync(Context.Guild.GetRole(mb.MuteRoleID));
                 await _jservice.SendModLog(Context.Guild.Id,0,ModLogEventTypes.Unmute,Context.User as SocketGuildUser,user as SocketUser,reason,mb.UseAlias);
                 await ReplyAsync("", false, GetEmbeddedMessage($"Unmute {user.Username}#{user.Discriminator}", $"**Reason**: {reason}", new Color(0, 192, 12)));
             }
@@ -2256,6 +2245,15 @@ namespace TestModule
                     GetEmbeddedMessage(context, "Configuration Error", $"Starboard is not bound to a channel in this guild. Please do this first.", Color.Orange));
                 return;
             }
+        }
+
+        public async Task<RestUserMessage> PostStarboard(SocketTextChannel Starboard, int StarCount, SocketGuildUser FromUser, string MessageContent="[No Message Text]", Attachment[] Attachments=null, Embed[] embeds=null)
+        {
+            EmbedBuilder builder = new EmbedBuilder()
+            {
+
+            };
+            return await Starboard.SendMessageAsync("STARBOARD");
         }
 
         #endregion STARBOARD
