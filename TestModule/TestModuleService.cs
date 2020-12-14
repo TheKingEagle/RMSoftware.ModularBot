@@ -2247,13 +2247,38 @@ namespace TestModule
             }
         }
 
-        public async Task<RestUserMessage> PostStarboard(SocketTextChannel Starboard, int StarCount, SocketGuildUser FromUser, string MessageContent="[No Message Text]", Attachment[] Attachments=null, Embed[] embeds=null)
+        //TODO: The rest of this.
+        public Embed GenerateStarBoardEmbed(out string StarBoardMsgHeader, bool AliasMode,  int StarCount, SocketMessage Message )
         {
+            SocketGuildUser FromUser = Message.Author as SocketGuildUser;
+            Embed FirstEmbed = Message.Embeds.First();
             EmbedBuilder builder = new EmbedBuilder()
             {
-
+                Description = FirstEmbed != null ? $"{Message.Content}{(!string.IsNullOrWhiteSpace(Message.Content) ? "\r\n":"")}" +
+                $"**[{FirstEmbed.Title}]**\r\n{FirstEmbed.Description}" : $"{Message.Content}",
+                Author = new EmbedAuthorBuilder()
+                {
+                    IconUrl = FromUser.GetAvatarUrl(ImageFormat.Auto),
+                    Name = AliasMode ? $"{FromUser.Nickname ?? FromUser.Username}"
+                                    : $"{FromUser.Username}#{FromUser.Discriminator}"
+                },
+                Footer = new EmbedFooterBuilder() { Text = $"ID: {Message.Id} • {Message.Timestamp}" },
+                Color = new Color(255, 234, 119)
             };
-            return await Starboard.SendMessageAsync("STARBOARD");
+            if(FirstEmbed != null)
+            {
+                foreach (var item in FirstEmbed.Fields)
+                {
+                    builder.AddField(item.Name, item.Value, item.Inline);
+                }
+            }
+            string starRank = StarCount >= 69 ? "\ud83d\udd25" 
+                : StarCount >= 30 ? "\u2728" 
+                : StarCount >= 20 ? "\ud83d\udcab" 
+                : StarCount >= 10 ? "\ud83c\udf1f" 
+                : "\u2B50";
+            StarBoardMsgHeader = $"{starRank} **{StarCount}** | <#{Message.Channel.Id}>";
+            return builder.Build();
         }
 
         #endregion STARBOARD
