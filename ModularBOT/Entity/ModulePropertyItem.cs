@@ -10,7 +10,6 @@ namespace ModularBOT.Entity
     {
         public string ModuleName { get; set; }
         public string ServiceClass { get; set; }
-        public string ModulePrefix { get; set; }
         public List<ulong> GuildsAvailable { get; set; }
 
         public List<string> ModuleGroups { get; set; }

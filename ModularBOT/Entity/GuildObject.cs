@@ -15,7 +15,6 @@ namespace ModularBOT.Entity
 
         public bool LockPFChanges { get; set; }
 
-        public bool EnablePerModulePrefix { get; set; }
         public ulong ID { get; set; }
 
         public AutoBlacklistModes? BlacklistMode { get; set; }
