@@ -707,6 +707,15 @@ namespace TestModule
             }
         }
 
+        [Command("sbtestembed",RunMode = RunMode.Async),Summary("This tests the new Starboard embed generator")]
+        public async Task SendTestEmbed(ulong channel, ulong messageID)
+        {
+            var SocketTextChannel = await Context.Guild.GetTextChannelAsync(channel);
+            var m = await SocketTextChannel.GetMessageAsync(messageID);
+            var em = _jservice.GenerateStarBoardEmbed( out string header, true, 69, m);
+            await ReplyAsync(header, false, em);
+        }
+
         [Group("TestModule")]
         public class _TestModule:ModuleBase
         {
@@ -1193,6 +1202,10 @@ namespace TestModule
         private async Task ShardedClient_ReactionAdded(Cacheable<IUserMessage, ulong> arg1,
             ISocketMessageChannel arg2, SocketReaction arg3)
         {
+            if(arg3.UserId == ShardedClient.CurrentUser.Id)
+            {
+                return;//ignore own reactions :)
+            }
             Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Reaction Event: Reaction Added!"));
             SocketGuildChannel STC = null;
             if (arg2 is SocketGuildChannel)
@@ -1212,11 +1225,11 @@ namespace TestModule
             if (arg3.Emote.ToString() == "\u2B50" || arg3.Emote.ToString() == "\uD83C\uDF1F") //STAR or GLOWING STAR
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
-                string msgattachment = "";
+
                 if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
                 {
 
-                    if (arg2.Id != binding.ChannelID) // Starred message is NOT on the starboard channel. 
+                    if (arg2.Id != binding.ChannelID) 
                     {
                         Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "SBBinding found. NOT Starboard embed."));
                         var sbmessage = binding.StarboardData.FirstOrDefault(x => x.StarredMessageID == arg1.Id);
@@ -1237,227 +1250,36 @@ namespace TestModule
                             }
                             string name = binding.UseAlias ? nick : sname;
                             //modify the starboard message
-                            
-                            EmbedBuilder SBEntryEmbed = new EmbedBuilder()
-                            {
-                                Author = new EmbedAuthorBuilder()
-                                {
-                                    IconUrl = StarredMessage.Author.GetAvatarUrl(ImageFormat.Auto),
-                                    Name = name
-                                },
-                                Description = StarredMessage.Content,
-                                Color = new Color(255, 234, 119),
-                                Footer = new EmbedFooterBuilder()
-                                {
-                                    Text = $"MessageID: {sbmessage.StarredMessageID}"
-                                }
 
-                            };
-                            if (StarredMessage.Embeds.Count > 0)
-                            {
-                                IEmbed first = StarredMessage.Embeds.First();
-                                foreach (var field in first.Fields)
-                                {
-                                    SBEntryEmbed.AddField($"[{field.Name}]", field.Value, field.Inline);
-                                }
-                                if (first.Image.HasValue)
-                                {
-                                    SBEntryEmbed.WithImageUrl(first.ToEmbedBuilder().ImageUrl);
-                                }
-                                if (first.Title.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n**[{first.Title}]**\r\n";
-                                }
-                                if (first.Description.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
-                                }
-                            }
-                            if (StarredMessage.Attachments.Count > 0)
-                            {
-                                if (StarredMessage.Attachments.First().Width.HasValue)
-                                {
-                                    if (!StarredMessage.Attachments.First().Filename.StartsWith("SPOILER_"))
-                                    {
-                                        SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
-                                    }
-                                    else
-                                    {
-                                        SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                    }
-                                }
-                                else
-                                {
-                                    msgattachment = StarredMessage.Attachments.First().Url;
-                                    SBEntryEmbed.AddField("Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                }
-                            }
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, sbmessage.StarCount, StarredMessage);
                             if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
                                     {
-                                        x.Content = $"🌟 **{sbmessage.StarCount}** | <#{sbmessage.StarredMsgChannelID}>";
-                                        x.Embed = SBEntryEmbed.Build();
+                                        x.Content = starheader;
+                                        x.Embed = SBEntryEmbed;
                                     }
                                     );
                             }
                             else //SUM was NULL! Create the new message instead.
                             {
-                                SBEntryEmbed = new EmbedBuilder()
-                                {
-                                    Author = new EmbedAuthorBuilder()
-                                    {
-                                        IconUrl = StarredMessage.Author.GetAvatarUrl(ImageFormat.Auto),
-                                        Name = name
-                                    },
-                                    Description = StarredMessage.Content,
-                                    Color = new Color(255, 234, 119),
-                                    Footer = new EmbedFooterBuilder()
-                                    {
-                                        Text = $"MessageID: {StarredMessage.Id} | {StarredMessage.Timestamp}"
-                                    }
-
-                                };
-                                if(StarredMessage.Embeds.Count > 0)
-                                {
-                                    IEmbed first = StarredMessage.Embeds.First();
-                                    foreach (var field in first.Fields)
-                                    {
-                                        SBEntryEmbed.AddField($"[{field.Name}]", field.Value, field.Inline);
-                                    }
-                                    if(first.Image.HasValue)
-                                    {
-                                        SBEntryEmbed.WithImageUrl(first.ToEmbedBuilder().ImageUrl);
-                                    }
-                                    if(first.Title.Length > 0)
-                                    {
-                                        SBEntryEmbed.Description += $"\r\n**[{first.Title}]**\r\n";
-                                    }
-                                    if(first.Description.Length > 0)
-                                    {
-                                        SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
-                                    }
-                                }
-                                if(StarredMessage.Attachments.Count > 0)
-                                {
-                                    if (StarredMessage.Attachments.First().Width.HasValue)
-                                    {
-                                        if (!StarredMessage.Attachments.First().IsSpoiler())
-                                        {
-                                            SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
-                                        }
-                                        else
-                                        {
-                                            SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                        }
-                                    }
-
-                                    msgattachment = StarredMessage.Attachments.First().Filename;
-                                    SBEntryEmbed.AddField("Attachment", msgattachment);
-                                }
+                                SBEntryEmbed = GenerateStarBoardEmbed(out starheader, binding.UseAlias, sbmessage.StarCount, StarredMessage);
                                 var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                                var newSBMessage = await channel.SendMessageAsync($"🌟 **1** | " +
-                                    $"<#{StarredMessage.Channel.Id}>", false, SBEntryEmbed.Build());
-                                if (!string.IsNullOrEmpty(msgattachment))
-                                {
-                                    if (msgattachment.EndsWith(".mov") ||
-                                        msgattachment.EndsWith(".mp4") ||
-                                        msgattachment.EndsWith(".wmv") ||
-                                        msgattachment.EndsWith(".mkv") ||
-                                        msgattachment.EndsWith(".avi") ||
-                                        msgattachment.EndsWith(".flv") ||
-                                        msgattachment.EndsWith(".mpeg"))
-                                    {
-                                        await channel.SendMessageAsync(StarredMessage.Attachments.First().Url);
-                                    }
-                                }
+                                var newSBMessage = await channel.SendMessageAsync(starheader,false,SBEntryEmbed);
                             }
                         }
 
                         if (sbmessage == null)
                         {
-                            //Create a new embed.
+                            //Otherwise, create a new entry
                             var StarredMessage = await arg1.GetOrDownloadAsync();
-                            string nick = (StarredMessage.Author as IGuildUser).Nickname;
-                            string sname = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator;
-                            if (string.IsNullOrWhiteSpace(nick))
-                            {
-                                nick = sname;
-                            }
-                            string name = binding.UseAlias ? nick : sname;
-                            //modify the starboard message
-                            EmbedBuilder SBEntryEmbed = new EmbedBuilder()
-                            {
-                                Author = new EmbedAuthorBuilder()
-                                {
-                                    IconUrl = StarredMessage.Author.GetAvatarUrl(ImageFormat.Auto),
-                                    Name = name
-                                },
-                                Description = StarredMessage.Content,
-                                Color = new Color(255, 234, 119),
-                                Footer = new EmbedFooterBuilder()
-                                {
-                                    Text = $"MessageID: {StarredMessage.Id}"
-                                }
-
-                            };
-                            if (StarredMessage.Embeds.Count > 0)
-                            {
-                                IEmbed first = StarredMessage.Embeds.First();
-                                foreach (var field in first.Fields)
-                                {
-                                    SBEntryEmbed.AddField($"[{field.Name}]", field.Value, field.Inline);
-                                }
-                                if (first.Image.HasValue)
-                                {
-                                    SBEntryEmbed.WithImageUrl(first.ToEmbedBuilder().ImageUrl);
-                                }
-                                if (!string.IsNullOrWhiteSpace(first.Title))
-                                {
-                                    SBEntryEmbed.Description += $"\r\n**[{first.Title}]**\r\n";
-                                }
-                                if (!string.IsNullOrWhiteSpace(first.Description))
-                                {
-                                    SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
-                                }
-                            }
-                            if (StarredMessage.Attachments.Count > 0)
-                            {
-                                if (StarredMessage.Attachments.First().Width.HasValue)
-                                {
-                                    if (!StarredMessage.Attachments.First().IsSpoiler())
-                                    {
-                                        SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
-                                    }
-                                    else
-                                    {
-                                        SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                    }
-                                }
-
-                                msgattachment = StarredMessage.Attachments.First().Filename;
-                                SBEntryEmbed.AddField("Attachment", msgattachment);
-                            }
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, 1, StarredMessage);
                             var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                            var newSBMessage = await channel.SendMessageAsync($"🌟 **1** | " +
-                                $"<#{StarredMessage.Channel.Id}>", false, SBEntryEmbed.Build());
+                            var newSBMessage = await channel.SendMessageAsync(starheader, false, SBEntryEmbed);
 
                             await newSBMessage.AddReactionAsync(new Emoji("\u2B50"));
-                            if (!string.IsNullOrEmpty(msgattachment))
-                            {
-                                if (msgattachment.EndsWith(".mov") ||
-                                    msgattachment.EndsWith(".mp4") ||
-                                    msgattachment.EndsWith(".wmv") ||
-                                    msgattachment.EndsWith(".mkv") ||
-                                    msgattachment.EndsWith(".avi") ||
-                                    msgattachment.EndsWith(".flv") ||
-                                    msgattachment.EndsWith(".mpeg"))
-                                {
-                                    await channel.SendMessageAsync(StarredMessage.Attachments.First().Url);
-                                }
-                            }
-                            //create a new starboard entry.
+
                             sbmessage = new SBEntry()
                             {
                                 SbMessageID = newSBMessage.Id,
@@ -1473,161 +1295,43 @@ namespace TestModule
 
                     } //Starred message IS NOT from Starboard channel.
 
-                    if (arg2.Id == binding.ChannelID) // Starred message IS from Starboard channel. 
+                    if (arg2.Id == binding.ChannelID)
                     {
 
                         Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. Starboard embed."));
-                        var ebsbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == (arg1.GetOrDownloadAsync().GetAwaiter().GetResult()).Id);
+                        var reactionMsg = await arg1.GetOrDownloadAsync();
+                        var ebsbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == reactionMsg.Id);
                         if (ebsbmessage != null)
                         {
-                            //message is already in the starboard Modify the starcount.
+                            //message is already in the starboard data.
                             ebsbmessage.StarCount++;
                             binding.StarboardData[binding.StarboardData.IndexOf(ebsbmessage)] = ebsbmessage;
                             SBBindings[STC.Guild.Id] = binding;
                             var StarredMessage = await STC.Guild.GetTextChannel(ebsbmessage.StarredMsgChannelID)
                                 .GetMessageAsync(ebsbmessage.StarredMessageID);
-                            //modify the starboard message
-                            string nick = (StarredMessage.Author as IGuildUser).Nickname;
-                            string sname = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator;
-                            if (string.IsNullOrWhiteSpace(nick))
-                            {
-                                nick = sname;
-                            }
-                            string name = binding.UseAlias ? nick : sname;
-                            //modify the starboard message
-                            EmbedBuilder SBEntryEmbed = new EmbedBuilder()
-                            {
-                                Author = new EmbedAuthorBuilder()
-                                {
-                                    IconUrl = StarredMessage.Author.GetAvatarUrl(ImageFormat.Auto),
-                                    Name = name
-                                },
-                                Description = StarredMessage.Content,
-                                Color = new Color(255, 234, 119),
-                                Footer = new EmbedFooterBuilder()
-                                {
-                                    Text = $"MessageID: {ebsbmessage.StarredMessageID}"
-                                }
+                            //generate embed, and modify the starboard message
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, ebsbmessage.StarCount, StarredMessage);
 
-                            };
-                            if (StarredMessage.Embeds.Count > 0)
-                            {
-                                IEmbed first = StarredMessage.Embeds.First();
-                                foreach (var field in first.Fields)
-                                {
-                                    SBEntryEmbed.AddField($"[{field.Name}]", field.Value, field.Inline);
-                                }
-                                if (first.Image.HasValue)
-                                {
-                                    SBEntryEmbed.WithImageUrl(first.ToEmbedBuilder().ImageUrl);
-                                }
-                                if (first.Title.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n**[{first.Title}]**\r\n";
-                                }
-                                if (first.Description.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
-                                }
-                            }
-                            if (StarredMessage.Attachments.Count > 0)
-                            {
-                                if (StarredMessage.Attachments.First().Width.HasValue)
-                                {
-                                    if (!StarredMessage.Attachments.First().Filename.StartsWith("SPOILER_"))
-                                    {
-                                        SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
-                                    }
-                                    else
-                                    {
-                                        SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                    }
-                                }
-
-                            }
                             if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
                                     {
-                                        x.Content = $"🌟 **{ebsbmessage.StarCount}** | <#{ebsbmessage.StarredMsgChannelID}>";
-                                        x.Embed = SBEntryEmbed.Build();
+                                        x.Content = starheader;
+                                        x.Embed = SBEntryEmbed;
                                     }
                                     );
                             }
                             else //SUM was NULL! Create the new message instead.
                             {
-                                SBEntryEmbed = new EmbedBuilder()
-                                {
-                                    Author = new EmbedAuthorBuilder()
-                                    {
-                                        IconUrl = StarredMessage.Author.GetAvatarUrl(ImageFormat.Auto),
-                                        Name = name
-                                    },
-                                    Description = StarredMessage.Content,
-                                    Color = new Color(255, 234, 119),
-                                    Footer = new EmbedFooterBuilder()
-                                    {
-                                        Text = $"MessageID: {StarredMessage.Id} | {StarredMessage.Timestamp}"
-                                    }
-
-                                };
-                                if (StarredMessage.Embeds.Count > 0)
-                                {
-                                    IEmbed first = StarredMessage.Embeds.First();
-                                    foreach (var field in first.Fields)
-                                    {
-                                        SBEntryEmbed.AddField($"[{field.Name}]", field.Value, field.Inline);
-                                    }
-                                    if (first.Image.HasValue)
-                                    {
-                                        SBEntryEmbed.WithImageUrl(first.ToEmbedBuilder().ImageUrl);
-                                    }
-                                    if (first.Title.Length > 0)
-                                    {
-                                        SBEntryEmbed.Description += $"\r\n**[{first.Title}]**\r\n";
-                                    }
-                                    if (first.Description.Length > 0)
-                                    {
-                                        SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
-                                    }
-                                }
-                                if (StarredMessage.Attachments.Count > 0)
-                                {
-                                    if (StarredMessage.Attachments.First().Width.HasValue)
-                                    {
-                                        if (!StarredMessage.Attachments.First().IsSpoiler())
-                                        {
-                                            SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
-                                        }
-                                        else
-                                        {
-                                            SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                        }
-                                    }
-
-                                    msgattachment = StarredMessage.Attachments.First().Filename;
-                                    SBEntryEmbed.AddField("Attachment", msgattachment);
-                                }
+                                SBEntryEmbed = GenerateStarBoardEmbed(out starheader, binding.UseAlias, 1, StarredMessage);
                                 var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                                var newSBMessage = await channel.SendMessageAsync($"🌟 **1** | " +
-                                    $"<#{StarredMessage.Channel.Id}>", false, SBEntryEmbed.Build());
-                                if (!string.IsNullOrEmpty(msgattachment))
-                                {
-                                    if (msgattachment.EndsWith(".mov") ||
-                                        msgattachment.EndsWith(".mp4") ||
-                                        msgattachment.EndsWith(".wmv") ||
-                                        msgattachment.EndsWith(".mkv") ||
-                                        msgattachment.EndsWith(".avi") ||
-                                        msgattachment.EndsWith(".flv") ||
-                                        msgattachment.EndsWith(".mpeg"))
-                                    {
-                                        await channel.SendMessageAsync(StarredMessage.Attachments.First().Url);
-                                    }
-                                }
+                                var newSBMessage = await channel.SendMessageAsync(starheader, false, SBEntryEmbed);
+
                             }
                         }
-                    } //Reaction is from starboard channel
+
+                    } //Starred message IS from Starboard channel. 
 
                     using (StreamWriter sw = new StreamWriter(StarboardBindingsConfig))
                     {
@@ -1666,7 +1370,8 @@ namespace TestModule
                     {
 
                         Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. NOT Starboard embed."));
-                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == (arg1.GetOrDownloadAsync().GetAwaiter().GetResult()).Id);
+                        var reactionMsg = await arg1.GetOrDownloadAsync();
+                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == reactionMsg.Id);
                         if (sbmessage != null)
                         {
                             //message is already in the starboard Modify the starcount.
@@ -1675,72 +1380,19 @@ namespace TestModule
                             SBBindings[STC.Guild.Id] = binding;
                             var StarredMessage = await STC.Guild.GetTextChannel(sbmessage.StarredMsgChannelID)
                                 .GetMessageAsync(sbmessage.StarredMessageID);
-                            string nick = (StarredMessage.Author as IGuildUser).Nickname;
-                            string sname = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator;
-                            if (string.IsNullOrWhiteSpace(nick))
-                            {
-                                nick = sname;
-                            }
-                            string name = binding.UseAlias ? nick : sname;
-                            //modify the starboard message
-                            EmbedBuilder SBEntryEmbed = new EmbedBuilder()
-                            {
-                                Author = new EmbedAuthorBuilder()
-                                {
-                                    IconUrl = StarredMessage.Author.GetAvatarUrl(ImageFormat.Auto),
-                                    Name = name
-                                },
-                                Description = StarredMessage.Content,
-                                Color = new Color(255, 234, 119),
-                                Footer = new EmbedFooterBuilder()
-                                {
-                                    Text = $"MessageID: {sbmessage.StarredMessageID}"
-                                }
 
-                            };
-                            if (StarredMessage.Embeds.Count > 0)
-                            {
-                                IEmbed first = StarredMessage.Embeds.First();
-                                foreach (var field in first.Fields)
-                                {
-                                    SBEntryEmbed.AddField($"[{field.Name}]", field.Value, field.Inline);
-                                }
-                                if (first.Image.HasValue)
-                                {
-                                    SBEntryEmbed.WithImageUrl(first.ToEmbedBuilder().ImageUrl);
-                                }
-                                if (first.Title.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n**[{first.Title}]**\r\n";
-                                }
-                                if (first.Description.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
-                                }
-                            }
-                            if (StarredMessage.Attachments.Count > 0)
-                            {
-                                if (StarredMessage.Attachments.First().Width.HasValue)
-                                {
-                                    if (!StarredMessage.Attachments.First().Filename.StartsWith("SPOILER_"))
-                                    {
-                                        SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
-                                    }
-                                    else
-                                    {
-                                        SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                    }
-                                }
-                            }
+
+                            //modify the starboard message
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, sbmessage.StarCount, StarredMessage);
+                            
                             if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
                                     {
-                                        x.Content = $"🌟 **{sbmessage.StarCount}** | <#{sbmessage.StarredMsgChannelID}>";
-                                        x.Embed = SBEntryEmbed.Build();
-                                    }
-                                    );
+                                        x.Content = starheader;
+                                        x.Embed = SBEntryEmbed;
+                                    });
                             }
                         }
 
@@ -1759,72 +1411,18 @@ namespace TestModule
                             SBBindings[STC.Guild.Id] = binding;
                             var StarredMessage = await STC.Guild.GetTextChannel(ebsbmessage.StarredMsgChannelID)
                                 .GetMessageAsync(ebsbmessage.StarredMessageID);
-                            string nick = (StarredMessage.Author as IGuildUser).Nickname;
-                            string sname = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator;
-                            if (string.IsNullOrWhiteSpace(nick))
-                            {
-                                nick = sname;
-                            }
-                            string name = binding.UseAlias ? nick : sname;
-                            //modify the starboard message
-                            EmbedBuilder SBEntryEmbed = new EmbedBuilder()
-                            {
-                                Author = new EmbedAuthorBuilder()
-                                {
-                                    IconUrl = StarredMessage.Author.GetAvatarUrl(ImageFormat.Auto),
-                                    Name = name
-                                },
-                                Description = StarredMessage.Content,
-                                Color = new Color(255, 234, 119),
-                                Footer = new EmbedFooterBuilder()
-                                {
-                                    Text = $"MessageID: {ebsbmessage.StarredMessageID}"
-                                }
 
-                            };
-                            if (StarredMessage.Embeds.Count > 0)
-                            {
-                                IEmbed first = StarredMessage.Embeds.First();
-                                foreach (var field in first.Fields)
-                                {
-                                    SBEntryEmbed.AddField($"[{field.Name}]", field.Value, field.Inline);
-                                }
-                                if (first.Image.HasValue)
-                                {
-                                    SBEntryEmbed.WithImageUrl(first.ToEmbedBuilder().ImageUrl);
-                                }
-                                if (first.Title.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n**[{first.Title}]**\r\n";
-                                }
-                                if (first.Description.Length > 0)
-                                {
-                                    SBEntryEmbed.Description += $"\r\n{first.Description}\r\n";
-                                }
-                            }
-                            if (StarredMessage.Attachments.Count > 0)
-                            {
-                                if (StarredMessage.Attachments.First().Width.HasValue)
-                                {
-                                    if (!StarredMessage.Attachments.First().Filename.StartsWith("SPOILER_"))
-                                    {
-                                        SBEntryEmbed.ImageUrl = StarredMessage.Attachments.First().Url;
-                                    }
-                                    else
-                                    {
-                                        SBEntryEmbed.AddField("Secret Attachment", $"||{StarredMessage.Attachments.First().Url}||");
-                                    }
-                                }
-                            }
+                            //modify the starboard message
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, ebsbmessage.StarCount, StarredMessage);
+                            
                             if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) is IUserMessage sum)
                             {
                                 await sum.ModifyAsync(
                                     x =>
                                     {
-                                        x.Content = $"🌟 **{ebsbmessage.StarCount}** | <#{ebsbmessage.StarredMsgChannelID}>";
-                                        x.Embed = SBEntryEmbed.Build();
-                                    }
-                                    );
+                                        x.Content = starheader;
+                                        x.Embed = SBEntryEmbed;
+                                    });
                             }
                         }
                     } //Message is on starboard channel
@@ -2248,23 +1846,43 @@ namespace TestModule
         }
 
         //TODO: The rest of this. HI!
-        public Embed GenerateStarBoardEmbed(out string StarBoardMsgHeader, bool AliasMode,  int StarCount, SocketMessage Message )
+        public Embed GenerateStarBoardEmbed(out string StarBoardMsgHeader, bool AliasMode,  int StarCount, IMessage Message )
         {
-            SocketGuildUser FromUser = Message.Author as SocketGuildUser;
-            Embed FirstEmbed = Message.Embeds.First();
+            string[] imageExtensions =  { ".jpg", ".png", ".jpeg", ".gif", ".webp",".bmp" };
+            string[] videoExtensions = { ".mp4", ".avi", ".wmv", ".mpeg", ".webv", ".mov" };
+            SocketGuildUser FromUser = (SocketGuildUser)Message.Author;
+            Embed FirstEmbed = (Embed)Message.Embeds.FirstOrDefault();
             EmbedBuilder builder = new EmbedBuilder()
             {
-                Description = FirstEmbed != null ? $"{Message.Content}{(!string.IsNullOrWhiteSpace(Message.Content) ? "\r\n":"")}" +
+                Description = FirstEmbed != null ? $"{Message.Content}{(!string.IsNullOrWhiteSpace(Message.Content) ? $"\r\n" : "")}" +
                 $"**[{FirstEmbed.Title}]**\r\n{FirstEmbed.Description}" : $"{Message.Content}",
                 Author = new EmbedAuthorBuilder()
                 {
                     IconUrl = FromUser.GetAvatarUrl(ImageFormat.Auto),
                     Name = AliasMode ? $"{FromUser.Nickname ?? FromUser.Username}"
                                     : $"{FromUser.Username}#{FromUser.Discriminator}"
+                    
                 },
-                Footer = new EmbedFooterBuilder() { Text = $"ID: {Message.Id} • {Message.Timestamp}" },
+                Footer = new EmbedFooterBuilder() { Text = $"ID: {Message.Id} • {Message.Timestamp.ToLocalTime():MM/dd/yyyy hh:mm:ss tt}" },
                 Color = new Color(255, 234, 119)
+               
             };
+            builder.Description += $"\r\n[[View Message]]({Message.GetJumpUrl()})\r\n";
+            if (Message.Attachments.Count > 0)
+            {
+                string url = Message.Attachments.First().Url;
+                string proximg = $"{Message.Attachments.First().ProxyUrl}?format=jpeg";
+                string ext = Path.GetExtension(Message.Attachments.First().Filename);
+                if (imageExtensions.Contains(ext.ToLower()))
+                {
+                    builder.WithImageUrl(url);
+                }
+                else builder.Description += $"\r\nAttachment: {url}";
+                if (videoExtensions.Contains(ext.ToLower()))
+                {
+                    builder.WithImageUrl(proximg);
+                }
+            }
             if(FirstEmbed != null)
             {
                 foreach (var item in FirstEmbed.Fields)
@@ -2278,6 +1896,7 @@ namespace TestModule
                 : StarCount >= 10 ? "\ud83c\udf1f" 
                 : "\u2B50";
             StarBoardMsgHeader = $"{starRank} **{StarCount}** | <#{Message.Channel.Id}>";
+            
             return builder.Build();
         }
 
