@@ -78,6 +78,7 @@ namespace ModularBOT.Component
             CoreScriptFunctions.Add(new CSFunctions.CSFEmbedSend());
             CoreScriptFunctions.Add(new CSFunctions.CSFSetTarget());
             CoreScriptFunctions.Add(new CSFunctions.CSFSet());
+            CoreScriptFunctions.Add(new CSFunctions.CSFStart());
             CoreScriptFunctions.Add(new CSFunctions.CSFCmd());
             CoreScriptFunctions.Add(new CSFunctions.CSFTitle());
             CoreScriptFunctions.Add(new CSFunctions.CSFOrb());
