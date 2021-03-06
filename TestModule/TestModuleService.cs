@@ -954,7 +954,6 @@ namespace TestModule
 
                 BoundItems = new Dictionary<ulong, GuildQueryItem>();
                 ShardedClient.UserJoined += ShardedClient_UserJoined;
-                ShardedClient.UserLeft += ShardedClient_UserLeft;
                 ShardedClient.ReactionAdded += ShardedClient_ReactionAdded;
                 ShardedClient.ReactionRemoved += ShardedClient_ReactionRemoved;
                 ShardedClient.UserBanned += ShardedClient_UserBanned;
@@ -1165,39 +1164,6 @@ namespace TestModule
             }
         }
 
-        private async Task ShardedClient_UserLeft(SocketGuildUser arg)
-        {
-            if (arg.Guild.CurrentUser.GuildPermissions.Has(GuildPermission.ViewAuditLog))
-            {
-                var audits = await arg.Guild.GetAuditLogsAsync(1).Flatten().ToListAsync();
-                var log = audits.OrderByDescending(x => x.CreatedAt).First();
-                if (log == null)
-                {
-                    return;
-                }
-                if (!ModLogBound(arg.Guild.Id, out ModLogBinding mb))
-                {
-                    return;
-                }
-                var staff = log.User;
-                Writer.WriteEntry(new LogMessage(LogSeverity.Critical, "AuditLog", $"Entry: {log.Action} R: {log.Reason} @ {log.CreatedAt}"));
-                if (log.Action == ActionType.Kick)
-                {
-                    ulong caseid = GetCaseCount(arg.Guild.Id);
-                    string kickreason = log.Reason;
-                    if (string.IsNullOrWhiteSpace(kickreason))
-                    {
-                        kickreason = $"Kick reason not specified! Please execute the `reason {caseid} <Reason>` command.";
-                    }
-
-                    if (staff.Id != ShardedClient.CurrentUser.Id)
-                    {
-                        RestUserMessage r = await SendModLog(arg.Guild.Id, caseid, ModLogEventTypes.Kick, arg.Guild.GetUser(staff.Id), arg, kickreason, mb.UseAlias);
-                        MessageCaseIDs.Add(Tuple.Create(arg.Guild.Id, caseid), r.Id);
-                    }
-                }
-            }
-        }
 
         private async Task ShardedClient_ReactionAdded(Cacheable<IUserMessage, ulong> arg1,
             ISocketMessageChannel arg2, SocketReaction arg3)
