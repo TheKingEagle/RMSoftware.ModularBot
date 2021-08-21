@@ -68,8 +68,12 @@ namespace ModularBOT.Component
                     MessageCacheSize = 20,
                     AlwaysDownloadUsers = true,
                     LogLevel = AppConfig.DiscordEventLogLevel,
-
+                    GatewayIntents = GatewayIntents.DirectMessageReactions | GatewayIntents.DirectMessages | 
+                    GatewayIntents.GuildBans | GatewayIntents.GuildMembers | GatewayIntents.GuildMessageReactions | 
+                    GatewayIntents.GuildMessages | GatewayIntents.GuildMessageTyping | GatewayIntents.GuildPresences | 
+                    GatewayIntents.Guilds | GatewayIntents.GuildVoiceStates | GatewayIntents.GuildWebhooks,
                     // TODO: Figure out a way to automatically set this later.
+                    ConnectionTimeout = 15000,
                     TotalShards = AppConfig.ShardCount
                 });
 
@@ -253,6 +257,7 @@ namespace ModularBOT.Component
                     {
                         InputCanceled = true;
                         ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
+                        //serviceProvider.GetRequiredService<Configuration>().LogChannel = 0;
                         serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, ref shutdownRequested, 
                             ref RestartRequested, 0, new ArgumentException("Guild channel was invalid.", "botChannel"),"DNET_INIT_INVALID");
                         
@@ -356,7 +361,7 @@ namespace ModularBOT.Component
         private void StartTimeoutKS( int msec_timeout, string eventDescription="Generic Event")
         {
             SpinWait.SpinUntil(() => LogConnected == true, msec_timeout);
-            if(!LogConnected)
+            if(!LogConnected && !InputCanceled)
             {
                 try
                 {
@@ -788,6 +793,7 @@ namespace ModularBOT.Component
                     {
                         serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.LogChannel = 0;
                         serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+                        InputCanceled = true;
                        await serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Log Channel Invalid", "You specified an invalid Log channel ID. Please verify your guild channel's ID and try again.", false, ref Program.ShutdownCalled,
                                 ref Program.RestartRequested, 0, new ArgumentException("init channel was invalid.", "botChannel"), "DNET_INIT_INVALID");
 
