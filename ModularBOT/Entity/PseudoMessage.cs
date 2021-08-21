@@ -111,19 +111,36 @@ namespace ModularBOT.Entity
 
         public IReadOnlyDictionary<IEmote, ReactionMetadata> Reactions
         {
-            get
-            {
-                throw new NotImplementedException();
-            }
+            get;
         }
 
-        public MessageActivity Activity => throw new NotImplementedException();
+        public MessageActivity Activity;
 
-        public MessageApplication Application => throw new NotImplementedException();
+        public MessageApplication Application;
 
-        public bool IsSuppressed => throw new NotImplementedException();
+        public bool IsSuppressed = false;
 
-        public MessageReference Reference => throw new NotImplementedException();
+        public MessageReference Reference;
+
+        public bool MentionedEveryone = false;
+
+        public IReadOnlyCollection<ISticker> Stickers;
+
+        public MessageFlags? Flags => MessageFlags.None;
+
+        public IUserMessage ReferencedMessage => null;
+
+        bool IMessage.IsSuppressed => false;
+
+        bool IMessage.MentionedEveryone => false;
+
+        MessageActivity IMessage.Activity => new MessageActivity();
+
+        MessageApplication IMessage.Application => new MessageApplication();
+
+        MessageReference IMessage.Reference => null;
+
+        IReadOnlyCollection<ISticker> IMessage.Stickers => null;
 
         Task IDeletable.DeleteAsync(RequestOptions options)
         {
@@ -177,12 +194,22 @@ namespace ModularBOT.Entity
 
         public Task RemoveReactionAsync(IEmote emote, ulong userId, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public Task ModifySuppressionAsync(bool suppressEmbeds, RequestOptions options = null)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
+        }
+
+        public Task RemoveAllReactionsForEmoteAsync(IEmote emote, RequestOptions options = null)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task CrosspostAsync(RequestOptions options = null)
+        {
+            throw new NotSupportedException();
         }
     }
 }
