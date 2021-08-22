@@ -72,6 +72,14 @@ namespace ModularBOT.Component.SystemVariables
                        .ToString(4);
     }
 
+    public class DNETVersion : SystemVariable
+    {
+        public DNETVersion() => Name = "dnet_ver";
+
+        protected override string Process(GuildObject gobj, string input, GuildCommand cmd, IDiscordClient client, IMessage message, CommandService cmdsvr)
+            => Assembly.GetAssembly(typeof(IDiscordClient)).GetName().Version.ToString(4);
+    }
+
     public class OS_Name : SystemVariable
     {
         public OS_Name() => Name = "os_name";
