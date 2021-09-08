@@ -38,7 +38,7 @@ namespace ModularBOT.Component
         };
 
         internal List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
-
+        private StringBuilder debugdump = new StringBuilder();
 
         #endregion
 
@@ -172,11 +172,13 @@ namespace ModularBOT.Component
                     return;
                 }
                 QueueProcessStarted = true;
+                
                 WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO",
                     "Console Queue has initialized. Processing any incoming log events."));
-
+                
                 while (true)
                 {
+                    debugdump.Clear();
                     SpinWait.SpinUntil(() => Backlog.Count > 0);
                     if (ScreenBusy) { continue; }                       //If the screen's busy (Resetting), DO NOT DQ!
                     if (Writing) { continue; }                          //If the console is in the middle of writing, DO NOT DQ!
@@ -184,19 +186,26 @@ namespace ModularBOT.Component
                     {
                         return;
                     }
+                    
+                    debugdump.AppendLine($"backlog: {Backlog?.ToString() ?? "null"}");
+                    debugdump.AppendLine($"backlog count: {Backlog?.Count}");
                     LogEntry qitem = Backlog.Dequeue();                 //DQ the item and process it as qitem.
-                    if(qitem.LogMessage.Source == "██▒")
+                    if(qitem == null) { continue; }
+                    debugdump.AppendLine($"qitem: {qitem?.ToString() ?? "null"}");
+                    if (qitem.LogMessage.Source == "██▒")
                     {
                         throw new Exception($"SYSTEM STOP -- Source-triggered crash. Msg: {qitem.LogMessage.Message}");
                     }
                     LatestEntry = qitem;
                     LogMessage message = qitem.LogMessage;              //Entry's log message data.
+                    
                     ConsoleColor? Entrycolor = qitem.EntryColor;        //left margin color
 
                     bool bypassFilter = qitem.BypassFilter;             //will this entry obey application log level?
                     bool bypassScreenLock = qitem.BypassScreenLock;     //will this entry show up through a modal screen?
                     bool showCursor = qitem.ShowCursor;                 //will this entry output and show the console cursor?
-
+                    
+                    debugdump.AppendLine($"LogEntries: {LogEntries?.ToString() ?? "null"}");
                     LogEntries.Add(new LogEntry(message, Entrycolor));  //Add the entry to buffer. Ignore screen modal, for outputting when modal is closed.
 
                     if (LogEntries.Count > Console.BufferHeight - 3)
@@ -211,6 +220,7 @@ namespace ModularBOT.Component
                     Writing = true;
                     PrvTop = Console.CursorTop;
                     Console.SetCursorPosition(0, Console.CursorTop);    //Reset line position.
+                    debugdump.AppendLine($"message.exception null?: {(message.Exception ==null ? "YES" : "NO")}");
                     LogMessage l = new LogMessage(message.Severity,
                         message.Source.PadRight(11, '\u2000'),
                         message.Message, message.Exception);
@@ -313,7 +323,8 @@ namespace ModularBOT.Component
             catch (Exception ex)
             {
                 PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
-                Program.RestartRequested = ShowKillScreen("Queue Failure", $"The ConsoleIO Queue process crashed. {ex.Message}", false,
+                string dump = debugdump.ToString();
+                Program.RestartRequested = ShowKillScreen("Queue Failure", $"The ConsoleIO Queue process crashed. {ex.Message}\r\n\r\n{"".PadRight(64, '─')}\r\nOBJ DUMP:\r\n\r\n{dump}\r\n\r\n{"".PadRight(64, '─')}", false,
                     ref Program.ShutdownCalled, ref Program.RestartRequested, 5, ex, "CIO_QUEUE_EXCEPTION").GetAwaiter().GetResult();
                 
                 CurTop = 0;
