@@ -307,6 +307,7 @@
     <Compile Include="Component\CSFunctions\CSFEmbedAddField.cs" />
     <Compile Include="Component\CSFunctions\CSFEmbedSend.cs" />
     <Compile Include="Component\CSFunctions\CSFCmd.cs" />
+    <Compile Include="Component\CSFunctions\CSFRoleModify.cs" />
     <Compile Include="Component\CSFunctions\CSFWait.cs" />
     <Compile Include="Component\CSFunctions\CSFStrmStatus.cs" />
     <Compile Include="Component\CSFunctions\CSFOrb.cs" />

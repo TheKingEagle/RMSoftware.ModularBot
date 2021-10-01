@@ -60,6 +60,7 @@ namespace ModularBOT.Component
             CoreScriptFunctions.Add(new CSFunctions.CSFCounterStart());
             CoreScriptFunctions.Add(new CSFunctions.CSFCounterStop());
             CoreScriptFunctions.Add(new CSFunctions.CSFRoleAdd());
+            CoreScriptFunctions.Add(new CSFunctions.CSFRoleModify());
             CoreScriptFunctions.Add(new CSFunctions.CSFRoleAssign());
             CoreScriptFunctions.Add(new CSFunctions.CSFRoleDel());
             CoreScriptFunctions.Add(new CSFunctions.CSFDelMsg());
