@@ -24,30 +24,21 @@ namespace ModularBOT.Component.CSFunctions
                                         .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
                                         .GuildPermissions.Has(GuildPermission.ManageRoles))
             {
-                errorEmbed.WithDescription($"Function error: I Don't have the proper permissions to assign roles.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Missing Permission", Value = "`Manage Roles`", IsInline = false } };
+                return ScriptError("This function requires me to have additional permissions!", cmd, errorEmbed, LineInScript, line,fields);
             }
             engine.OutputCount++;
-            if (engine.OutputCount > 4)
+            if (engine.OutputCount > 6)
             {
-                
-                errorEmbed.WithDescription($"`ROLE_ADD` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             output = line.Remove(0, Name.Length).Trim();
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
             string[] arguments = output.Split(' ');
             if (string.IsNullOrWhiteSpace(output) || arguments.Length < 3)
             {
-                errorEmbed.WithDescription($"Syntax is not correct ```{line}```");
-                errorEmbed.AddField("Usage", "`ROLE_MODIFY <ulong roleID> <string color> <string text>`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("Syntax is not correct.", 
+                    "<ulong roleID> <string color> <string text>",cmd,errorEmbed,LineInScript,line);
             }
             string arg1 = arguments[0]; //<ulong id>
             string arg2 = arguments[1]; //<string color>
@@ -55,47 +46,47 @@ namespace ModularBOT.Component.CSFunctions
             if (ulong.TryParse(arg1, out ulong ulo))
             {
                 IRole role = (await client.GetGuildAsync(gobj.ID)).GetRole(ulo);
+                if(role == null)
+                {
+                    return ScriptError("Role with specified ID not found in guild.", cmd, errorEmbed, LineInScript, line);
+                }
+                if(role.Id == (await client.GetGuildAsync(gobj.ID)).EveryoneRole.Id)
+                {
+                    return ScriptError("Unable to modify this role.", cmd, errorEmbed, LineInScript, line);
+                }
                 System.Drawing.Color c = System.Drawing.Color.Black;
-                try
+                if(arg2.ToLower() != "null")
                 {
-                    c = System.Drawing.ColorTranslator.FromHtml(arg2);
+                    try
+                    {
+                        c = System.Drawing.ColorTranslator.FromHtml(arg2);
+                    }
+                    catch (Exception ex)
+                    {
+                        EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false } };
+                        return ScriptError("Specify a valid hex number or color name was expected. (Example: #10F7E3, purple, null)", cmd, errorEmbed, LineInScript, line, fields);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    errorEmbed.WithDescription($"A valid hex color was expected. (# and 3 or 6 digits [0-9, A-F] Example: #10F7E3) ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd, true);
-                    errorEmbed.AddField("Internal Exception", "```\r\n"+ex.Message+"\r\n```", false);
-                    return false;
-                }
-                
-                
                 if(arg3.Length > 40)
                 {
-                    errorEmbed.WithDescription($"Role name too long. ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd, true);
-                    return false;
+                    return ScriptError("Role name too long.", cmd, errorEmbed, LineInScript, line);
                 }
-                if (role != null)
+
+                await role.ModifyAsync(x =>
                 {
-                    await role.ModifyAsync(x =>
-                   {
-                       x.Color = new Color(c.R,c.G,c.B);
-                       x.Name = arg3;
-                   });
-                }
+                   x.Color = arg2.ToLower() != "null" ? new Color(c.R, c.G, c.B) : Optional.Create<Color>();
+                   x.Name = arg3.ToLower() != "null" ? arg3 : Optional.Create<string>();
+                });
             }
             else
             {
-                errorEmbed.WithDescription($"A ulong ID was expected. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("A ulong format role ID was expected.", cmd, errorEmbed, LineInScript, line);
             }
 
 
             return true;
         }
+
+        
     }
 }
