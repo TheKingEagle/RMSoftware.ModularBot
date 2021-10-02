@@ -22,22 +22,12 @@ namespace ModularBOT.Component.CSFunctions
             engine.OutputCount++;
             if (engine.OutputCount > 4)
             {
-                
-                errorEmbed.WithDescription($"`ECHO` Function Error: Preemptive rate limit reached." +
-                    $"\r\n```\r\n{line}\r\n```");
-
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             string output = line.Remove(0, Name.Length).Trim();
             if (string.IsNullOrWhiteSpace(engine.ProcessVariableString(gobj, output, cmd, client, message)))
             {
-                errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-
-                return false;
+                return ScriptError("Message string cannot be empty", "<string Message>", cmd, errorEmbed, LineInScript, line);
             }
             if (contextToDM)
             {

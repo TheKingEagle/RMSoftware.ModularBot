@@ -22,20 +22,16 @@ namespace ModularBOT.Component.CSFunctions
             
             if (string.IsNullOrWhiteSpace(engine.ProcessVariableString(gobj, output, cmd, client, message)))
             {
-                errorEmbed.WithDescription($"SCRIPT path cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Synax Error: Path required", "<string path>", cmd, errorEmbed, LineInScript, line);
+
             }
-            
+
             string scriptpath = @"scripts\" + engine.ProcessVariableString(gobj, output, cmd, client, message);
             if (!File.Exists(scriptpath))
             {
-                errorEmbed.WithDescription($"script file could not be found. ```{line}```");
-                errorEmbed.AddField("Path", $"`../{scriptpath.Replace('\\','/')}`", false);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "At Path", Value = $"`../{scriptpath.Replace('\\', '/')}`" } };
+
+                return ScriptError("Script could not be found.", cmd, errorEmbed, LineInScript, line,fields);
             }
             string eval = "";
             using (StreamReader SR = File.OpenText(scriptpath))

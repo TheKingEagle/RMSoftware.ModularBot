@@ -20,10 +20,8 @@ namespace ModularBOT.Component.CSFunctions
             string output = line.Remove(0, Name.Length).Trim();
             if (string.IsNullOrWhiteSpace(engine.ProcessVariableString(gobj, output, cmd, client, message)))
             {
-                errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Syntax is not correct.",
+                     "<string imageURL>", cmd, errorEmbed, LineInScript, line);
             }
 
             CSEmbed.WithImageUrl(engine.ProcessVariableString(gobj, output, cmd, client, message));

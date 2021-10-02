@@ -22,18 +22,13 @@ namespace ModularBOT.Component.CSFunctions
             string output = line.Remove(0, Name.Length).Trim();
             if (string.IsNullOrWhiteSpace(engine.ProcessVariableString(gobj, output, cmd, client, message)))
             {
-                errorEmbed.WithDescription($"Attachment path cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Attachment path cannot be empty.", cmd, errorEmbed, LineInScript, line);
+
             }
             if (!File.Exists(@"attachments\" + engine.ProcessVariableString(gobj, output, cmd, client, message)))
             {
-                errorEmbed.WithDescription($"Attachment could not be found. ```{line}```");
-                errorEmbed.AddField("Path", "`../attachments/" + output + "`", false);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "Path", Value = $"`.. / attachments / {output}`" } };
+                return ScriptError("Attachment could not be found.", cmd, errorEmbed, LineInScript, line,fields);
             }
 
             string attachmentpath = @"attachments\" + engine.ProcessVariableString(gobj, output, cmd, client, message);
@@ -45,12 +40,8 @@ namespace ModularBOT.Component.CSFunctions
                 }
                 catch (Exception ex)
                 {
-
-                    errorEmbed.WithDescription($"The script failed due to an exception ```{line}```");
-                    errorEmbed.AddField("details", $"```{ex.Message}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false } };
+                    return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
                 }
 
             }

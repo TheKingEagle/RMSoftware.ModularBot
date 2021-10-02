@@ -22,10 +22,8 @@ namespace ModularBOT.Component.CSFunctions
             string ProcessedValue = engine.ProcessVariableString(gobj, output, cmd, client, message);
             if (string.IsNullOrWhiteSpace(ProcessedValue))
             {
-                errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Syntax is not correct.",
+                    "<string ColorHEX> (example: #00B169 or 00B169)", cmd, errorEmbed, LineInScript, line);
             }
             string o = ProcessedValue.Replace("#", "").ToUpper().Trim();
             try
@@ -35,10 +33,8 @@ namespace ModularBOT.Component.CSFunctions
             }
             catch(Exception ex)
             {
-                errorEmbed.WithDescription($"Function Error: ```\r\n{ex.Message}\r\n```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false } };
+                return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
             }
             return await Task.FromResult(true);
         }

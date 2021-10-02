@@ -19,20 +19,15 @@ namespace ModularBOT.Component.CSFunctions
         {
             if (CSEmbed.Author == null)
             {
-                errorEmbed.WithDescription($"You must use `EMBED_AUTHOR` first. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Invalid Operation. Call EMBED_AUTHOR first.", cmd, errorEmbed, LineInScript, line);
             }
             //Get the line removing echo.
             string output = line.Remove(0, Name.Length).Trim();
             string ProcessedValue = engine.ProcessVariableString(gobj, output, cmd, client, message);
             if (string.IsNullOrWhiteSpace(ProcessedValue))
             {
-                errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Syntax is not correct.",
+                     "<string imageURL>", cmd, errorEmbed, LineInScript, line);
             }
             try
             {
@@ -41,10 +36,8 @@ namespace ModularBOT.Component.CSFunctions
             catch (ArgumentException ex)
             {
 
-                errorEmbed.WithDescription($"Argument Exception: `{ex.Message}` ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false } };
+                return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
             }
             return await Task.FromResult(true);
         }

@@ -19,13 +19,11 @@ namespace ModularBOT.Component.CSFunctions
         {
             string output = line.Remove(0, Name.Length).Trim();
             string ProcessedValue = engine.ProcessVariableString(gobj, output, cmd, client, message);
+            EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "Supported Targets", Value = "• `DIRECT`\r\n• `CHANNEL [optional ID]`" } };
+
             if (string.IsNullOrWhiteSpace(ProcessedValue))
             {
-                errorEmbed.WithDescription($"Invalid target context. ```{line}```");
-                errorEmbed.AddField("Available targets", "• CHANNEL\r\n• DIRECT");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Synax Error: Target required","<string Target>", cmd, errorEmbed, LineInScript, line, fields);
             }
             if (output.ToUpper().StartsWith("CHANNEL"))
             {
@@ -35,21 +33,13 @@ namespace ModularBOT.Component.CSFunctions
                     string ulparse = ProcessedValue.ToUpper().Replace("CHANNEL", "").Trim();
                     if (!ulong.TryParse(ulparse, out ulong tempid))
                     {
-                        errorEmbed.WithDescription($"Invalid Channel ID format. ```{line}```");
-                        errorEmbed.AddField("Available targets", "• `CHANNEL [Optional Channel ID]`\r\n• `DIRECT`");
-                        errorEmbed.AddField("Line", LineInScript, true);
-                        errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                        return await Task.FromResult(false);
+                        return ScriptError("Synax Error: Invalid Channel ID", "<string Target>", cmd, errorEmbed, LineInScript, line, fields);
                     }
                     else
                     {
                         if (await client.GetChannelAsync(tempid) == null)
                         {
-                            errorEmbed.WithDescription($"The channel with specified ID did not exist ```{line}```");
-                            errorEmbed.AddField("Available targets", "• `CHANNEL [Optional Channel ID]`\r\n• `DIRECT`");
-                            errorEmbed.AddField("Line", LineInScript, true);
-                            errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                            return await Task.FromResult(false);
+                            return ScriptError("Channel did not exist.", "<string Target>", cmd, errorEmbed, LineInScript, line, fields);
                         }
                         else
                         {
@@ -59,11 +49,7 @@ namespace ModularBOT.Component.CSFunctions
                             }
                             else
                             {
-                                errorEmbed.WithDescription($"The provided ID was for a valid text channel. ```{line}```");
-                                errorEmbed.AddField("Available targets", "• `CHANNEL [Optional Channel ID]`\r\n• `DIRECT`");
-                                errorEmbed.AddField("Line", LineInScript, true);
-                                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                                return await Task.FromResult(false);
+                                return ScriptError("Channel was not a text channel", "<string Target>", cmd, errorEmbed, LineInScript, line, fields);
                             }
                         }
                     }

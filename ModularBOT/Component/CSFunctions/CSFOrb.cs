@@ -20,17 +20,12 @@ namespace ModularBOT.Component.CSFunctions
             engine.OutputCount++;
             if (engine.OutputCount > 2)
             {
-                errorEmbed.WithDescription($"`STATUSORB` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             if (cmd.CommandAccessLevel < AccessLevels.Administrator)
             {
-                errorEmbed.WithDescription($"Function error: This requires `AccessLevels.Administrator`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "Minimum AccessLevel", Value = "`Administrator`" } };
+                return ScriptError("Command has insufficient AccessLevel requirement.", cmd, errorEmbed, LineInScript, line, fields);
             }
             string cond = line.Remove(0, Name.Length).Trim().ToUpper();
             switch (cond)
@@ -54,10 +49,8 @@ namespace ModularBOT.Component.CSFunctions
                     await ((DiscordShardedClient)client).SetStatusAsync(UserStatus.Invisible);
                     break;
                 default:
-                    errorEmbed.WithDescription($"Function error. Unexpected argument: {cond}.\r\nTry either ONLINE, BUSY, AWAY, AFK, INVISIBLE, OFFLINE.");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "Supported Parameter Values", Value = "`ONLINE`, `AWAY`, `AFK`, `BUSY`, `OFFLINE`, `INVISIBLE`" } };
+                    return ScriptError($"Unexpected Value: {cond}", cmd, errorEmbed, LineInScript, line, fields);
             }
             return true;
         }

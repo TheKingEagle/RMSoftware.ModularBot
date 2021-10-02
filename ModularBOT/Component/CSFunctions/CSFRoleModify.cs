@@ -25,7 +25,7 @@ namespace ModularBOT.Component.CSFunctions
                                         .GuildPermissions.Has(GuildPermission.ManageRoles))
             {
                 EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Missing Permission", Value = "`Manage Roles`", IsInline = false } };
-                return ScriptError("This function requires me to have additional permissions!", cmd, errorEmbed, LineInScript, line,fields);
+                return ScriptError("This function requires additional permissions!", cmd, errorEmbed, LineInScript, line,fields);
             }
             engine.OutputCount++;
             if (engine.OutputCount > 6)

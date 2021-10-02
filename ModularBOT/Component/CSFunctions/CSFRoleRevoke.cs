@@ -8,12 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 namespace ModularBOT.Component.CSFunctions
 {
-    public class CSFRoleDel:CSFunction
+    public class CSFRoleRevoke:CSFunction
     {
         
-        public CSFRoleDel()
+        public CSFRoleRevoke()
         {
-            Name = "ROLE_DEL";
+            Name = "ROLE_REVOKE";
         }
 
         public override async Task<bool> Evaluate(CoreScript engine, GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message, EmbedBuilder errorEmbed, int LineInScript, string line, bool contextToDM, ulong ChannelTarget = 0, EmbedBuilder CSEmbed = null, bool StartCORE=false)
@@ -23,29 +23,21 @@ namespace ModularBOT.Component.CSFunctions
                                         .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
                                         .GuildPermissions.Has(GuildPermission.ManageRoles))
             {
-                errorEmbed.WithDescription($"Function error: I don't have permission to manage roles.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Missing Permission", Value = "`Manage Roles`", IsInline = false } };
+                return ScriptError("This function requires additional permissions!", cmd, errorEmbed, LineInScript, line, fields);
             }
             engine.OutputCount++;
-            if (engine.OutputCount > 4)
+            if (engine.OutputCount > 6)
             {
-                errorEmbed.WithDescription($"`ROLE_DEL` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             output = line.Remove(0, Name.Length).Trim();
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
             string[] arguments1 = output.Split(' ');
             if (string.IsNullOrWhiteSpace(output) || arguments1.Length < 2)
             {
-                errorEmbed.WithDescription($"Syntax is not correct ```{line}```");
-                errorEmbed.AddField("Usage", "`ROLE_ADD <ulong roleID> <string message>`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("Syntax is not correct.",
+                    "<ulong roleID> <string RevokeMessage>", cmd, errorEmbed, LineInScript, line);
             }
             string arg01 = arguments1[0];
             string arg02 = output.Remove(0, arg01.Length).Trim();
@@ -60,7 +52,7 @@ namespace ModularBOT.Component.CSFunctions
                     if (sgu.Roles.FirstOrDefault(rf => rf.Id == role.Id) == null)
                     {
                         EmbedBuilder bz = new EmbedBuilder();
-                        bz.WithTitle("Role Removed!");
+                        bz.WithTitle("Role Revoked!");
                         bz.WithAuthor(client.CurrentUser);
                         bz.WithColor(Color.LightOrange);
                         bz.WithDescription($"{arg02}");
@@ -69,19 +61,15 @@ namespace ModularBOT.Component.CSFunctions
                     }
                     else
                     {
-                        errorEmbed.WithDescription($"The role could not be removed ```{line}```");
-                        errorEmbed.AddField("Line", LineInScript, true);
-                        errorEmbed.AddField("Execution Context", cmd, true);
-                        return false;
+                        return ScriptError("Could not revoke role. Ensure it exists and accessible (Hierarchy)", cmd, errorEmbed, LineInScript, line);
+
                     }
                 }
             }
             else
             {
-                errorEmbed.WithDescription($"A ulong ID was expected. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("Expected a ulong formatted role ID.", cmd, errorEmbed, LineInScript, line);
+
             }
 
             return true;

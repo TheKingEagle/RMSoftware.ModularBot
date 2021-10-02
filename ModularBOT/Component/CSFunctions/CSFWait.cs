@@ -19,18 +19,11 @@ namespace ModularBOT.Component.CSFunctions
         {
             if (!int.TryParse(engine.ProcessVariableString(gobj, line.Remove(0, 5), cmd, client, message), out int v))
             {
-                errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Expected number greater than 0 and below maximum supported by the system.", cmd, errorEmbed, LineInScript, line);
             }
             if (v < 1)
             {
-                //errorMessage = $"SCRIPT ERROR:```\r\nA number was expected here. You gave: {line.Remove(0, 5)}\r\n\r\n\tCoreScript engine\r\n\tLine:{LineInScript}\r\n\tCommand: {cmd}```";
-                errorEmbed.WithDescription($"Function error: Expected a valid number greater than zero & below the maximum value supported by the system. You gave: `{line.Remove(0, 5)}`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Expected number greater than 0 and below maximum supported by the system.", cmd, errorEmbed, LineInScript, line);
             }
             await Task.Delay(v);
             return await Task.FromResult(true);

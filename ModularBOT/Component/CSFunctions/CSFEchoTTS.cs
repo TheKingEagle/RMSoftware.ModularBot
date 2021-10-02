@@ -21,30 +21,18 @@ namespace ModularBOT.Component.CSFunctions
         {
             if (cmd.CommandAccessLevel < AccessLevels.CommandManager || !cmd.RequirePermission)
             {
-                errorEmbed.WithDescription($"Function error: This requires `AccessLevels.CommandManager`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "Minimum AccessLevel", Value = "`CommandManager`" } };
+                return ScriptError("Command has insufficient AccessLevel requirement.",cmd,errorEmbed,LineInScript,line,fields);
             }
             engine.OutputCount++;
             if (engine.OutputCount > 4)
             {
-                
-                errorEmbed.WithDescription($"`ECHOTTS` Function Error: Preemptive rate limit reached." +
-                    $"\r\n```\r\n{line}\r\n```");
-
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             string output = line.Remove(0, Name.Length).Trim();
             if (string.IsNullOrWhiteSpace(engine.ProcessVariableString(gobj, output, cmd, client, message)))
             {
-                errorEmbed.WithDescription($"Output string cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-
-                return false;
+                return ScriptError("Message string cannot be empty","<string Message>", cmd, errorEmbed, LineInScript, line);
             }
             if (contextToDM)
             {

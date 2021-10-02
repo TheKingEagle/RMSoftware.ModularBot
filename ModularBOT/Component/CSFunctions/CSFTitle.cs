@@ -22,17 +22,12 @@ namespace ModularBOT.Component.CSFunctions
             string processed = engine.ProcessVariableString(gobj, output, cmd, client, message);
             if (engine.OutputCount > 2)
             {
-                errorEmbed.WithDescription($"`{Name}` Function Error: Preemptive rate limit reached.\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             if (cmd.CommandAccessLevel < AccessLevels.Administrator)
             {
-                errorEmbed.WithDescription($"`{Name}` Function error: This requires the calling context to be `AccessLevels.Administrator`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "Minimum AccessLevel", Value = "`Administrator`" } };
+                return ScriptError("Command has insufficient AccessLevel requirement.", cmd, errorEmbed, LineInScript, line, fields);
             }
             await ((DiscordShardedClient)client).SetGameAsync(processed,null,ActivityType.Playing);
             return true;

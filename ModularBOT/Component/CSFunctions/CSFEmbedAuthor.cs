@@ -22,10 +22,8 @@ namespace ModularBOT.Component.CSFunctions
             string ProcessedValue = engine.ProcessVariableString(gobj, output, cmd, client, message);
             if (string.IsNullOrWhiteSpace(ProcessedValue))
             {
-                errorEmbed.WithDescription($"String cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Author Name cannot be empty",
+                    "<string Name>", cmd, errorEmbed, LineInScript, line);
             }
 
             CSEmbed.WithAuthor(ProcessedValue);

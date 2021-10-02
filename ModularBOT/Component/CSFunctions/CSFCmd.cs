@@ -19,10 +19,10 @@ namespace ModularBOT.Component.CSFunctions
         public override async Task<bool> Evaluate(CoreScript engine, GuildObject gobj, string response, GuildCommand cmd, IDiscordClient client, IMessage message, EmbedBuilder errorEmbed, int LineInScript, string line, bool contextToDM, ulong ChannelTarget = 0, EmbedBuilder CSEmbed = null, bool StartCORE=false)
         {
             return await Task.FromResult(CaseExecCmd(engine, engine.ProcessVariableString(gobj, line, cmd, client, message),
-                engine.ccmgr, gobj, ref errorEmbed, ref LineInScript, ref client, ref message));
+                engine.ccmgr,cmd, gobj, ref errorEmbed, ref LineInScript, ref client, ref message));
         }
 
-        private bool CaseExecCmd(CoreScript engine, string line, CustomCommandManager ccmg, GuildObject guildObject, ref EmbedBuilder errorEmbed, ref int LineInScript,
+        private bool CaseExecCmd(CoreScript engine, string line, CustomCommandManager ccmg, GuildCommand cmd, GuildObject guildObject, ref EmbedBuilder errorEmbed, ref int LineInScript,
             ref IDiscordClient client, ref IMessage ArgumentMessage)
         {
             ulong gid = 0;
@@ -61,10 +61,7 @@ namespace ModularBOT.Component.CSFunctions
             engine.LogToConsole(new LogMessage(LogSeverity.Info, "CoreScript", result.Result.ToString()));
             if (!result.Result.IsSuccess)
             {
-                errorEmbed.WithDescription($"CMD Function Error: The command context returned the following error:\r\n`{result.Result.ErrorReason}`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", ecmd ?? "No context", true);
-                return false;
+                return ScriptError($"The command context returned the following error:\r\n`{result.Result.ErrorReason}`", cmd, errorEmbed, LineInScript, line);
             }
             return true;
         }

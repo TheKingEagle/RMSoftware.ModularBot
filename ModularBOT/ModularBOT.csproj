@@ -309,7 +309,6 @@
     <Compile Include="Component\CSFunctions\CSFCmd.cs" />
     <Compile Include="Component\CSFunctions\CSFRoleModify.cs" />
     <Compile Include="Component\CSFunctions\CSFWait.cs" />
-    <Compile Include="Component\CSFunctions\CSFStrmStatus.cs" />
     <Compile Include="Component\CSFunctions\CSFOrb.cs" />
     <Compile Include="Component\CSFunctions\CSFTitle.cs" />
     <Compile Include="Component\CSFunctions\CSFSet.cs" />
@@ -322,9 +321,9 @@
     <Compile Include="Component\CSFunctions\CSFCounterStop.cs" />
     <Compile Include="Component\CSFunctions\CSFEmbedDesc.cs" />
     <Compile Include="Component\CSFunctions\CSFEmbed.cs" />
-    <Compile Include="Component\CSFunctions\CSFRoleDel.cs" />
-    <Compile Include="Component\CSFunctions\CSFRoleAssign.cs" />
-    <Compile Include="Component\CSFunctions\CSFRoleAdd.cs" />
+    <Compile Include="Component\CSFunctions\CSFRoleRevoke.cs" />
+    <Compile Include="Component\CSFunctions\CSFRoleGrantUser.cs" />
+    <Compile Include="Component\CSFunctions\CSFRoleGrant.cs" />
     <Compile Include="Component\CSFunctions\CSFEcho.cs" />
     <Compile Include="Component\ModuleProperties.cs" />
     <Compile Include="Component\OS_SystemInfo.cs" />

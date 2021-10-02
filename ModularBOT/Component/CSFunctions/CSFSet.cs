@@ -19,22 +19,19 @@ namespace ModularBOT.Component.CSFunctions
         {
             if (line.Split(' ')[1].StartsWith("/"))
             {
+                EmbedFieldBuilder[] Flagfields = {
+                        new EmbedFieldBuilder() { IsInline = false, Name = "Supported Flags", Value = "Any Combination of /`U``P``H`\r\n" +
+                        "```\r\nU: Variable for user only\r\nP: Prompt sender to input value\r\nH: Hide variable from variable list\r\n```" },
+                        new EmbedFieldBuilder() { IsInline = false, Name = "Example", Value = $"{Name} /UH Hello=World" }
+                    };
                 bool hidden = line.Split(' ')[1].ToUpper().Contains('H');
                 if (line.Split(' ')[1].Length > 4)
                 {
-                    errorEmbed.WithDescription($"Syntax Error: ```Too many flags.```");
-                    errorEmbed.AddField("details", $"```Expected format: SET /UPH VarName=PromptOrValue.\r\n\r\nFlags can be any combination of U P and H.\r\n\r\nMaximum flag supported: 3```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax Error: `Too many flags`","[/flags] <variableName>=<value>", cmd, errorEmbed, LineInScript, line, Flagfields);
                 }
                 if (line.Split(' ')[1].Length == 1)
                 {
-                    errorEmbed.WithDescription($"Syntax Error: ```No Flags Specified.```");
-                    errorEmbed.AddField("details", $"```Expected format: SET /UPH VarName=PromptOrValue.\r\n\r\nFlags can be any combination of U P and H.\r\n\r\nMaximum flag supported: 3.```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax Error: `No Flags Specified`", "[/flags] <variableName>=<value>", cmd, errorEmbed, LineInScript, line, Flagfields);
                 }
                 if (line.Split(' ')[1].ToUpper().Contains('U'))
                 {
@@ -58,11 +55,8 @@ namespace ModularBOT.Component.CSFunctions
                 }
                 else if (!line.Split(' ')[1].ToUpper().Contains('H'))
                 {
-                    errorEmbed.WithDescription($"Syntax Error: ```Unrecognized Flag```");
-                    errorEmbed.AddField("details", $"```Expected format: SET /UPH VarName=PromptOrValue.\r\n\r\nFlags can be any combination of U P and H.\r\n\r\nMaximum flag supported: 3.```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    
+                    return ScriptError("Syntax Error: `Too many flags`", "[/flags] <variableName>=<value>", cmd, errorEmbed, LineInScript, line, Flagfields);
                 }
             }
 
@@ -75,12 +69,9 @@ namespace ModularBOT.Component.CSFunctions
             string output = line;
             if (output.Split(' ').Length < 2)
             {
-                
-                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
-                errorEmbed.AddField("Function", line.Split(' ')[0]);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+
+                return ScriptError("Syntax Error. ","[/flags] <variableName>=<value>", cmd, errorEmbed, LineInScript, line);
+
             }
             if (hidden)
             {
@@ -100,12 +91,12 @@ namespace ModularBOT.Component.CSFunctions
             }
             catch (ArgumentException ex)
             {
-                errorEmbed.WithDescription($"{ex.Message}\r\n");
-                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
-                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = {
+                    new EmbedFieldBuilder() { Name = "Function", Value = $"```\r\n{line.Split(' ')[0]}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Variable Name", Value = $"```\r\n{varname}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false } 
+                };
+                return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
             }
             return true;
         }
@@ -115,11 +106,7 @@ namespace ModularBOT.Component.CSFunctions
             string output = line;
             if (output.Split(' ').Length < 2)
             {
-                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
-                errorEmbed.AddField("Function", line.Split(' ')[0]);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Syntax Error. ", "[/flags] <variableName>=<value>", cmd, errorEmbed, LineInScript, line);
             }
             if (hidden)
             {
@@ -130,6 +117,10 @@ namespace ModularBOT.Component.CSFunctions
                 output = line.Remove(0, 7).Trim();//SET /U 
             }
             string varname = output.Split('=')[0];
+            if (string.IsNullOrWhiteSpace(varname))
+            {
+                return ScriptError("Syntax Error: Variable name must not be empty.", "[/flags] <variableName>=<value>", cmd, errorEmbed, LineInScript, line);
+            }
             output = output.Split('=')[1];
             output = output.Trim();
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
@@ -139,13 +130,12 @@ namespace ModularBOT.Component.CSFunctions
             }
             catch (ArgumentException ex)
             {
-                errorEmbed.WithDescription($"{ex.Message}\r\n");
-                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
-                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
-
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = {
+                    new EmbedFieldBuilder() { Name = "Function", Value = $"```\r\n{line.Split(' ')[0]}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Variable Name", Value = $"```\r\n{varname}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false }
+                };
+                return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
             }
             return true;
         }
@@ -157,11 +147,7 @@ namespace ModularBOT.Component.CSFunctions
             string output = line;
             if (output.Split(' ').Length < 2)
             {
-                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
-                errorEmbed.AddField("Function", line.Split(' ')[0]);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Syntax Error. ", "[/flags] <variableName>=<PromptForUser>", cmd, errorEmbed, LineInScript, line);
             }
             if (hidden)
             {
@@ -173,6 +159,10 @@ namespace ModularBOT.Component.CSFunctions
                 output = line.Remove(0, 7).Trim();//SET /P 
             }
             string varname = output.Split('=')[0];
+            if (string.IsNullOrWhiteSpace(varname))
+            {
+                return ScriptError("Syntax Error: Variable name must not be empty.", "[/flags] <variableName>=<PromptForUser>", cmd, errorEmbed, LineInScript, line);
+            }
             output = output.Split('=')[1];
             output = output.Trim();
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
@@ -210,13 +200,12 @@ namespace ModularBOT.Component.CSFunctions
             }
             catch (ArgumentException ex)
             {
-                errorEmbed.WithDescription($"{ex.Message}\r\n");
-                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
-                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
-
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = {
+                    new EmbedFieldBuilder() { Name = "Function", Value = $"```\r\n{line.Split(' ')[0]}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Variable Name", Value = $"```\r\n{varname}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false }
+                };
+                return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
             }
             return true;
         }
@@ -228,11 +217,7 @@ namespace ModularBOT.Component.CSFunctions
             string output = line;
             if (output.Split(' ').Length < 2)
             {
-                errorEmbed.WithDescription($"The Syntax of this function is incorrect. ```{line}```");
-                errorEmbed.AddField("Function", line.Split(' ')[0]);
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Syntax Error. ", "[/flags] <variableName>=<PromptForUser>", cmd, errorEmbed, LineInScript, line);
             }
             if (hidden)
             {
@@ -244,6 +229,10 @@ namespace ModularBOT.Component.CSFunctions
                 output = line.Remove(0, 8).Trim();//SET /UP 
             }
             string varname = output.Split('=')[0];
+            if (string.IsNullOrWhiteSpace(varname))
+            {
+                return ScriptError("Syntax Error: Variable name must not be empty.", "[/flags] <variableName>=<PromptForUser>", cmd, errorEmbed, LineInScript, line);
+            }
             output = output.Split('=')[1];
             output = output.Trim();
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
@@ -281,13 +270,12 @@ namespace ModularBOT.Component.CSFunctions
             }
             catch (ArgumentException ex)
             {
-                errorEmbed.WithDescription($"{ex.Message}\r\n");
-                errorEmbed.AddField("Function", "```" + line.Split(' ')[0] + "```", true);
-                errorEmbed.AddField("Variable Name", "```" + varname + "```", true);
-
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = {
+                    new EmbedFieldBuilder() { Name = "Function", Value = $"```\r\n{line.Split(' ')[0]}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Variable Name", Value = $"```\r\n{varname}\r\n```", IsInline = true },
+                    new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false }
+                };
+                return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
             }
             return true;
         }

@@ -30,10 +30,8 @@ namespace ModularBOT.Component.CSFunctions
                 string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
                 if (parsedCondition.Length < 2)
                 {
-                    errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax is not correct.",
+                    "%variable1%==%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (engine.ProcessVariableString(gobj, parsedCondition[0], cmd, client, message) == engine.ProcessVariableString(gobj, parsedCondition[1], cmd, client, message))
                 {
@@ -58,10 +56,8 @@ namespace ModularBOT.Component.CSFunctions
                 string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
                 if (parsedCondition.Length < 2)
                 {
-                    errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax is not correct.",
+                    "%variable1%!=%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (engine.ProcessVariableString(gobj, parsedCondition[0], cmd, client, message) != engine.ProcessVariableString(gobj, parsedCondition[1], cmd, client, message))
                 {
@@ -86,26 +82,20 @@ namespace ModularBOT.Component.CSFunctions
                 string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
                 if (parsedCondition.Length < 2)
                 {
-                    errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax is not correct.",
+                    "%variable1%>=%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 string sleft = engine.ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
                 string sright = engine.ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
                 if (!long.TryParse(sleft, out long left))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric left-side value",
+                    "%variable1%>=%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (!long.TryParse(sright, out long right))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sright}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric right-side value",
+                    "%variable1%>=%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (left >= right)
                 {
@@ -130,26 +120,20 @@ namespace ModularBOT.Component.CSFunctions
                 string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
                 if (parsedCondition.Length < 2)
                 {
-                    errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax is not correct.",
+                    "%variable1%>%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 string sleft = engine.ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
                 string sright = engine.ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
                 if (!long.TryParse(sleft, out long left))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric left-side value",
+                    "%variable1%>%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (!long.TryParse(sright, out long right))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sright}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric right-side value",
+                    "%variable1%>%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (left > right)
                 {
@@ -174,26 +158,20 @@ namespace ModularBOT.Component.CSFunctions
                 string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
                 if (parsedCondition.Length < 2)
                 {
-                    errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax is not correct.",
+                    "%variable1%<=%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 string sleft = engine.ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
                 string sright = engine.ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
                 if (!long.TryParse(sleft, out long left))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric left-side value",
+                    "%variable1%<=%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (!long.TryParse(sright, out long right))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sright}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric right-side value",
+                    "%variable1%<=%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (left <= right)
                 {
@@ -218,26 +196,20 @@ namespace ModularBOT.Component.CSFunctions
                 string[] parsedCondition = Component[0].Split(ConditionalCompare, 2, StringSplitOptions.None);
                 if (parsedCondition.Length < 2)
                 {
-                    errorEmbed.WithDescription($"Invalid Syntax! ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Syntax is not correct.",
+                     "%variable1%<%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 string sleft = engine.ProcessVariableString(gobj, parsedCondition[0], cmd, client, message);
                 string sright = engine.ProcessVariableString(gobj, parsedCondition[1], cmd, client, message);
                 if (!long.TryParse(sleft, out long left))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sleft}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric left-side value",
+                    "%variable1%<%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (!long.TryParse(sright, out long right))
                 {
-                    errorEmbed.WithDescription($"Invalid number. ```{sright}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return false;
+                    return ScriptError("Type Mismatch. Expected numeric right-side value",
+                    "%variable1%<%variable2% <Function>", cmd, errorEmbed, LineInScript, line);
                 }
                 if (left < right)
                 {
@@ -253,7 +225,6 @@ namespace ModularBOT.Component.CSFunctions
                 }
             }
             #endregion
-
 
             return true;
         }

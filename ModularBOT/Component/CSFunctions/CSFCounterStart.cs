@@ -19,11 +19,7 @@ namespace ModularBOT.Component.CSFunctions
         {
             if (message.Channel as SocketTextChannel == null)
             {
-                errorEmbed.WithDescription($"This function is unavailable in DMs. ```\r\nCOUNTER_START\r\n```");
-                errorEmbed.AddField("Additional Information", "This function can only be used in a GUILD CHANNEL.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("This function cannot execute within a DM.", cmd, errorEmbed, LineInScript, line);
             }
             if (CoreScript.MessageCounter.ContainsKey(message.Channel.Id))
             {

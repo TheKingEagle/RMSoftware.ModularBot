@@ -24,22 +24,10 @@ namespace ModularBOT.Component.CSFunctions
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
             Regex r = new Regex("\"[^\"]*\"");
             #region ERRORS
-            if (string.IsNullOrWhiteSpace(output))
+            if (string.IsNullOrWhiteSpace(output) || r.Matches(output).Count < 2)
             {
-                errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
-                errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
-            }
-            if (r.Matches(output).Count < 2)
-            {
-                errorEmbed.WithDescription($"The Syntax of the command is incorrect. ```{line}```");
-                errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q;` before and after the content you want to quote.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Syntax is not correct.",
+                    "\"<string Name>\" \"<string Value>\"", cmd, errorEmbed, LineInScript, line);
             }
             #endregion
 
@@ -49,21 +37,13 @@ namespace ModularBOT.Component.CSFunctions
             #region MORE ERROR HANDLES
             if (string.IsNullOrWhiteSpace(emtitle))
             {
-                errorEmbed.WithDescription($"Title cannot be empty! ```{line}```");
-                errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q;` before and after the content you want to quote.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Field Name cannot be empty",
+                    "\"<string Name>\" \"<string Value>\"", cmd, errorEmbed, LineInScript, line);
             }
             if (string.IsNullOrWhiteSpace(content))
             {
-                errorEmbed.WithDescription($"Content cannot be empty! ```{line}```");
-                errorEmbed.AddField("Usage", "```\nEMBED_ADDFIELD \"Title in quotes\" \"Content in quotes\"\n```");
-                errorEmbed.AddField("NOTES:", "• The title & content will always be set by the first two group of quotes.\r\n• If you want to have double-quotes within the content or title use `&q` before and after the content you want to quote.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Field Value cannot be empty",
+                    "\"<string Name>\" \"<string Value>\"", cmd, errorEmbed, LineInScript, line);
             }
             #endregion
 

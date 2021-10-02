@@ -20,10 +20,7 @@ namespace ModularBOT.Component.CSFunctions
             engine.OutputCount++;
             if (engine.OutputCount > 4)
             {
-                errorEmbed.WithDescription($"`EMBED_SEND` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return await Task.FromResult(false);
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             //Get the line removing echo.
             if (contextToDM)
@@ -34,12 +31,8 @@ namespace ModularBOT.Component.CSFunctions
                 }
                 catch (Exception ex)
                 {
-
-                    errorEmbed.WithDescription($"The script failed due to an exception ```{line}```");
-                    errorEmbed.AddField("details", $"```{ex.Message}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                    return await Task.FromResult(false);
+                    EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Internal Exception", Value = $"```\r\n{ex.Message}\r\n```", IsInline = false } };
+                    return ScriptError("Internal Exception thrown.", cmd, errorEmbed, LineInScript, line, fields);
                 }
 
             }

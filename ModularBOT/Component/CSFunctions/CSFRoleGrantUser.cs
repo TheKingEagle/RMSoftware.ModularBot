@@ -9,12 +9,12 @@ using System.Text;
 using System.Threading.Tasks;
 namespace ModularBOT.Component.CSFunctions
 {
-    public class CSFRoleAssign:CSFunction
+    public class CSFRoleGrantUser:CSFunction
     {
         
-        public CSFRoleAssign()
+        public CSFRoleGrantUser()
         {
-            Name = "ROLE_ASSIGN";
+            Name = "ROLE_GRANT_USER";
         }
 
 
@@ -23,38 +23,28 @@ namespace ModularBOT.Component.CSFunctions
             string output = "";
             if (cmd.CommandAccessLevel < AccessLevels.CommandManager || !cmd.RequirePermission)
             {
-                errorEmbed.WithDescription($"Function error: This requires `AccessLevels.CommandManager`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { IsInline = false, Name = "Minimum AccessLevel", Value = "`CommandManager`" } };
+                return ScriptError("Command has insufficient AccessLevel requirement.", cmd, errorEmbed, LineInScript, line, fields);
             }
             if (!client.GetGuildAsync(gobj.ID).GetAwaiter().GetResult()
                 .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
                 .GuildPermissions.Has(GuildPermission.ManageRoles))
             {
-                errorEmbed.WithDescription($"Function error: I don't have permission to manage roles.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Missing Permission", Value = "`Manage Roles`", IsInline = false } };
+                return ScriptError("This function requires additional permissions!", cmd, errorEmbed, LineInScript, line, fields);
             }
             engine.OutputCount++;
             if (engine.OutputCount > 4)
             {
-                errorEmbed.WithDescription($"`ROLE_ASSIGN` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             output = line.Remove(0, Name.Length).Trim();
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
             string[] aarguments = output.Split(' ');
             if (string.IsNullOrWhiteSpace(output) || aarguments.Length < 3)
             {
-                errorEmbed.WithDescription($"Syntax is not correct ```{line}```");
-                errorEmbed.AddField("Usage", "`ROLE_ASSIGN <ulong roleID> <User Mention> <string message>`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("Syntax is not correct.",
+                    "<ulong roleID> <Mentionable User> <string RevokeMessage>", cmd, errorEmbed, LineInScript, line);
             }
             string aarg1 = aarguments[0];
             string aarg2 = aarguments[1];
@@ -64,24 +54,18 @@ namespace ModularBOT.Component.CSFunctions
             TypeReaderResult s = SF.ReadAsync(cde, aarg2, engine.Services).GetAwaiter().GetResult();
             if (!ulong.TryParse(aarg1, out ulong aulo))
             {
-                errorEmbed.WithDescription($"A ulong ID was expected for Argument 1. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd.Name, true);
-                return false;
+                return ScriptError("Syntax is not correct. Expected Argument 1 to be role ID",
+                    "<ulong roleID> <Mentionable User> <string RevokeMessage>", cmd, errorEmbed, LineInScript, line);
             }
             if (!s.IsSuccess)
             {
-                errorEmbed.WithDescription($"A Guild User was expected in Argument 2 ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("Syntax is not correct. Expected Argument 2 to be user mention",
+                    "<ulong roleID> <Mentionable User> <string RevokeMessage>", cmd, errorEmbed, LineInScript, line);
             }
             if (string.IsNullOrWhiteSpace(aarg3))
             {
-                errorEmbed.WithDescription($"Argument 3 cannot be empty. Please specify a message ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("Syntax is not correct. Expected Argument 3 to have a value",
+                    "<ulong roleID> <Mentionable User> <string RevokeMessage>", cmd, errorEmbed, LineInScript, line);
             }
             IRole arole = (await client.GetGuildAsync(gobj.ID)).GetRole(aulo);
             if (s.BestMatch is SocketGuildUser asgu)
@@ -101,10 +85,8 @@ namespace ModularBOT.Component.CSFunctions
                 }
                 else
                 {
-                    errorEmbed.WithDescription($"The role was not added. Please make sure bot has proper permission to add the role. ```{line}```");
-                    errorEmbed.AddField("Line", LineInScript, true);
-                    errorEmbed.AddField("Execution Context", cmd, true);
-                    return false;
+                    return ScriptError("Could not grant this role. Ensure it exists and accessible (Hierarchy)", cmd, errorEmbed, LineInScript, line);
+
                 }
             }
 

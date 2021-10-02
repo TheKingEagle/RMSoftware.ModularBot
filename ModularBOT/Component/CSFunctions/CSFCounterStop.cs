@@ -19,13 +19,7 @@ namespace ModularBOT.Component.CSFunctions
         {
             if (message.Channel as SocketTextChannel == null)
             {
-                
-                //errorMessage = $"SCRIPT ERROR:```\r\nUnexpected header:``` ```{line}```\r\n```CoreScript engine\r\nLine:{LineInScript}\r\nCommand: {cmd}```\r\nAdditional info: Multi-line formatting required.";
-                errorEmbed.WithDescription($"This function is unavailable in DMs. ```\r\nCOUNTER_STOP\r\n```");
-                errorEmbed.AddField("Additional Information", "This function can only be used in a GUILD CHANNEL.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("This function cannot execute within a DM.", cmd, errorEmbed, LineInScript, line);
             }
             if (CoreScript.MessageCounter.ContainsKey(message.Channel.Id))
             {

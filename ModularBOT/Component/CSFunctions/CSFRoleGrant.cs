@@ -8,12 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 namespace ModularBOT.Component.CSFunctions
 {
-    public class CSFRoleAdd:CSFunction
+    public class CSFRoleGrant:CSFunction
     {
         
-        public CSFRoleAdd()
+        public CSFRoleGrant()
         {
-            Name = "ROLE_ADD";
+            Name = "ROLE_GRANT";
         }
 
 
@@ -24,30 +24,21 @@ namespace ModularBOT.Component.CSFunctions
                                         .GetCurrentUserAsync(CacheMode.AllowDownload).GetAwaiter().GetResult()
                                         .GuildPermissions.Has(GuildPermission.ManageRoles))
             {
-                errorEmbed.WithDescription($"Function error: I Don't have the proper permissions to assign roles.");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                EmbedFieldBuilder[] fields = { new EmbedFieldBuilder() { Name = "Missing Permission", Value = "`Manage Roles`", IsInline = false } };
+                return ScriptError("This function requires additional permissions!", cmd, errorEmbed, LineInScript, line, fields);
             }
             engine.OutputCount++;
-            if (engine.OutputCount > 4)
+            if (engine.OutputCount > 6)
             {
-                
-                errorEmbed.WithDescription($"`ROLE_ADD` Function Error: Preemptive rate limit reached. Please slow down your script with `WAIT`\r\n```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Rate limit triggered! Add waits between executions.", cmd, errorEmbed, LineInScript, line);
             }
             output = line.Remove(0, Name.Length).Trim();
             output = engine.ProcessVariableString(gobj, output, cmd, client, message);
             string[] arguments = output.Split(' ');
             if (string.IsNullOrWhiteSpace(output) || arguments.Length < 2)
             {
-                errorEmbed.WithDescription($"Syntax is not correct ```{line}```");
-                errorEmbed.AddField("Usage", "`ROLE_ADD <ulong roleID> <string message>`");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("Syntax is not correct.", 
+                    "<ulong roleID> <string SuccessMessage>",cmd,errorEmbed,LineInScript,line);
             }
             string arg1 = arguments[0];
             string arg2 = output.Remove(0, arg1.Length).Trim();
@@ -71,19 +62,13 @@ namespace ModularBOT.Component.CSFunctions
                     }
                     else
                     {
-                        errorEmbed.WithDescription($"The role was not added. Please make sure bot has proper permission to add the role. ```{line}```");
-                        errorEmbed.AddField("Line", LineInScript, true);
-                        errorEmbed.AddField("Execution Context", cmd, true);
-                        return false;
+                        return ScriptError("Role could not be added. Check to ensure role exists or is within reach (hierarchy)", cmd, errorEmbed, LineInScript, line);
                     }
                 }
             }
             else
             {
-                errorEmbed.WithDescription($"A ulong ID was expected. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd, true);
-                return false;
+                return ScriptError("A ulong format role ID was expected.", cmd, errorEmbed, LineInScript, line);
             }
 
 

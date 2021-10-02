@@ -59,10 +59,10 @@ namespace ModularBOT.Component
             CoreScriptFunctions.Add(new CSFunctions.CSFEcho());
             CoreScriptFunctions.Add(new CSFunctions.CSFCounterStart());
             CoreScriptFunctions.Add(new CSFunctions.CSFCounterStop());
-            CoreScriptFunctions.Add(new CSFunctions.CSFRoleAdd());
+            CoreScriptFunctions.Add(new CSFunctions.CSFRoleGrant());
             CoreScriptFunctions.Add(new CSFunctions.CSFRoleModify());
-            CoreScriptFunctions.Add(new CSFunctions.CSFRoleAssign());
-            CoreScriptFunctions.Add(new CSFunctions.CSFRoleDel());
+            CoreScriptFunctions.Add(new CSFunctions.CSFRoleGrantUser());
+            CoreScriptFunctions.Add(new CSFunctions.CSFRoleRevoke());
             CoreScriptFunctions.Add(new CSFunctions.CSFDelMsg());
             CoreScriptFunctions.Add(new CSFunctions.CSFIf());
             CoreScriptFunctions.Add(new CSFunctions.CSFEmbed());
@@ -83,7 +83,6 @@ namespace ModularBOT.Component
             CoreScriptFunctions.Add(new CSFunctions.CSFCmd());
             CoreScriptFunctions.Add(new CSFunctions.CSFTitle());
             CoreScriptFunctions.Add(new CSFunctions.CSFOrb());
-            CoreScriptFunctions.Add(new CSFunctions.CSFStrmStatus());
             CoreScriptFunctions.Add(new CSFunctions.CSFWait());
             #endregion
 

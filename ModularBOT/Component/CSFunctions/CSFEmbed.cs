@@ -23,10 +23,7 @@ namespace ModularBOT.Component.CSFunctions
             string title = engine.ProcessVariableString(gobj, output, cmd, client, message);
             if (string.IsNullOrWhiteSpace(title))
             {
-                errorEmbed.WithDescription($"Title string cannot be empty. ```{line}```");
-                errorEmbed.AddField("Line", LineInScript, true);
-                errorEmbed.AddField("Execution Context", cmd?.Name ?? "No context", true);
-                return false;
+                return ScriptError("Embed title cannot be empty!", "<string title>", cmd, errorEmbed, LineInScript, line);
             }
             if (CSEmbed == null)
             {
