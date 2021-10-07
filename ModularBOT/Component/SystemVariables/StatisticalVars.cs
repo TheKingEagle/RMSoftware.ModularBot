@@ -88,6 +88,14 @@ namespace ModularBOT.Component.SystemVariables
             => SystemInfo.FriendlyName();
     }
 
+    public class PC_Name : SystemVariable
+    {
+        public PC_Name() => Name = "pc_name";
+
+        protected override string Process(GuildObject gobj, string input, GuildCommand cmd, IDiscordClient client, IMessage message, CommandService cmdsvr)
+            => Environment.MachineName;
+    }
+
     public class OS_Bit : SystemVariable
     {
         public OS_Bit() => Name = "os_bit";
