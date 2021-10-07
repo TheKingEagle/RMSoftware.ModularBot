@@ -109,6 +109,7 @@ namespace ModularBOT.Component
             SystemVariables.Add(new SystemVariables.Version());
             SystemVariables.Add(new SystemVariables.DNETVersion());
             SystemVariables.Add(new SystemVariables.OS_Name());
+            SystemVariables.Add(new SystemVariables.PC_Name());
             SystemVariables.Add(new SystemVariables.OS_Bit());
             SystemVariables.Add(new SystemVariables.OS_Ver());
             SystemVariables.Add(new SystemVariables.Bot_Mem());
