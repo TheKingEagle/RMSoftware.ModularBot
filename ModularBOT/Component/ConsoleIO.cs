@@ -494,8 +494,10 @@ namespace ModularBOT.Component
             }
             ConsoleTitle = title;
             Console.Clear();
-            Console.SetWindowSize(144, 32);//Seems to be a reasonable console size.
-            Console.SetBufferSize(144, 512);//Extra buffer room just because why not.
+            int w = 144 > Console.LargestWindowWidth ? Console.LargestWindowWidth : 144;
+            int h = 32 > Console.LargestWindowHeight ? Console.LargestWindowHeight : 32;
+            Console.SetWindowSize(w, h);//Seems to be a reasonable console size.
+            Console.SetBufferSize(w, 512);//Extra buffer room just because why not.
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
             Console.Clear();
@@ -556,8 +558,11 @@ namespace ModularBOT.Component
             }
             ConsoleTitle = title;
             Console.Clear();
-            Console.SetWindowSize(144, 32);//Seems to be a reasonable console size.
-            Console.SetBufferSize(144, 512);//Extra buffer room just because why not.
+            int w = 144 > Console.LargestWindowWidth ? Console.LargestWindowWidth : 144;
+            int h = 32 > Console.LargestWindowHeight ? Console.LargestWindowHeight : 32;
+            
+            Console.SetWindowSize(w, h);//Seems to be a reasonable console size.
+            Console.SetBufferSize(w, 512);//Extra buffer room just because why not.
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
             Console.Clear();
@@ -646,8 +651,10 @@ namespace ModularBOT.Component
             }
             ConsoleTitle = title;
             Console.Clear();
-            Console.SetWindowSize(w, h);
-            Console.SetBufferSize(w, h);
+            int ww = w > Console.LargestWindowWidth ? Console.LargestWindowWidth : w;
+            int hh = h > Console.LargestWindowHeight ? Console.LargestWindowHeight : h;
+            Console.SetWindowSize(ww, hh);
+            Console.SetBufferSize(ww, hh);
             Console.BackgroundColor = back;
             Console.ForegroundColor = fore;
             Console.Clear();
