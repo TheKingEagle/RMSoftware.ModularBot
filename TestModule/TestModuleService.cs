@@ -548,6 +548,11 @@ namespace TestModule
             {
                 await ReplyAsync("", false, _permissions.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
             }
+            //try to refetch
+            if(TestModuleService.SniperGuilds?.Count <=0)
+            {
+                TestModuleService.ReloadSnipeList();
+            }
             SniperBinding sniperb = TestModuleService.SniperGuilds.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
             if (sniperb == null)
             {
@@ -997,14 +1002,21 @@ namespace TestModule
         {
             if (!(channel is SocketGuildChannel sgc))
             {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "SNIPER", $"Channel is not a supported channel"));
+
                 return;
+            }
+            if(SniperGuilds?.Count <=0)
+            {
+                ReloadSnipeList();
             }
             SniperBinding sniper = SniperGuilds.FirstOrDefault(x => x.GuildID == sgc.Guild.Id);
             if(sniper == null)
             {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "SNIPER", $"There is no binding on {sgc.Guild.Name ?? "Unknown guild"}"));
                 return;
             }
-            SniperGuilds.Remove(sniper);
+            
             if(sniper.DeletedMessages.Count+1 > sniper.QueueSize)
             {
                 sniper.DeletedMessages.RemoveAt(0);
@@ -1012,6 +1024,7 @@ namespace TestModule
             var m = await message.GetOrDownloadAsync();
             if(m == null)
             {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Warning, "SNIPER", "Message download failed!"));
                 return;
             }
             List<DeletedEmbed> dlembeds = new List<DeletedEmbed>();
@@ -1058,7 +1071,8 @@ namespace TestModule
                     Embeds = dlembeds
 
                 });
-            SniperGuilds.Add(sniper);
+            SniperGuilds.Remove(sniper);
+            SniperGuilds.Add(sniper);//readd
             using (StreamWriter sw = new StreamWriter(SniperGuildConfig))
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_MD", "Deconstruction: Saving Snipers"));
@@ -1652,6 +1666,14 @@ namespace TestModule
                 await context.Channel.SendMessageAsync("", false,
                     GetEmbeddedMessage(context, "Configuration Error", $"Mod Log is not bound to a channel in this guild. Please do this first.", Color.Orange));
                 return;
+            }
+        }
+
+        public static void ReloadSnipeList()
+        {
+            using (StreamReader sr = new StreamReader(SniperGuildConfig))
+            {
+                SniperGuilds = JsonConvert.DeserializeObject<List<SniperBinding>>(sr.ReadToEnd());
             }
         }
 
