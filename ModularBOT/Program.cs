@@ -86,10 +86,10 @@ namespace ModularBOT
             #endregion
 
             configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
-            if (!Directory.Exists("guilds")) { Directory.CreateDirectory("guilds"); }
-            if (!Directory.Exists("modules")) { Directory.CreateDirectory("modules"); }
-            if (!Directory.Exists("ext")) { Directory.CreateDirectory("ext"); }
-            if (!Directory.Exists("attachments")) { Directory.CreateDirectory("attachments"); }
+            Directory.CreateDirectory("guilds");
+            Directory.CreateDirectory("modules"); 
+            Directory.CreateDirectory("ext");
+            Directory.CreateDirectory("attachments");
             RunStartlogo();
             
             consoleIO.ConsoleGUIReset(configMGR.CurrentConfig.ConsoleForegroundColor,
