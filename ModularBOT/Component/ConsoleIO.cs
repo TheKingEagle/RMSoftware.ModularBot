@@ -1056,7 +1056,7 @@ namespace ModularBOT.Component
             
             string PRV_TITLE = ConsoleTitle;
             ScreenModal = true;
-            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);//pre-enptively clear console command queue if invoked via discord/module
+            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);//pre-emptively clear console command queue if invoked via discord/module
             //---------------start modal---------------
             NGScreen.ActiveScreen = true;
             ActiveScreen = NGScreen;
