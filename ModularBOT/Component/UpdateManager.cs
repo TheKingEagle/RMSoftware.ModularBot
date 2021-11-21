@@ -70,7 +70,7 @@ namespace ModularBOT.Component
                     {
                        return true;
                     }
-                    if (PrereleaseChannel && Assembly.GetExecutingAssembly().GetName().Version.Revision < UpdateInfo.PRERELE)
+                    if (PrereleaseChannel && Assembly.GetExecutingAssembly().GetName().Version.Revision < Math.Max(UpdateInfo.RELEASE,UpdateInfo.PRERELE))
                     {
                         return true;
                     }
