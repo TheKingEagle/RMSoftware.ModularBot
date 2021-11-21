@@ -14,6 +14,10 @@ namespace ModularBOT.Entity
         private bool Writing;
         private bool QueueProcessStarted;
 
+        internal const int VK_RETURN = 0x0D;
+        internal const int VK_ESCAPE = 0x1B;
+        internal const int WM_KEYDOWN = 0x100;
+
         #endregion
 
         #region Public Properties
@@ -748,20 +752,26 @@ namespace ModularBOT.Entity
         /// </summary>
         public void RenderScreen()
         {
+            SpinWait.SpinUntil(()=>!LayoutUpdating);
             LayoutUpdating = true;
 
             #region Primary Clear
             Console.Clear();
-
+            
+            Console.WindowLeft = 0;
+            Console.WindowTop = 0;
             #region Window Height buffering
             if (WindowHeight > BufferHeight) WindowHeight = BufferHeight;
             if (WindowWidth > BufferWidth) WindowWidth = BufferWidth;
             if (WindowWidth > Console.LargestWindowWidth) WindowWidth = Console.LargestWindowWidth;
             if (WindowHeight > Console.LargestWindowHeight) WindowHeight = Console.LargestWindowHeight;
             #endregion
-
-            Console.SetWindowSize(WindowWidth, WindowHeight);
+            
+            
             Console.SetBufferSize(BufferWidth, BufferHeight);
+            Console.SetWindowSize(WindowWidth,WindowHeight);
+
+
 
             Console.BackgroundColor = ScreenBackColor;
             Console.ForegroundColor = ScreenFontColor;
