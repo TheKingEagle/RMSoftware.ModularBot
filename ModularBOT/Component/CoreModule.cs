@@ -12,6 +12,9 @@ using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Discord.Addons.Interactive;
 using ModularBOT.Entity;
+using ModularBOT.Component.ConsoleScreens;
+using System.Diagnostics;
+using System.Threading;
 
 namespace ModularBOT.Component
 {
@@ -23,6 +26,7 @@ namespace ModularBOT.Component
         CommandService Cmdsvr { get; set; }
         ConsoleIO ConsoleIO { get; set; }
         DiscordNET DiscordNet { get; set; }
+        DiscordNET _discordNet = null;//used purely for updater
 
         public CoreModule(DiscordShardedClient client, CommandService cmdservice, ConsoleIO consoleIO, DiscordNET dnet)
         {
@@ -36,6 +40,7 @@ namespace ModularBOT.Component
             Cmdsvr = cmdservice;
             this.ConsoleIO = consoleIO;
             DiscordNet = dnet;
+            _discordNet = dnet;
             this.ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "CoreMOD", "Constructor called! This debug message proved it."));
 
         }
@@ -56,6 +61,66 @@ namespace ModularBOT.Component
             builder.AddField("Version", "v"+ Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
             builder.WithFooter("ModularBOT • Created by TheKingEagle");
             await Context.Channel.SendMessageAsync("", false, builder.Build());
+        }
+
+        [Command("sysupdate"), Summary("Attempt to automatically update the instance"), Remarks("AccessLevels.Administrator")]
+        public async Task CORE_SysUpdate()
+        {
+            try
+            {
+                SpinWait.SpinUntil(() => !ConsoleIO.ScreenBusy);
+                if (DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
+                {
+                    await Context.Channel.SendMessageAsync("", false, DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
+                    return;
+                }
+
+                EmbedBuilder builder = new EmbedBuilder
+                {
+                    Title = "System Update"
+                };
+                builder.WithAuthor(Context.Client.CurrentUser);
+                builder.Color = Color.Blue;
+                builder.Description = "Attempting to Check for a system update...\r\n\r\nYou may need to check the console...";
+                builder.WithFooter("ModularBOT • Created by TheKingEagle");
+                await Context.Channel.SendMessageAsync("", false, builder.Build());
+                SpinWait.SpinUntil(() => !ConsoleIO.ScreenBusy);
+                var NGScreen = new UpdaterScreen(ref Program.configMGR.CurrentConfig, ref _discordNet, true);
+                ConsoleIO.ShowConsoleScreen(NGScreen, true);
+
+                if (NGScreen.InstallUpdate)
+                {
+                    SpinWait.SpinUntil(() => !ConsoleIO.ScreenBusy);
+                    builder.WithAuthor(Context.Client.CurrentUser);
+                    builder.Color = Color.Green;
+                    builder.Description = $"System update available! Preparing to install new version: `{NGScreen.UPDATEDVER}`";
+                    builder.WithFooter("ModularBOT • Created by TheKingEagle");
+                    await Context.Channel.SendMessageAsync("", false, builder.Build());
+                    ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Terminating application and running system update..."));
+                    Program.ImmediateTerm = true;
+                    Process.Start(NGScreen.UPDATERLOC, "/silent");
+                    Thread.Sleep(500);
+                    _discordNet.Stop(ref Program.ShutdownCalled);
+                    Program.RestartRequested = false;
+
+                    return;
+                }
+                else
+                {
+                    SpinWait.SpinUntil(() => !ConsoleIO.ScreenBusy);
+                    builder.WithAuthor(Context.Client.CurrentUser);
+                    builder.Color = Color.DarkGreen;
+                    builder.Description = $"`{Context.Client.CurrentUser.Username}` is up-to-date!";
+                    builder.WithFooter("ModularBOT • Created by TheKingEagle");
+                    await Context.Channel.SendMessageAsync("", false, builder.Build());
+                }
+                return;
+            }
+            catch (Exception ex)
+            {
+                await Context.Channel.SendMessageAsync(ex.ToString());
+            }
+            
         }
 
         [Command("changes"), Summary("Shows what changed in this version")]
