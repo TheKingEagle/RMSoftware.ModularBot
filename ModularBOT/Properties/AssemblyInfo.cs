@@ -12,7 +12,7 @@ using System.Windows;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("RMSoftware Development")]
 [assembly: AssemblyProduct("ModularBOT")]
-[assembly: AssemblyCopyright("Copyright © 2017-2020 RMSoftware Development")]
+[assembly: AssemblyCopyright("Copyright © 2017-2021 RMSoftware Development")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -26,6 +26,6 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.7.0.3320")]
-[assembly: AssemblyFileVersion("2.7.0.3320")]
+[assembly: AssemblyVersion("2.7.1.3321")]
+[assembly: AssemblyFileVersion("2.7.1.3321")]
 [assembly: ComVisible(false)]
