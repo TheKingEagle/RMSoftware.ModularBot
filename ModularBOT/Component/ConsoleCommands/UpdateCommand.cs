@@ -31,7 +31,7 @@ namespace ModularBOT.Component.ConsoleCommands
             {
                 console.WriteEntry(new LogMessage(LogSeverity.Critical, "Console", "Terminating application and running system update..."));
                 Program.ImmediateTerm = true;
-                Process.Start(NGScreen.UPDATERLOC);
+                Process.Start(NGScreen.UPDATERLOC,"/silent");
                 Thread.Sleep(500);
                 discordNET.Stop(ref ShutdownCalled);
                 RestartRequested = false;
