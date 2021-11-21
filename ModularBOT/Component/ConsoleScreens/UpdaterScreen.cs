@@ -22,13 +22,16 @@ namespace ModularBOT.Component.ConsoleScreens
         string UpdateVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         string UpdateTitle = "System Update";
         public string UPDATERLOC = "";
+        public string UPDATEDVER = "";
         bool UpdateAvailable = false;
         bool pr = false;
         string ErrorDeet = "";
         DiscordNET disnet;
         UpdateInfo u = null;
-        public UpdaterScreen(ref Configuration currentconfig, ref DiscordNET dnet)
+        bool isAuto = false;
+        public UpdaterScreen(ref Configuration currentconfig, ref DiscordNET dnet, bool auto=false)
         {
+            isAuto = auto;
             disnet = dnet;
             ScreenFontColor = ConsoleColor.Cyan;
             ScreenBackColor = ConsoleColor.Black;
@@ -48,7 +51,6 @@ namespace ModularBOT.Component.ConsoleScreens
             ProgressMax = 1;
             BufferHeight = 34;
             WindowHeight = 32;
-            //ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
             try
             {
                 if (currentconfig.UseInDevChannel.HasValue)
@@ -103,6 +105,7 @@ namespace ModularBOT.Component.ConsoleScreens
                             updateStep = 1;
                             RenderScreen();
                             UPDATERLOC = $"updater-{ (pr ? u.PREVERS : u.VERSION)}.exe";
+                            UPDATEDVER = pr ? u.PREVERS : u.VERSION;
                             Thread.Sleep(2500);
                         }
                     }
@@ -161,6 +164,12 @@ namespace ModularBOT.Component.ConsoleScreens
                     Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
                     Console.Write("".PadLeft(width - 4, '\u2500'));//bottom line
                     WriteFooter("[ESC] Close...");
+                    if(isAuto)
+                    {
+                        Thread.Sleep(1000);
+                        
+                        PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_ESCAPE, 0);
+                    }
                 }
                 else
                 {
@@ -228,6 +237,12 @@ namespace ModularBOT.Component.ConsoleScreens
                     RenderProgress(width, -1, 100);
                     WriteFooter("[Enter] Begin update... \u2502 [ESC] Cancel...");
                     #endregion
+
+                    if (isAuto)
+                    {
+                        Thread.Sleep(1000);
+                        PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
+                    }
                 }
                 #endregion
 
