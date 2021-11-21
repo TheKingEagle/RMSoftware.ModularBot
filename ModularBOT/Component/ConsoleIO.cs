@@ -428,7 +428,14 @@ namespace ModularBOT.Component
                 ConsoleCommand cm = ConsoleCommands.FirstOrDefault(x => x.CommandName == input.Split(' ')[0]);
                 if(cm == null)
                 {
-                    WriteEntry(new LogMessage(LogSeverity.Info, "Console", "unknown command"), null, true, false, true);
+                    if (!string.IsNullOrWhiteSpace(input))
+                    {
+                        WriteEntry(new LogMessage(LogSeverity.Info, "Console", "unknown command"), null, true, false, true);
+                    }
+                    else
+                    {
+                        Console.CursorLeft = 2;
+                    }
                     continue;
                 }
                 else
@@ -486,7 +493,7 @@ namespace ModularBOT.Component
         /// <param name="title">Console's header title (not window title)</param>
         public void ConsoleGUIReset(ConsoleColor fore, ConsoleColor back, string title)
         {
-
+            SpinWait.SpinUntil(() => !ScreenBusy);
             ScreenBusy = true;
             if (title.Length > 72)
             {
@@ -1046,9 +1053,10 @@ namespace ModularBOT.Component
 
         public void ShowConsoleScreen(ConsoleScreen NGScreen, bool FromLog)
         {
-
+            
             string PRV_TITLE = ConsoleTitle;
             ScreenModal = true;
+            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);//pre-enptively clear console command queue if invoked via discord/module
             //---------------start modal---------------
             NGScreen.ActiveScreen = true;
             ActiveScreen = NGScreen;
@@ -1068,6 +1076,7 @@ namespace ModularBOT.Component
                 ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
                 Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
                 ScreenModal = false;
+                SpinWait.SpinUntil(() => !ScreenBusy);
                 v.AddRange(LogEntries);
                 LogEntries.Clear();//clear buffer.
                                    //output previous logEntry.
