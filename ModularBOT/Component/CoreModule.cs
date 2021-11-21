@@ -86,7 +86,7 @@ namespace ModularBOT.Component
                 await Context.Channel.SendMessageAsync("", false, builder.Build());
                 SpinWait.SpinUntil(() => !ConsoleIO.ScreenBusy);
                 var NGScreen = new UpdaterScreen(ref Program.configMGR.CurrentConfig, ref _discordNet, true);
-                ConsoleIO.ShowConsoleScreen(NGScreen, true);
+                ConsoleIO.ShowConsoleScreen(NGScreen, true,true);
 
                 if (NGScreen.InstallUpdate)
                 {
