@@ -1051,12 +1051,16 @@ namespace ModularBOT.Component
             errorLogWrite = false;
         }
 
-        public void ShowConsoleScreen(ConsoleScreen NGScreen, bool FromLog)
+        public void ShowConsoleScreen(ConsoleScreen NGScreen, bool FromLog, bool InterruptInput=false)
         {
             
             string PRV_TITLE = ConsoleTitle;
             ScreenModal = true;
-            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);//pre-emptively clear console command queue if invoked via discord/module
+            if(InterruptInput)
+            {
+                //Exit the running console input read if desired
+                PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
+            }
             //---------------start modal---------------
             NGScreen.ActiveScreen = true;
             ActiveScreen = NGScreen;
