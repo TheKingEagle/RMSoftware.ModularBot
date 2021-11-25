@@ -1221,12 +1221,12 @@ namespace ModularBOT.Entity
             Console.CursorVisible = ShowCursor;
         }
 
-        public void ClearContents()
+        public void ClearContents(int height=0)
         {
             Console.CursorVisible = false;
             Console.CursorLeft = 0;
             Console.CursorTop = ContentTop;
-            for (int i = ContentTop; i < BufferHeight; i++)
+            for (int i = ContentTop; i < (height >0 ? height : WindowHeight); i++)
             {
                 
                 Console.Write("".PadRight(BufferWidth, '\u2005'));
@@ -1237,7 +1237,7 @@ namespace ModularBOT.Entity
             Console.CursorLeft = 0;
             Console.CursorTop = ContentTop;
           
-            for (int i = ContentTop; i < BufferHeight; i++)
+            for (int i = ContentTop; i < (height > 0 ? height : WindowHeight); i++)
             {
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Black;
@@ -1252,7 +1252,8 @@ namespace ModularBOT.Entity
                 Console.CursorTop = i;
                 Console.CursorLeft = 0;
             }
-            Console.CursorTop = 0; 
+            Console.CursorTop = 0;
+            Console.CursorTop = ContentTop; 
             Console.CursorLeft = 0;
             Console.CursorVisible = true;
 
