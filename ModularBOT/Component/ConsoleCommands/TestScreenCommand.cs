@@ -23,7 +23,7 @@ namespace ModularBOT.Component.ConsoleCommands
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
 
-            console.ShowConsoleScreen(new TestScreen(), true);
+            console.ShowConsoleScreen(new SetupWizardScreen(), true);
             return true;
         }
 
