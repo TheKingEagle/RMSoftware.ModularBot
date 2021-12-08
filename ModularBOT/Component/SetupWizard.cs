@@ -496,7 +496,7 @@ namespace ModularBOT.Component
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- Version history can be found here https://rmsoftware.org/modularbot/history");
             consoleIO.WriteEntry("\u2502\u2005");
             consoleIO.WriteEntry("\u2502\u2005Key Console Commands");
-            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- cls or clear: clear the console output");
+            consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- cls: clear the console output");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- list: List all available console commands");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- disablecmd: disables message and command processing");
             consoleIO.WriteEntry("\u2502\u2005\u2005\u2005- enablecmd: enables message and command processing");
