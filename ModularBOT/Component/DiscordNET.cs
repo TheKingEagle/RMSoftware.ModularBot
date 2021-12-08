@@ -127,8 +127,6 @@ namespace ModularBOT.Component
             {
                 foreach (HttpException httex in agex.InnerExceptions)
                 {
-
-
                     if (httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
                     {
                         serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.AuthToken = null;
@@ -295,10 +293,11 @@ namespace ModularBOT.Component
                     #endregion
 
                     #region Update Check
-                    if (serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value)
+                    
+                    if (serviceProvider.GetRequiredService<Configuration>().CheckForUpdates ?? true)// assume true if null.
                     {
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
-                        bool pre = serviceProvider.GetRequiredService<Configuration>().UseInDevChannel.Value;
+                        bool pre = serviceProvider.GetRequiredService<Configuration>().UseInDevChannel ?? false;//assume stable
                         bool availableUpdates = Updater.CheckUpdate(pre).GetAwaiter().GetResult();
                         if (availableUpdates)
                         {
