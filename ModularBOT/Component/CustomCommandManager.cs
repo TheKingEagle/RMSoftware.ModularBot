@@ -25,6 +25,16 @@ namespace ModularBOT.Component
         internal CustomCommandManager(IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
+            if (string.IsNullOrWhiteSpace(serviceProvider.GetRequiredService<Configuration>().CommandPrefix))
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Invalid Prefix", "You don't have a valid global prefix configured.", false, ref Program.ShutdownCalled, ref Program.RestartRequested, 5, new ArgumentException("Invalid prefix"), "MBOT_CONFIGURATION_ERR", true);
+            }
+            if (serviceProvider.GetRequiredService<Configuration>().CommandPrefix.Contains('`'))
+            {
+                serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Invalid Prefix", "Your configured global prefix has invalid characters.", false, ref Program.ShutdownCalled, ref Program.RestartRequested, 5, new ArgumentException("Invalid prefix"), "MBOT_CONFIGURATION_ERR", true);
+                serviceProvider.GetRequiredService<Configuration>().CommandPrefix = null;
+                serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+            }
             //Populate guild items.
             coreScript = new CoreScript(this, ref serviceProvider);
             foreach (string guildFile in Directory.GetFiles("guilds", "*.guild", SearchOption.TopDirectoryOnly))
@@ -44,15 +54,17 @@ namespace ModularBOT.Component
                     }
                     if (string.IsNullOrWhiteSpace(ob.CommandPrefix))
                     {
+                        
                         ob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it)
                         ob.SaveJson();
                     }
                     if(ob.CommandPrefix.Contains('`'))
                     {
+                        
                         ob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it)
                         ob.SaveJson();
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
-                            new LogMessage(LogSeverity.Warning, "CmdMgr", $"Warning: Command prefix had invalid character! reset to configured default."), ConsoleColor.Magenta);
+                            new LogMessage(LogSeverity.Warning, "CmdMgr", $"Warning: Guild `{ob.ID}`'s Command prefix had invalid character! reset to global default."), ConsoleColor.Magenta);
                     }
                     if(!ob.BlacklistMode.HasValue)
                     {
@@ -199,7 +211,7 @@ namespace ModularBOT.Component
                     }
                     else
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild's command list not found! Do they have any guild commands defined?"));
+                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild's command list not found! They must be new here."));
                         return null;
                     }
 
@@ -224,7 +236,7 @@ namespace ModularBOT.Component
             else
             {
                 string res = "";
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Global command list not found! Do you have any global commands defined?"));
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Global command list not found! Were there previously global commands defined?"));
                 //check guild context since global straight up didn't exist.
                 if ((msg.Channel as SocketGuildChannel) != null)
                 {
@@ -255,7 +267,7 @@ namespace ModularBOT.Component
                 }
                 else
                 {
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild's command list not found! Do you have any guild commands defined?"));
+                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "CmdMgr", "Context guild's command list not found! They must be new here."));
                     return null;
                 }
             }
@@ -859,7 +871,7 @@ namespace ModularBOT.Component
         {
             if(guilds.FirstOrDefault(x=>x.ID == obj.ID) != null)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", "Guild was already in loaded list"));
+                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Guild `{obj.ID}` was already in memory."));
                 return false;
             }
             guilds.Add(obj);
