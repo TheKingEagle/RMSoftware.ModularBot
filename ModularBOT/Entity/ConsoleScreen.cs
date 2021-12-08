@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -236,6 +237,7 @@ namespace ModularBOT.Entity
             }
             return returnstring;
         }
+        
         private ConsoleColor GetInvertedColor(ConsoleColor Color) //I realize this is not accurate.
         {
             return (ConsoleColor)(Math.Abs((Color - ConsoleColor.White)));
@@ -735,7 +737,7 @@ namespace ModularBOT.Entity
 
         #endregion
 
-        #region overridden methods.
+        #region overridden Methods
 
         protected virtual void RenderContents()
         {
@@ -1258,6 +1260,14 @@ namespace ModularBOT.Entity
             Console.CursorVisible = true;
 
         }
+        #endregion
+
+        #region P/Invoke
+        [DllImport("kernel32.dll")]
+        internal static extern IntPtr GetConsoleWindow();
+        [DllImport("User32.Dll", EntryPoint = "PostMessageA")]
+        internal static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
+
         #endregion
 
         public class LogEntry
