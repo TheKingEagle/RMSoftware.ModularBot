@@ -24,7 +24,8 @@ namespace ModularBOT.Component.ConsoleScreens
         bool AutoReboot = false;
         Exception exception = null;
         bool timedout = false;
-        public KillScreen(Exception ex, bool autorestart, string source, string title, string message, int timeout=5)
+        bool _userError = false;
+        public KillScreen(Exception ex, bool autorestart, string source, string title, string message, int timeout=5, bool userError = false)
         {
             ScreenFontColor = ConsoleColor.White;
             ScreenBackColor = ConsoleColor.Black;
@@ -47,12 +48,10 @@ namespace ModularBOT.Component.ConsoleScreens
             TimeOut = timeout;
             AutoReboot = autorestart;
             exception = ex;
+            _userError = userError;
         }
         #region P/Invoke
-        [DllImport("kernel32.dll")]
-        internal static extern IntPtr GetConsoleWindow();
-        [DllImport("User32.Dll", EntryPoint = "PostMessageA")]
-        internal static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
+        
 
         #endregion
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
@@ -116,20 +115,20 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 stack = "Not available...";
             }
-            UpdateScreen_WriteTitleLine(140, "The program has encountered a problem...");
-            UpdateScreen_WriteBody(140,$"{ErrorDeet}\r\n\r\n" +
+            RenderTitleLine(140, "The program has encountered a problem...");
+            RenderBody(140,$"{ErrorDeet}\r\n\r\n" +
                 $"Dev Stack (partial):\r\n"+
                 $"{"".PadLeft(100, '\u2500')}\r\n" +
                 $"{stack}\r\n" +
                 $"{"".PadLeft(100, '\u2500')}\r\n" +
-                $"If this happens frequently, please submit a bug report to the ModularBOT GitHub repository. ",
+                $"{(!_userError ? "If this happens frequently, please submit a bug report to the ModularBOT GitHub repository.":"If this happens frequently, please verify the current configuration is correct.")}",
                 "Something went wrong...", ConsoleColor.Red);
             Console.BackgroundColor = ConsoleColor.DarkRed;
             Console.ForegroundColor = ConsoleColor.White;
             Console.CursorTop = 28;
             Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
             Console.Write("".PadLeft(width - 4, '\u2500'));//bottom line
-            WriteFooter("[ESC] Terminate Application...");
+            RenderFooter("[ESC] Terminate Application...");
             #endregion
             
             //Thread.Sleep(1000);
@@ -143,7 +142,7 @@ namespace ModularBOT.Component.ConsoleScreens
             }
         }
 
-        private void UpdateScreen_WriteBody(int width, string Message, string meta, ConsoleColor MetaColor = ConsoleColor.Green)
+        private void RenderBody(int width, string Message, string meta, ConsoleColor MetaColor = ConsoleColor.Green)
         {
             MetaFontColor = MetaColor;
             Meta = meta;
@@ -173,7 +172,7 @@ namespace ModularBOT.Component.ConsoleScreens
 
         }
 
-        private void UpdateScreen_WriteTitleLine(int width, string Title)
+        private void RenderTitleLine(int width, string Title)
         {
             Console.CursorTop = 5;
             Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
@@ -187,7 +186,7 @@ namespace ModularBOT.Component.ConsoleScreens
         }
 
         
-        private void WriteFooter(string footer, ConsoleColor BackColor = ConsoleColor.Gray, ConsoleColor ForeColor = ConsoleColor.Black)
+        private void RenderFooter(string footer, ConsoleColor BackColor = ConsoleColor.Gray, ConsoleColor ForeColor = ConsoleColor.Black)
         {
             SpinWait.SpinUntil(() => !LayoutUpdating);
             LayoutUpdating = true;
@@ -212,7 +211,7 @@ namespace ModularBOT.Component.ConsoleScreens
         {
             for (int i = 0; i < TimeOut; i++)
             {
-                WriteFooter($"Auto Restart in [{TimeOut-i}] second(s)...");
+                RenderFooter($"Auto Restart in [{TimeOut-i}] second(s)...");
                 Thread.Sleep(1000);
             }
             timedout = true;
