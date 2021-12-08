@@ -960,11 +960,11 @@ namespace ModularBOT.Component
         /// <param name="timeout">auto restart timeout in seconds.</param>
         /// <param name="ex">The inner exception leading to the kill screen.</param>
         /// <returns></returns>
-        public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ProgramShutdownFlag, ref bool ProgramRestartFlag, int timeout = 5, Exception ex = null,string source = "Unknown Source")
+        public Task<bool> ShowKillScreen(string title, string message, bool autorestart, ref bool ProgramShutdownFlag, ref bool ProgramRestartFlag, int timeout = 5, Exception ex = null,string source = "Unknown Source", bool userError = false)
         {
             ScreenModal = true;
             PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_RETURN, 0);
-            var NGScreen = new KillScreen(ex ?? new Exception("Undefined exception"),autorestart,source,title,message,timeout)
+            var NGScreen = new KillScreen(ex ?? new Exception("Undefined exception"),autorestart,source,title,message,timeout,userError)
             {
                 ActiveScreen = true
             };
@@ -1051,7 +1051,7 @@ namespace ModularBOT.Component
             errorLogWrite = false;
         }
 
-        public void ShowConsoleScreen(ConsoleScreen NGScreen, bool FromLog, bool InterruptInput=false)
+        public void ShowConsoleScreen(ConsoleScreen NGScreen, bool FromLog, bool InterruptInput=false, Configuration config = null)
         {
             
             string PRV_TITLE = ConsoleTitle;
@@ -1077,8 +1077,8 @@ namespace ModularBOT.Component
             if(FromLog)
             {
                 List<LogEntry> v = new List<LogEntry>();
-                ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
-                Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
+                ConsoleGUIReset((config ?? Program.configMGR?.CurrentConfig)?.ConsoleForegroundColor ?? ConsoleColor.White,
+                (config ?? Program.configMGR?.CurrentConfig)?.ConsoleBackgroundColor ?? ConsoleColor.DarkBlue, PRV_TITLE);
                 ScreenModal = false;
                 SpinWait.SpinUntil(() => !ScreenBusy);
                 v.AddRange(LogEntries);
