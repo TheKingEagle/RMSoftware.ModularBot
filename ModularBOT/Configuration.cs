@@ -9,6 +9,8 @@ using System.IO;
 using ModularBOT.Component;
 using ModularBOT.Component.ConfigEntities;
 using ModularBOT.Entity;
+using ModularBOT.Component.ConsoleScreens;
+
 namespace ModularBOT
 {
     /// <summary>
@@ -133,10 +135,7 @@ namespace ModularBOT
                     try
                     {
                         CurrentConfig = JsonConvert.DeserializeObject<Configuration>(sr.ReadToEnd());
-                        if(CurrentConfig == null)
-                        {
-                            CurrentConfig = new Configuration();
-                        }
+                   
                         
                     }
                     catch (Exception ex)
@@ -145,8 +144,19 @@ namespace ModularBOT
                     }
                 }
             }
-            if (setup.StartSetupWizard(ref consoleIO, ref CurrentConfig))
+            //if (setup.StartSetupWizard(ref consoleIO, ref CurrentConfig))
+            //{
+            //    CurrentConfig.SaveConfig(jsonFilename);
+            //}
+            
+            SetupWizardScreen wizard = new SetupWizardScreen(ref CurrentConfig);
+            if (wizard.NeedsConfig(ref CurrentConfig))
             {
+                consoleIO.ShowConsoleScreen(wizard, true,false,CurrentConfig);
+            }
+            if(wizard.Completed && wizard.NewConfig != null)
+            {
+                CurrentConfig = wizard.NewConfig;
                 CurrentConfig.SaveConfig(jsonFilename);
             }
 
