@@ -80,13 +80,7 @@ namespace ModularBOT.Component.ConsoleScreens
             }
 
         }
-        #region P/Invoke
-        [DllImport("kernel32.dll")]
-        internal static extern IntPtr GetConsoleWindow();
-        [DllImport("User32.Dll", EntryPoint = "PostMessageA")]
-        internal static extern bool PostMessage(IntPtr hWnd, uint msg, int wParam, int lParam);
-
-        #endregion
+        
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
 
