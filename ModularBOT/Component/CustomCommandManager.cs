@@ -56,20 +56,20 @@ namespace ModularBOT.Component
                     {
                         
                         ob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it)
-                        ob.SaveJson();
+                        ob.SaveData();
                     }
                     if(ob.CommandPrefix.Contains('`'))
                     {
                         
                         ob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;//use global (This will set it)
-                        ob.SaveJson();
+                        ob.SaveData();
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
                             new LogMessage(LogSeverity.Warning, "CmdMgr", $"Warning: Guild `{ob.ID}`'s Command prefix had invalid character! reset to global default."), ConsoleColor.Magenta);
                     }
                     if(!ob.BlacklistMode.HasValue)
                     {
                         ob.BlacklistMode = AutoBlacklistModes.Standard;//by default, set new missing value...
-                        ob.SaveJson();
+                        ob.SaveData();
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(
                             new LogMessage(LogSeverity.Warning, "CmdMgr", $"Warning: Auto-Blacklist option was not present. set it to STANDARD"), ConsoleColor.Magenta);
                     }
@@ -89,13 +89,13 @@ namespace ModularBOT.Component
                     GuildCommands = new List<GuildCommand>(),
                     
                 };
-                globalob.SaveJson();
+                globalob.SaveData();
                 guilds.Add(globalob);
             }
             else
             {
                 globalob.CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
-                globalob.SaveJson();
+                globalob.SaveData();
             }
             
         }
@@ -418,7 +418,7 @@ namespace ModularBOT.Component
                     ID = gid,
                     GuildCommands = new List<GuildCommand>()
                 };
-                go.SaveJson();
+                go.SaveData();
                 guilds.Add(go);
             }
             GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.Name.ToLower() == name.ToLower());
@@ -444,7 +444,7 @@ namespace ModularBOT.Component
                     CommandAccessLevel = CommandAccessLevel
                 };
                 go.GuildCommands.Add(gc);
-                go.SaveJson();
+                go.SaveData();
                 EmbedBuilder b = new EmbedBuilder();
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithTitle("Custom Command Added!");
@@ -491,7 +491,7 @@ namespace ModularBOT.Component
                     ID = gid,
                     GuildCommands = new List<GuildCommand>()
                 };
-                go.SaveJson();
+                go.SaveData();
                 guilds.Add(go);
             }
             GuildCommand gc = go.GuildCommands.FirstOrDefault(cm => cm.Name.ToLower() == name.ToLower());
@@ -517,7 +517,7 @@ namespace ModularBOT.Component
                     CommandAccessLevel = AccessLevels.CommandManager
                 };
                 go.GuildCommands.Add(gc);
-                go.SaveJson();
+                go.SaveData();
                 EmbedBuilder b = new EmbedBuilder();
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithTitle("Custom Command Added!");
@@ -590,7 +590,7 @@ namespace ModularBOT.Component
             {
 
                 go.GuildCommands.Remove(gc);
-                go.SaveJson();
+                go.SaveData();
                 EmbedBuilder b = new EmbedBuilder();
                 b.WithAuthor(serviceProvider.GetRequiredService<DiscordShardedClient>().CurrentUser);
                 b.WithTitle("Custom Command Removed!");
@@ -764,8 +764,8 @@ namespace ModularBOT.Component
                 }
                 if(asRestricted.HasValue) { gco.RequirePermission = asRestricted.Value; }
                 if(newAction != "(unchanged)") { gco.Action = newAction; }
-                ggo.SaveJson();
-                cgo.SaveJson();
+                ggo.SaveData();
+                cgo.SaveData();
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Global command modified!"));
                 await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, AccessLevels.CommandManager, newAction));
                 return;
@@ -788,8 +788,8 @@ namespace ModularBOT.Component
                     }
                     if (asRestricted.HasValue) { cco.RequirePermission = asRestricted.Value; }
                     if (newAction != "(unchanged)") { cco.Action = newAction; }
-                    ggo.SaveJson();
-                    cgo.SaveJson();
+                    ggo.SaveData();
+                    cgo.SaveData();
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Context-guild command modified!"));
                     await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, asRestricted, AccessLevels.CommandManager, newAction));
                     return;
@@ -824,8 +824,8 @@ namespace ModularBOT.Component
                 gco.CommandAccessLevel = CommandAccessLevel;
                 
                 if (newAction != "(unchanged)") { gco.Action = newAction; }
-                ggo.SaveJson();
-                cgo.SaveJson();
+                ggo.SaveData();
+                cgo.SaveData();
                 serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Global command modified!"));
                 await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, CommandAccessLevel > AccessLevels.Normal,CommandAccessLevel, newAction));
                 return;
@@ -845,8 +845,8 @@ namespace ModularBOT.Component
                     cco.CommandAccessLevel = CommandAccessLevel;
                     
                     if (newAction != "(unchanged)") { cco.Action = newAction; }
-                    ggo.SaveJson();
-                    cgo.SaveJson();
+                    ggo.SaveData();
+                    cgo.SaveData();
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "CmdMgr", "Context-guild command modified!"));
                     await context.Channel.SendMessageAsync("", false, GetCMDModified(context, cmdName, CommandAccessLevel > AccessLevels.Normal, CommandAccessLevel, newAction));
                     return;
@@ -875,7 +875,7 @@ namespace ModularBOT.Component
                 return false;
             }
             guilds.Add(obj);
-            obj.SaveJson();
+            obj.SaveData();
             return true;
         }
 
@@ -889,7 +889,7 @@ namespace ModularBOT.Component
 
             serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Deleting guild data: {obj.ID}.guild"));
 
-            obj.DeleteJson();
+            obj.DeleteData();
             guilds.Remove(obj);
         }
         #endregion
