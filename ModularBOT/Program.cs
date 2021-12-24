@@ -54,11 +54,13 @@ namespace ModularBOT
             #region ConsoleIO Command hooks
             //Populate command list.
             consoleIO.ConsoleCommands.Add(new AboutCommand());            //about
-            consoleIO.ConsoleCommands.Add(new CfgLCMCommand());           //config.loadcoremodule
             consoleIO.ConsoleCommands.Add(new ChannelsCommand());         //channels
             consoleIO.ConsoleCommands.Add(new CLSCommand());              //cls
             consoleIO.ConsoleCommands.Add(new ConfigCFUCommand());        //config.checkforupdates
+            consoleIO.ConsoleCommands.Add(new CfgDebugWizardCommand());   //config.debugwizard
             consoleIO.ConsoleCommands.Add(new ConfigDCEvtLLCommand());    //config.discordeventloglevel
+            consoleIO.ConsoleCommands.Add(new CfgLCMCommand());           //config.loadcoremodule
+            consoleIO.ConsoleCommands.Add(new ConfigResetCommand());      //config.reset
             consoleIO.ConsoleCommands.Add(new ConfigSCCommand());         //config.setcolors
             consoleIO.ConsoleCommands.Add(new ConfigSLPCommand());        //config.setlogo
             consoleIO.ConsoleCommands.Add(new ConfigUPRCCommand());       //config.useprereleasechannel
@@ -66,8 +68,10 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new DisableCMDCommand());       //disablecmd
             consoleIO.ConsoleCommands.Add(new EnableCMDCommand());        //enablecmd
             consoleIO.ConsoleCommands.Add(new GuildNameCommand());        //guildname
-            consoleIO.ConsoleCommands.Add(new TestScreenCommand());       //testscreen
+            consoleIO.ConsoleCommands.Add(new GuildsCommand());           //guilds
+            consoleIO.ConsoleCommands.Add(new ConIOCrashCommand());       //iocrash
             consoleIO.ConsoleCommands.Add(new LeaveCommand());            //leave
+            consoleIO.ConsoleCommands.Add(new ListCommand());             //list
             consoleIO.ConsoleCommands.Add(new MBotDataCommand());         //mbotdata
             consoleIO.ConsoleCommands.Add(new MyRolesCommand());          //myroles
             consoleIO.ConsoleCommands.Add(new RolesCommand());            //roles
@@ -76,12 +80,9 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new SetvarCommand());           //setvar
             consoleIO.ConsoleCommands.Add(new StatusCommand());           //status
             consoleIO.ConsoleCommands.Add(new StopCommand());             //stopbot
+            consoleIO.ConsoleCommands.Add(new TestScreenCommand());       //testscreen
             consoleIO.ConsoleCommands.Add(new TSKillCommand());           //tskill
             consoleIO.ConsoleCommands.Add(new UsersCommand());            //users
-            consoleIO.ConsoleCommands.Add(new ListCommand());             //list
-            consoleIO.ConsoleCommands.Add(new GuildsCommand());           //guilds
-            consoleIO.ConsoleCommands.Add(new ConIOCrashCommand());       //iocrash
-            consoleIO.ConsoleCommands.Add(new ConfigResetCommand());      //config.reset
             consoleIO.ConsoleCommands.Add(new UpdateCommand());           //update
             #endregion
 
