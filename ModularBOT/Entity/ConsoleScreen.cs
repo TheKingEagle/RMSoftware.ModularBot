@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
-
+using System.Reflection ;
 namespace ModularBOT.Entity
 {
     public class ConsoleScreen
@@ -15,6 +15,9 @@ namespace ModularBOT.Entity
         private bool Writing;
         private bool QueueProcessStarted;
 
+        private string _title = "Untitled Screen";
+        public string LastConsoleTitle { get; private set; }
+
         internal const int VK_RETURN = 0x0D;
         internal const int VK_ESCAPE = 0x1B;
         internal const int WM_KEYDOWN = 0x100;
@@ -22,7 +25,16 @@ namespace ModularBOT.Entity
         #endregion
 
         #region Public Properties
-        public string Title { get; set; } = "Untitled Screen";
+        public string Title { 
+            get { 
+                return _title;
+            } 
+            set {
+                LastConsoleTitle = Console.Title;
+                Console.Title = $"{value}";
+                _title = value;
+            } 
+        }
         public string Meta { get; set; } = "Default Meta";
 
         public int ProgressMax { get; set; } = 100;
@@ -669,6 +681,36 @@ namespace ModularBOT.Entity
             }
 
             return linecount;
+        }
+
+        protected void RenderButton(string buttonText, int top, int left, ConsoleColor buttonColor = ConsoleColor.DarkGray, ConsoleColor TextColor = ConsoleColor.White, bool shadow = true)
+        {
+            //recall later.
+            ConsoleColor prvBk = Console.BackgroundColor;
+            ConsoleColor prvFk = Console.ForegroundColor;
+            int pleft = Console.CursorLeft;
+            int ptop = Console.CursorTop;
+            //set new params
+            Console.CursorTop = top;
+            Console.CursorLeft = left;
+            Console.BackgroundColor = buttonColor;
+            Console.ForegroundColor = TextColor;
+            //render button
+            Console.Write(" " + buttonText + " ");
+            if(shadow)
+            {
+                Console.BackgroundColor = prvBk;
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.Write("\u2584");
+                Console.CursorLeft = left+1;
+                Console.CursorTop++;
+                Console.Write("".PadRight(buttonText.Length + 2, '\u2580'));
+            }
+            //reset
+            Console.CursorLeft = pleft;
+            Console.CursorTop = ptop;
+            Console.BackgroundColor = prvBk;
+            Console.ForegroundColor = prvFk;
         }
 
         private void OSS_RenderOptions(string option1, string option2, string option3, string option4, int selectionindex, int cl, int ct) //Sub-screen options...
