@@ -1080,6 +1080,7 @@ namespace ModularBOT.Component
                 ConsoleGUIReset((config ?? Program.configMGR?.CurrentConfig)?.ConsoleForegroundColor ?? ConsoleColor.White,
                 (config ?? Program.configMGR?.CurrentConfig)?.ConsoleBackgroundColor ?? ConsoleColor.DarkBlue, PRV_TITLE);
                 ScreenModal = false;
+                
                 SpinWait.SpinUntil(() => !ScreenBusy);
                 v.AddRange(LogEntries);
                 LogEntries.Clear();//clear buffer.
@@ -1089,7 +1090,7 @@ namespace ModularBOT.Component
                     WriteEntry(item.LogMessage, item.EntryColor);
                 }
             }
-            
+            Console.Title = NGScreen.LastConsoleTitle;
         }
 
         #endregion
