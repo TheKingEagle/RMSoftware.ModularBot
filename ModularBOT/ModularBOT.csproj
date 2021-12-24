@@ -254,6 +254,7 @@
     <Compile Include="Component\ConfigEntities\LockPrefix.cs" />
     <Compile Include="Component\ConfigEntities\GlobalInitChannel.cs" />
     <Compile Include="Component\ConsoleCommands\AboutCommand.cs" />
+    <Compile Include="Component\ConsoleCommands\CfgDebugWizardCommand.cs" />
     <Compile Include="Component\ConsoleCommands\CfgLCMCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ChannelsCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ConfigResetCommand.cs" />
