@@ -52,7 +52,7 @@ namespace ModularBOT.Component.ConsoleCommands
                     if (k.Key == ConsoleKey.N)
                     {
 
-                        ConsoleIO.ScreenModal = true;
+                        ConsoleIO.ScreenModal = false;
                         return true;
 
                     }
