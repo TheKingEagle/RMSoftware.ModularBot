@@ -52,7 +52,7 @@ namespace ModularBOT.Component.ConsoleScreens
             TitlesFontColor = ConsoleColor.White;
             ProgressColor = ConsoleColor.Cyan;
 
-            Title = $"Guilds | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version}";
+            Title = $"Guilds - {discord.Client.CurrentUser.Username}#{discord.Client.CurrentUser.Discriminator} | {Assembly.GetExecutingAssembly().GetName().Name} v{Assembly.GetExecutingAssembly().GetName().Version}";
             RefreshMeta();
             ShowProgressBar = true;
             ShowMeta = true;
