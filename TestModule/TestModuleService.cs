@@ -388,7 +388,7 @@ namespace TestModule
             _writer.WriteEntry(ER3R);
             if (Context.User != Context.Client.CurrentUser)
             {
-                await ReplyAsync("",false,GetEmbeddedMessage("Invalid Action","This command is designed to be called from OnStart.CORE.",Color.DarkRed));
+                await ReplyAsync("",false,GetEmbeddedMessage("Invalid Action","This command is designed to be called from the startup script.",Color.DarkRed));
                 return;
             }
             
@@ -1166,14 +1166,14 @@ namespace TestModule
                 
                 Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser uses JoinEvent... It's SUPER EFFECTIVE!");//debuglul
                 Writer.WriteEntry(Log);
-                Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser: " + arg.Username + "\r\n" + "The Guild: " + arg.Guild.Name);//debuglul
+                Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser: " + arg.Username + " " + "The Guild: " + arg.Guild.Name);//debuglul
                 Writer.WriteEntry(Log);
             }
             else
             {
                 Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser uses JoinEvent... It's Not very effective...");//debuglul
                 Writer.WriteEntry(Log);
-                Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser: " + arg.Username + "\r\n" + "The Guild: " + arg.Guild.Name);//debuglul
+                Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser: " + arg.Username + " " + "The Guild: " + arg.Guild.Name);//debuglul
                 Writer.WriteEntry(Log);
             }
         }
