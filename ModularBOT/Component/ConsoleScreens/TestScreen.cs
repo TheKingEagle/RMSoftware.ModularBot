@@ -13,7 +13,7 @@ namespace ModularBOT.Component.ConsoleScreens
         public TestScreen()
         {
             ScreenFontColor = ConsoleColor.Cyan;
-            ScreenBackColor = ConsoleColor.Black;
+            ScreenBackColor = ConsoleColor.DarkBlue;
             TitlesBackColor = ConsoleColor.Black;
             TitlesFontColor = ConsoleColor.White;
             ProgressColor   = ConsoleColor.Green;
@@ -36,7 +36,7 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 string val = ShowStringPrompt("Test StringPrompt", "Please enter some text below.");
                 ScreenFontColor = ConsoleColor.Cyan;
-                ScreenBackColor = ConsoleColor.Black;
+                ScreenBackColor = ConsoleColor.DarkBlue;
                 TitlesBackColor = ConsoleColor.Black;
                 TitlesFontColor = ConsoleColor.White;
                 ProgressColor = ConsoleColor.Green;
@@ -96,6 +96,12 @@ namespace ModularBOT.Component.ConsoleScreens
             ScreenBackColor = ConsoleColor.Yellow;
             WriteEntry("this is a test!", ConsoleColor.Red, false);
             ScreenBackColor = ConsoleColor.DarkGreen;
+
+            ScreenBackColor = ConsoleColor.DarkBlue;
+            ScreenFontColor = ConsoleColor.Cyan;
+            Console.BackgroundColor = ScreenBackColor;
+            Console.ForegroundColor = ScreenFontColor;
+            RenderButton("Helloooo world!", 12, 30, ConsoleColor.DarkGray, ConsoleColor.White, true);
         }
     }
 }
