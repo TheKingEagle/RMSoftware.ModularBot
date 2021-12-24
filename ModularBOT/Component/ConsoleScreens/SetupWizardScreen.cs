@@ -38,7 +38,6 @@ namespace ModularBOT.Component.ConsoleScreens
             TitlesFontColor = ConsoleColor.White;
             ProgressColor = ConsoleColor.Green;
             MetaFontColor = ConsoleColor.Yellow;
-
             Title = $"Setup Wizard | ModularBOT v{Assembly.GetExecutingAssembly().GetName().Version}";
             Meta = "Welcome -- Getting Started";
             ShowProgressBar = true;
@@ -116,6 +115,7 @@ namespace ModularBOT.Component.ConsoleScreens
 
         protected override void RenderContents()
         {
+            
             SpinWait.SpinUntil(() => !LayoutUpdating);
             switch (Steps[StepIndex])
             {
@@ -144,6 +144,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 RenderFooter("Press [ENTER] to Start Application.");
             }
         }
+
 
         #region Input
         private bool Input_Step_1(ConsoleKeyInfo keyinfo)
@@ -538,7 +539,7 @@ namespace ModularBOT.Component.ConsoleScreens
 
         private bool Input_Step_5(ConsoleKeyInfo keyinfo)
         {
-            int CL = (144/2) - (("[  YES]".Length+"".PadRight(32,'\u2005').Length+"[  NO]".Length)/2);
+            int CL = CLeft;
             
             RenderFooter("[UP/DOWN/LEFT/RIGHT]: EDIT SELECTION \u2502 [ENTER]: CONFIRM SELECTION");
             if(keyinfo.Key == ConsoleKey.UpArrow || 
@@ -550,34 +551,18 @@ namespace ModularBOT.Component.ConsoleScreens
             }
             Console.CursorTop -= 2;
             Console.CursorLeft = CL;
-            char py = APAoptionState ? '\u25BA' : '\u2005';
-            char pn = !APAoptionState ? '\u25BA' : '\u2005';
+            string yebtn = APAoptionState ? "\u25C4 YES \u25BA" : "\u2005 YES \u2005";
+            string nobtn = !APAoptionState ? "\u25C4 NO \u25BA" : "\u2005 NO \u2005";
+
+            ConsoleColor TextColorY = APAoptionState ? ConsoleColor.Yellow : ConsoleColor.White;
+            ConsoleColor TextColorN = !APAoptionState ? ConsoleColor.Yellow : ConsoleColor.White;
+            
+            int ct = Console.CursorTop;
             Console.BackgroundColor = ConsoleColor.DarkBlue;
-            if (!APAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-            }
-            if (APAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.White;
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-            }
-            Console.Write($"[{py} YES]");
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            Console.Write("".PadRight(32, '\u2005'));
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            if (APAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-            }
-            if (!APAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.White;
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-            }
-            Console.Write($"[{pn} NO]");
+            int p1 = (144 / 2) - ((yebtn.Length / 2) + 12);
+            int p2 = (144 / 2) + ((-nobtn.Length / 2) + (yebtn.Length / 2)) + 12;
+            RenderButton(yebtn, ct, p1-3, ConsoleColor.DarkGray, TextColorY);
+            RenderButton(nobtn, ct, p2-3, ConsoleColor.DarkGray, TextColorN);
             Console.CursorLeft = CL;
             Console.CursorTop += 2;
 
@@ -763,7 +748,7 @@ namespace ModularBOT.Component.ConsoleScreens
 
         private bool Input_Step_7(ConsoleKeyInfo keyinfo)
         {
-            int CL = (144 / 2) - (("[  YES]".Length + "".PadRight(32, '\u2005').Length + "[  NO]".Length) / 2);
+            int CL = CLeft;
 
             RenderFooter("[UP/DOWN/LEFT/RIGHT]: EDIT SELECTION \u2502 [ENTER]: CONFIRM SELECTION");
             if (keyinfo.Key == ConsoleKey.UpArrow ||
@@ -775,34 +760,18 @@ namespace ModularBOT.Component.ConsoleScreens
             }
             Console.CursorTop -= 2;
             Console.CursorLeft = CL;
-            char py = AUAoptionState ? '\u25BA' : '\u2005';
-            char pn = !AUAoptionState ? '\u25BA' : '\u2005';
+            string yebtn = AUAoptionState ? "\u25C4 YES \u25BA" : "\u2005 YES \u2005";
+            string nobtn = !AUAoptionState ? "\u25C4 NO \u25BA" : "\u2005 NO \u2005";
+
+            ConsoleColor TextColorY = AUAoptionState ? ConsoleColor.Yellow : ConsoleColor.White;
+            ConsoleColor TextColorN = !AUAoptionState ? ConsoleColor.Yellow : ConsoleColor.White;
+
+            int ct = Console.CursorTop;
             Console.BackgroundColor = ConsoleColor.DarkBlue;
-            if (!AUAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-            }
-            if (AUAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.White;
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-            }
-            Console.Write($"[{py} YES]");
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            Console.Write("".PadRight(32, '\u2005'));
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            if (AUAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-            }
-            if (!AUAoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.White;
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-            }
-            Console.Write($"[{pn} NO]");
+            int p1 = (144 / 2) - ((yebtn.Length / 2) + 12);
+            int p2 = (144 / 2) + ((-nobtn.Length / 2) + (yebtn.Length / 2)) + 12;
+            RenderButton(yebtn, ct, p1 - 3, ConsoleColor.DarkGray, TextColorY);
+            RenderButton(nobtn, ct, p2 - 3, ConsoleColor.DarkGray, TextColorN);
             Console.CursorLeft = CL;
             Console.CursorTop += 2;
 
@@ -854,34 +823,18 @@ namespace ModularBOT.Component.ConsoleScreens
             }
             Console.CursorTop -= 2;
             Console.CursorLeft = CL;
-            char py = AUCoptionState ? '\u25BA' : '\u2005';
-            char pn = !AUCoptionState ? '\u25BA' : '\u2005';
+            string yebtn = AUCoptionState ? "\u25C4 INDEV \u25BA" : "\u2005 INDEV \u2005";
+            string nobtn = !AUCoptionState ? "\u25C4 RELEASE \u25BA" : "\u2005 RELEASE \u2005";
+
+            ConsoleColor TextColorY = AUCoptionState ? ConsoleColor.Yellow : ConsoleColor.White;
+            ConsoleColor TextColorN = !AUCoptionState ? ConsoleColor.Yellow : ConsoleColor.White;
+
+            int ct = Console.CursorTop;
             Console.BackgroundColor = ConsoleColor.DarkBlue;
-            if (!AUCoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-            }
-            if (AUCoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.White;
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-            }
-            Console.Write($"[{py} INDEV]");
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            Console.Write("".PadRight(32, '\u2005'));
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            if (AUCoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-            }
-            if (!AUCoptionState)
-            {
-                Console.BackgroundColor = ConsoleColor.White;
-                Console.ForegroundColor = ConsoleColor.DarkGreen;
-            }
-            Console.Write($"[{pn} RELEASE]");
+            int p1 = (144 / 2) - ((yebtn.Length / 2) + 12);
+            int p2 = (144 / 2) + ((-nobtn.Length / 2) + (yebtn.Length / 2)) + 12;
+            RenderButton(yebtn, ct, p1 - 3, ConsoleColor.DarkGray, TextColorY);
+            RenderButton(nobtn, ct, p2 - 3, ConsoleColor.DarkGray, TextColorN);
             Console.CursorLeft = CL;
             Console.CursorTop += 2;
 
@@ -1011,19 +964,12 @@ namespace ModularBOT.Component.ConsoleScreens
             Console.CursorLeft = CL;
             Console.CursorTop++;
             Console.Write("{0}", "".PadRight(maxSize+2, '\u2005'));//Button Bar2 (Button text)
-            Console.BackgroundColor = ConsoleColor.DarkGray;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.CursorLeft = (144/2) - ("[BEGIN SETUP]".Length/2);
-            Console.Write("[");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("BEGIN SETUP");
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("]");
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            Console.ForegroundColor = ConsoleColor.White;
+            int ct = Console.CursorTop;
             Console.CursorLeft = CL;
             Console.CursorTop++;
             Console.Write("{0}", "".PadRight(maxSize+2, '\u2005'));//Button Bar3 (Fill)
+            string tx = "\u25c4 BEGIN SETUP \u25ba";
+            RenderButton(tx, ct, (144 / 2) - (tx.Length / 2),ConsoleColor.DarkGray,ConsoleColor.Yellow);
 
 
         }
@@ -1351,13 +1297,19 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.CursorTop++;
             }
 
-            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
-            Console.CursorLeft = CL;
-            Console.CursorTop++;
-            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
-            Console.CursorLeft = CL;
-            Console.CursorTop++;
             Console.Write("\u2514{0}\u2518", "".PadRight(maxSize - 2, '\u2500'));//BOTTOM UI
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            
         }
         
         private void Render_Step_6()
@@ -1496,7 +1448,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 "\u2005\u2005\u2005- Security -- Keeping updated will ensure the latest discord API is used, keeping the application secure.",
                 "\u2005",
                 "\u2005\u2005 Information:",
-                "\u2005\u2005\u2005- This will prompt you to download and run the update right from the console (via the update command)",
+                "\u2005\u2005\u2005- This will prompt you to download and run the update right from the console.",
                 "\u2005\u2005\u2005- Once installed, the new version will start automatically.",
                 "\u2005\u2005\u2005- Regardless, you can still manually check for the most resent stable version via the update command.",
                 "\u2005",
@@ -1547,13 +1499,18 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.CursorTop++;
             }
 
-            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
-            Console.CursorLeft = CL;
-            Console.CursorTop++;
-            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
-            Console.CursorLeft = CL;
-            Console.CursorTop++;
             Console.Write("\u2514{0}\u2518", "".PadRight(maxSize - 2, '\u2500'));//BOTTOM UI
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
         }
 
         private void Render_Step_7A()
@@ -1624,13 +1581,18 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.CursorTop++;
             }
 
-            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
-            Console.CursorLeft = CL;
-            Console.CursorTop++;
-            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
-            Console.CursorLeft = CL;
-            Console.CursorTop++;
             Console.Write("\u2514{0}\u2518", "".PadRight(maxSize - 2, '\u2500'));//BOTTOM UI
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2005 {0} \u2005", "".PadRight(maxSize - 4, '\u2005'));//button fill
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
         }
 
         private void Render_Step_8()
@@ -1700,19 +1662,12 @@ namespace ModularBOT.Component.ConsoleScreens
             Console.CursorLeft = CL;
             Console.CursorTop++;
             Console.Write("{0}", "".PadRight(maxSize + 2, '\u2005'));//Button Bar2 (Button text)
-            Console.BackgroundColor = ConsoleColor.DarkBlue;
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.CursorLeft = (144 / 2) - ("[FINISHED]".Length / 2);
-            Console.Write("[");
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.Write("FINISHED");
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("]");
-            Console.BackgroundColor = ConsoleColor.DarkMagenta;
-            Console.ForegroundColor = ConsoleColor.White;
+            int ct = Console.CursorTop;
             Console.CursorLeft = CL;
             Console.CursorTop++;
             Console.Write("{0}", "".PadRight(maxSize + 2, '\u2005'));//Button Bar3 (Fill)
+            string tx = "\u25c4 FINISH SETUP & LAUNCH \u25ba";
+            RenderButton(tx, ct, (144 / 2) - (tx.Length / 2), ConsoleColor.DarkGray, ConsoleColor.Yellow);
 
 
         }
