@@ -271,13 +271,13 @@ namespace ModularBOT.Component.SystemVariables
                 if (cmd.Counter.HasValue)
                 {
                     cmd.Counter++;
-                    gobj.SaveJson();
+                    gobj.SaveData();
                     return cmd.Counter.ToString();
                 }
                 else
                 {
                     cmd.Counter = 1;
-                    gobj.SaveJson();
+                    gobj.SaveData();
                     return cmd.Counter.ToString();
                 }
             }

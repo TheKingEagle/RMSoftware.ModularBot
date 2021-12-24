@@ -1404,7 +1404,7 @@ namespace ModularBOT.Component
             {
                 
                 obj.CommandPrefix = newPrefix;
-                obj.SaveJson();
+                obj.SaveData();
                 var g = await Context.Client.GetGuildAsync(gid);
                 ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "Prefix", $"The prefix for `{g?.Name ?? "Direct Messages"}` has been set to `{newPrefix}`"), ConsoleColor.Cyan);
                 await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Success!", $"The prefix for `{g?.Name ?? "Direct Messages"}` has been set to `{newPrefix}`", Color.Green));

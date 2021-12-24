@@ -43,7 +43,7 @@ namespace ModularBOT.Component.ConfigEntities
                 else
                 {
                     g.BlacklistMode = configvalue;
-                    g.SaveJson();
+                    g.SaveData();
                     await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(ConsoleIO, Context, "Config Updated", $"`BlacklistMode` updated to `{value}` for {Context.Guild.Name}", Color.Green));
 
                 }
