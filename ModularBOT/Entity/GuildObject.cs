@@ -20,7 +20,7 @@ namespace ModularBOT.Entity
         public AutoBlacklistModes? BlacklistMode { get; set; }
         public List<GuildCommand> GuildCommands { get; set; }
 
-        public void SaveJson()
+        public void SaveData()
         {
             using (StreamWriter sw = new StreamWriter($"guilds/{ID}.guild"))
             {
@@ -30,7 +30,7 @@ namespace ModularBOT.Entity
                 sw.Close();
             }
         }
-        public void DeleteJson()
+        public void DeleteData()
         {
             if(File.Exists($"guilds/{ID}.guild"))
             {
