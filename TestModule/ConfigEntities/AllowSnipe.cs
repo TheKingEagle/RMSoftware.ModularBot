@@ -19,17 +19,8 @@ namespace TestModule.ConfigEntities
         }
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            if(TestModuleService.SniperGuilds?.Count <=0)
-            {
-                _DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Warning, "SNIPER", "Snipe list was empty. Attempting to re-fetch data from disk."));
-
-                TestModuleService.ReloadSnipeList();
-                if(TestModuleService.SniperGuilds?.Count <= 0)
-                {
-                    _DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new Discord.LogMessage(Discord.LogSeverity.Warning, "SNIPER", "TMS Reloaded snipe list, but the list still yielded no data."));
-                }
-            }
-            var sniper = TestModuleService.SniperGuilds.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
+           
+            var sniper = TestModuleService.SniperGuilds?.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
             
             if (sniper == null) return base.ExecuteView(_DiscordNet, Context, "False");
             else return base.ExecuteView(_DiscordNet, Context, "True");
