@@ -1879,7 +1879,8 @@ namespace ModularBOT.Component
                             dsc += "== Guild Configuration ==\r\n";
                             DoOncePerPageGC = true;
                         }
-                        int flen = dsc.Length + $"{item.ExecuteView(DiscordNet,Context)}\r\n".Length;
+                        string toAddG = item.ExecuteView(DiscordNet, Context);
+                        int flen = dsc.Length + $"{toAddG}\r\n".Length;
                         if (flen > 2000)
                         {
 
@@ -1890,7 +1891,7 @@ namespace ModularBOT.Component
                             DoOncePerPageGC = false;
 
                         }
-                        dsc += $"{item.ExecuteView(DiscordNet, Context)}\r\n";
+                        dsc += $"{toAddG}\r\n";
                     }
                     foreach (ConfigEntity item in DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities)
                     {
