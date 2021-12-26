@@ -548,11 +548,7 @@ namespace TestModule
             {
                 await ReplyAsync("", false, _permissions.GetAccessDeniedMessage(Context, AccessLevels.CommandManager));
             }
-            //try to refetch
-            if(TestModuleService.SniperGuilds?.Count <=0)
-            {
-                TestModuleService.ReloadSnipeList();
-            }
+            
             SniperBinding sniperb = TestModuleService.SniperGuilds.FirstOrDefault(x => x.GuildID == Context.Guild.Id);
             if (sniperb == null)
             {
@@ -954,6 +950,7 @@ namespace TestModule
 
                 if (SniperGuilds == null)
                 {
+                    Writer.WriteEntry(new LogMessage(LogSeverity.Critical, "TMS_SNIPE", "SniperGuilds null"));
                     SniperGuilds = new List<SniperBinding>();
                 }
 
@@ -1005,10 +1002,6 @@ namespace TestModule
                 Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "SNIPER", $"Channel is not a supported channel"));
 
                 return;
-            }
-            if(SniperGuilds?.Count <=0)
-            {
-                ReloadSnipeList();
             }
             SniperBinding sniper = SniperGuilds.FirstOrDefault(x => x.GuildID == sgc.Guild.Id);
             if(sniper == null)
@@ -1666,14 +1659,6 @@ namespace TestModule
                 await context.Channel.SendMessageAsync("", false,
                     GetEmbeddedMessage(context, "Configuration Error", $"Mod Log is not bound to a channel in this guild. Please do this first.", Color.Orange));
                 return;
-            }
-        }
-
-        public static void ReloadSnipeList()
-        {
-            using (StreamReader sr = new StreamReader(SniperGuildConfig))
-            {
-                SniperGuilds = JsonConvert.DeserializeObject<List<SniperBinding>>(sr.ReadToEnd());
             }
         }
 
