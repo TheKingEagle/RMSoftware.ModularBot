@@ -1899,7 +1899,8 @@ namespace ModularBOT.Component
                             dsc += "\r\n== System Configuration ==\r\n";
                             DoOncePerPageSC = true;
                         }
-                        int flen = dsc.Length + $"{item.ExecuteView(DiscordNet, Context)}\r\n".Length;
+                        string toAdd = item.ExecuteView(DiscordNet, Context);
+                        int flen = dsc.Length + $"{toAdd}\r\n".Length;
                         if (flen > 2000)
                         {
 
@@ -1910,7 +1911,7 @@ namespace ModularBOT.Component
                             DoOncePerPageSC = false;
 
                         }
-                        dsc += $"{item.ExecuteView(DiscordNet, Context)}\r\n";
+                        dsc += $"{toAdd}\r\n";
                     }
 
                     pageItem.Description = $"```ASCIIDOC\r\n{dsc}\r\n```";
