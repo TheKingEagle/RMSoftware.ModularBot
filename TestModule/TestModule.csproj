@@ -14,6 +14,16 @@
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <ShouldCreateLogs>True</ShouldCreateLogs>
+    <AdvancedSettingsExpanded>False</AdvancedSettingsExpanded>
+    <UpdateAssemblyVersion>True</UpdateAssemblyVersion>
+    <UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
+    <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
+    <AssemblyVersionSettings>IncrementOnDemand.IncrementOnDemand.IncrementWithResetOnIncrease.Increment</AssemblyVersionSettings>
+    <UpdatePackageVersion>False</UpdatePackageVersion>
+    <AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
+    <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
+    <AssemblyFileVersionSettings>IncrementOnDemand.IncrementOnDemand.IncrementWithResetOnIncrease.Increment</AssemblyFileVersionSettings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -166,13 +176,14 @@
     <Compile Include="ConfigEntities\StarboardChannel.cs" />
     <Compile Include="ConfigEntities\ServerMuteRole.cs" />
     <Compile Include="ConfigEntities\ModLogChannel.cs" />
+    <Compile Include="ConfigEntities\EnableMentions.cs" />
     <Compile Include="ConfigEntities\WelcomeChannel.cs" />
     <Compile Include="ConfigEntities\WelcomeMessage.cs" />
     <Compile Include="ConfigEntities\WelcomeRole.cs" />
     <Compile Include="Entity\DeletedEmbed.cs" />
     <Compile Include="Entity\DeletedEmbedField.cs" />
     <Compile Include="Entity\DeletedMessage.cs" />
-    <Compile Include="Entity\GuildQueryItem.cs" />
+    <Compile Include="Entity\WelcomeConfig.cs" />
     <Compile Include="Entity\ModLogBinding.cs" />
     <Compile Include="Entity\ModLogEventTypes.cs" />
     <Compile Include="Entity\SBEntry.cs" />
