@@ -24,7 +24,7 @@ namespace TestModule.ConfigEntities
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
             var cfg = TestModuleService.WelcomeBindings.FirstOrDefault(x => x.GuildId == Context.Guild.Id);
-            return base.ExecuteView(_DiscordNet, Context, (cfg?.WelcomeRole ?? 0).ToString());
+            return base.ExecuteView(_DiscordNet, Context, (cfg?.WelcomeMessage ?? "Not Configured").ToString());
         }
 
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
