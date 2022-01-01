@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using ModularBOT.Component;
 using ModularBOT.Entity;
 
@@ -13,18 +16,44 @@ namespace TestModule.ConfigEntities
     {
         public WelcomeMessage()
         {
-            ReadOnly = true;
-            ConfigIdentifier = "WelcomeMessage";
+            ReadOnly = false;
+            ConfigIdentifier = "TMS_WelcomeMessage";
 
         }
 
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            if (TestModuleService.BoundItems.TryGetValue(Context.Guild.Id, out GuildQueryItem gqi))
+            var cfg = TestModuleService.WelcomeBindings.FirstOrDefault(x => x.GuildId == Context.Guild.Id);
+            return base.ExecuteView(_DiscordNet, Context, (cfg?.WelcomeRole ?? 0).ToString());
+        }
+
+        public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
+        {
+            
+            var cfg = TestModuleService.WelcomeBindings.FirstOrDefault(x => x.GuildId == Context.Guild.Id);
+            if (cfg == null)
             {
-                return base.ExecuteView(_DiscordNet, Context, gqi.WelcomeMessage.ToString());
+                cfg = new WelcomeConfig()
+                {
+                    EnableMentions = false,
+                    GuildId = Context.Guild.Id,
+                    WelcomeChannel = 0,
+                    WelcomeMessage = value,
+                    WelcomeRole = 0
+                };
+                //create it if not existing;
+                TestModuleService.WelcomeBindings.Add(cfg);
             }
-            return base.ExecuteView(_DiscordNet, Context, "Not Configured");
+            else
+            {
+                //update the root binding.
+                TestModuleService.WelcomeBindings[TestModuleService.WelcomeBindings.IndexOf(cfg)].WelcomeMessage = value;
+            }
+
+            //save config. 
+            WelcomeConfig.SaveConfig(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(),
+                TestModuleService.WelcomeBindings, TestModuleService.WelcomeBindingsConfig);
+            await base.ExecuteSet(Client, _discordNET, Context, value);
         }
     }
 }

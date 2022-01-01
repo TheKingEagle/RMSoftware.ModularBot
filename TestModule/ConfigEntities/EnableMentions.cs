@@ -3,43 +3,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using ModularBOT.Component;
 using ModularBOT.Entity;
+using Microsoft.Extensions.DependencyInjection;
+using Discord;
 namespace TestModule.ConfigEntities
 {
-    public class WelcomeChannel:ConfigEntity
+    public class EnableMentions : ConfigEntity
     {
-        public WelcomeChannel()
+        public EnableMentions()
         {
             ReadOnly = false;
-            ConfigIdentifier = "TMS_WelcomeChannel";
+            ConfigIdentifier = "TMS_EnableMentions";
         }
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
             var cfg = TestModuleService.WelcomeBindings.FirstOrDefault(x => x.GuildId == Context.Guild.Id);
-            return base.ExecuteView(_DiscordNet, Context, (cfg?.WelcomeChannel ?? 0).ToString());
+            return base.ExecuteView(_DiscordNet, Context, (cfg?.EnableMentions ?? false).ToString());
         }
 
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
         {
-            if (!ulong.TryParse(value, out ulong res))
+            if(!bool.TryParse(value, out bool res))
             {
                 await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(), Context,
-                    "Invalid Value", "Expected a valid `ULONG` value", Color.DarkRed));
+                    "Invalid Value", "Expected `True` or `False` boolean values", Color.DarkRed));
                 return;
             }
             var cfg = TestModuleService.WelcomeBindings.FirstOrDefault(x => x.GuildId == Context.Guild.Id);
-            if (cfg == null)
+            if(cfg == null)
             {
                 cfg = new WelcomeConfig()
                 {
-                    EnableMentions = false,
+                    EnableMentions = res,
                     GuildId = Context.Guild.Id,
-                    WelcomeChannel = res,
+                    WelcomeChannel = 0,
                     WelcomeMessage = "Enjoy your stay!",
                     WelcomeRole = 0
                 };
@@ -49,7 +49,7 @@ namespace TestModule.ConfigEntities
             else
             {
                 //update the root binding.
-                TestModuleService.WelcomeBindings[TestModuleService.WelcomeBindings.IndexOf(cfg)].WelcomeChannel = res;
+                TestModuleService.WelcomeBindings[TestModuleService.WelcomeBindings.IndexOf(cfg)].EnableMentions = res;
             }
 
             //save config. 
