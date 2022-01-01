@@ -7,6 +7,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using ModularBOT.Component;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ModularBOT.Entity
 {
@@ -58,12 +59,15 @@ namespace ModularBOT.Entity
 
 
         /// <summary>
-        /// Override in derived class.
+        /// Override in derived class. call this base method to send confirmation.
         /// </summary>
         /// <param name="NewValue">the new parameter for the setting.</param>
         public virtual async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
         {
-            await Task.Delay(1);
+            await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(
+                _discordNET.serviceProvider.GetRequiredService<ConsoleIO>(),
+                Context,
+                "Configuration Updated", $"Successfully Updated value of `{ConfigIdentifier}` to `{value}`", Color.Green));
             return;
         }
 
