@@ -380,39 +380,6 @@ namespace TestModule
 
         #region BINDING COMMANDS
 
-        [Command("pollJoin", RunMode = RunMode.Async), Alias("pollJoin","bindWelcomeMessage","bw"),Remarks("AccessLevels.BotOnly")]
-        public async Task BindWelcomeMessage(ulong GuildID, ulong ChannelID, ulong RoleID = 0, [Remainder]string WelcomeMessage = null)
-        {
-
-            LogMessage ER3R = new LogMessage(LogSeverity.Info, "Greetings", "COMMAND CALLED");
-            _writer.WriteEntry(ER3R);
-            if (Context.User != Context.Client.CurrentUser)
-            {
-                await ReplyAsync("",false,GetEmbeddedMessage("Invalid Action","This command is designed to be called from the startup script.",Color.DarkRed));
-                return;
-            }
-            
-            GuildQueryItem item = new GuildQueryItem
-            {
-                DefaultChannel = (ITextChannel)_client.GetGuild(GuildID).GetChannel(ChannelID),
-                RoleToAssign = _client.GetGuild(GuildID).GetRole(RoleID)
-            };
-            if (!string.IsNullOrWhiteSpace(WelcomeMessage))
-            {
-                LogMessage ERR = new LogMessage(LogSeverity.Info, "Greetings", "Initial Welcome Message: " + WelcomeMessage);
-                _writer.WriteEntry(ERR);
-                item.WelcomeMessage = WelcomeMessage;
-            }
-            else
-            {
-                LogMessage ERR = new LogMessage(LogSeverity.Info, "Greetings", "Using Default Welcome Message.");
-                _writer.WriteEntry(ERR);
-                item.WelcomeMessage = "Please Enjoy Your Stay.";
-            }
-            await _jservice.BindWelcomeMessage(Context, item);
-
-        }
-
         [Command("bindTrashcan", RunMode = RunMode.Async), Summary("Creates a Reaction event for specified " +
             "server & emote to act as a self-delete button"),Alias("bt", "binddelete", "bindtrash","mktrash"), Remarks("AccessLevels.GuildPermission")]
         public async Task BindTrashcan(string emote, ulong guildID = 0)
@@ -773,9 +740,10 @@ namespace TestModule
     public class TestModuleService
     {
         #region PRIVATE COMPONENTS
+        
+        private static ConsoleIO Writer;
 
         private DiscordShardedClient ShardedClient { get; set; }
-        private static ConsoleIO Writer { get; set; }
         
         private PermissionManager PermissionsManager { get; set; }
         private ConfigurationManager CfgMgr { get; set; }
@@ -784,18 +752,21 @@ namespace TestModule
 
         #region PRIVATE FIELDS
 
-        private static readonly string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
-        private readonly string TrashcanBindingsConfig = "Modules/TestModule/trash-can.json";
-        private static readonly string StarboardBindingsConfig = "Modules/TestModule/starboard.json";
-        private static readonly string SniperGuildConfig = "Modules/TestModule/snipe.json";
+        internal static readonly string ModLogBindingsConfig = "Modules/TestModule/mod-log.json";
+        internal static readonly string TrashcanBindingsConfig = "Modules/TestModule/trash-can.json";
+        internal static readonly string StarboardBindingsConfig = "Modules/TestModule/starboard.json";
+        internal static readonly string WelcomeBindingsConfig = "Modules/TestModule/Welcome.json";
+        internal static readonly string SniperGuildConfig = "Modules/TestModule/snipe.json";
         private static bool doonce = false;
 
         #endregion PRIVATE FIELDS
         
         #region PUBLIC PROPERTIES
 
+        
         [DontInject]
-        public static Dictionary<ulong, GuildQueryItem> BoundItems { get; set; }//This contains <guildID,role> value pairs to check user's join event.
+
+        public static List<WelcomeConfig> WelcomeBindings { get; set; }
 
         [DontInject]
         public static Dictionary<ulong, string> Trashcans { get; set; }
@@ -838,123 +809,44 @@ namespace TestModule
                     LogMessage ERR = new LogMessage(LogSeverity.Critical, "TMS_Main", "Client is null! You should be ashamed.");
                     _consoleIO.WriteEntry(ERR);
                 }
-                if (!Directory.Exists(Path.GetDirectoryName(ModLogBindingsConfig)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(ModLogBindingsConfig));
-                    MLbindings = new List<ModLogBinding>();
-                    using (StreamWriter sw = new StreamWriter(ModLogBindingsConfig))
+
+                if (!Directory.Exists("Modules/TestModule")) Directory.CreateDirectory("Modules/Testmodule");
+
+                WelcomeBindings = WelcomeConfig.LoadConfig(ref Writer, WelcomeBindingsConfig);
+                
+                if (File.Exists(ModLogBindingsConfig))
+                    using (StreamReader sr = new StreamReader(ModLogBindingsConfig))
                     {
-                        sw.WriteLine(JsonConvert.SerializeObject(MLbindings, Formatting.Indented));
+                        MLbindings = JsonConvert.DeserializeObject<List<ModLogBinding>>(sr.ReadToEnd());
                     }
-                }
-                else
-                {
-                    if (!File.Exists(ModLogBindingsConfig))
+
+                if (File.Exists(TrashcanBindingsConfig))
+                    using (StreamReader sr = new StreamReader(TrashcanBindingsConfig))
                     {
-                        var fs = File.Create(ModLogBindingsConfig);
-                        fs.WriteByte(0);
-                        fs.Close();
+                        Trashcans = JsonConvert.DeserializeObject<Dictionary<ulong, string>>(sr.ReadToEnd());
                     }
-                }
-                if (!Directory.Exists(Path.GetDirectoryName(StarboardBindingsConfig)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(StarboardBindingsConfig));
-                    SBBindings = new Dictionary<ulong, StarboardBinding>();
-                    using (StreamWriter sw = new StreamWriter(StarboardBindingsConfig))
+
+                if (File.Exists(StarboardBindingsConfig))
+                    using (StreamReader sr = new StreamReader(StarboardBindingsConfig))
                     {
-                        sw.WriteLine(JsonConvert.SerializeObject(SBBindings, Formatting.Indented));
+                        SBBindings = JsonConvert.DeserializeObject<Dictionary<ulong, StarboardBinding>>(sr.ReadToEnd());
                     }
-                }
-                else
-                {
-                    if (!File.Exists(StarboardBindingsConfig))
+
+                if (File.Exists(SniperGuildConfig))
+                    using (StreamReader sr = new StreamReader(SniperGuildConfig))
                     {
-                        var fs = File.Create(StarboardBindingsConfig);
-                        fs.WriteByte(0);
-                        fs.Close();
+                        SniperGuilds = JsonConvert.DeserializeObject<List<SniperBinding>>(sr.ReadToEnd());
                     }
-                }
 
-                if (!Directory.Exists(Path.GetDirectoryName(TrashcanBindingsConfig)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(TrashcanBindingsConfig));
-                    Trashcans = new Dictionary<ulong, string>();
-                    using (StreamWriter sw = new StreamWriter(TrashcanBindingsConfig))
-                    {
-                        sw.WriteLine(JsonConvert.SerializeObject(Trashcans, Formatting.Indented));
-                    }
-                }
-                else
-                {
-                    if (!File.Exists(TrashcanBindingsConfig))
-                    {
-                        var fs = File.Create(TrashcanBindingsConfig);
-                        fs.WriteByte(0);
-                        fs.Close();
-                    }
-                }
+                if (MLbindings == null)  MLbindings = new List<ModLogBinding>();
 
-                if (!Directory.Exists(Path.GetDirectoryName(SniperGuildConfig)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(SniperGuildConfig));
-                    SniperGuilds = new List<SniperBinding>();
-                    using (StreamWriter sw = new StreamWriter(SniperGuildConfig))
-                    {
-                        sw.WriteLine(JsonConvert.SerializeObject(SniperGuilds, Formatting.Indented));
-                    }
-                }
-                else
-                {
-                    if (!File.Exists(SniperGuildConfig))
-                    {
-                        var fs = File.Create(SniperGuildConfig);
-                        fs.WriteByte(0);
-                        fs.Close();
-                    }
-                }
+                if (Trashcans == null) Trashcans = new Dictionary<ulong, string>();
 
-                using (StreamReader sr = new StreamReader(ModLogBindingsConfig))
-                {
-                    MLbindings = JsonConvert.DeserializeObject<List<ModLogBinding>>(sr.ReadToEnd());
-                }
+                if (SBBindings == null) SBBindings = new Dictionary<ulong, StarboardBinding>();
 
-                using (StreamReader sr = new StreamReader(TrashcanBindingsConfig))
-                {
-                    Trashcans = JsonConvert.DeserializeObject<Dictionary<ulong, string>>(sr.ReadToEnd());
-                }
+                if (SniperGuilds == null) SniperGuilds = new List<SniperBinding>();
 
-                using (StreamReader sr = new StreamReader(StarboardBindingsConfig))
-                {
-                    SBBindings = JsonConvert.DeserializeObject<Dictionary<ulong, StarboardBinding>>(sr.ReadToEnd());
-                }
-
-                using (StreamReader sr = new StreamReader(SniperGuildConfig))
-                {
-                    SniperGuilds = JsonConvert.DeserializeObject<List<SniperBinding>>(sr.ReadToEnd());
-                }
-
-                if (MLbindings == null)
-                {
-                    MLbindings = new List<ModLogBinding>();
-                }
-
-                if (Trashcans == null)
-                {
-                    Trashcans = new Dictionary<ulong, string>();
-                }
-
-                if (SBBindings == null)
-                {
-                    SBBindings = new Dictionary<ulong, StarboardBinding>();
-                }
-
-                if (SniperGuilds == null)
-                {
-                    Writer.WriteEntry(new LogMessage(LogSeverity.Critical, "TMS_SNIPE", "SniperGuilds null"));
-                    SniperGuilds = new List<SniperBinding>();
-                }
-
-                BoundItems = new Dictionary<ulong, GuildQueryItem>();
+                
                 ShardedClient.UserJoined += ShardedClient_UserJoined;
                 ShardedClient.ReactionAdded += ShardedClient_ReactionAdded;
                 ShardedClient.ReactionRemoved += ShardedClient_ReactionRemoved;
@@ -965,16 +857,14 @@ namespace TestModule
                 LogMessage Log3 = new LogMessage(LogSeverity.Info, "Reactions", "Added ReactionRemoved event handler to client.");
                 LogMessage Log2 = new LogMessage(LogSeverity.Info, "Greetings", "Added UserJoin event handler to client.");
                 LogMessage Log4 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserBanned event handler to client.");
-                LogMessage Log5 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserLeft event handler to client.");
-                LogMessage Log6 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserUnbanned event handler to client.");
-                LogMessage Log7 = new LogMessage(LogSeverity.Info, "Sniper", "Added MessageDeleted event handler to client.");
+                LogMessage Log5 = new LogMessage(LogSeverity.Info, "ModLogs", "Added UserUnbanned event handler to client.");
+                LogMessage Log6 = new LogMessage(LogSeverity.Info, "Sniper", "Added MessageDeleted event handler to client.");
                 _consoleIO.WriteEntry(Log1);
                 _consoleIO.WriteEntry(Log3);
                 _consoleIO.WriteEntry(Log2);
                 _consoleIO.WriteEntry(Log4);
                 _consoleIO.WriteEntry(Log5);
                 _consoleIO.WriteEntry(Log6);
-                _consoleIO.WriteEntry(Log7);
 
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Adding entities to the configuration manager"));
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.TrashCanEmote());
@@ -988,6 +878,7 @@ namespace TestModule
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.AllowSnipe());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.SniperQueueSize());
                 _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.ModlogAliasMode());
+                _cfgMgr.RegisterGuildConfigEntity(new ConfigEntities.EnableMentions());
                 _consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "TMS_Config", "Success!! Config entities registered."));
                 doonce = true;
             }
@@ -1137,40 +1028,35 @@ namespace TestModule
 
         private async Task ShardedClient_UserJoined(SocketGuildUser arg)
         {
-            LogMessage Log = new LogMessage(LogSeverity.Verbose, "Greetings", "A wild user appears!");
+            LogMessage Log = new LogMessage(LogSeverity.Verbose, "TMSWelcome", "A wild user appears!");
             Writer.WriteEntry(Log);
-            bool result = BoundItems.TryGetValue(arg.Guild.Id, out GuildQueryItem item);
-            if (result)
+            //TODO: Reimplement Welcome Messages
+            var cfg = WelcomeBindings.FirstOrDefault(x => x.GuildId == arg.Guild.Id);
+            if(cfg != null)
             {
-                Log = new LogMessage(LogSeverity.Verbose, "Greetings", $"What is the default channel? {item.DefaultChannel.Name}");//debuglul
-                Writer.WriteEntry(Log);
-                await item.DefaultChannel.SendMessageAsync($"Hello `{arg.Username}#{arg.Discriminator}`, Welcome to `{arg.Guild.Name}`! {item.WelcomeMessage}");
-                if (item.RoleToAssign == null)
+                Writer.WriteEntry(new LogMessage(LogSeverity.Verbose, "TMSWelcome", $"Guild User {arg.Username} of {arg.Guild.Name} uses Join... It was Super Effective!"));
+
+                if (cfg.WelcomeChannel != 0)
                 {
-                    Log = new LogMessage(LogSeverity.Warning, "Greetings", $"A role was not specified. Playing welcome message only.");
-                    Writer.WriteEntry(Log);
+                    Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "TMSWelcome", "The channel ID was specified!"));
+                    SocketTextChannel tx = arg.Guild.GetTextChannel(cfg.WelcomeChannel);
+                    if (tx == null) Writer.WriteEntry(new LogMessage(LogSeverity.Critical, "TMSWelcome", "The channel ID specified is not a valid text channel"));
+                    else await tx.SendMessageAsync($"Hello {(!cfg.EnableMentions ? $"`{arg.Username}#{arg.Discriminator}`" : $"{arg.Mention}")}, Welcome to `{arg.Guild.Name}`! {cfg.WelcomeMessage}");
                 }
-                if (item.RoleToAssign != null)
+
+                if(cfg.WelcomeRole != 0)
                 {
-                    Log = new LogMessage(LogSeverity.Info, "Greetings", $"A role was specified, let's assign to user. ROLE: {item.RoleToAssign.Name}<{item.RoleToAssign.Id}>");//debuglul
-                    Writer.WriteEntry(Log);
-                    await arg.AddRoleAsync(item.RoleToAssign); //assign le role
+                    Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "TMSWelcome", "The role ID was specified!"));
+                    SocketRole role = arg.Guild.GetRole(cfg.WelcomeRole);
+                    if (role != null) await arg.AddRoleAsync(cfg.WelcomeRole);
+                    else Writer.WriteEntry(new LogMessage(LogSeverity.Critical, "TMSWelcome", "The role ID specified did not point to a valid role"));
                 }
-                
-                Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser uses JoinEvent... It's SUPER EFFECTIVE!");//debuglul
-                Writer.WriteEntry(Log);
-                Log = new LogMessage(LogSeverity.Info, "Greetings", "The GuildUser: " + arg.Username + " " + "The Guild: " + arg.Guild.Name);//debuglul
-                Writer.WriteEntry(Log);
             }
             else
             {
-                Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser uses JoinEvent... It's Not very effective...");//debuglul
-                Writer.WriteEntry(Log);
-                Log = new LogMessage(LogSeverity.Verbose, "Greetings", "The GuildUser: " + arg.Username + " " + "The Guild: " + arg.Guild.Name);//debuglul
-                Writer.WriteEntry(Log);
+                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "TMSWelcome", $"Guild User {arg.Username} of {arg.Guild.Name} uses Join... It did nothing at all (Not bound!)"));
             }
         }
-
 
         private async Task ShardedClient_ReactionAdded(Cacheable<IUserMessage, ulong> arg1,
             ISocketMessageChannel arg2, SocketReaction arg3)
@@ -1663,14 +1549,6 @@ namespace TestModule
         }
 
         #endregion MODLOG
-
-        public Task BindWelcomeMessage(ICommandContext Context, GuildQueryItem roletoadd)
-        {
-            BoundItems.Add(roletoadd.DefaultChannel.GuildId, roletoadd);
-            var Log = new LogMessage(LogSeverity.Info, "Greetings", $"Created a Join Event listener using the channel `{roletoadd.DefaultChannel.Name}` located in guild `{roletoadd.DefaultChannel.Guild.Name}`. Using Welcome message: {roletoadd.WelcomeMessage}");//debuglul
-            Writer.WriteEntry(Log);
-            return Task.Delay(0);
-        }
 
         #region TRASHCAN
 
