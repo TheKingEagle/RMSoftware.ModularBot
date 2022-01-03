@@ -41,7 +41,7 @@ namespace ModularBOT.Component
             ServiceProvider = _serviceProvider;
         }
 
-        public async Task<bool> CheckUpdate(bool PrereleaseChannel)
+        public async Task<(bool updateAvailable,string channel)> CheckUpdate(bool PrereleaseChannel)
         {
             //download json
             try
@@ -68,15 +68,16 @@ namespace ModularBOT.Component
 
                     if (!PrereleaseChannel && Assembly.GetExecutingAssembly().GetName().Version.Revision < UpdateInfo.RELEASE)
                     {
-                       return true;
+                       return (true,"RELEASE");
                     }
                     if (PrereleaseChannel && Assembly.GetExecutingAssembly().GetName().Version.Revision < Math.Max(UpdateInfo.RELEASE,UpdateInfo.PRERELE))
                     {
-                        return true;
+                        string res = UpdateInfo.RELEASE > UpdateInfo.PRERELE ? "RELEASE" : "INDEV";
+                        return (true,res);
                     }
                 }
                 
-                return false;
+                return (false,"INDEV");
             }
             catch (Exception ex )
             {
