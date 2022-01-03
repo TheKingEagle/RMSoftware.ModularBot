@@ -298,10 +298,10 @@ namespace ModularBOT.Component
                     {
                         serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
                         bool pre = serviceProvider.GetRequiredService<Configuration>().UseInDevChannel ?? false;//assume stable
-                        bool availableUpdates = Updater.CheckUpdate(pre).GetAwaiter().GetResult();
-                        if (availableUpdates)
+                        (bool result, string channel) availableUpdates = Updater.CheckUpdate(pre).GetAwaiter().GetResult();
+                        if (availableUpdates.result)
                         {
-                            string verdata = pre ? Updater.UpdateInfo.PREVERS : Updater.UpdateInfo.VERSION;
+                            string verdata = (availableUpdates.channel == "INDEV") ? Updater.UpdateInfo.PREVERS : Updater.UpdateInfo.VERSION;
                             EmbedBuilder builder = new EmbedBuilder();
                             builder.WithAuthor(Client.CurrentUser);
                             builder.WithTitle("UPDATE AVAILABLE");
@@ -309,7 +309,7 @@ namespace ModularBOT.Component
                             builder.WithDescription("A new version is available for download! From the console, use the `update` command to download and install.");
                             builder.AddField("⚠ Installed", $"`v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)}`", true);
                             builder.AddField("✅ Latest", $"`v{verdata}`", true);
-                            builder.AddField("📂 Updates Channel", $"`{(pre ? "INDEV":"RELEASE")}`", true);
+                            builder.AddField("📂 Updates Channel", $"`{availableUpdates.channel}`", true);
                             builder.WithColor(new Color(0, 255, 60));
                             builder.WithFooter("ModularBOT • Core");
                             ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
