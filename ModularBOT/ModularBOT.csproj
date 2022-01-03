@@ -344,7 +344,6 @@
     <Compile Include="Component\CoreScript.cs" />
     <Compile Include="Component\CustomCommandManager.cs" />
     <Compile Include="Component\DiscordNET.cs" />
-    <Compile Include="Component\SetupWizard.cs" />
     <Compile Include="Component\UpdateManager.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Entity\GuildCommand.cs" />

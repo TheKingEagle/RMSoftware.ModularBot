@@ -99,7 +99,6 @@ namespace ModularBOT
     public class ConfigurationManager
     {
         public Configuration CurrentConfig;
-        internal SetupWizard setup;
         internal bool Deleted = false;
         private List<ConfigEntity> _GuildConfigEntities = new List<ConfigEntity>();
         private List<ConfigEntity> _ModularCnfgEntities = new List<ConfigEntity>();
@@ -127,7 +126,6 @@ namespace ModularBOT
         public ConfigurationManager(string jsonFilename, ref ConsoleIO consoleIO)
         {
             FileName = jsonFilename;
-            setup = new SetupWizard();
             if(File.Exists(jsonFilename))
             {
                 using (StreamReader sr = new StreamReader(jsonFilename))
