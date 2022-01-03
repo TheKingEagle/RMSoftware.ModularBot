@@ -23,7 +23,7 @@ namespace ModularBOT.Component.ConsoleScreens
         string UpdateTitle = "System Update";
         public string UPDATERLOC = "";
         public string UPDATEDVER = "";
-        bool UpdateAvailable = false;
+        (bool available, string channel) updresult = (false,"RELEASE");
         bool pr = false;
         string ErrorDeet = "";
         DiscordNET disnet;
@@ -55,9 +55,9 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 if (currentconfig.UseInDevChannel.HasValue)
                 {
-                    UpdateAvailable = dnet.Updater.CheckUpdate(true).GetAwaiter().GetResult();
+                    updresult = dnet.Updater.CheckUpdate(currentconfig.UseInDevChannel.Value).GetAwaiter().GetResult();
 
-                    if (UpdateAvailable)
+                    if (updresult.available)
                     {
                         u = dnet.Updater.UpdateInfo;
 
@@ -65,11 +65,11 @@ namespace ModularBOT.Component.ConsoleScreens
                     }
                     if (u != null)
                     {
-                        UpdateVersion = currentconfig.UseInDevChannel.Value ? u.PREVERS : u.VERSION;
+                        UpdateVersion = (updresult.channel == "INDEV") ? u.PREVERS : u.VERSION;
                         Meta = "Software Update Available!";
                         MetaFontColor = ConsoleColor.Green;
-                        UpdateVersion = currentconfig.UseInDevChannel.Value ? u.PREVERS : u.VERSION;
-                        UpdateTitle = currentconfig.UseInDevChannel.Value ? u.BTITLE : u.ATITLE;
+                        UpdateVersion = (updresult.channel == "INDEV") ? u.PREVERS : u.VERSION;
+                        UpdateTitle = (updresult.channel == "INDEV") ? u.BTITLE : u.ATITLE;
                     }
                 }
             }
@@ -84,7 +84,7 @@ namespace ModularBOT.Component.ConsoleScreens
         public override bool ProcessInput(ConsoleKeyInfo keyinfo)
         {
 
-            if (UpdateAvailable)
+            if (updresult.available)
             {
                 if (updateStep == 0)
                 {
@@ -92,14 +92,14 @@ namespace ModularBOT.Component.ConsoleScreens
                     {
                         //run thread
                         WriteFooter("Downloading... Please wait");
-                        Task.Run(() => DownloadUpdate(pr ? u.PREPAKG : u.PACKAGE, $"updater-{(pr ? u.PREVERS : u.VERSION)}.exe"));
+                        Task.Run(() => DownloadUpdate(updresult.channel == "INDEV" ? u.PREPAKG : u.PACKAGE, $"updater-{(updresult.channel == "INDEV" ? u.PREVERS : u.VERSION)}.exe"));
                         SpinWait.SpinUntil(() => DownloadFinished);
                         if(updateStep != -1)
                         {
                             updateStep = 1;
                             RenderScreen();
-                            UPDATERLOC = $"updater-{ (pr ? u.PREVERS : u.VERSION)}.exe";
-                            UPDATEDVER = pr ? u.PREVERS : u.VERSION;
+                            UPDATERLOC = $"updater-{ (updresult.channel == "INDEV" ? u.PREVERS : u.VERSION)}.exe";
+                            UPDATEDVER = updresult.channel == "INDEV" ? u.PREVERS : u.VERSION;
                             Thread.Sleep(2500);
                         }
                     }
@@ -148,7 +148,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 
                 UpdateScreen_WriteTitleLine(width,$"{ UpdateTitle} (v{ UpdateVersion})");
                 
-                if (!UpdateAvailable)
+                if (!updresult.available)
                 {
                     UpdateScreen_WriteBody(width,"You are already running the latest version. Check https://rms0.org?a=mbchanges for the change log.","Update Check Finished");
 
@@ -167,7 +167,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 }
                 else
                 {
-                    string summ = pr ? u.BSUMMARY : u.ASUMMARY;
+                    string summ = updresult.channel == "INDEV" ? u.BSUMMARY : u.ASUMMARY;
                     int coffset = 0;
                     if (summ.Length > 240)
                     {
@@ -188,7 +188,7 @@ namespace ModularBOT.Component.ConsoleScreens
                     Console.CursorTop = 8 + coffset;
                     Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
                     Console.Write($"Key changes:");
-                    List<string> changes = pr ? u.BCHANGES : u.ACHANGES;
+                    List<string> changes = updresult.channel == "INDEV" ? u.BCHANGES : u.ACHANGES;
                     for (int i = 0; i < 10; i++)
                     {
                         if (i > changes.Count - 1)
@@ -218,7 +218,8 @@ namespace ModularBOT.Component.ConsoleScreens
                     Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
 
                     Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write($"Update Channel: {(pr ? "INDEV" : "RELEASE")}");
+                    Console.Write($"Configured source subscription: {(pr ? "INDEV" : "RELEASE")} | Current Update Source: {updresult.channel}");
+
 
                     #region Progress Bar
 
@@ -287,7 +288,8 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.CursorTop = 10 + coffset;
                 Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
                 Console.ForegroundColor = ConsoleColor.Gray;
-                Console.Write($"Update Channel: {(pr ? "INDEV" : "RELEASE")}");
+                Console.Write($"Configured source subscription: {(pr ? "INDEV" : "RELEASE")} | Current Update Source: {updresult.channel}");
+
                 Console.ForegroundColor = ConsoleColor.Cyan;
 
                 #endregion
@@ -350,7 +352,7 @@ namespace ModularBOT.Component.ConsoleScreens
             Console.CursorTop = 10 + coffset;
             Console.CursorLeft = ((140 / 2) - (width / 2)) + 5;
             Console.ForegroundColor = ConsoleColor.Gray;
-            Console.Write($"Update Channel: {(pr ? "INDEV" : "RELEASE")}");
+            Console.Write($"Configured source subscription: {(pr ? "INDEV" : "RELEASE")} | Current Update Source: {updresult.channel}");
             Console.ForegroundColor = ConsoleColor.Cyan;
             
         }
@@ -376,13 +378,8 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 Console.CursorTop = 29;
                 Console.CursorLeft = 5;
-                Console.BackgroundColor = ConsoleColor.DarkGray;
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.Write(" \u25BA UPDATE \u25C4 "); //progress% or button 12 spaces
-                Console.BackgroundColor = ConsoleColor.DarkBlue;
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write("\u2005\u2005");
-
+                RenderButton("\u25c4 UPDATE \u25ba", 29, 5,ConsoleColor.DarkGray,ConsoleColor.Yellow);
+                Console.CursorLeft +=15;
             }
             string bar = "";
             if(val > max)
@@ -402,7 +399,11 @@ namespace ModularBOT.Component.ConsoleScreens
                 Console.CursorLeft = 5;
                 Console.BackgroundColor = ConsoleColor.DarkBlue;
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write($"{percent}% complete ".PadLeft(14,'\u2005')); //progress% or button
+                Console.Write($"{percent}% Complete\u2005".PadLeft(15,'\u2005')); //progress% or button
+                Console.CursorTop = 30;
+                Console.CursorLeft = 5;
+                Console.Write($"".PadLeft(15, '\u2005')); //clear shadow.
+                Console.CursorTop = 29;
             }
 
             for (int i = 0; i < (width-19); i++)
