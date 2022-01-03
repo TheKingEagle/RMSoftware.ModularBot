@@ -68,13 +68,21 @@ namespace ModularBOT.Component
         {
             try
             {
+                
                 SpinWait.SpinUntil(() => !ConsoleIO.ScreenBusy);
                 if (DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
                 {
                     await Context.Channel.SendMessageAsync("", false, DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                     return;
                 }
+                if (ConsoleIO.ScreenModal)
+                {
+                    await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Console Busy",
+                        "Unable to perform an automatic update. The console is displaying a dialog or screen. " +
+                        "Take care of that first, then manually run the `update` command via console.", Color.DarkRed));
 
+                    return;
+                }
                 EmbedBuilder builder = new EmbedBuilder
                 {
                     Title = "System Update"
@@ -122,28 +130,28 @@ namespace ModularBOT.Component
             }
             
         }
+        //TODO: Come up with automation for generating this.
+        //[Command("changes"), Summary("Shows what changed in this version")]
+        //public async Task CORE_ShowChanges()
+        //{
+        //    EmbedBuilder eb = new EmbedBuilder();
 
-        [Command("changes"), Summary("Shows what changed in this version")]
-        public async Task CORE_ShowChanges()
-        {
-            EmbedBuilder eb = new EmbedBuilder();
-
-            eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
-            eb.WithDescription("This version may not be compatible with pre-existing scripts.");
-            eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT System Update [BETA]",
-                $"• REWRITE: CoreScript now implements a modular function list.\r\n" +
-                $"• RENAMED: `BOTSTATUS` to `TITLE`\r\n" +
-                $"• FIX: Proper Error handling for misconfiguration`\r\n" +
-                $"• ADD: `config.reset` to console commands\r\n" +
-                $"• FIX: KillScreen stacktrace malformed\r\n" +
-                $"• CHANGE: Startup.CORE now supports the same commands as a standard CoreScript call.\r\n" +
-                $"• SOURCE: Refactoring/TODOs");
+        //    eb.WithAuthor("What's New", Client.CurrentUser.GetAvatarUrl(), "");
+        //    eb.WithDescription("This version may not be compatible with pre-existing scripts.");
+        //    eb.AddField($"v{Assembly.GetExecutingAssembly().GetName().Version.ToString(4)} ModularBOT System Update [BETA]",
+        //        $"• REWRITE: CoreScript now implements a modular function list.\r\n" +
+        //        $"• RENAMED: `BOTSTATUS` to `TITLE`\r\n" +
+        //        $"• FIX: Proper Error handling for misconfiguration`\r\n" +
+        //        $"• ADD: `config.reset` to console commands\r\n" +
+        //        $"• FIX: KillScreen stacktrace malformed\r\n" +
+        //        $"• CHANGE: Startup.CORE now supports the same commands as a standard CoreScript call.\r\n" +
+        //        $"• SOURCE: Refactoring/TODOs");
 
 
-            eb.WithFooter("ModularBOT • Core");
-            eb.Color = Color.DarkBlue;
-            await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build());
-        }
+        //    eb.WithFooter("ModularBOT • Core");
+        //    eb.Color = Color.DarkBlue;
+        //    await Context.Channel.SendMessageAsync("**Full version history/change log: http://rms0.org?a=mbChanges**", false, eb.Build());
+        //}
 
         #region Command Management
         [Command("addcmd"),Summary("Add a command to your bot. If you run this via DM, it will create a global command. (NOTE: Creating a global commands requires AccessLevels.Administrator)"), Remarks("AccessLevels.CommandManager")]
