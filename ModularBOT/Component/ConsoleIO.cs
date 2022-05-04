@@ -55,7 +55,7 @@ namespace ModularBOT.Component
         public static ConsoleScreen ActiveScreen { get; set; }
         public List<ConsoleCommand> ConsoleCommands { get; internal set; } = new List<ConsoleCommand>();
 
-        public LogEntry LatestEntry { get; set; }
+        public string LatestEntry { get; set; }
         #endregion
 
         #region PRIVATE Methods
@@ -196,7 +196,7 @@ namespace ModularBOT.Component
                     {
                         throw new Exception($"SYSTEM STOP -- Source-triggered crash. Msg: {qitem.LogMessage.Message}");
                     }
-                    LatestEntry = qitem;
+                    LatestEntry = qitem.LogMessage.ToString();
                     LogMessage message = qitem.LogMessage;              //Entry's log message data.
                     
                     ConsoleColor? Entrycolor = qitem.EntryColor;        //left margin color
@@ -1063,6 +1063,11 @@ namespace ModularBOT.Component
             }
             //---------------start modal---------------
             NGScreen.ActiveScreen = true;
+            ConsoleScreen lastScreen = null;
+            if(ActiveScreen != null)
+            {
+                lastScreen = ActiveScreen;
+            }
             ActiveScreen = NGScreen;
             NGScreen.RenderScreen();
             while (true)
@@ -1072,7 +1077,7 @@ namespace ModularBOT.Component
                     break;
                 }
             }
-            NGScreen.ActiveScreen = false; ActiveScreen = null;
+            NGScreen.ActiveScreen = false; ActiveScreen = lastScreen;
             //----------------End modal----------------
             if(FromLog)
             {

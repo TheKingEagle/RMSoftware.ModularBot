@@ -28,6 +28,8 @@ namespace ModularBOT.Component
         DiscordNET DiscordNet { get; set; }
         DiscordNET _discordNet = null;//used purely for updater
 
+        private static bool cio_debug = false;
+
         public CoreModule(DiscordShardedClient client, CommandService cmdservice, ConsoleIO consoleIO, DiscordNET dnet)
         {
             if(client.LoginState != LoginState.LoggedIn)
@@ -1479,6 +1481,15 @@ namespace ModularBOT.Component
                 await ReplyAsync("", false, DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                 return;
             }
+            ulong pgid = 0;
+
+            if (Context.Guild != null)
+            {
+                pgid = Context.Guild.Id;
+            }
+            var pg = await Context.Client.GetGuildAsync(pgid);
+            GuildObject pobj = DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == pgid);
+            string prefix = pobj?.CommandPrefix ?? DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             EmbedBuilder b = new EmbedBuilder
             {
                 Title = "ConsoleIO Statistics",
@@ -1496,12 +1507,43 @@ namespace ModularBOT.Component
             b.AddField("Is Screen Resetting?", ConsoleIO.ScreenBusy);
             b.AddField("Is screen Active/writing?", ConsoleIO.Writing);
             b.AddField("Was input canceled?", DiscordNet.InputCanceled);
-            b.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry.LogMessage.ToString()}`");
+            b.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry}`");
             b.AddField("Active Modal", $"`{ConsoleIO.ActiveScreen?.Title??"NONE"}`");
+
+            b.WithFooter($"⏺ Polling console session. Use {prefix}ciostop to stop.");
             var msg = await ReplyAsync("", false, b.Build());
-            for (int i = 1; i < 5; i++)
+            
+            cio_debug = true;
+            while (true)
             {
-                await Task.Delay(1000);
+                if (!cio_debug || Program.ShutdownCalled)
+                {
+                    await Task.Delay(2000);
+                    EmbedBuilder bef = new EmbedBuilder
+                    {
+                        Title = "ConsoleIO Statistics",
+                        Author = new EmbedAuthorBuilder
+                        {
+                            IconUrl = Client.CurrentUser.GetAvatarUrl(ImageFormat.Auto, 128),
+                            Name = Client.CurrentUser.Username + "#" + Client.CurrentUser.Discriminator
+
+                        },
+                        Color = Color.Orange,
+                        Description = $"Current `ConsoleIO` Class statistics Debugging information (Updated `{DateTime.Now}`)"
+                    };
+                    bef.AddField("Backlog Count", ConsoleIO.Backlog.Count, true);
+                    bef.AddField("Current Output Count", ConsoleIO.LogEntriesBuffer.Count, true);
+                    bef.AddField("Is there an active Modal Dialog?", ConsoleIO.ScreenModal);
+                    bef.AddField("Is Screen Resetting?", ConsoleIO.ScreenBusy);
+                    bef.AddField("Is screen Active/writing?", ConsoleIO.Writing);
+                    bef.AddField("Was input canceled?", DiscordNet.InputCanceled);
+                    bef.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry}`");
+                    bef.AddField("Active Modal", $"`{ConsoleIO.ActiveScreen?.Title ?? "NONE"}`");
+                    bef.WithFooter("⏹ Polling stopped");
+                    await msg.ModifyAsync(m => m.Embed = bef.Build());
+                    break;
+                }
+                await Task.Delay(2000);
                 EmbedBuilder be = new EmbedBuilder
                 {
                     Title = "ConsoleIO Statistics",
@@ -1512,7 +1554,7 @@ namespace ModularBOT.Component
 
                     },
                     Color = Color.Orange,
-                    Description = $"Current `ConsoleIO` Class statistics Debugging information (Update `{i}`)"
+                    Description = $"Current `ConsoleIO` Class statistics Debugging information (Updated `{DateTime.Now}`)"
                 };
                 be.AddField("Backlog Count", ConsoleIO.Backlog.Count,true);
                 be.AddField("Current Output Count", ConsoleIO.LogEntriesBuffer.Count, true);
@@ -1520,10 +1562,19 @@ namespace ModularBOT.Component
                 be.AddField("Is Screen Resetting?", ConsoleIO.ScreenBusy);
                 be.AddField("Is screen Active/writing?", ConsoleIO.Writing);
                 be.AddField("Was input canceled?", DiscordNet.InputCanceled);
-                be.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry.LogMessage.ToString()}`");
+                be.AddField("Last Logged entry", $"`{ConsoleIO.LatestEntry}`");
                 be.AddField("Active Modal", $"`{ConsoleIO.ActiveScreen?.Title ?? "NONE"}`");
+                be.WithFooter($"⏺ Polling console session. Use {prefix}ciostop to stop.");
                 await msg.ModifyAsync(m => m.Embed = be.Build());
             }
+        }
+
+        [Command("ciostop")]
+        public async Task BOT_CioStop()
+        {
+            cio_debug = false;
+            await Task.Delay(1);
+            return;
         }
 
         [Command("Shards")]
