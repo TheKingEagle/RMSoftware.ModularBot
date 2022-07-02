@@ -326,7 +326,7 @@
     <Compile Include="Component\CSFunctions\CSFRoleGrantUser.cs" />
     <Compile Include="Component\CSFunctions\CSFRoleGrant.cs" />
     <Compile Include="Component\CSFunctions\CSFEcho.cs" />
-    <Compile Include="Component\ModuleProperties.cs" />
+    <Compile Include="Component\ModuleManager.cs" />
     <Compile Include="Component\OS_SystemInfo.cs" />
     <Compile Include="Component\PermissionManagement.cs" />
     <Compile Include="Component\SystemVariables\BotInstanceVars.cs" />
