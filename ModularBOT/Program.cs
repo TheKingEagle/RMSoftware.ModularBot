@@ -166,7 +166,7 @@ namespace ModularBOT
         {
             allDone.Set();
             var cli = ping.EndAccept(ar);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "ICMP", "Accepted client connection: "+ cli.RemoteEndPoint.ToString()));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "ICMP", "Accepted client connection: "+ cli.RemoteEndPoint.ToString()));
         }
 
         private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
