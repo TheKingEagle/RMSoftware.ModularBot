@@ -122,12 +122,12 @@ namespace ModularBOT
                     ping.Listen(1);
                     while (!ShutdownCalled)
                     {
-                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "PING", "Waiting for more connections. " + ping.LocalEndPoint));
+                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "PING", "Waiting for more connections. " + ping.LocalEndPoint));
 
                         allDone.Reset();
                         ping.BeginAccept(new AsyncCallback(icMPAccept), ping);
                         allDone.WaitOne();
-                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "PING", "End loop " + ping.LocalEndPoint));
+                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "PING", "End loop " + ping.LocalEndPoint));
 
                     }
                 });
