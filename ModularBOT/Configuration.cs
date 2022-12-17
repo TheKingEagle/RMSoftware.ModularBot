@@ -22,6 +22,8 @@ namespace ModularBOT
 
         public int ShardCount { get; set; }
 
+        public int? ICMPPort { get; set; }
+
         public string CommandPrefix { get; set; }
 
         public ulong LogChannel { get; set; }
@@ -41,14 +43,15 @@ namespace ModularBOT
         public bool? CheckForUpdates { get; set; }
 
         public bool? UseInDevChannel { get; set; }
-
+        
+        public bool? RegisterManagementOnJoin { get; set; }
+        
         public LogSeverity DiscordEventLogLevel { get; set; }
 
         public ConsoleColor ConsoleBackgroundColor { get; set; }
 
         public ConsoleColor ConsoleForegroundColor { get; set; }
 
-        public bool? RegisterManagementOnJoin { get; set; }
 
         public Configuration()
         {

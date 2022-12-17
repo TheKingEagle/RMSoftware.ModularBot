@@ -10,6 +10,8 @@ using Discord;
 using System.IO;
 using System.Runtime.InteropServices;
 using ModularBOT.Component.ConsoleCommands;
+using System.Net;
+using System.Net.Sockets;
 namespace ModularBOT
 {
     class Program
@@ -24,7 +26,8 @@ namespace ModularBOT
         private static ConsoleIO consoleIO;
         private static bool recoveredFromCrash = false;
         private delegate bool ConsoleCtrlHandlerDelegate(int sig);
-
+        private static Socket ping = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        public static ManualResetEvent allDone = new ManualResetEvent(false);
         [DllImport("Kernel32")]
         private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandlerDelegate handler, bool add);
 
@@ -109,7 +112,26 @@ namespace ModularBOT
 
             Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested,ref recoveredFromCrash));//Discord.NET thread
             Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord.InputCanceled,ref discord));//Console reader thread;
-           
+            if (configMGR.CurrentConfig.ICMPPort.HasValue && configMGR.CurrentConfig.ICMPPort.Value > 0)
+            {
+                Task s = Task.Run(() =>
+                {
+                    
+                    ping.Bind(new IPEndPoint(IPAddress.Any, configMGR.CurrentConfig.ICMPPort.Value));
+                    consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "PING", "Listening for connection on " + ping.LocalEndPoint));
+                    ping.Listen(1);
+                    while (!ShutdownCalled)
+                    {
+                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "PING", "Waiting for more connections. " + ping.LocalEndPoint));
+
+                        allDone.Reset();
+                        ping.BeginAccept(new AsyncCallback(icMPAccept), ping);
+                        allDone.WaitOne();
+                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "PING", "End loop " + ping.LocalEndPoint));
+
+                    }
+                });
+            }
             SpinWait.SpinUntil(() => ShutdownCalled);//HOLD THREAD
             if (RestartRequested)
             {
@@ -138,6 +160,13 @@ namespace ModularBOT
 
             }
             return 0x000;//ok;
+        }
+
+        private static void icMPAccept(IAsyncResult ar)
+        {
+            allDone.Set();
+            var cli = ping.EndAccept(ar);
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Info, "ICMP", "Accepted client connection: "+ cli.RemoteEndPoint.ToString()));
         }
 
         private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)

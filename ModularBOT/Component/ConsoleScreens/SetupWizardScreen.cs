@@ -61,7 +61,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 if (!Debug)
                 {
                     if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.UseInDevChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
-                            && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath) && appConfig.RegisterManagementOnJoin.HasValue)
+                            && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath) && appConfig.RegisterManagementOnJoin.HasValue && appConfig.ICMPPort.HasValue)
                     {
                         return false;//if every critical thing is set... continue.
                     }
@@ -76,7 +76,8 @@ namespace ModularBOT.Component.ConsoleScreens
                         if (!appConfig.RegisterManagementOnJoin.HasValue) Steps.Add(5);
                         if (string.IsNullOrWhiteSpace(appConfig.LogoPath)) Steps.Add(6);
                         if (!appConfig.CheckForUpdates.HasValue || !appConfig.UseInDevChannel.HasValue) Steps.Add(7);
-                        Steps.Add(8);//outro;
+                        if (!appConfig.ICMPPort.HasValue) Steps.Add(8);
+                        Steps.Add(9);//outro;
                         ProgressMax = Steps.Count;
                         return true;
                     }
@@ -106,6 +107,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 case (6): return Input_Step_6(keyinfo);
                 case (7): return Input_Step_7(keyinfo); 
                 case (8): return Input_Step_8(keyinfo);
+                case (9): return Input_Step_9(keyinfo);
                 default:
                     return Input_Step_8(keyinfo);
             }
@@ -127,11 +129,12 @@ namespace ModularBOT.Component.ConsoleScreens
                 case (6): Render_Step_6(); break;
                 case (7): Render_Step_7(); break;
                 case (8): Render_Step_8(); break;
+                case (9): Render_Step_9(); break;
                 default:
                     break;
             }
             
-            if (Steps[StepIndex] != 8)
+            if (Steps[StepIndex] != 9)
             {
                 RenderFooter("Press [ENTER] to Continue.");
             }
@@ -139,7 +142,7 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 RenderFooter("Press [ENTER] to Begin Setup.");
             }
-            if(Steps[StepIndex] == 8)
+            if(Steps[StepIndex] == 9)
             {
                 RenderFooter("Press [ENTER] to Start Application.");
             }
@@ -859,6 +862,154 @@ namespace ModularBOT.Component.ConsoleScreens
         }
 
         private bool Input_Step_8(ConsoleKeyInfo keyinfo)
+        {
+            int auth = 0;
+
+
+            while (true)
+            {
+                int CT = Console.CursorTop;
+                int CL = CLeft + 2;
+                RenderFooter("INPUT Requested value then press [ENTER]");
+                Console.CursorTop = CT;
+                Console.CursorLeft = CL;
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.Write("> ");
+                Console.CursorVisible = true;
+                bool errorShown = false;
+                string pass = "";
+                do
+                {
+
+                    ConsoleKeyInfo key = Console.ReadKey(true);
+                    // Backspace Should Not Work
+                    if (!char.IsControl(key.KeyChar))
+                    {
+                        if (pass.Length < 6)
+                        {
+                            pass += key.KeyChar;
+                            Console.Write(key.KeyChar);
+                            if (errorShown)
+                            {
+                                Console.CursorLeft = CL + 2;
+                                Console.CursorTop++;
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.Write("".PadRight(84, '\u2005'));
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.CursorLeft = pass.Length + CL + 2;
+                                Console.CursorTop--;
+                                errorShown = false;
+                            }
+                        }
+                        else
+                        {
+                            Console.CursorLeft = CL + 2;
+                            Console.CursorTop++;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.Write("Maximum length reached!");
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.CursorLeft = pass.Length + CL + 2;
+                            Console.CursorTop--;
+                            errorShown = true;
+                        }
+                    }
+                    else
+                    {
+                        if (key.Key == ConsoleKey.Backspace && pass.Length > 0)
+                        {
+                            pass = pass.Substring(0, (pass.Length - 1));
+                            Console.Write("\b \b");
+                            if (errorShown)
+                            {
+                                Console.CursorLeft = CL + 2;
+                                Console.CursorTop++;
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.Write("".PadRight(84, '\u2005'));
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.CursorLeft = pass.Length + CL + 2;
+                                Console.CursorTop--;
+                                errorShown = false;
+                            }
+                        }
+                        else if (key.Key == ConsoleKey.Enter)
+                        {
+                            if (errorShown)
+                            {
+                                Console.CursorLeft = CL + 2;
+                                Console.CursorTop++;
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.Write("".PadRight(84, '\u2005'));
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.CursorLeft = pass.Length + CL + 2;
+                                Console.CursorTop--;
+                                errorShown = false;
+                            }
+                            break;
+                        }
+                    }
+                } while (true);
+                
+
+                if (string.IsNullOrWhiteSpace(pass))
+                {
+                    Console.CursorLeft = CL + 2;
+                    Console.CursorVisible = false;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("You cannot leave this blank. Try again.");
+                    Thread.Sleep(1000);
+                    ClearContents();
+                    RenderContents();
+                    PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_ESCAPE, 0);
+                }
+                else
+                {
+                    if (!int.TryParse(pass, out int res))
+                    {
+                        Console.CursorLeft = CL + 2;
+                        Console.CursorVisible = false;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("Must be a valid number");
+                        Thread.Sleep(1000);
+                        ClearContents();
+                        RenderContents();
+                        PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_ESCAPE, 0);
+                    } else
+                    {
+                        if(res > 65535 || res < 0)
+                        {
+                            Console.CursorLeft = CL + 2;
+                            Console.CursorVisible = false;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.Write("Out of range.");
+                            Thread.Sleep(1000);
+                            ClearContents();
+                            RenderContents();
+                            PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_ESCAPE, 0);
+                        } else
+                        {
+
+                            if (!Debug) NewConfig.ICMPPort = res;
+                        }
+                    }
+
+
+                    break;
+                }
+
+            }
+
+            Console.CursorLeft = CLeft + 4;
+            Console.CursorTop++;
+            Console.CursorVisible = false;
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Write("ICMP port set. Moving on.");
+            Thread.Sleep(1000);
+            CheckForEnter(new ConsoleKeyInfo('\n', ConsoleKey.Enter, false, false, false));//fake key check
+            return false;
+        }
+
+        private bool Input_Step_9(ConsoleKeyInfo keyinfo)
         {
             CheckForEnter(keyinfo);
             if(keyinfo.Key == ConsoleKey.Enter)
@@ -1596,6 +1747,88 @@ namespace ModularBOT.Component.ConsoleScreens
         }
 
         private void Render_Step_8()
+        {
+            Meta = "Application Setup: ICMP";
+            UpdateProgressBar();
+            UpdateMeta(ShowProgressBar ? 4 : 3);
+            ClearContents();
+            if (Debug) WriteEntry("DEBUG: This value will not be saved.", ConsoleColor.Yellow, false);
+
+            string[] contentBlock =
+            {
+                "The program has the ability to be pinged on a port of your choice. This is useful to keep track of bot uptime remotely (Uptime Kuma).",
+                "Please keep the following in mind:",
+                "\u2005",
+                "\u2005\u2005\u2005- This is a required configuration step.",
+                "\u2005\u2005\u2005- You can disable this feature by entering 0 as the port number.",
+                "\u2005\u2005\u2005- It is *HIGHLY* advised to only allow local connections to ping this port.",
+                "\u2005\u2005\u2005- It is *HIGHLY* advised to firewall the port to only IP addresses you trust.",
+                "\u2005\u2005\u2005- Otherwise, this may lead to ping flood (DDoS) if you're not careful.",
+                "\u2005\u2005\u2005- This feature is intended for use for services such as Uptime Kuma.",
+                "\u2005\u2005\u2005- This feature is PURELY for ping. No data or control is possible through this port",
+                "\u2005",
+                "Please enter a port (Between 0 and 65535). Please be mindful of other ports being used.",
+                "\u2005"
+            };
+
+            int maxSize = contentBlock.OrderByDescending(s => s.Length).First().Length + 4;
+
+            int CL = (WindowWidth / 2) - (maxSize / 2);
+            CLeft = CL;
+            Console.CursorTop++;
+            if (!Debug) Console.CursorTop++;//do it again to keep it padded by two
+            Console.BackgroundColor = ConsoleColor.DarkBlue;
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.CursorLeft = CL;
+            Console.Write("\u250c{0}\u2510", "".PadRight(maxSize - 2, '\u2500'));//TOP UI
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            for (int i = 0; i < contentBlock.Length; i++)
+            {
+                if (i < 4)
+                {
+                    Console.Write("\u2502 {0} \u2502", contentBlock[i].PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
+                }
+                else
+                {
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write("\u2502 ");
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+
+                    if (i > 3 && i < 7)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
+                    else if (i > 6 && i < 11)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    Console.Write(contentBlock[i].PadRight(maxSize - 4, '\u2005'));
+                    Console.BackgroundColor = ConsoleColor.DarkBlue;
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write(" \u2502");
+                }
+                Console.CursorLeft = CL;
+                Console.CursorTop++;
+            }
+
+            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2502 {0} \u2502", "".PadRight(maxSize - 4, '\u2005'));//CONTENT FILL UI
+            Console.CursorLeft = CL;
+            Console.CursorTop++;
+            Console.Write("\u2514{0}\u2518", "".PadRight(maxSize - 2, '\u2500'));//BOTTOM UI
+            Console.CursorLeft = CL;
+            Console.CursorTop -= 2;
+        }
+
+        private void Render_Step_9()
         {
             Meta = "Setup Complete!";
             UpdateProgressBar();
