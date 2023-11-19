@@ -136,17 +136,6 @@ namespace ModularBOT.Component
                             "The server responded with error 401. Verify your token is correct, and try again.", false,
                             ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_UNAUTHORIZED").GetAwaiter().GetResult();
                     }
-                    if (httex.DiscordCode == 4007)
-                    {
-                        RestartRequested = consoleIO.ShowKillScreen("Invalid Client ID", "The server responded with error 4007.", true,
-                            ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_INVALID_ID").GetAwaiter().GetResult();
-                    }
-                    if (httex.DiscordCode == 5001)
-                    {
-                        RestartRequested = consoleIO.ShowKillScreen("guild timed out", "The server responded with error 5001.", true,
-                            ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_TIMED_OUT").GetAwaiter().GetResult();
-                    }
-
                     else
                     {
                         RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.",
@@ -344,7 +333,7 @@ namespace ModularBOT.Component
             }
             catch (HttpException httx)
             {
-                if (httx.DiscordCode == 50001)
+                if (httx.DiscordCode == DiscordErrorCode.MissingPermissions)
                 {
                     serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "CRITICAL", "The bot was unable to perform needed operations. Please make sure it has the following permissions: Read messages, Read message history, Send Messages, Embed Links, Attach Files. (Calculated: 117760)", httx));
                 }

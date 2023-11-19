@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.Remoting.Channels;
     using System.Threading.Tasks;
 
     using Discord.Commands;
@@ -263,6 +264,14 @@
             }
         }
 
+        private async Task HandleReactionAsync(Cacheable<IUserMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2, SocketReaction reaction)
+        {
+            
+            var channel = await cacheable2.GetOrDownloadAsync() as ISocketMessageChannel;
+            await Task.Run(() => OffloadReactionAsync(cacheable1, channel, reaction));
+            
+        }
+
         /// <summary>
         /// Handles messages for NextMessageAsync
         /// </summary>
@@ -290,26 +299,8 @@
             }
         }
 
-        /// <summary>
-        /// Handles a message reaction
-        /// </summary>
-        /// <param name="message">
-        /// The message.
-        /// </param>
-        /// <param name="channel">
-        /// The channel.
-        /// </param>
-        /// <param name="reaction">
-        /// The reaction.
-        /// </param>
-        /// <returns>
-        /// The <see cref="Task"/>.
-        /// </returns>
-        private Task HandleReactionAsync(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
-        {
-            Task.Run(() => OffloadReactionAsync(message,channel,reaction));
-            return Task.Delay(0);
-        }
+
+
 
         public async Task OffloadReactionAsync(Cacheable<IUserMessage,ulong> message, ISocketMessageChannel channel, SocketReaction reaction)
         {

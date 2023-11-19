@@ -884,6 +884,162 @@ namespace TestModule
             }
         }
 
+        private Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2)
+        {
+            throw new NotImplementedException();
+        }
+
+        private Task ShardedClient_ReactionRemoved(Cacheable<IUserMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2, SocketReaction reaction)
+        {
+            throw new NotImplementedException();
+        }
+
+        private async Task ShardedClient_ReactionAdded(Cacheable<IUserMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2, SocketReaction reaction)
+        {
+            var arg1 = await cacheable1.GetOrDownloadAsync();
+            var arg2 = await cacheable2.GetOrDownloadAsync() as ISocketMessageChannel;
+            var arg3 = reaction;
+            if (reaction.UserId == ShardedClient.CurrentUser.Id)
+            {
+                return;//ignore own reactions :)
+            }
+            Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Reaction Event: Reaction Added!"));
+            SocketGuildChannel STC = null;
+            if (arg2 is SocketGuildChannel)
+            {
+                STC = arg2 as SocketGuildChannel;
+            }
+            else
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Channel wasn't a guild channel... RIP"));
+                return;
+            }
+
+            await Dsc_trashcanCheck(STC, cacheable1, arg2, arg3);
+
+            #region Starboards
+
+            if (arg3.Emote.ToString() == "\u2B50" || arg3.Emote.ToString() == "\uD83C\uDF1F") //STAR or GLOWING STAR
+            {
+                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
+
+                if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
+                {
+
+                    if (arg2.Id != binding.ChannelID)
+                    {
+                        Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "SBBinding found. NOT Starboard embed."));
+                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.StarredMessageID == arg1.Id);
+                        if (sbmessage != null)
+                        {
+                            //message is already in the starboard channel Modify the starcount.
+                            sbmessage.StarCount++;
+                            binding.StarboardData[binding.StarboardData.IndexOf(sbmessage)].StarCount = sbmessage.StarCount;
+                            SBBindings[STC.Guild.Id] = binding;
+                            var StarredMessage = await STC.Guild.GetTextChannel(sbmessage.StarredMsgChannelID)
+                                .GetMessageAsync(sbmessage.StarredMessageID);
+
+                            string nick = (StarredMessage.Author as IGuildUser).Nickname;
+                            string sname = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator;
+                            if (string.IsNullOrWhiteSpace(nick))
+                            {
+                                nick = sname;
+                            }
+                            string name = binding.UseAlias ? nick : sname;
+                            //modify the starboard message
+
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, sbmessage.StarCount, StarredMessage);
+                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is IUserMessage sum)
+                            {
+                                await sum.ModifyAsync(
+                                    x =>
+                                    {
+                                        x.Content = starheader;
+                                        x.Embed = SBEntryEmbed;
+                                    }
+                                    );
+                            }
+                            else //SUM was NULL! Create the new message instead.
+                            {
+                                SBEntryEmbed = GenerateStarBoardEmbed(out starheader, binding.UseAlias, sbmessage.StarCount, StarredMessage);
+                                var channel = STC.Guild.GetTextChannel(binding.ChannelID);
+                                var newSBMessage = await channel.SendMessageAsync(starheader, false, SBEntryEmbed);
+                            }
+                        }
+
+                        if (sbmessage == null)
+                        {
+                            //Otherwise, create a new entry
+                            var StarredMessage = arg1;
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, 1, StarredMessage);
+                            var channel = STC.Guild.GetTextChannel(binding.ChannelID);
+                            var newSBMessage = await channel.SendMessageAsync(starheader, false, SBEntryEmbed);
+
+                            await newSBMessage.AddReactionAsync(new Emoji("\u2B50"));
+
+                            sbmessage = new SBEntry()
+                            {
+                                SbMessageID = newSBMessage.Id,
+                                StarredMessageID = arg1.Id,
+                                StarCount = 1,
+                                StarredMsgChannelID = arg1.Channel.Id
+                            };
+                            binding.StarboardData.Add(sbmessage);
+                            SBBindings[STC.Guild.Id] = binding;
+
+                        }
+
+
+                    } //Starred message IS NOT from Starboard channel.
+
+                    if (arg2.Id == binding.ChannelID)
+                    {
+
+                        Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. Starboard embed."));
+                        var reactionMsg = arg1;
+                        var ebsbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == reactionMsg.Id);
+                        if (ebsbmessage != null)
+                        {
+                            //message is already in the starboard data.
+                            ebsbmessage.StarCount++;
+                            binding.StarboardData[binding.StarboardData.IndexOf(ebsbmessage)] = ebsbmessage;
+                            SBBindings[STC.Guild.Id] = binding;
+                            var StarredMessage = await STC.Guild.GetTextChannel(ebsbmessage.StarredMsgChannelID)
+                                .GetMessageAsync(ebsbmessage.StarredMessageID);
+                            //generate embed, and modify the starboard message
+                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, ebsbmessage.StarCount, StarredMessage);
+
+                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) is IUserMessage sum)
+                            {
+                                await sum.ModifyAsync(
+                                    x =>
+                                    {
+                                        x.Content = starheader;
+                                        x.Embed = SBEntryEmbed;
+                                    }
+                                    );
+                            }
+                            else //SUM was NULL! Create the new message instead.
+                            {
+                                SBEntryEmbed = GenerateStarBoardEmbed(out starheader, binding.UseAlias, 1, StarredMessage);
+                                var channel = STC.Guild.GetTextChannel(binding.ChannelID);
+                                var newSBMessage = await channel.SendMessageAsync(starheader, false, SBEntryEmbed);
+
+                            }
+                        }
+
+                    } //Starred message IS from Starboard channel. 
+
+                    using (StreamWriter sw = new StreamWriter(StarboardBindingsConfig))
+                    {
+                        sw.WriteLine(JsonConvert.SerializeObject(SBBindings, Formatting.Indented));
+                    }
+                }
+            }
+
+            #endregion
+        }
+
         #region ShardedClient EVENTS
 
         private async Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> message, ISocketMessageChannel channel)
@@ -1056,151 +1212,6 @@ namespace TestModule
             {
                 Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "TMSWelcome", $"Guild User {arg.Username} of {arg.Guild.Name} uses Join... It did nothing at all (Not bound!)"));
             }
-        }
-
-        private async Task ShardedClient_ReactionAdded(Cacheable<IUserMessage, ulong> arg1,
-            ISocketMessageChannel arg2, SocketReaction arg3)
-        {
-            if(arg3.UserId == ShardedClient.CurrentUser.Id)
-            {
-                return;//ignore own reactions :)
-            }
-            Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Reaction Event: Reaction Added!"));
-            SocketGuildChannel STC = null;
-            if (arg2 is SocketGuildChannel)
-            {
-                STC = arg2 as SocketGuildChannel;
-            }
-            else
-            {
-                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Reaction", "Channel wasn't a guild channel... RIP"));
-                return;
-            }
-
-            await Dsc_trashcanCheck(STC, arg1, arg2, arg3);
-
-            #region Starboards
-
-            if (arg3.Emote.ToString() == "\u2B50" || arg3.Emote.ToString() == "\uD83C\uDF1F") //STAR or GLOWING STAR
-            {
-                Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "Reaction was a STAR!"));
-
-                if (SBBindings.TryGetValue(STC.Guild.Id, out StarboardBinding binding))
-                {
-
-                    if (arg2.Id != binding.ChannelID) 
-                    {
-                        Writer.WriteEntry(new LogMessage(LogSeverity.Debug, "Starboard", "SBBinding found. NOT Starboard embed."));
-                        var sbmessage = binding.StarboardData.FirstOrDefault(x => x.StarredMessageID == arg1.Id);
-                        if (sbmessage != null)
-                        {
-                            //message is already in the starboard channel Modify the starcount.
-                            sbmessage.StarCount++;
-                            binding.StarboardData[binding.StarboardData.IndexOf(sbmessage)].StarCount = sbmessage.StarCount;
-                            SBBindings[STC.Guild.Id] = binding;
-                            var StarredMessage = await STC.Guild.GetTextChannel(sbmessage.StarredMsgChannelID)
-                                .GetMessageAsync(sbmessage.StarredMessageID);
-                            
-                            string nick = (StarredMessage.Author as IGuildUser).Nickname;
-                            string sname = StarredMessage.Author.Username + "#" + StarredMessage.Author.Discriminator;
-                            if (string.IsNullOrWhiteSpace(nick))
-                            {
-                                nick = sname;
-                            }
-                            string name = binding.UseAlias ? nick : sname;
-                            //modify the starboard message
-
-                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, sbmessage.StarCount, StarredMessage);
-                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(sbmessage.SbMessageID) is IUserMessage sum)
-                            {
-                                await sum.ModifyAsync(
-                                    x =>
-                                    {
-                                        x.Content = starheader;
-                                        x.Embed = SBEntryEmbed;
-                                    }
-                                    );
-                            }
-                            else //SUM was NULL! Create the new message instead.
-                            {
-                                SBEntryEmbed = GenerateStarBoardEmbed(out starheader, binding.UseAlias, sbmessage.StarCount, StarredMessage);
-                                var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                                var newSBMessage = await channel.SendMessageAsync(starheader,false,SBEntryEmbed);
-                            }
-                        }
-
-                        if (sbmessage == null)
-                        {
-                            //Otherwise, create a new entry
-                            var StarredMessage = await arg1.GetOrDownloadAsync();
-                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, 1, StarredMessage);
-                            var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                            var newSBMessage = await channel.SendMessageAsync(starheader, false, SBEntryEmbed);
-
-                            await newSBMessage.AddReactionAsync(new Emoji("\u2B50"));
-
-                            sbmessage = new SBEntry()
-                            {
-                                SbMessageID = newSBMessage.Id,
-                                StarredMessageID = arg1.Id,
-                                StarCount = 1,
-                                StarredMsgChannelID = (await arg1.GetOrDownloadAsync()).Channel.Id
-                            };
-                            binding.StarboardData.Add(sbmessage);
-                            SBBindings[STC.Guild.Id] = binding;
-
-                        }
-
-
-                    } //Starred message IS NOT from Starboard channel.
-
-                    if (arg2.Id == binding.ChannelID)
-                    {
-
-                        Writer.WriteEntry(new LogMessage(LogSeverity.Info, "Starboard", "SBBinding found. Starboard embed."));
-                        var reactionMsg = await arg1.GetOrDownloadAsync();
-                        var ebsbmessage = binding.StarboardData.FirstOrDefault(x => x.SbMessageID == reactionMsg.Id);
-                        if (ebsbmessage != null)
-                        {
-                            //message is already in the starboard data.
-                            ebsbmessage.StarCount++;
-                            binding.StarboardData[binding.StarboardData.IndexOf(ebsbmessage)] = ebsbmessage;
-                            SBBindings[STC.Guild.Id] = binding;
-                            var StarredMessage = await STC.Guild.GetTextChannel(ebsbmessage.StarredMsgChannelID)
-                                .GetMessageAsync(ebsbmessage.StarredMessageID);
-                            //generate embed, and modify the starboard message
-                            var SBEntryEmbed = GenerateStarBoardEmbed(out string starheader, binding.UseAlias, ebsbmessage.StarCount, StarredMessage);
-
-                            if (await STC.Guild.GetTextChannel(binding.ChannelID).GetMessageAsync(ebsbmessage.SbMessageID) is IUserMessage sum)
-                            {
-                                await sum.ModifyAsync(
-                                    x =>
-                                    {
-                                        x.Content = starheader;
-                                        x.Embed = SBEntryEmbed;
-                                    }
-                                    );
-                            }
-                            else //SUM was NULL! Create the new message instead.
-                            {
-                                SBEntryEmbed = GenerateStarBoardEmbed(out starheader, binding.UseAlias, 1, StarredMessage);
-                                var channel = STC.Guild.GetTextChannel(binding.ChannelID);
-                                var newSBMessage = await channel.SendMessageAsync(starheader, false, SBEntryEmbed);
-
-                            }
-                        }
-
-                    } //Starred message IS from Starboard channel. 
-
-                    using (StreamWriter sw = new StreamWriter(StarboardBindingsConfig))
-                    {
-                        sw.WriteLine(JsonConvert.SerializeObject(SBBindings, Formatting.Indented));
-                    }
-                }
-            }
-
-            #endregion
-
         }
 
         private async Task ShardedClient_ReactionRemoved(Cacheable<IUserMessage, ulong> arg1,

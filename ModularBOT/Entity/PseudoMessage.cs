@@ -140,7 +140,20 @@ namespace ModularBOT.Entity
 
         MessageReference IMessage.Reference => null;
 
-        IReadOnlyCollection<ISticker> IMessage.Stickers => null;
+
+        public string CleanContent => throw new NotImplementedException();
+
+        public IThreadChannel Thread => throw new NotImplementedException();
+
+        public IReadOnlyCollection<IMessageComponent> Components => throw new NotImplementedException();
+
+        IReadOnlyCollection<IStickerItem> IMessage.Stickers => throw new NotImplementedException();
+
+        public IMessageInteraction Interaction => throw new NotImplementedException();
+
+        public MessageRoleSubscriptionData RoleSubscriptionData => throw new NotImplementedException();
+
+        public MessageResolvedData ResolvedData => throw new NotImplementedException();
 
         Task IDeletable.DeleteAsync(RequestOptions options)
         {
@@ -210,6 +223,11 @@ namespace ModularBOT.Entity
         public Task CrosspostAsync(RequestOptions options = null)
         {
             throw new NotSupportedException();
+        }
+
+        public IAsyncEnumerable<IReadOnlyCollection<IUser>> GetReactionUsersAsync(IEmote emoji, int limit, RequestOptions options = null, ReactionType type = ReactionType.Normal)
+        {
+            throw new NotImplementedException();
         }
     }
 }
