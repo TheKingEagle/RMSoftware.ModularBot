@@ -70,7 +70,8 @@ namespace ModularBOT.Component
                     LogLevel = AppConfig.DiscordEventLogLevel,
                     GatewayIntents = GatewayIntents.DirectMessageReactions | GatewayIntents.DirectMessages | 
                     GatewayIntents.GuildBans | GatewayIntents.GuildMembers | GatewayIntents.GuildMessageReactions | 
-                    GatewayIntents.GuildMessages | GatewayIntents.GuildMessageTyping | GatewayIntents.GuildPresences | 
+                    GatewayIntents.GuildMessages | GatewayIntents.GuildMessageTyping | GatewayIntents.GuildPresences |
+                    GatewayIntents.MessageContent |
                     GatewayIntents.Guilds | GatewayIntents.GuildVoiceStates | GatewayIntents.GuildWebhooks,
                     // TODO: Figure out a way to automatically set this later.
                     ConnectionTimeout = 15000,
