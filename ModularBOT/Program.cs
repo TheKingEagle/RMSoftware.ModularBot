@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 using ModularBOT.Component.ConsoleCommands;
 using System.Net;
 using System.Net.Sockets;
+using Microsoft.Win32;
+
 namespace ModularBOT
 {
     class Program
@@ -31,16 +33,85 @@ namespace ModularBOT
         [DllImport("Kernel32")]
         private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandlerDelegate handler, bool add);
 
+
         private static ConsoleCtrlHandlerDelegate _consoleCtrlHandler;
+
+        static bool CheckTerminalCompatibility()
+        {
+            // Define the compatible values for DelegationConsole and DelegationTerminal.
+            string[] compatibleValues = { "{B23D10C0-E52E-411E-9D5B-C09FDF709C7D}", "{00000000-0000-0000-0000-000000000000}" };
+
+            Dictionary<string, string> terminalMapping = new Dictionary<string, string>
+            {
+                { "{2EACA947-7F5F-4CFA-BA87-8F7FBEEFBE69}", "Windows Terminal" },
+                { "{00000000-0000-0000-0000-000000000000}", "Default" },
+                { "{B23D10C0-E52E-411E-9D5B-C09FDF709C7D}", "Conhost" },
+                { "{E12CFF52-A866-4C77-9A90-F570A7AA2C6B}", "Windows Terminal" }
+            };
+
+            // Check DelegationConsole value.
+            string delegationConsoleValue = GetRegistryValue("Console\\%%Startup", "DelegationConsole");
+            if (!IsCompatibleValue(delegationConsoleValue, compatibleValues))
+            {
+                Console.WriteLine($"Incompatible Console Host Detected: {terminalMapping[delegationConsoleValue]}");
+                return false;
+            }
+
+            // Check DelegationTerminal value.
+            string delegationTerminalValue = GetRegistryValue("Console\\%%Startup", "DelegationTerminal");
+            if (!IsCompatibleValue(delegationTerminalValue, compatibleValues))
+            {
+                Console.WriteLine($"Incompatible Terminal Detected: {terminalMapping[delegationConsoleValue]}");
+                return false;
+            }
+
+            return true;
+        }
+
+        static string GetRegistryValue(string registryPath, string valueName)
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(registryPath))
+            {
+                if (key != null)
+                {
+                    object value = key.GetValue(valueName);
+                    if (value != null)
+                    {
+                        return value.ToString();
+                    }
+                }
+            }
+            return null;
+        }
+
+        static bool IsCompatibleValue(string value, string[] compatibleValues)
+        {
+            if(value == null)
+            {
+                return true;//assume compatible.
+            }
+            // Check if the value is in the list of compatible values.
+            return Array.Exists(compatibleValues, v => v.Equals(value, StringComparison.OrdinalIgnoreCase));
+        }
+
 
         /// <summary>
         /// Application Entry Point.
         /// </summary>        
         public static int Main(string[] ARGS = null)
         {
+            if (!CheckTerminalCompatibility())
+            {
+                Console.WriteLine("WARNING: The configured default terminal is not compatible with this application.");
+                Console.WriteLine("WARNING: The program may run incorrectly, or outright crash.");
+                Console.WriteLine("NOTICE: If you are running with cmd.exe or conhost, you may disregard this message.");
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+            }
+
             _consoleCtrlHandler += s =>
             {
-                if(discord!=null)
+                if (discord != null)
                 {
                     discord.Stop(ref ShutdownCalled);
                 }
@@ -52,6 +123,8 @@ namespace ModularBOT
                 AppArguments.AddRange(ARGS);
             }
             recoveredFromCrash = AppArguments.Contains("-crashed");
+
+            
             consoleIO = new ConsoleIO();
 
             #region ConsoleIO Command hooks
@@ -89,13 +162,13 @@ namespace ModularBOT
             consoleIO.ConsoleCommands.Add(new UpdateCommand());           //update
             #endregion
 
-            configMGR = new ConfigurationManager("modbot-config.cnf",ref consoleIO);
+            configMGR = new ConfigurationManager("modbot-config.cnf", ref consoleIO);
             Directory.CreateDirectory("guilds");
-            Directory.CreateDirectory("modules"); 
+            Directory.CreateDirectory("modules");
             Directory.CreateDirectory("ext");
             Directory.CreateDirectory("attachments");
             RunStartlogo();
-            
+
             consoleIO.ConsoleGUIReset(configMGR.CurrentConfig.ConsoleForegroundColor,
                 configMGR.CurrentConfig.ConsoleBackgroundColor, "Active Session");
             Task.Run(() => consoleIO.ProcessQueue());//START ConsoleIO processing.
@@ -110,13 +183,13 @@ namespace ModularBOT
 
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Main", "Application started"));
 
-            Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested,ref recoveredFromCrash));//Discord.NET thread
-            Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested,ref discord.InputCanceled,ref discord));//Console reader thread;
+            Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested, ref recoveredFromCrash));//Discord.NET thread
+            Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested, ref discord.InputCanceled, ref discord));//Console reader thread;
             if (configMGR.CurrentConfig.ICMPPort.HasValue && configMGR.CurrentConfig.ICMPPort.Value > 0)
             {
                 Task s = Task.Run(() =>
                 {
-                    
+
                     ping.Bind(new IPEndPoint(IPAddress.Any, configMGR.CurrentConfig.ICMPPort.Value));
                     consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "PING", "Listening for connection on " + ping.LocalEndPoint));
                     ping.Listen(1);
@@ -166,16 +239,16 @@ namespace ModularBOT
         {
             allDone.Set();
             var cli = ping.EndAccept(ar);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "ICMP", "Accepted client connection: "+ cli.RemoteEndPoint.ToString()));
+            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "ICMP", "Accepted client connection: " + cli.RemoteEndPoint.ToString()));
         }
 
         private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
         {
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "FirstChance", e.Exception.Message), ConsoleColor.DarkRed, true, false, true);
-            
+
             consoleIO.WriteErrorsLog(e.Exception);
         }
-        
+
         private static void RunStartlogo()
         {
             Console.CursorVisible = false;
@@ -186,7 +259,7 @@ namespace ModularBOT
                 Thread.Sleep(800);
                 try
                 {
-                    if(configMGR.CurrentConfig.LogoPath == "INTERNAL")
+                    if (configMGR.CurrentConfig.LogoPath == "INTERNAL")
                     {
                         consoleIO.ConsoleWriteImage(Properties.Resources.RMSoftwareICO);
                         Thread.Sleep(2000);
