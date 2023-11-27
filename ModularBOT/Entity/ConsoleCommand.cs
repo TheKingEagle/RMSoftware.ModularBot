@@ -8,6 +8,7 @@ using ModularBOT.Component;
 
 namespace ModularBOT.Entity
 {
+    [Obsolete("ConsoleCommand is being phased out in favor of direct interaction via Discord and the upcoming web interface.")]
     public class ConsoleCommand
     {
         public string CommandName { get; set; }
