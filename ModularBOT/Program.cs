@@ -192,7 +192,7 @@ namespace ModularBOT
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Main", "Application started"));
 
             Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested, ref recoveredFromCrash));//Discord.NET thread
-            //Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested, ref discord.InputCanceled, ref discord));//Console reader thread;
+            Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested, ref discord.InputCanceled, ref discord));//Console reader thread;
             
             SpinWait.SpinUntil(() => ShutdownCalled);//HOLD THREAD
             if (RestartRequested)
