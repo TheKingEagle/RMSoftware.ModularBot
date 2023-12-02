@@ -28,7 +28,7 @@ namespace ModularBOT
         private static ConsoleIO consoleIO;
         private static bool recoveredFromCrash = false;
         private delegate bool ConsoleCtrlHandlerDelegate(int sig);
-        private static Socket ping = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        
         public static ManualResetEvent allDone = new ManualResetEvent(false);
         [DllImport("Kernel32")]
         private static extern bool SetConsoleCtrlHandler(ConsoleCtrlHandlerDelegate handler, bool add);
@@ -176,8 +176,9 @@ namespace ModularBOT
 
             Task.Run(() =>
             {
-                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "WebPortal", "Listening on http://localhost:8080"));
-                WebPortal wp = new WebPortal(8080, "localhost");
+
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "WebPortal", $"Listening on http://localhost:{configMGR.CurrentConfig.WebPortalPort}"));
+                WebPortal wp = new WebPortal(configMGR.CurrentConfig.WebPortalPort.Value, "localhost");
 
             });
             #region DEBUG
@@ -221,13 +222,6 @@ namespace ModularBOT
 
             }
             return 0x000;//ok;
-        }
-
-        private static void icMPAccept(IAsyncResult ar)
-        {
-            allDone.Set();
-            var cli = ping.EndAccept(ar);
-            consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "ICMP", "Accepted client connection: " + cli.RemoteEndPoint.ToString()));
         }
 
         private static void CurrentDomain_FirstChanceException(object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e)
