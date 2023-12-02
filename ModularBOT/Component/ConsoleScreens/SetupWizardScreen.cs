@@ -14,7 +14,7 @@ namespace ModularBOT.Component.ConsoleScreens
     {
         private List<int> Steps = new List<int>()
         {
-            1,2,3,4,5,6,7,8
+            1,2,3,4,5,6,7,8,9
         };
         private bool Debug = false;
         private bool InitialRun = false;
@@ -61,7 +61,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 if (!Debug)
                 {
                     if (appConfig.LogChannel != 0 && appConfig.CheckForUpdates.HasValue && appConfig.UseInDevChannel.HasValue && !string.IsNullOrWhiteSpace(appConfig.CommandPrefix)
-                            && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath) && appConfig.RegisterManagementOnJoin.HasValue && appConfig.ICMPPort.HasValue)
+                            && !appConfig.CommandPrefix.Contains('`') && !string.IsNullOrWhiteSpace(appConfig.AuthToken) && !string.IsNullOrWhiteSpace(appConfig.LogoPath) && appConfig.RegisterManagementOnJoin.HasValue && appConfig.WebPortalPort.HasValue)
                     {
                         return false;//if every critical thing is set... continue.
                     }
@@ -76,7 +76,8 @@ namespace ModularBOT.Component.ConsoleScreens
                         if (!appConfig.RegisterManagementOnJoin.HasValue) Steps.Add(5);
                         if (string.IsNullOrWhiteSpace(appConfig.LogoPath)) Steps.Add(6);
                         if (!appConfig.CheckForUpdates.HasValue || !appConfig.UseInDevChannel.HasValue) Steps.Add(7);
-                        if (!appConfig.ICMPPort.HasValue) Steps.Add(8);
+                        if (!appConfig.WebPortalPort.HasValue) { Steps.Add(8); }
+
                         Steps.Add(9);//outro;
                         ProgressMax = Steps.Count;
                         return true;
@@ -109,7 +110,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 case (8): return Input_Step_8(keyinfo);
                 case (9): return Input_Step_9(keyinfo);
                 default:
-                    return Input_Step_8(keyinfo);
+                    return Input_Step_9(keyinfo);
             }
             
             //return base.ProcessInput(keyinfo);
@@ -976,7 +977,7 @@ namespace ModularBOT.Component.ConsoleScreens
                         PostMessage(GetConsoleWindow(), WM_KEYDOWN, VK_ESCAPE, 0);
                     } else
                     {
-                        if(res > 65535 || res < 0)
+                        if(res > 65535 || res < 1025)
                         {
                             Console.CursorLeft = CL + 2;
                             Console.CursorVisible = false;
@@ -989,7 +990,7 @@ namespace ModularBOT.Component.ConsoleScreens
                         } else
                         {
 
-                            if (!Debug) NewConfig.ICMPPort = res;
+                            if (!Debug) NewConfig.WebPortalPort = res;
                         }
                     }
 
@@ -1003,7 +1004,7 @@ namespace ModularBOT.Component.ConsoleScreens
             Console.CursorTop++;
             Console.CursorVisible = false;
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.Write("ICMP port set. Moving on.");
+            Console.Write($"Web interface will run on http://localhost:{NewConfig.WebPortalPort}/. Moving on.");
             Thread.Sleep(1000);
             CheckForEnter(new ConsoleKeyInfo('\n', ConsoleKey.Enter, false, false, false));//fake key check
             return false;
@@ -1748,7 +1749,7 @@ namespace ModularBOT.Component.ConsoleScreens
 
         private void Render_Step_8()
         {
-            Meta = "Application Setup: ICMP";
+            Meta = "Application Setup: Web Interface";
             UpdateProgressBar();
             UpdateMeta(ShowProgressBar ? 4 : 3);
             ClearContents();
@@ -1756,18 +1757,19 @@ namespace ModularBOT.Component.ConsoleScreens
 
             string[] contentBlock =
             {
-                "The program has the ability to be pinged on a port of your choice. This is useful to keep track of bot uptime remotely (Uptime Kuma).",
+                "The program has a built in web portal. You can select the port on which it runs.",
                 "Please keep the following in mind:",
                 "\u2005",
                 "\u2005\u2005\u2005- This is a required configuration step.",
-                "\u2005\u2005\u2005- You can disable this feature by entering 0 as the port number.",
-                "\u2005\u2005\u2005- It is *HIGHLY* advised to only allow local connections to ping this port.",
-                "\u2005\u2005\u2005- It is *HIGHLY* advised to firewall the port to only IP addresses you trust.",
-                "\u2005\u2005\u2005- Otherwise, this may lead to ping flood (DDoS) if you're not careful.",
-                "\u2005\u2005\u2005- This feature is intended for use for services such as Uptime Kuma.",
-                "\u2005\u2005\u2005- This feature is PURELY for ping. No data or control is possible through this port",
+                "\u2005\u2005\u2005- The program will fail to start if the port is already in use.",
+                "\u2005\u2005\u2005- By default, web portal will only be available on the device the program is running.",
+                "\u2005\u2005\u2005- However, you can configure a 3rd party web server to make it available to all devices on the network and beyond**",
                 "\u2005",
-                "Please enter a port (Between 0 and 65535). Please be mindful of other ports being used.",
+                "\u2005",
+                "\u2005",
+                "\u2005 **Will require knowledge of port forwarding, proxy with a web server etc. At your own risk and all that.",
+                "\u2005",
+                "Please enter a port (Between 1025 and 65535). Please be mindful of other ports being used.",
                 "\u2005"
             };
 
@@ -1924,6 +1926,21 @@ namespace ModularBOT.Component.ConsoleScreens
             Console.ForegroundColor = ScreenFontColor;
             Console.BackgroundColor = ScreenBackColor;
             LayoutUpdating = false;
+        }
+
+        #endregion
+
+        #region SETUP WIZARD
+        internal void SetLogo_Choices()
+        {
+            WriteEntry("\u2502 Have you ever seen those old DOS programs that have the fancy ASCII art @ startup?");
+            WriteEntry("\u2502 Yea? Well great! This bot can do that! Why? (You may be asking) WHY NOT?!");
+            WriteEntry("\u2502\u2005");
+            WriteEntry("\u2502\u2005\u2005 Options:", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005\u2005\u2005 1. No logo", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005\u2005\u2005 2. Default logo", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005\u2005\u2005 3. Custom logo", ConsoleColor.DarkGreen);
+            WriteEntry("\u2502\u2005");
         }
 
         #endregion
