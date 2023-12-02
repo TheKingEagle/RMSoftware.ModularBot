@@ -64,7 +64,7 @@
     <UpdatePackageVersion>False</UpdatePackageVersion>
     <AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
     <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
-    <LangVersion>7.1</LangVersion>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -85,7 +85,7 @@
     <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
     <AssemblyInfoVersionSettings>
     </AssemblyInfoVersionSettings>
-    <LangVersion>7.1</LangVersion>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>ModularBOT.Program</StartupObject>
@@ -253,6 +253,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Component\WebPortal.cs" />
     <Compile Include="Component\CommandList.cs" />
     <Compile Include="Component\ConfigEntities\BlacklistMode.cs" />
     <Compile Include="Component\ConfigEntities\MassDeploymentMode.cs" />
@@ -276,7 +277,6 @@
     <Compile Include="Component\ConsoleCommands\ConfigCFUCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ConfigDCEvtLLCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ConfigSCCommand.cs" />
-    <Compile Include="Component\ConsoleCommands\ConfigSLPCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ConfigUPRCCommand.cs" />
     <Compile Include="Component\ConsoleCommands\ConmsgCommand.cs" />
     <Compile Include="Component\ConsoleCommands\DisableCMDCommand.cs" />
@@ -352,6 +352,7 @@
     <Compile Include="Entity\ConsoleScreen.cs" />
     <Compile Include="Entity\CSFunction.cs" />
     <Compile Include="Entity\PseudoMessage.cs" />
+    <Compile Include="Entity\WebPortalPage.cs" />
     <Compile Include="RMSoftware.Http\FileMime.cs" />
     <Compile Include="RMSoftware.Http\QuickServer.cs" />
   </ItemGroup>
@@ -374,6 +375,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="Resources\index.html" />
+    <Content Include="wrd_asset\css\main.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -392,6 +397,13 @@
     <Content Include="startup.core">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="wrd_asset\img\.gitkeep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="wrd_asset\css\.gitkeep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="wrd_asset\js\.gitkeep" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
@@ -422,7 +434,7 @@ RD "$(TargetDir)lib" /s /q
 REM Make the directory
 MKDIR $(TargetDir)lib
 REM Move assembly references to LIB.
-ROBOCOPY "$(TargetDir) " "$(TargetDir)lib\ " /XF *.exe *.config *.manifest *.LOG *.json *.core *.cnf *.pdb /XD lib modules guilds ext downloads attachments scripts /E /IS /MOVE
+ROBOCOPY "$(TargetDir) " "$(TargetDir)lib\ " /XF *.exe *.config *.manifest *.LOG *.json *.core *.cnf *.pdb /XD lib modules guilds ext downloads attachments scripts wrd_asset /E /IS /MOVE
 if %25errorlevel%25 leq 4 exit 0 else exit %25errorlevel%25</PostBuildEvent>
   </PropertyGroup>
   <Import Project="..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets" Condition="Exists('..\packages\NETStandard.Library.2.0.3\build\netstandard2.0\NETStandard.Library.targets')" />

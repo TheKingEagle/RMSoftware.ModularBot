@@ -19,8 +19,8 @@ namespace ModularBOT.Component.ConsoleCommands
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
-            console.LogEntries.Clear();//remove buffer.
-            console.ConsoleGUIReset(console.ConsoleForegroundColor, console.ConsoleBackgroundColor, console.ConsoleTitle);
+            ConsoleIO.LogEntries.Clear();//remove buffer.
+            console.ConsoleGUIReset(console.ConsoleForegroundColor, console.ConsoleBackgroundColor, ConsoleIO.ConsoleTitle);
             SpinWait.SpinUntil(() => !ConsoleIO.ScreenBusy);
             console.WriteEntry(new LogMessage(LogSeverity.Info, "Console", "Console cleared!"), null, true, false, true);
             return true;

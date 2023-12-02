@@ -108,7 +108,7 @@ namespace ModularBOT
                 Console.WriteLine("Press any key to continue...");
                 Console.ReadKey();
             }
-
+            
             _consoleCtrlHandler += s =>
             {
                 if (discord != null)
@@ -129,37 +129,37 @@ namespace ModularBOT
 
             #region ConsoleIO Command hooks
             //Populate command list.
-            consoleIO.ConsoleCommands.Add(new AboutCommand());            //about
-            consoleIO.ConsoleCommands.Add(new ChannelsCommand());         //channels
-            consoleIO.ConsoleCommands.Add(new CLSCommand());              //cls
-            consoleIO.ConsoleCommands.Add(new ConfigCFUCommand());        //config.checkforupdates
-            consoleIO.ConsoleCommands.Add(new CfgDebugWizardCommand());   //config.debugwizard
-            consoleIO.ConsoleCommands.Add(new ConfigDCEvtLLCommand());    //config.discordeventloglevel
-            consoleIO.ConsoleCommands.Add(new CfgLCMCommand());           //config.loadcoremodule
-            consoleIO.ConsoleCommands.Add(new ConfigResetCommand());      //config.reset
-            consoleIO.ConsoleCommands.Add(new ConfigSCCommand());         //config.setcolors
-            consoleIO.ConsoleCommands.Add(new ConfigSLPCommand());        //config.setlogo
-            consoleIO.ConsoleCommands.Add(new ConfigUPRCCommand());       //config.useprereleasechannel
-            consoleIO.ConsoleCommands.Add(new ConmsgCommand());           //conmsg
-            consoleIO.ConsoleCommands.Add(new DisableCMDCommand());       //disablecmd
-            consoleIO.ConsoleCommands.Add(new EnableCMDCommand());        //enablecmd
-            consoleIO.ConsoleCommands.Add(new GuildNameCommand());        //guildname
-            consoleIO.ConsoleCommands.Add(new GuildsCommand());           //guilds
-            consoleIO.ConsoleCommands.Add(new ConIOCrashCommand());       //iocrash
-            consoleIO.ConsoleCommands.Add(new LeaveCommand());            //leave
-            consoleIO.ConsoleCommands.Add(new ListCommand());             //list
-            consoleIO.ConsoleCommands.Add(new MBotDataCommand());         //mbotdata
-            consoleIO.ConsoleCommands.Add(new MyRolesCommand());          //myroles
-            consoleIO.ConsoleCommands.Add(new RolesCommand());            //roles
-            consoleIO.ConsoleCommands.Add(new RSKillCommand());           //rskill
-            consoleIO.ConsoleCommands.Add(new SetgchCommand());           //setgch
-            consoleIO.ConsoleCommands.Add(new SetvarCommand());           //setvar
-            consoleIO.ConsoleCommands.Add(new StatusCommand());           //status
-            consoleIO.ConsoleCommands.Add(new StopCommand());             //stopbot
-            consoleIO.ConsoleCommands.Add(new TestScreenCommand());       //testscreen
-            consoleIO.ConsoleCommands.Add(new TSKillCommand());           //tskill
-            consoleIO.ConsoleCommands.Add(new UsersCommand());            //users
-            consoleIO.ConsoleCommands.Add(new UpdateCommand());           //update
+            ConsoleIO.ConsoleCommands.Add(new AboutCommand());            //about
+            ConsoleIO.ConsoleCommands.Add(new ChannelsCommand());         //channels
+            ConsoleIO.ConsoleCommands.Add(new CLSCommand());              //cls
+            ConsoleIO.ConsoleCommands.Add(new CfgDebugWizardCommand());   //config.debugwizard
+            ConsoleIO.ConsoleCommands.Add(new ConfigCFUCommand());        //config.checkforupdates
+            ConsoleIO.ConsoleCommands.Add(new ConfigDCEvtLLCommand());    //config.discordeventloglevel
+            ConsoleIO.ConsoleCommands.Add(new CfgLCMCommand());           //config.loadcoremodule
+            ConsoleIO.ConsoleCommands.Add(new ConfigResetCommand());      //config.reset
+            ConsoleIO.ConsoleCommands.Add(new ConfigSCCommand());         //config.setcolors
+            
+            ConsoleIO.ConsoleCommands.Add(new ConfigUPRCCommand());       //config.useprereleasechannel
+            ConsoleIO.ConsoleCommands.Add(new ConmsgCommand());           //conmsg
+            ConsoleIO.ConsoleCommands.Add(new DisableCMDCommand());       //disablecmd
+            ConsoleIO.ConsoleCommands.Add(new EnableCMDCommand());        //enablecmd
+            ConsoleIO.ConsoleCommands.Add(new GuildNameCommand());        //guildname
+            ConsoleIO.ConsoleCommands.Add(new GuildsCommand());           //guilds
+            ConsoleIO.ConsoleCommands.Add(new ConIOCrashCommand());       //iocrash
+            ConsoleIO.ConsoleCommands.Add(new LeaveCommand());            //leave
+            ConsoleIO.ConsoleCommands.Add(new ListCommand());             //list
+            ConsoleIO.ConsoleCommands.Add(new MBotDataCommand());         //mbotdata
+            ConsoleIO.ConsoleCommands.Add(new MyRolesCommand());          //myroles
+            ConsoleIO.ConsoleCommands.Add(new RolesCommand());            //roles
+            ConsoleIO.ConsoleCommands.Add(new RSKillCommand());           //rskill
+            ConsoleIO.ConsoleCommands.Add(new SetgchCommand());           //setgch
+            ConsoleIO.ConsoleCommands.Add(new SetvarCommand());           //setvar
+            ConsoleIO.ConsoleCommands.Add(new StatusCommand());           //status
+            ConsoleIO.ConsoleCommands.Add(new StopCommand());             //stopbot
+            ConsoleIO.ConsoleCommands.Add(new TestScreenCommand());       //testscreen
+            ConsoleIO.ConsoleCommands.Add(new TSKillCommand());           //tskill
+            ConsoleIO.ConsoleCommands.Add(new UsersCommand());            //users
+            ConsoleIO.ConsoleCommands.Add(new UpdateCommand());           //update
             #endregion
 
             configMGR = new ConfigurationManager("modbot-config.cnf", ref consoleIO);
@@ -173,6 +173,13 @@ namespace ModularBOT
                 configMGR.CurrentConfig.ConsoleBackgroundColor, "Active Session");
             Task.Run(() => consoleIO.ProcessQueue());//START ConsoleIO processing.
 
+
+            Task.Run(() =>
+            {
+                consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "WebPortal", "Listening on http://localhost:8080"));
+                WebPortal wp = new WebPortal(8080, "localhost");
+
+            });
             #region DEBUG
 #if (DEBUG)
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "ATTENTION:", "You are running a debug build!"));
@@ -184,27 +191,8 @@ namespace ModularBOT
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Main", "Application started"));
 
             Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested, ref recoveredFromCrash));//Discord.NET thread
-            Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested, ref discord.InputCanceled, ref discord));//Console reader thread;
-            if (configMGR.CurrentConfig.ICMPPort.HasValue && configMGR.CurrentConfig.ICMPPort.Value > 0)
-            {
-                Task s = Task.Run(() =>
-                {
-
-                    ping.Bind(new IPEndPoint(IPAddress.Any, configMGR.CurrentConfig.ICMPPort.Value));
-                    consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "PING", "Listening for connection on " + ping.LocalEndPoint));
-                    ping.Listen(1);
-                    while (!ShutdownCalled)
-                    {
-                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "PING", "Waiting for more connections. " + ping.LocalEndPoint));
-
-                        allDone.Reset();
-                        ping.BeginAccept(new AsyncCallback(icMPAccept), ping);
-                        allDone.WaitOne();
-                        consoleIO.WriteEntry(new LogMessage(LogSeverity.Debug, "PING", "End loop " + ping.LocalEndPoint));
-
-                    }
-                });
-            }
+            //Task r = Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested, ref discord.InputCanceled, ref discord));//Console reader thread;
+            
             SpinWait.SpinUntil(() => ShutdownCalled);//HOLD THREAD
             if (RestartRequested)
             {

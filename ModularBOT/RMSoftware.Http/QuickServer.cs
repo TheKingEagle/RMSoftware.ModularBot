@@ -1,5 +1,6 @@
 ﻿
 using HttpMultipartParser;
+using ModularBOT;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -30,7 +31,8 @@ namespace RMSoftware.Http
         public void Start() 
         {
             string baseUrl = $"http://{Host}:{Port}/";
-            Console.WriteLine($"Listening for http requests on {baseUrl}");
+            //Console.WriteLine($"Listening for http requests on {baseUrl}");
+            
             Listener.Prefixes.Add(baseUrl);
             Listener.Start();
             while (true)
@@ -48,13 +50,13 @@ namespace RMSoftware.Http
                 {
                     if (ex.ErrorCode != 995)
                     {
-                        Console.WriteLine(ex.Message);
+                        //Console.WriteLine(ex.Message);
                     }
                 }
                 catch (ObjectDisposedException) { }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    //Console.WriteLine(ex.Message);
                 }
             }
 

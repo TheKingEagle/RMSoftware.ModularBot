@@ -23,12 +23,12 @@ namespace ModularBOT.Component.ConsoleCommands
             
             console.WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO","Printing current ConsoleCommands List"));
 
-            foreach (var item in console.ConsoleCommands)
+            foreach (var item in ConsoleIO.ConsoleCommands)
             {
                 console.WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO", item.CommandName));
                 Thread.Sleep(10);
             }
-            console.WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO", $"Listed {console.ConsoleCommands.Count} commands."));
+            console.WriteEntry(new LogMessage(LogSeverity.Critical, "ConsoleIO", $"Listed {ConsoleIO.ConsoleCommands.Count} commands."));
 
             return true;
             //return base.Execute(consoleInput, ref ShutdownCalled, ref RestartRequested, ref InputCanceled, ref discordNET);

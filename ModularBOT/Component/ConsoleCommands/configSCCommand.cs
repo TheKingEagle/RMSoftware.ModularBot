@@ -22,7 +22,7 @@ namespace ModularBOT.Component.ConsoleCommands
         }
         public override bool Execute(string consoleInput, ref bool ShutdownCalled, ref bool RestartRequested, ref bool InputCanceled, ref DiscordNET discordNET, ref ConsoleIO console)
         {
-            string PRV_TITLE = console.ConsoleTitle;
+            string PRV_TITLE = ConsoleIO.ConsoleTitle;
             List<LogEntry> v = new List<LogEntry>();
 
             #region Background Color
@@ -82,8 +82,8 @@ namespace ModularBOT.Component.ConsoleCommands
             console.ConsoleGUIReset(Program.configMGR.CurrentConfig.ConsoleForegroundColor,
                 Program.configMGR.CurrentConfig.ConsoleBackgroundColor, PRV_TITLE);
             ScreenModal = false;
-            v.AddRange(console.LogEntries);
-            console.LogEntries.Clear();//clear buffer.
+            v.AddRange(ConsoleIO.LogEntries);
+            ConsoleIO.LogEntries.Clear();//clear buffer.
                                //output previous logEntry.
             foreach (var item in v)
             {
