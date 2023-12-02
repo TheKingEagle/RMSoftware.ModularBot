@@ -61,6 +61,23 @@ namespace ModularBOT.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;html&gt;
+        ///&lt;head&gt;
+        ///	&lt;!--TEMPLATE_SCRIPTS--&gt;
+        ///	&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0&quot;&gt;
+        ///
+        ///	&lt;link rel=&quot;preload&quot; href=&quot;https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap&quot; as=&quot;style&quot;&gt;
+        ///	&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap&quot; media=&quot;print&quot; onload=&quot;this.media=&apos;all&apos;&quot;&gt;
+        ///	&lt;noscript&gt;
+        ///		&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?fam [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Page {
+            get {
+                return ResourceManager.GetString("Page", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap RMSoftwareICO {
