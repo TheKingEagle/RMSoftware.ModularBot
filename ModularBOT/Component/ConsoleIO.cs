@@ -19,7 +19,7 @@ using ModularBOT.Component.ConsoleScreens;
 
 namespace ModularBOT.Component
 {
-    [Obsolete("ConsoleIO is being phased out in favor of direct interaction via Discord and the upcoming web interface.")]
+    
     public class ConsoleIO
     {
         #region PRIVATE | INTERNAL Fields
@@ -174,8 +174,6 @@ namespace ModularBOT.Component
                 }
                 QueueProcessStarted = true;
                 
-                WriteEntry(new LogMessage(LogSeverity.Info, "ConsoleIO",
-                    "Console Queue has initialized. Processing any incoming log events."));
                 
                 while (true)
                 {

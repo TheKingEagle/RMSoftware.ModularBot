@@ -8,7 +8,7 @@ using System.Threading;
 using System.Reflection ;
 namespace ModularBOT.Entity
 {
-    [Obsolete("ConsoleScreen is being phased out in favor of direct interaction via Discord and the upcoming web interface.")]
+    
     public class ConsoleScreen
     {
         #region Private Values
