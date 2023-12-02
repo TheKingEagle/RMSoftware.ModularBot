@@ -28,7 +28,7 @@ namespace ModularBOT.Component
         internal const int WM_KEYDOWN = 0x100;
         internal ulong chID = 0;
 
-        private bool errorLogWrite = false;
+        private static bool errorLogWrite = false;
         internal ConsoleColor ConsoleForegroundColor = ConsoleColor.Gray;
         internal ConsoleColor ConsoleBackgroundColor = ConsoleColor.Black;
 
@@ -38,8 +38,8 @@ namespace ModularBOT.Component
             0x808080, 0x0000FF, 0x00FF00, 0x00FFFF, 0xFF0000, 0xFF00FF, 0xFFFF00, 0xFFFFFF
         };
 
-        internal List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
-        private StringBuilder debugdump = new StringBuilder();
+        internal static List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
+        private static StringBuilder debugdump = new StringBuilder();
 
         #endregion
 
@@ -48,13 +48,13 @@ namespace ModularBOT.Component
         public static bool QueueProcessStarted { get; set; } = false;
         public static bool ScreenBusy { get; set; }//If console is resetting or rendering new ui.
         public static bool ScreenModal { get; set; }//If there is a screen showing above discord logs
-        public IReadOnlyCollection<LogEntry> LogEntriesBuffer { get { return LogEntries.AsReadOnly(); } }
+        public static IReadOnlyCollection<LogEntry> LogEntriesBuffer { get { return LogEntries.AsReadOnly(); } }
         public static Queue<LogEntry> Backlog { get; set; } = new Queue<LogEntry>();
-        public int CurTop { get; set; }
-        public int PrvTop { get; set; }
-        public string ConsoleTitle { get; set; } = "";
+        public static int CurTop { get; set; }
+        public static int PrvTop { get; set; }
+        public static string ConsoleTitle { get; set; } = "";
         public static ConsoleScreen ActiveScreen { get; set; }
-        public List<ConsoleCommand> ConsoleCommands { get; internal set; } = new List<ConsoleCommand>();
+        public static List<ConsoleCommand> ConsoleCommands { get; internal set; } = new List<ConsoleCommand>();
 
         public string LatestEntry { get; set; }
         #endregion
@@ -142,20 +142,7 @@ namespace ModularBOT.Component
         }
         #endregion
 
-        #region SETUP WIZARD
-        internal void SetLogo_Choices()
-        {
-            WriteEntry("\u2502 Have you ever seen those old DOS programs that have the fancy ASCII art @ startup?");
-            WriteEntry("\u2502 Yea? Well great! This bot can do that! Why? (You may be asking) WHY NOT?!");
-            WriteEntry("\u2502\u2005");
-            WriteEntry("\u2502\u2005\u2005 Options:", ConsoleColor.DarkGreen);
-            WriteEntry("\u2502\u2005\u2005\u2005 1. No logo", ConsoleColor.DarkGreen);
-            WriteEntry("\u2502\u2005\u2005\u2005 2. Default logo", ConsoleColor.DarkGreen);
-            WriteEntry("\u2502\u2005\u2005\u2005 3. Custom logo", ConsoleColor.DarkGreen);
-            WriteEntry("\u2502\u2005");
-        }
-
-        #endregion
+        
 
         #endregion
 
