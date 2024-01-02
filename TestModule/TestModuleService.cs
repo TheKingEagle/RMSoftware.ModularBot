@@ -884,14 +884,14 @@ namespace TestModule
             }
         }
 
-        private Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2)
+        private async Task ShardedClient_MessageDeleted(Cacheable<IMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2)
         {
-            throw new NotImplementedException();
+            await ShardedClient_MessageDeleted(cacheable1, await cacheable2.DownloadAsync() as ISocketMessageChannel);
         }
 
-        private Task ShardedClient_ReactionRemoved(Cacheable<IUserMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2, SocketReaction reaction)
+        private async Task ShardedClient_ReactionRemoved(Cacheable<IUserMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2, SocketReaction reaction)
         {
-            throw new NotImplementedException();
+            await ShardedClient_ReactionRemoved(cacheable1, await cacheable2.DownloadAsync() as ISocketMessageChannel, reaction);
         }
 
         private async Task ShardedClient_ReactionAdded(Cacheable<IUserMessage, ulong> cacheable1, Cacheable<IMessageChannel, ulong> cacheable2, SocketReaction reaction)

@@ -30,7 +30,7 @@ namespace TestModule.ConfigEntities
         {
             if (!ulong.TryParse(value, out ulong res))
             {
-                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(), Context,
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_discordNET._serviceProvider.GetRequiredService<ConsoleIO>(), Context,
                     "Invalid Value", "Expected a valid `ULONG` value", Color.DarkRed));
                 return;
             }
@@ -55,7 +55,7 @@ namespace TestModule.ConfigEntities
             }
 
             //save config. 
-            WelcomeConfig.SaveConfig(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(),
+            WelcomeConfig.SaveConfig(_discordNET._serviceProvider.GetRequiredService<ConsoleIO>(),
                 TestModuleService.WelcomeBindings, TestModuleService.WelcomeBindingsConfig);
             await base.ExecuteSet(Client, _discordNET, Context, value);
         }

@@ -28,7 +28,7 @@ namespace TestModule.ConfigEntities
         {
             if(!bool.TryParse(value, out bool res))
             {
-                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(), Context,
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(_discordNET._serviceProvider.GetRequiredService<ConsoleIO>(), Context,
                     "Invalid Value", "Expected `True` or `False` boolean values", Color.DarkRed));
                 return;
             }
@@ -53,7 +53,7 @@ namespace TestModule.ConfigEntities
             }
 
             //save config. 
-            WelcomeConfig.SaveConfig(_discordNET.serviceProvider.GetRequiredService<ConsoleIO>(),
+            WelcomeConfig.SaveConfig(_discordNET._serviceProvider.GetRequiredService<ConsoleIO>(),
                 TestModuleService.WelcomeBindings, TestModuleService.WelcomeBindingsConfig);
             await base.ExecuteSet(Client, _discordNET, Context, value);
         }
