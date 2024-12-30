@@ -965,7 +965,7 @@ namespace ModularBOT.Component.ConsoleScreens
                 }
                 else
                 {
-                    if (!int.TryParse(pass, out int res))
+                    if (!ushort.TryParse(pass, out ushort res))
                     {
                         Console.CursorLeft = CL + 2;
                         Console.CursorVisible = false;

@@ -353,7 +353,7 @@ namespace ModularBOT.Component
         {
             ulong gid = 0;
             CommandList commandList = new CommandList(Client.CurrentUser.Username,Context.Guild?.Name ?? "Direct Messages");
-            string prefix = DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            string prefix = DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             if (Context.Guild != null)
             {
                 GuildObject obj = DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
@@ -471,7 +471,7 @@ namespace ModularBOT.Component
         {
 
             ulong gid = 0;
-            string prefix = DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            string prefix = DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             if (Context.Guild != null)
             {
                 GuildObject obj = DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
@@ -1355,7 +1355,7 @@ namespace ModularBOT.Component
                 }
                 var pg = await Context.Client.GetGuildAsync(pgid);
                 GuildObject pobj = DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == pgid);
-                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Current Prefix", $"The current prefix for `{pg?.Name ?? "Direct Messages"}` is `{pobj?.CommandPrefix ?? DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix}`", new Color(0,255,0)));
+                await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage("Current Prefix", $"The current prefix for `{pg?.Name ?? "Direct Messages"}` is `{pobj?.CommandPrefix ?? DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix}`", new Color(0,255,0)));
                 return;
             }
             if(string.IsNullOrWhiteSpace(newPrefix) || newPrefix.Contains('`'))
@@ -1405,7 +1405,7 @@ namespace ModularBOT.Component
                     await Context.Channel.SendMessageAsync("", false, DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
                     return;
                 }
-                DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix = newPrefix;
+                DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix = newPrefix;
                 Program.configMGR.Save();
                 
             }
@@ -1489,7 +1489,7 @@ namespace ModularBOT.Component
             }
             var pg = await Context.Client.GetGuildAsync(pgid);
             GuildObject pobj = DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == pgid);
-            string prefix = pobj?.CommandPrefix ?? DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            string prefix = pobj?.CommandPrefix ?? DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             EmbedBuilder b = new EmbedBuilder
             {
                 Title = "ConsoleIO Statistics",
@@ -1931,7 +1931,7 @@ namespace ModularBOT.Component
 
                     PaginatedMessage.Page pageItem = new PaginatedMessage.Page();
                     string dsc = "";
-                    foreach (ConfigEntity item in DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().GuildConfigEntities)
+                    foreach (ConfigEntity item in DiscordNet._serviceProvider.GetRequiredService<ConfigurationManager>().GuildConfigEntities)
                     {
                         if(!DoOncePerPageGC)
                         {
@@ -1952,7 +1952,7 @@ namespace ModularBOT.Component
                         }
                         dsc += $"{toAddG}\r\n";
                     }
-                    foreach (ConfigEntity item in DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities)
+                    foreach (ConfigEntity item in DiscordNet._serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities)
                     {
                         if (!DoOncePerPageSC)
                         {
@@ -2017,8 +2017,8 @@ namespace ModularBOT.Component
                 case ("SET"):
                     g = DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
                     List<ConfigEntity> All = new List<ConfigEntity>();
-                    All.AddRange(DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().GuildConfigEntities);
-                    All.AddRange(DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities);
+                    All.AddRange(DiscordNet._serviceProvider.GetRequiredService<ConfigurationManager>().GuildConfigEntities);
+                    All.AddRange(DiscordNet._serviceProvider.GetRequiredService<ConfigurationManager>().ModularCnfgEntities);
                     ConfigEntity c = All.FirstOrDefault(x => x.ConfigIdentifier.ToUpper() == setting.ToUpper());
                     if(c== null)
                     {

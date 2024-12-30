@@ -61,19 +61,36 @@ namespace ModularBOT.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &lt;div class=&quot;StatusOverview&quot;&gt;
+        ///    &lt;h1&gt;STATUS: &lt;span id=&quot;status&quot; class=&quot;&quot;&gt;--&lt;/span&gt;&lt;/h1&gt;
+        ///    &lt;p class=&quot;runtime_details&quot;&gt;&lt;b&gt;DURATION:&lt;/b&gt; &lt;span class=&quot;runtime&quot;&gt;-- Days -- Hours -- Minutes&lt;/span&gt; | &lt;b&gt;Guilds:&lt;/b&gt; &lt;span class=&quot;g_avail&quot;&gt;----&lt;/span&gt;/&lt;span class=&quot;g_total&quot;&gt;----&lt;/span&gt;&lt;/p&gt;
+        ///&lt;/div&gt;
+        ///&lt;div class=&quot;ticketgrid&quot;&gt;
+        ///    &lt;div class=&quot;bn_conf&quot;&gt;&lt;h2&gt;Configuration&lt;/h2&gt;&lt;/div&gt;
+        ///    &lt;div class=&quot;bn_management&quot;&gt;&lt;h2&gt;Instance Settings&lt;/h2&gt;&lt;/div&gt;
+        ///    &lt;div class=&quot;bn_commands&quot;&gt;&lt;h2&gt;Commands&lt;/h2&gt;&lt;/div&gt;
+        ///&lt;/div&gt;.
+        /// </summary>
+        internal static string Dashboard {
+            get {
+                return ResourceManager.GetString("Dashboard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &lt;html&gt;
         ///&lt;head&gt;
-        ///	&lt;!--TEMPLATE_SCRIPTS--&gt;
+        ///
         ///	&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0&quot;&gt;
         ///
         ///	&lt;link rel=&quot;preload&quot; href=&quot;https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap&quot; as=&quot;style&quot;&gt;
         ///	&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap&quot; media=&quot;print&quot; onload=&quot;this.media=&apos;all&apos;&quot;&gt;
         ///	&lt;noscript&gt;
-        ///		&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?fam [rest of string was truncated]&quot;;.
+        ///		&lt;link rel=&quot;stylesheet&quot; href=&quot;https://fonts.googleapis.com/css2?family=Roboto:wght@300;400; [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string Page {
+        internal static string PageTemplate {
             get {
-                return ResourceManager.GetString("Page", resourceCulture);
+                return ResourceManager.GetString("PageTemplate", resourceCulture);
             }
         }
         

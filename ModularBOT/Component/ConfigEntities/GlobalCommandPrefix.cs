@@ -21,7 +21,7 @@ namespace ModularBOT.Component.ConfigEntities
         }
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _DiscordNet, ICommandContext Context, string value)
         {
-            var ConsoleIO = _DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>();
+            var ConsoleIO = _DiscordNet._serviceProvider.GetRequiredService<ConsoleIO>();
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
                 await Context.Channel.SendMessageAsync("", false, _DiscordNet.PermissionManager.GetAccessDeniedMessage(Context, AccessLevels.Administrator));
@@ -32,8 +32,8 @@ namespace ModularBOT.Component.ConfigEntities
                 await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(ConsoleIO,Context,"Invalid prefix", "Your prefix must not start with whitespace, or contain invalid characters!", Color.Red));
                 return;
             }
-            _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix = value;
-            _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+            _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix = value;
+            _DiscordNet._serviceProvider.GetRequiredService<ConfigurationManager>().Save();
             await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(ConsoleIO, Context, "Config Updated", $"`GlobalCommandPrefix` updated to `{value}`", Color.Green));
             return;
         }
@@ -44,7 +44,7 @@ namespace ModularBOT.Component.ConfigEntities
 
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix}`",
+                Value = $"`{_DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix}`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
@@ -53,7 +53,7 @@ namespace ModularBOT.Component.ConfigEntities
 
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            return base.ExecuteView(_DiscordNet, Context, _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix);
+            return base.ExecuteView(_DiscordNet, Context, _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix);
         }
     }
 }

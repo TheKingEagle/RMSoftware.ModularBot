@@ -22,7 +22,7 @@ namespace ModularBOT
 
         public int ShardCount { get; set; }
 
-        public int? WebPortalPort { get; set; }
+        public ushort? WebPortalPort { get; set; }
 
         public string CommandPrefix { get; set; }
 

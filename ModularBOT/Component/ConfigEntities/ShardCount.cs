@@ -24,7 +24,7 @@ namespace ModularBOT.Component.ConfigEntities
         {
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().ShardCount}`",
+                Value = $"`{_DiscordNet._serviceProvider.GetRequiredService<Configuration>().ShardCount}`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
@@ -32,7 +32,7 @@ namespace ModularBOT.Component.ConfigEntities
         }
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            return base.ExecuteView(_DiscordNet, Context,_DiscordNet.serviceProvider.GetRequiredService<Configuration>().ShardCount.ToString());
+            return base.ExecuteView(_DiscordNet, Context,_DiscordNet._serviceProvider.GetRequiredService<Configuration>().ShardCount.ToString());
         }
 
         public override Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
@@ -51,8 +51,8 @@ namespace ModularBOT.Component.ConfigEntities
                 return Context.Channel.SendMessageAsync("", false, _discordNET.CustomCMDMgr.GetEmbeddedMessage(Context,
                     "Unexpected Value", "This configuration only accepts a valid 32-bit integer greater than zero.", Color.DarkRed));
             }
-            _discordNET.serviceProvider.GetRequiredService<Configuration>().ShardCount = newval;
-            _discordNET.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+            _discordNET._serviceProvider.GetRequiredService<Configuration>().ShardCount = newval;
+            _discordNET._serviceProvider.GetRequiredService<ConfigurationManager>().Save();
             return Context.Channel.SendMessageAsync("", false, _discordNET.CustomCMDMgr.GetEmbeddedMessage(Context,
                     "Configuration Updated", $"Client will connect to Discord with `{newval}` shard(s).\r\n\r\nThis change will not be effective until the program is restarted.", Color.Green));
         }

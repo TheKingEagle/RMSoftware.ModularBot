@@ -13,15 +13,16 @@ using ModularBOT.Component.ConsoleCommands;
 using System.Net;
 using System.Net.Sockets;
 using Microsoft.Win32;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ModularBOT
 {
     class Program
     {
         public static ConfigurationManager configMGR;
-
+        public static ServiceCollection Services { get; private set; }
         public static List<string> AppArguments = new List<string>();
-        private static DiscordNET discord = new DiscordNET();
+        private static DiscordNET discord;
         internal static bool ShutdownCalled = false;
         public static bool RestartRequested = false;
         public static bool ImmediateTerm = false;
@@ -173,12 +174,16 @@ namespace ModularBOT
                 configMGR.CurrentConfig.ConsoleBackgroundColor, "Active Session");
             Task.Run(() => consoleIO.ProcessQueue());//START ConsoleIO processing.
 
-
+            Services = new ServiceCollection();
+            Services.AddSingleton(Program.configMGR.CurrentConfig);
+            Services.AddSingleton(Program.configMGR);
+            Services.AddSingleton(consoleIO);
+            discord = new DiscordNET(Services);
             Task.Run(() =>
             {
 
                 consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "WebPortal", $"Listening on http://localhost:{configMGR.CurrentConfig.WebPortalPort}"));
-                WebPortal wp = new WebPortal(configMGR.CurrentConfig.WebPortalPort.Value, "localhost");
+                WebPortal wp = new WebPortal(configMGR.CurrentConfig.WebPortalPort.Value, "localhost",ref discord);
 
             });
             #region DEBUG
@@ -190,7 +195,7 @@ namespace ModularBOT
             #endregion
 
             consoleIO.WriteEntry(new LogMessage(LogSeverity.Critical, "Main", "Application started"));
-
+            
             Task.Run(() => discord.Start(ref consoleIO, ref configMGR.CurrentConfig, ref ShutdownCalled, ref RestartRequested, ref recoveredFromCrash));//Discord.NET thread
             Task.Run(() => consoleIO.GetConsoleInput(ref ShutdownCalled, ref RestartRequested, ref discord.InputCanceled, ref discord));//Console reader thread;
             
@@ -221,6 +226,7 @@ namespace ModularBOT
                 Thread.Sleep(1000);
 
             }
+            WebPortal.TermFlag = true;
             return 0x000;//ok;
         }
 

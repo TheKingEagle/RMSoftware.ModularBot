@@ -24,7 +24,7 @@ namespace ModularBOT.Component.ConfigEntities
         {
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogoPath}`",
+                Value = $"`{_DiscordNet._serviceProvider.GetRequiredService<Configuration>().LogoPath}`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
@@ -32,7 +32,7 @@ namespace ModularBOT.Component.ConfigEntities
         }
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            return base.ExecuteView(_DiscordNet, Context, _DiscordNet.serviceProvider.GetRequiredService<Configuration>().LogoPath);
+            return base.ExecuteView(_DiscordNet, Context, _DiscordNet._serviceProvider.GetRequiredService<Configuration>().LogoPath);
         }
     }
 }

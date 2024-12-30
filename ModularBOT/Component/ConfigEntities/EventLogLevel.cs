@@ -22,7 +22,7 @@ namespace ModularBOT.Component.ConfigEntities
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _DiscordNet, ICommandContext Context, string value)
         {
            
-            var ConsoleIO = _DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>();
+            var ConsoleIO = _DiscordNet._serviceProvider.GetRequiredService<ConsoleIO>();
 
             if (_DiscordNet.PermissionManager.GetAccessLevel(Context.User) < AccessLevels.Administrator)
             {
@@ -45,8 +45,8 @@ namespace ModularBOT.Component.ConfigEntities
             }
             else
             {
-                _DiscordNet.serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel = log;
-                _DiscordNet.serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+                _DiscordNet._serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel = log;
+                _DiscordNet._serviceProvider.GetRequiredService<ConfigurationManager>().Save();
                 await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(ConsoleIO, Context, "Config Updated", $"`EventLogLevel` updated to `{value}`.\r\n" +
                     $"**You will need to restart the program for this to take affect**", Color.Green));
             }
@@ -57,7 +57,7 @@ namespace ModularBOT.Component.ConfigEntities
             
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = $"`{_DiscordNet.serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel}`",
+                Value = $"`{_DiscordNet._serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel}`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
@@ -65,7 +65,7 @@ namespace ModularBOT.Component.ConfigEntities
         }
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            return base.ExecuteView(_DiscordNet, Context, _DiscordNet.serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel.ToString());
+            return base.ExecuteView(_DiscordNet, Context, _DiscordNet._serviceProvider.GetRequiredService<Configuration>().DiscordEventLogLevel.ToString());
         }
     }
 }

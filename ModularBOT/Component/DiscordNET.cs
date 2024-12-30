@@ -20,8 +20,8 @@ namespace ModularBOT.Component
     {
         #region Fields
         public CommandService cmdsvr = new Discord.Commands.CommandService();          //Discord Command Service
-        public IServiceCollection services;                                            //Discord Service collection
-        public IServiceProvider serviceProvider;                                       //Discord Service provider
+        public IServiceCollection _services;                                           //Discord Service collection
+        public IServiceProvider _serviceProvider;                                      //Discord Service provider
         public bool InputCanceled = false;                                             //ModularBOT Console Read Operation
         private static bool init_start = false;                                        //DiscordNET Conditional Initialization
         private bool Initialized = false;                                              //Conditional Completed Initialization
@@ -45,6 +45,13 @@ namespace ModularBOT.Component
 
         #endregion
 
+        public DiscordNET(ServiceCollection services)
+        {
+            services.AddSingleton(this);
+            _services = services;
+            _serviceProvider = _services.BuildServiceProvider();
+        }
+
         #region Methods
         public void Start(ref ConsoleIO consoleIO, ref Configuration AppConfig, ref bool ShutdownRequest, ref bool RestartRequested,ref bool FromCrash)
         {
@@ -54,14 +61,7 @@ namespace ModularBOT.Component
                 DisableMessages = true;//Do not allow messages until bot is fully logged in.
                 Initialized = false;
                 string token = AppConfig.AuthToken;
-
-                services = new ServiceCollection();
-                services.AddSingleton(AppConfig);
-                services.AddSingleton(Program.configMGR);
-                services.AddSingleton(consoleIO);
-                services.AddSingleton(cmdsvr);
-                services.AddSingleton(this);
-                serviceProvider = services.BuildServiceProvider();
+                
                 
                 Client = new DiscordShardedClient(new DiscordSocketConfig
                 {
@@ -78,11 +78,10 @@ namespace ModularBOT.Component
                     TotalShards = AppConfig.ShardCount
                 });
 
-                services.AddSingleton(Client);
-
-                services.AddSingleton(new Discord.Addons.Interactive.InteractiveService(Client));
-
-                serviceProvider = services.BuildServiceProvider();
+                _services.AddSingleton(Client);
+                _services.AddSingleton(cmdsvr);
+                _services.AddSingleton(new Discord.Addons.Interactive.InteractiveService(Client));
+                _serviceProvider = _services.BuildServiceProvider();
                 Client.Log += Client_Log;
 
                 Client.LoggedIn += Client_LoggedIn;
@@ -97,7 +96,7 @@ namespace ModularBOT.Component
                 Client.GuildMembersDownloaded += Client_GuildMembersDownloaded;
 
                 InstanceStartTime = DateTime.Now;
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "I-Uptime", $"Instance start time set to {InstanceStartTime}"));
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "I-Uptime", $"Instance start time set to {InstanceStartTime}"));
 
                 //var timeout = Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord INIT attempt"));
                 var z = Task.Run(async () => await Client.LoginAsync(TokenType.Bot, token,true));
@@ -113,7 +112,7 @@ namespace ModularBOT.Component
                 Task.Run(() => ResetUserCom());//Start auto-blacklist timer reset system...
                 if (AppConfig.LoadCoreModule)
                 {
-                    cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(), serviceProvider);//ADD CORE.
+                    cmdsvr.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);//ADD CORE.
                 }
                 if(!AppConfig.LoadCoreModule)
                 {
@@ -126,40 +125,39 @@ namespace ModularBOT.Component
             }
             catch (AggregateException agex)
             {
-                foreach (HttpException httex in agex.InnerExceptions)
+                foreach (Exception ex in agex.InnerExceptions)
                 {
-                    if (httex.HttpCode == System.Net.HttpStatusCode.Unauthorized)
+                    if((ex as HttpException ) != null)
                     {
-                        serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.AuthToken = null;
-                        serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+                        if ((ex as HttpException).HttpCode == System.Net.HttpStatusCode.Unauthorized)
+                        {
+                            _serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.AuthToken = null;
+                            _serviceProvider.GetRequiredService<ConfigurationManager>().Save();
 
-                        RestartRequested = consoleIO.ShowKillScreen("Unauthorized",
-                            "The server responded with error 401. Verify your token is correct, and try again.", false,
-                            ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_UNAUTHORIZED").GetAwaiter().GetResult();
-                    }
+                            RestartRequested = consoleIO.ShowKillScreen("Unauthorized",
+                                "The server responded with error 401. Verify your token is correct, and try again.", false,
+                                ref ShutdownRequest, ref RestartRequested, 5, ex, "DNET_HTTPEX_UNAUTHORIZED").GetAwaiter().GetResult();
+                        }
+                        else
+                        {
+                            RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.",
+                                true, ref ShutdownRequest, ref RestartRequested, 5, ex, "DNET_HTTPEX_UNKNOWN_ERROR").GetAwaiter().GetResult();
+                        }
+                    } 
                     else
                     {
-                        RestartRequested = consoleIO.ShowKillScreen("HTTP_EXCEPTION", "The server responded with an error. SEE Crash.LOG for more info.",
-                            true, ref ShutdownRequest, ref RestartRequested, 5, httex, "DNET_HTTPEX_UNKNOWN_ERROR").GetAwaiter().GetResult();
+                        RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex, "DNET_START_ERROR")
+                        .GetAwaiter()
+                        .GetResult();
                     }
+                    
                 }
-                foreach (Exception item in agex.InnerExceptions)
-                {
-                    throw item;
-                }
-            }
-
-            catch (Exception ex)
-            {
-                RestartRequested = consoleIO.ShowKillScreen("Unexpected Error", ex.Message, true, ref ShutdownRequest, ref RestartRequested, 5, ex,"DNET_START_ERROR")
-                    .GetAwaiter()
-                    .GetResult();
             }
         }
 
         private Task Client_GuildMembersDownloaded(SocketGuild arg)
         {
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "USERDL",
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "USERDL",
                     $" Userlist for <Guild ID: {arg.Id}> has {arg.Users.Count} members."), ConsoleColor.Green); 
             return Task.Delay(0);
         }
@@ -173,15 +171,15 @@ namespace ModularBOT.Component
         private Task Client_LoggedIn()
         {
             SpinWait.SpinUntil(() => Client.LoginState == LoginState.LoggedIn);
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Client", "Client is logged in! We can now start permissions system."));
-            PermissionManager = new PermissionManager(serviceProvider);
-            services.AddSingleton(PermissionManager);
-            serviceProvider = services.BuildServiceProvider();
-            ModuleMgr = new ModuleManager(ref cmdsvr, ref services, ref serviceProvider);
-            CustomCMDMgr = new CustomCommandManager(serviceProvider);
-            services.AddSingleton(CustomCMDMgr);
-            serviceProvider = services.BuildServiceProvider();
-            Updater = new UpdateManager(serviceProvider);
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Client", "Client is logged in! We can now start permissions system."));
+            PermissionManager = new PermissionManager(_serviceProvider);
+            _services.AddSingleton(PermissionManager);
+            _serviceProvider = _services.BuildServiceProvider();
+            ModuleMgr = new ModuleManager(ref cmdsvr, ref _services, ref _serviceProvider);
+            CustomCMDMgr = new CustomCommandManager(_serviceProvider);
+            _services.AddSingleton(CustomCMDMgr);
+            _serviceProvider = _services.BuildServiceProvider();
+            Updater = new UpdateManager(_serviceProvider);
             LoginEventsCalled = true;
             return Task.Delay(1);
         }
@@ -193,11 +191,11 @@ namespace ModularBOT.Component
             {
                 if (item.Permissions.Has(GuildPermission.Administrator) || item.Permissions.Has(GuildPermission.ManageGuild) || item.Permissions.Has(GuildPermission.ManageChannels))
                 {
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Role {item.Name} has met the criteria."));
+                    _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Role {item.Name} has met the criteria."));
 
                     if (PermissionManager.GetAccessLevel(item) < AccessLevels.CommandManager)
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a role that can manage guilds: " +
+                        _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", $"Found a role that can manage guilds: " +
                         $"{item.Name} <@&{item.Id}>. Registering role as CommandManager!"));
                         PermissionManager.RegisterEntityNS(item, AccessLevels.CommandManager);
                     }
@@ -207,9 +205,9 @@ namespace ModularBOT.Component
 
         public void Stop(ref bool ShutdownRequest)
         {
-            if(serviceProvider != null)
+            if(_serviceProvider != null)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Permissions", $"Saving permissions @ Stop"));
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Permissions", $"Saving permissions @ Stop"));
 
             }
             if(PermissionManager != null)
@@ -233,7 +231,7 @@ namespace ModularBOT.Component
                 if (!Initialized)
                 {
                     //Client.SetStatusAsync(UserStatus.DoNotDisturb);
-                    ulong id = serviceProvider.GetRequiredService<Configuration>().LogChannel;
+                    ulong id = _serviceProvider.GetRequiredService<Configuration>().LogChannel;
 
                     //download users
 
@@ -246,7 +244,7 @@ namespace ModularBOT.Component
                         InputCanceled = true;
                         ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
                         //serviceProvider.GetRequiredService<Configuration>().LogChannel = 0;
-                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, ref shutdownRequested, 
+                        _serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", "You specified an invalid guild channel ID. Please verify your guild channel's ID and try again.", false, ref shutdownRequested, 
                             ref RestartRequested, 0, new ArgumentException("Guild channel was invalid.", "botChannel"),"DNET_INIT_INVALID");
                         
                         Stop(ref shutdownRequested);
@@ -261,7 +259,7 @@ namespace ModularBOT.Component
                         builder.WithColor(new Color(255, 255, 0));
                         builder.WithFooter("ModularBOT • Core");
                         ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
+                        _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", "The program auto-restarted due to a crash. Please see Crash.LOG."));
                     }
                     GuildObject obj = CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == i.Guild.Id) ?? CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == 0);
                     try
@@ -273,7 +271,7 @@ namespace ModularBOT.Component
                     {
                         InputCanceled = true;
                         ConsoleIO.PostMessage(ConsoleIO.GetConsoleWindow(), ConsoleIO.WM_KEYDOWN, ConsoleIO.VK_RETURN, 0);
-                        serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", $"{ex.Message}", false, 
+                        _serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("TaskManager Exception", $"{ex.Message}", false, 
                             ref shutdownRequested, ref RestartRequested, 0, ex,"DNET_CORE_FILE_MISSING");
                         Stop(ref shutdownRequested);
 
@@ -284,10 +282,10 @@ namespace ModularBOT.Component
 
                     #region Update Check
                     
-                    if (serviceProvider.GetRequiredService<Configuration>().CheckForUpdates ?? true)// assume true if null.
+                    if (_serviceProvider.GetRequiredService<Configuration>().CheckForUpdates ?? true)// assume true if null.
                     {
-                        serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
-                        bool pre = serviceProvider.GetRequiredService<Configuration>().UseInDevChannel ?? false;//assume stable
+                        _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Checking for updates."));
+                        bool pre = _serviceProvider.GetRequiredService<Configuration>().UseInDevChannel ?? false;//assume stable
                         (bool result, string channel) availableUpdates = Updater.CheckUpdate(pre).GetAwaiter().GetResult();
                         if (availableUpdates.result)
                         {
@@ -303,12 +301,12 @@ namespace ModularBOT.Component
                             builder.WithColor(new Color(0, 255, 60));
                             builder.WithFooter("ModularBOT • Core");
                             ((SocketTextChannel)Client.GetChannel(id)).SendMessageAsync("", false, builder.Build());
-                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"A new version is available! v{verdata}"),ConsoleColor.Green);
-                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"use the 'update' command to download and install."),ConsoleColor.Green);
+                            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"A new version is available! v{verdata}"),ConsoleColor.Green);
+                            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"use the 'update' command to download and install."),ConsoleColor.Green);
                         }
                         else
                         {
-                            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"You are running the most recent version."),ConsoleColor.Black);
+                            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "UPDATE", $"You are running the most recent version."),ConsoleColor.Black);
                         }
                     }
 
@@ -316,18 +314,18 @@ namespace ModularBOT.Component
                     #endregion
                     Initialized = true;
                     DisableMessages = false;
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Processing Message Queue."));
+                    _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Processing Message Queue."));
                     foreach (var item in messageQueue)
                     {
                         Client_MessageReceived(item).GetAwaiter().GetResult();
                         Task.Delay(500);
                     }
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Client Status update!"));
+                    _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
+                    _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Client Status update!"));
                     //Finished task manager.
-                    Client.SetStatusAsync(serviceProvider.GetRequiredService<Configuration>().ReadyStatus);
-                    Client.SetGameAsync(serviceProvider.GetRequiredService<Configuration>().ReadyText,null,serviceProvider.GetRequiredService<Configuration>().ReadyActivity);
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
+                    Client.SetStatusAsync(_serviceProvider.GetRequiredService<Configuration>().ReadyStatus);
+                    Client.SetGameAsync(_serviceProvider.GetRequiredService<Configuration>().ReadyText,null,_serviceProvider.GetRequiredService<Configuration>().ReadyActivity);
+                    _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "TaskMgr", "Task is complete."));
 
                     
                 }
@@ -336,13 +334,13 @@ namespace ModularBOT.Component
             {
                 if (httx.DiscordCode == DiscordErrorCode.MissingPermissions)
                 {
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "CRITICAL", "The bot was unable to perform needed operations. Please make sure it has the following permissions: Read messages, Read message history, Send Messages, Embed Links, Attach Files. (Calculated: 117760)", httx));
+                    _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Critical, "CRITICAL", "The bot was unable to perform needed operations. Please make sure it has the following permissions: Read messages, Read message history, Send Messages, Embed Links, Attach Files. (Calculated: 117760)", httx));
                 }
             }
             catch (Exception ex)
             {
                 Initialized = false;
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Error, "TaskMgr", ex.Message, ex));
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Error, "TaskMgr", ex.Message, ex));
 
             }
         }
@@ -359,7 +357,7 @@ namespace ModularBOT.Component
                 catch (Exception ex)
                 {
 
-                    serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Operation Timed out", $"The specified operation timed out: {eventDescription}",
+                    _serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Operation Timed out", $"The specified operation timed out: {eventDescription}",
                     true, ref Program.ShutdownCalled, ref Program.RestartRequested, 5,ex, "DNET_TIME_OUT");
                 }
                 
@@ -367,7 +365,7 @@ namespace ModularBOT.Component
             }
             else
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "TaskMgr", "Log Connected within time limit."));
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "TaskMgr", "Log Connected within time limit."));
             }
 
         }
@@ -405,15 +403,15 @@ namespace ModularBOT.Component
         private Task Client_GuildUnavailable(SocketGuild guild)
         {
             string guildName = guild.Name.Length > 20 ? guild.Name.Remove(17) + "..." : guild.Name;
-            SocketTextChannel c = guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel);
+            SocketTextChannel c = guild.GetTextChannel(_serviceProvider.GetRequiredService<Configuration>().LogChannel);
             if (c != null)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", 
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", 
                     $"Requested initialization channel ({c.Name}) became unavailable."));
                 
                 LogConnected = false;
             }
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{guildName}] "));
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"A guild just vanished. [{guildName}] "));
             return Task.Delay(0);
         }
 
@@ -422,15 +420,15 @@ namespace ModularBOT.Component
             //Console.Title = "RMSoftware.ModularBOT -> " + guild.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
             string guildName = guild.Name.Length > 20 ? guild.Name.Remove(17) + "..." : guild.Name;
 
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", 
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", 
                 $"A guild just appeared. [{guildName}] "),ConsoleColor.Green);
-            SocketTextChannel c = guild.GetTextChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel);
+            SocketTextChannel c = guild.GetTextChannel(_serviceProvider.GetRequiredService<Configuration>().LogChannel);
             if ( c != null)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", 
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "Guilds", 
                     $"Requested initialization channel ({c.Name}) has been found. {guild.Name} currently has it!"));
                 ClientStartTime = DateTime.Now;
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"Client SessionStart time set to {ClientStartTime}"));
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Uptime", $"Client SessionStart time set to {ClientStartTime}"));
                 LogConnected = true;
             }
             
@@ -440,12 +438,12 @@ namespace ModularBOT.Component
 
         private Task Client_ShardDisconnected(Exception arg1, DiscordSocketClient arg2)
         {
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Error, "Shards", $"A shard was disconnected! {arg2.Guilds.Count} guild(s) lost contact. "));
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Error, "Shards", $"A shard was disconnected! {arg2.Guilds.Count} guild(s) lost contact. "));
             if(!Program.ShutdownCalled)
             {
                 //Set timeout based on shard count.
                 //Ie: 1 shard: 10 second timeout; 10 shards: 100 seconds.
-                Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord re-connection Attempt"));
+                Task.Run(() => StartTimeoutKS(10000 * _serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord re-connection Attempt"));
             }
             return Task.Delay(0);
         }
@@ -462,7 +460,7 @@ namespace ModularBOT.Component
             lastrecieved = arg.Content;
             if (!(arg is SocketUserMessage message)) return;
             ulong gid = 0;//global by default
-            string prefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            string prefix = _serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             if ((arg.Channel as SocketGuildChannel) != null)
             {
                 SocketGuildChannel sc = arg.Channel as SocketGuildChannel;
@@ -495,7 +493,7 @@ namespace ModularBOT.Component
             {
                 if (arg.Author.IsBot)//do not allow bots to mention command. PERIOD.
                 {
-                    serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "BOT", "Someone tried to bait the bot with a bot..."));
+                    _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "BOT", "Someone tried to bait the bot with a bot..."));
                     return;
                 }
                 
@@ -521,7 +519,7 @@ namespace ModularBOT.Component
                         ((SocketGuildChannel)message.Channel).Guild.Name.Remove(17) + "..." : ((SocketGuildChannel)message.Channel).Guild.Name;
 
                 }
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Mention",
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Mention",
                     $"<#{message.Channel.Name} [{mcgontext}]> {message.Author.Username}#{message.Author.Discriminator}: {message.Content}"));
                 #endregion
 
@@ -587,7 +585,7 @@ namespace ModularBOT.Component
                     ((SocketGuildChannel)message.Channel).Guild.Name.Remove(17) + "..." : ((SocketGuildChannel)message.Channel).Guild.Name;
 
             }
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands",
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Commands",
                 $"<#{message.Channel.Name} [{cgontext}]> {message.Author.Username}#{message.Author.Discriminator}: {message.Content}"));
             #endregion
 
@@ -604,7 +602,7 @@ namespace ModularBOT.Component
                         SetUserCom(arg.Author.Id, (short)(userBL[arg.Author.Id] + 1));
                         if(userBL[arg.Author.Id] > 8)
                         {
-                            serviceProvider.GetRequiredService<ConsoleIO>()
+                            _serviceProvider.GetRequiredService<ConsoleIO>()
                                 .WriteEntry(new LogMessage(LogSeverity.Critical, "AutoBL",
                                 $"User {message.Author.Username}  was just blacklisted for command abuse!"));
                             PermissionManager.RegisterEntity(arg.Author, AccessLevels.Blacklisted,blm == AutoBlacklistModes.Standard);
@@ -630,7 +628,7 @@ namespace ModularBOT.Component
                         SetUserCom(arg.Author.Id, (short)(userBL[arg.Author.Id] + 1));
                         if (userBL[arg.Author.Id] > 8)
                         {
-                            serviceProvider.GetRequiredService<ConsoleIO>()
+                            _serviceProvider.GetRequiredService<ConsoleIO>()
                                 .WriteEntry(new LogMessage(LogSeverity.Critical, "AutoBL",
                                 $"User {message.Author.Username}  was just blacklisted for command abuse!"));
                             PermissionManager.RegisterEntity(arg.Author, AccessLevels.Blacklisted, blm == AutoBlacklistModes.Standard);
@@ -662,14 +660,14 @@ namespace ModularBOT.Component
                 var c = search.Commands;
                 //get module name
                 string module = c.First().Command.Module.Name;
-                var m = serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleGroups.Contains(module));
+                var m = _serviceProvider.GetRequiredService<DiscordNET>().ModuleMgr.Modules.FirstOrDefault(x => x.ModuleGroups.Contains(module));
                 if (m != null)
                 {
                     if(m.GuildsAvailable.Count > 0)
                     {
                         if(m.GuildsAvailable.FirstOrDefault(gid => gid == context.Guild?.Id) == 0)//if no match for guild, don't execute.
                         {
-                            serviceProvider.GetRequiredService<ConsoleIO>()
+                            _serviceProvider.GetRequiredService<ConsoleIO>()
                                 .WriteEntry(new LogMessage(LogSeverity.Verbose, "ModuleCMD", "Module was called but wrong guild."));
                             return;
                         }
@@ -680,7 +678,7 @@ namespace ModularBOT.Component
 
             // Execute the command. (result does not indicate a return value, 
             // rather an object stating if the command executed successfully)
-            var cmdres = await cmdsvr.ExecuteAsync(context, prefix.Length, serviceProvider);
+            var cmdres = await cmdsvr.ExecuteAsync(context, prefix.Length, _serviceProvider);
 
             if (cmdres.IsSuccess)
             {
@@ -697,7 +695,7 @@ namespace ModularBOT.Component
                         SetUserCom(message.Author.Id, (short)(userBL[message.Author.Id] + 1));
                         if (userBL[message.Author.Id] > 8)
                         {
-                            serviceProvider.GetRequiredService<ConsoleIO>()
+                            _serviceProvider.GetRequiredService<ConsoleIO>()
                                 .WriteEntry(new LogMessage(LogSeverity.Critical, "AutoBL", 
                                 $"User {message.Author.Username}  was just blacklisted for command abuse!"));
                             PermissionManager.RegisterEntity(message.Author, AccessLevels.Blacklisted, blm == AutoBlacklistModes.Standard);
@@ -742,10 +740,10 @@ namespace ModularBOT.Component
         {
             Task.Run(()=>DownloadGuildUsers(arg));
             //Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards",
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards",
                 $"A shard was connected! {arg.Guilds.Count} guilds just made contact. "), ConsoleColor.DarkGreen);
 
-            Task.Run(() => StartTimeoutKS(10000 * serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
+            Task.Run(() => StartTimeoutKS(10000 * _serviceProvider.GetRequiredService<Configuration>().ShardCount, "Discord connection Attempt"));
             return Task.Delay(0);
 
         }
@@ -754,7 +752,7 @@ namespace ModularBOT.Component
         {
             foreach (var guild in arg.Guilds)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "USERDL", 
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Verbose, "USERDL", 
                     $"Fetching userlist for <Guild ID: {guild.Id}>"), ConsoleColor.Magenta);
                 guild.DownloadUsersAsync().GetAwaiter().GetResult();
             }
@@ -764,11 +762,11 @@ namespace ModularBOT.Component
         {
             
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Shards", 
                 $"Shard ready! {arg.Guilds.Count} guilds are fully loaded. "),ConsoleColor.Green);
-            if (arg.GetChannel(serviceProvider.GetRequiredService<Configuration>().LogChannel) is SocketTextChannel ch && !Initialized)
+            if (arg.GetChannel(_serviceProvider.GetRequiredService<Configuration>().LogChannel) is SocketTextChannel ch && !Initialized)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", $"Executing OnStart.CORE"));
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "TaskMgr", $"Executing OnStart.CORE"));
 
                 init_start = true;//Signal SpinWait to run task.
                
@@ -780,10 +778,10 @@ namespace ModularBOT.Component
                     shardinitAttempts++;
                     if (shardinitAttempts >= Client.Shards.Count)
                     {
-                        serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.LogChannel = 0;
-                        serviceProvider.GetRequiredService<ConfigurationManager>().Save();
+                        _serviceProvider.GetRequiredService<ConfigurationManager>().CurrentConfig.LogChannel = 0;
+                        _serviceProvider.GetRequiredService<ConfigurationManager>().Save();
                         InputCanceled = true;
-                       await serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Log Channel Invalid", "You specified an invalid Log channel ID. Please verify your guild channel's ID and try again.", false, ref Program.ShutdownCalled,
+                       await _serviceProvider.GetRequiredService<ConsoleIO>().ShowKillScreen("Log Channel Invalid", "You specified an invalid Log channel ID. Please verify your guild channel's ID and try again.", false, ref Program.ShutdownCalled,
                                 ref Program.RestartRequested, 0, new ArgumentException("init channel was invalid.", "botChannel"), "DNET_INIT_INVALID");
 
                     }
@@ -793,7 +791,7 @@ namespace ModularBOT.Component
 
         private Task Client_Log(LogMessage arg)
         {
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(arg);
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(arg);
             return Task.Delay(0);
         }
 
@@ -801,20 +799,20 @@ namespace ModularBOT.Component
         {
             
             Console.Title = "RMSoftware.ModularBOT -> " + arg.CurrentUser + " | Connected to " + Client.Guilds.Count + " guilds.";
-            serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
+            _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Info, "Guilds", $"{Client.CurrentUser.Username} Joined a new guild!" +
                 $"Creating {arg.Name}'s {arg.Id}.guild file!"));
             GuildObject g = new GuildObject
             {
                 ID = arg.Id,
-                CommandPrefix = serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                CommandPrefix = _serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
                 LockPFChanges = false,
                 BlacklistMode = AutoBlacklistModes.Standard,
                 GuildCommands = new List<GuildCommand>(),
             };
             CustomCMDMgr.AddGuildObject(g);
-            if (serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value)
+            if (_serviceProvider.GetRequiredService<Configuration>().RegisterManagementOnJoin.Value)
             {
-                serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
+                _serviceProvider.GetRequiredService<ConsoleIO>().WriteEntry(new LogMessage(LogSeverity.Warning, "Guilds", $"Mass-deployment is enabled. Downloading users... This may take a while!"));
                 await Task.Delay(1);
 #pragma warning disable 4014
                 Task.Run(() => SyncGuild(arg));//don't really care about result in this case. just want a new thread.

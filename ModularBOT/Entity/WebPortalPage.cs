@@ -11,6 +11,8 @@ namespace ModularBOT.Entity
     {
         internal string Title { get; set; }
         internal string Content { get; set; }
+        internal string RawCSS { get; set; }
+        internal string RawJS { get; set; }
         internal string LogoUrl { get; set; }
 
         internal List<string> ScriptSources { get; set; }
@@ -36,9 +38,11 @@ namespace ModularBOT.Entity
                     stylesheets += $"<link rel='stylesheet' href='{item}'/>\n";
                 }
             }
-            return Resources.Page
+            return Resources.PageTemplate
                 .Replace("<!--TEMPLATE_CONTENT-->", Content)
                 .Replace("<!--TEMPLATE_STYLESHEETS-->", stylesheets)
+                .Replace("<!--TEMPLATE_RAWCSS-->", RawCSS)
+                .Replace("<!--TEMPLATE_RAWJS-->", RawJS)
                 .Replace("<!--TEMPLATE_SCRIPTS-->", scripts)
                 .Replace("<!--TEMPLATE_LOGO-->", LogoUrl)
                 .Replace("<!--TEMPLATE_TITLE-->", Title);

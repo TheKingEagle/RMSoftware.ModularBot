@@ -15,6 +15,25 @@ p a {
   */
 }
 
+.ticketgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 960px;
+    justify-content: center;
+}
+.grid-item {
+    border: 1px solid #3b3c3d;
+    border-radius: 10px;
+    background: linear-gradient(#1f1f1f,#283037);
+    height: 300px;
+    width: 300px;
+    text-align: center;
+    vertical-align: bottom;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 fieldset {
     margin: 20px 0;
     padding: 10px;

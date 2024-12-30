@@ -22,14 +22,14 @@ namespace ModularBOT.Component.ConfigEntities
 
         public override EmbedFieldBuilder ExecuteView(DiscordNET _DiscordNet, ICommandContext Context, bool inline)
         {
-            string p = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
-            var ConsoleIO = _DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>();
+            string p = _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            var ConsoleIO = _DiscordNet._serviceProvider.GetRequiredService<ConsoleIO>();
             GuildObject g = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
             p = g?.CommandPrefix;
             if (g == null)
             {
                 ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "GPrefix", "Warning: The guild object was null, this means the guild's file doesn't exist!!"));
-                p = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+                p = _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             }
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
@@ -42,14 +42,14 @@ namespace ModularBOT.Component.ConfigEntities
 
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
-            string p = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
-            var ConsoleIO = _DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>();
+            string p = _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+            var ConsoleIO = _DiscordNet._serviceProvider.GetRequiredService<ConsoleIO>();
             GuildObject g = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
             p = g?.CommandPrefix;
             if (g == null)
             {
                 ConsoleIO.WriteEntry(new LogMessage(LogSeverity.Warning, "GPrefix", "Warning: The guild object was null, this means the guild's file doesn't exist!!"));
-                p = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
+                p = _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix;
             }
             return base.ExecuteView(_DiscordNet, Context,p);
         }

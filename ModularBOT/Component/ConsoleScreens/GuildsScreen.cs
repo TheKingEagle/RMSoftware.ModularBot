@@ -250,7 +250,7 @@ namespace ModularBOT.Component.ConsoleScreens
             {
                 bool z = DNet.CustomCMDMgr.AddGuildObject(new GuildObject()
                 {
-                    CommandPrefix = DNet.serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
+                    CommandPrefix = DNet._serviceProvider.GetRequiredService<Configuration>().CommandPrefix,
                     ID = item.Id,
                     BlacklistMode = AutoBlacklistModes.Disabled,
                     GuildCommands = new List<GuildCommand>(),

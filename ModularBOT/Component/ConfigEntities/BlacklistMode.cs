@@ -22,7 +22,7 @@ namespace ModularBOT.Component.ConfigEntities
         public override async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _DiscordNet, ICommandContext Context, string value)
         {
             var g = _DiscordNet.CustomCMDMgr.GuildObjects.FirstOrDefault(x => x.ID == Context.Guild.Id);
-            var ConsoleIO = _DiscordNet.serviceProvider.GetRequiredService<ConsoleIO>();
+            var ConsoleIO = _DiscordNet._serviceProvider.GetRequiredService<ConsoleIO>();
 
             if (Context.User is SocketGuildUser SGU)
             {

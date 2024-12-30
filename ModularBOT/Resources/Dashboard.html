@@ -1,0 +1,57 @@
+﻿
+<div class="StatusOverview">
+    <h1>STATUS: <span id="status">--</span></h1>
+    <p class="runtime_details"><b>DURATION:</b> <span id="runtime">-- Days -- Hours -- Minutes</span> | <b>Guilds:</b> <span id="g_avail" title="Total Available">----</span> / <span id="g_total" title="Total Joined">----</span></p>
+</div>
+<div class="ticketgrid">
+    <div class="grid-item config"><h2>Settings</h2></div>
+    <div class="grid-item manager"><h2>Guild Management</h2></div>
+    <div class="grid-item manager"><h2>Start/Stop</h2></div>
+    <div class="grid-item commands"><h2>Command List</h2></div>
+    <div class="grid-item commands"><h2>Modules</h2></div>
+</div>
+
+<script>
+    function parseRuntime(runtimeStr) {
+        // Regular expression to match hours, minutes, seconds, and fractional seconds
+        const regex = /(\d{2}):(\d{2}):(\d{2})\.(\d+)/;
+
+        // Extracting the components using the regular expression
+        const match = runtimeStr.match(regex);
+
+        // If the format is incorrect, return null or an error
+        if (!match) {
+            return null; // Or throw new Error('Invalid runtime format');
+        }
+
+        // Converting the matched groups to numbers
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        const seconds = parseInt(match[3], 10);
+        const fractionalSeconds = parseInt(match[4], 10);
+
+        // Returning the result as an object
+        return { hours, minutes, seconds, fractionalSeconds };
+    }
+    
+    socket.on("stats", (data) => {
+        let ts = parseRuntime(data.runtime);
+
+        let color = data.guildAvailable < data.guildCount ? "yellow" : "lime"; 
+         
+
+
+        document.getElementById("runtime").innerHTML = `<b>${ts.hours}</b> Hours <b>${ts.minutes}</b> Minutes <b>${ts.seconds}</b> Seconds`;
+        document.getElementById("g_avail").innerHTML = `<b style='color:${color}'>${data.guildAvailable}</b>`;
+        document.getElementById("g_total").innerHTML = `<b>${data.guildCount}</b>`;
+        document.title = data.username + " - Dashboard";
+        document.getElementById("pageLogo").src = data.avatar;
+        document.getElementById("TitleHead").innerHTML = data.username + " &#x2022; Dashboard";
+
+        let stat = data.Status.toLowerCase();
+        let stcolor = stat == "connected" ? "lime" : "red";
+
+        document.getElementById("status").innerHTML = data.Status;
+        document.getElementById("status").style.color = stcolor;
+    });
+</script>

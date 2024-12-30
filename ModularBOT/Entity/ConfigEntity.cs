@@ -65,7 +65,7 @@ namespace ModularBOT.Entity
         public virtual async Task ExecuteSet(DiscordShardedClient Client, DiscordNET _discordNET, ICommandContext Context, string value)
         {
             await Context.Channel.SendMessageAsync("", false, GetEmbeddedMessage(
-                _discordNET.serviceProvider.GetRequiredService<ConsoleIO>(),
+                _discordNET._serviceProvider.GetRequiredService<ConsoleIO>(),
                 Context,
                 "Configuration Updated", $"Successfully Updated value of `{ConfigIdentifier}` to `{value}`", Color.Green));
             return;

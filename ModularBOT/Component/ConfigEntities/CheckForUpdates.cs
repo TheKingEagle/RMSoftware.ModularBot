@@ -24,7 +24,7 @@ namespace ModularBOT.Component.ConfigEntities
         {
             EmbedFieldBuilder efb = new EmbedFieldBuilder()
             {
-                Value = _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value ? "`Yes`" : "`No`",
+                Value = _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value ? "`Yes`" : "`No`",
                 Name = ConfigIdentifier,
                 IsInline = inline
             };
@@ -34,7 +34,7 @@ namespace ModularBOT.Component.ConfigEntities
         public override string ExecuteView(DiscordNET _DiscordNet, ICommandContext Context)
         {
             return base.ExecuteView(_DiscordNet, Context,
-                _DiscordNet.serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value.ToString());
+                _DiscordNet._serviceProvider.GetRequiredService<Configuration>().CheckForUpdates.Value.ToString());
         }
     }
 }
